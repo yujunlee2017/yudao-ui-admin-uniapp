@@ -42,6 +42,12 @@ export default defineManifestConfig({
     compatible: {
       ignoreVersion: true,
     },
+    /** 来自 https://gitee.com/yudaocode/yudao-ui-admin-uniapp/issues/IEZGWJ 反馈 */
+    safearea: {
+      bottom: {
+        offset: 'none',
+      },
+    },
     splashscreen: {
       alwaysShowBeforeRender: true,
       waiting: true,
