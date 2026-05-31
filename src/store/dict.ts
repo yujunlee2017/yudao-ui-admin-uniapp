@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 
 import { computed, ref } from 'vue'
 import { getSimpleDictDataList } from '@/api/system/dict/data'
+import { sleep } from '@/utils/promise'
 
 /** 字典项 */
 export interface DictItem {
@@ -14,6 +15,8 @@ export interface DictItem {
 
 /** 字典缓存类型 */
 export type DictCache = Record<string, DictItem[]>
+
+let loadingPromise: Promise<void> | null = null
 
 export const useDictStore = defineStore(
   'dict',
@@ -27,11 +30,15 @@ export const useDictStore = defineStore(
     }
 
     /** 通过 API 加载字典数据 */
-    const loadDictCache = async () => {
-      if (isLoaded.value) {
+    const loadDictCache = async (force = false) => {
+      if (!force && isLoaded.value) {
         return
       }
-      try {
+      if (loadingPromise) {
+        return loadingPromise
+      }
+
+      loadingPromise = (async () => {
         const dicts = await getSimpleDictDataList()
         const dictCacheData: DictCache = {}
         dicts.forEach((dict: DictData) => {
@@ -46,8 +53,28 @@ export const useDictStore = defineStore(
           })
         })
         setDictCache(dictCacheData)
-      } catch (error) {
-        console.error('加载字典数据失败', error)
+      })()
+
+      try {
+        await loadingPromise
+      } finally {
+        loadingPromise = null
+      }
+    }
+
+    /** 重试加载字典数据，用于微信等环境下缓存丢失或网络抖动后的补偿 */
+    const loadDictCacheWithRetry = async (maxRetry = 3) => {
+      for (let i = 0; i <= maxRetry; i++) {
+        try {
+          await loadDictCache()
+          return
+        } catch (error) {
+          console.error(`加载字典数据失败，第 ${i + 1} 次`, error)
+          if (i >= maxRetry) {
+            return
+          }
+          await sleep(800 * (i + 1))
+        }
       }
     }
 
@@ -75,6 +102,7 @@ export const useDictStore = defineStore(
       isLoaded,
       setDictCache,
       loadDictCache,
+      loadDictCacheWithRetry,
       getDictOptions,
       getDictData,
       clearDictCache,

@@ -109,7 +109,7 @@ export const useTokenStore = defineStore(
       await userStore.fetchUserInfo()
       // add by 芋艿：加载字典数据（异步）
       const dictStore = useDictStore()
-      dictStore.loadDictCache().then()
+      void dictStore.loadDictCacheWithRetry()
     }
 
     /**
