@@ -9,42 +9,38 @@
 
     <!-- 表单区域 -->
     <view>
-      <wd-form ref="formRef" :model="formData" :rules="formRules">
+      <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
-          <wd-input
-            v-model="formData.clientId"
-            label="客户端编号"
-            label-width="220rpx"
-            prop="clientId"
-            clearable
-            placeholder="请输入客户端编号"
-          />
-          <wd-input
-            v-model="formData.secret"
-            label="客户端密钥"
-            label-width="220rpx"
-            prop="secret"
-            clearable
-            placeholder="请输入客户端密钥"
-          />
-          <wd-input
-            v-model="formData.name"
-            label="应用名"
-            label-width="220rpx"
-            prop="name"
-            clearable
-            placeholder="请输入应用名"
-          />
-          <wd-textarea
-            v-model="formData.description"
-            label="应用描述"
-            label-width="220rpx"
-            prop="description"
-            clearable
-            placeholder="请输入应用描述"
-          />
-          <wd-cell title="状态" title-width="220rpx" prop="status" center>
-            <wd-radio-group v-model="formData.status" shape="button">
+          <wd-form-item title="客户端编号" title-width="220rpx" prop="clientId">
+            <wd-input
+              v-model="formData.clientId"
+              clearable
+              placeholder="请输入客户端编号"
+            />
+          </wd-form-item>
+          <wd-form-item title="客户端密钥" title-width="220rpx" prop="secret">
+            <wd-input
+              v-model="formData.secret"
+              clearable
+              placeholder="请输入客户端密钥"
+            />
+          </wd-form-item>
+          <wd-form-item title="应用名" title-width="220rpx" prop="name">
+            <wd-input
+              v-model="formData.name"
+              clearable
+              placeholder="请输入应用名"
+            />
+          </wd-form-item>
+          <wd-form-item title="应用描述" title-width="220rpx" prop="description">
+            <wd-textarea
+              v-model="formData.description"
+              clearable
+              placeholder="请输入应用描述"
+            />
+          </wd-form-item>
+          <wd-form-item title="状态" title-width="220rpx" prop="status" center>
+            <wd-radio-group v-model="formData.status" type="button">
               <wd-radio
                 v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)"
                 :key="dict.value"
@@ -53,25 +49,23 @@
                 {{ dict.label }}
               </wd-radio>
             </wd-radio-group>
-          </wd-cell>
-          <wd-input
-            v-model="formData.accessTokenValiditySeconds"
-            label="访问令牌有效期"
-            label-width="220rpx"
-            prop="accessTokenValiditySeconds"
-            type="number"
-            clearable
-            placeholder="请输入访问令牌有效期（秒）"
-          />
-          <wd-input
-            v-model="formData.refreshTokenValiditySeconds"
-            label="刷新令牌有效期"
-            label-width="220rpx"
-            prop="refreshTokenValiditySeconds"
-            type="number"
-            clearable
-            placeholder="请输入刷新令牌有效期（秒）"
-          />
+          </wd-form-item>
+          <wd-form-item title="访问令牌有效期" title-width="220rpx" prop="accessTokenValiditySeconds">
+            <wd-input
+              v-model="formData.accessTokenValiditySeconds"
+              type="number"
+              clearable
+              placeholder="请输入访问令牌有效期（秒）"
+            />
+          </wd-form-item>
+          <wd-form-item title="刷新令牌有效期" title-width="220rpx" prop="refreshTokenValiditySeconds">
+            <wd-input
+              v-model="formData.refreshTokenValiditySeconds"
+              type="number"
+              clearable
+              placeholder="请输入刷新令牌有效期（秒）"
+            />
+          </wd-form-item>
         </wd-cell-group>
       </wd-form>
     </view>
@@ -91,14 +85,15 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
+import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { OAuth2Client } from '@/api/system/oauth2/client'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { useToast } from 'wot-design-uni'
 import { createOAuth2Client, getOAuth2Client, updateOAuth2Client } from '@/api/system/oauth2/client'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   id?: number | any
@@ -132,13 +127,13 @@ const formData = ref<OAuth2Client>({
   resourceIds: [],
   additionalInformation: '',
 })
-const formRules = {
+const formSchema = createFormSchema({
   clientId: [{ required: true, message: '客户端编号不能为空' }],
   secret: [{ required: true, message: '客户端密钥不能为空' }],
   name: [{ required: true, message: '应用名不能为空' }],
   accessTokenValiditySeconds: [{ required: true, message: '访问令牌有效期不能为空' }],
   refreshTokenValiditySeconds: [{ required: true, message: '刷新令牌有效期不能为空' }],
-}
+})
 const formRef = ref<FormInstance>()
 
 /** 返回上一页 */

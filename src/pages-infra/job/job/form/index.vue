@@ -9,67 +9,60 @@
 
     <!-- 表单区域 -->
     <view>
-      <wd-form ref="formRef" :model="formData" :rules="formRules">
+      <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
-          <wd-input
-            v-model="formData.name"
-            label="任务名称"
-            label-width="200rpx"
-            prop="name"
-            clearable
-            placeholder="请输入任务名称"
-          />
-          <wd-input
-            v-model="formData.handlerName"
-            label="处理器名称"
-            label-width="200rpx"
-            prop="handlerName"
-            clearable
-            placeholder="请输入处理器名称"
-          />
-          <wd-input
-            v-model="formData.handlerParam"
-            label="处理器参数"
-            label-width="200rpx"
-            prop="handlerParam"
-            clearable
-            placeholder="请输入处理器参数"
-          />
-          <wd-input
-            v-model="formData.cronExpression"
-            label="CRON 表达式"
-            label-width="200rpx"
-            prop="cronExpression"
-            clearable
-            placeholder="请输入 CRON 表达式"
-          />
-          <wd-input
-            v-model.number="formData.retryCount"
-            label="重试次数"
-            label-width="200rpx"
-            prop="retryCount"
-            type="number"
-            clearable
-            placeholder="请输入重试次数"
-          />
-          <wd-input
-            v-model.number="formData.retryInterval"
-            label="重试间隔(ms)"
-            label-width="200rpx"
-            prop="retryInterval"
-            type="number"
-            clearable
-            placeholder="请输入重试间隔"
-          />
-          <wd-input
-            v-model.number="formData.monitorTimeout"
-            label="监控超时(ms)"
-            label-width="200rpx"
-            prop="monitorTimeout"
-            type="number"
-            clearable
-            placeholder="请输入监控超时时间"
-          />
+          <wd-form-item title="任务名称" title-width="200rpx" prop="name">
+            <wd-input
+              v-model="formData.name"
+              clearable
+              placeholder="请输入任务名称"
+            />
+          </wd-form-item>
+          <wd-form-item title="处理器名称" title-width="200rpx" prop="handlerName">
+            <wd-input
+              v-model="formData.handlerName"
+              clearable
+              placeholder="请输入处理器名称"
+            />
+          </wd-form-item>
+          <wd-form-item title="处理器参数" title-width="200rpx" prop="handlerParam">
+            <wd-input
+              v-model="formData.handlerParam"
+              clearable
+              placeholder="请输入处理器参数"
+            />
+          </wd-form-item>
+          <wd-form-item title="CRON 表达式" title-width="200rpx" prop="cronExpression">
+            <wd-input
+              v-model="formData.cronExpression"
+              clearable
+              placeholder="请输入 CRON 表达式"
+            />
+          </wd-form-item>
+          <wd-form-item title="重试次数" title-width="200rpx" prop="retryCount">
+            <wd-input
+              v-model.number="formData.retryCount"
+              type="number"
+              clearable
+              placeholder="请输入重试次数"
+            />
+          </wd-form-item>
+          <wd-form-item title="重试间隔(ms)" title-width="200rpx" prop="retryInterval">
+            <wd-input
+              v-model.number="formData.retryInterval"
+              type="number"
+              clearable
+              placeholder="请输入重试间隔"
+            />
+          </wd-form-item>
+          <wd-form-item title="监控超时(ms)" title-width="200rpx" prop="monitorTimeout">
+            <wd-input
+              v-model.number="formData.monitorTimeout"
+              type="number"
+              clearable
+              placeholder="请输入监控超时时间"
+            />
+          </wd-form-item>
         </wd-cell-group>
       </wd-form>
     </view>
@@ -89,13 +82,14 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
+import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { Job } from '@/api/infra/job'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { useToast } from 'wot-design-uni'
 import { createJob, getJob, updateJob } from '@/api/infra/job'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum } from '@/utils/constants/biz-system-enum'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   id?: number | any
@@ -122,13 +116,13 @@ const formData = ref<Job>({
   retryInterval: 0,
   monitorTimeout: 0,
 })
-const formRules = {
+const formSchema = createFormSchema({
   name: [{ required: true, message: '任务名称不能为空' }],
   handlerName: [{ required: true, message: '处理器名称不能为空' }],
   cronExpression: [{ required: true, message: 'CRON 表达式不能为空' }],
   retryCount: [{ required: true, message: '重试次数不能为空' }],
   retryInterval: [{ required: true, message: '重试间隔不能为空' }],
-}
+})
 const formRef = ref<FormInstance>()
 
 /** 返回上一页 */

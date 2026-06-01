@@ -9,28 +9,27 @@
 
     <!-- 操作表单 -->
     <view class="p-24rpx">
-      <wd-form ref="formRef" :model="formData" :rules="formRules">
+      <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
           <!-- 友情提醒 -->
           <view class="mb-24rpx border border-[#ffd591] rounded-16rpx bg-[#fff7e6] p-24rpx">
             <view class="mb-12rpx flex items-center">
-              <wd-icon name="warning" color="#faad14" size="32rpx" />
+              <wd-icon name="exclamation-circle" color="#faad14" size="32rpx" />
               <text class="ml-12rpx text-28rpx text-[#faad14] font-bold">友情提醒</text>
             </view>
             <text class="text-26rpx text-[#666]">取消后，该审批流程将自动结束。</text>
           </view>
 
           <!-- 取消理由 -->
-          <wd-textarea
-            v-model="formData.cancelReason"
-            prop="cancelReason"
-            label="取消理由："
-            label-width="180rpx"
-            placeholder="请输入取消理由"
-            :maxlength="500"
-            show-word-limit
-            clearable
-          />
+          <wd-form-item prop="cancelReason" title="取消理由：" title-width="180rpx">
+            <wd-textarea
+              v-model="formData.cancelReason"
+              placeholder="请输入取消理由"
+              :maxlength="500"
+              show-word-limit
+              clearable
+            />
+          </wd-form-item>
         </wd-cell-group>
         <!-- 提交按钮 -->
         <view class="mt-48rpx">
@@ -50,11 +49,12 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
+import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, reactive, ref } from 'vue'
-import { useToast } from 'wot-design-uni'
 import { cancelProcessInstanceByStartUser } from '@/api/bpm/processInstance'
 import { navigateBackPlus } from '@/utils'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   processInstanceId: string
@@ -75,11 +75,9 @@ const formLoading = ref(false)
 const formData = reactive({
   cancelReason: '',
 })
-const formRules = {
-  cancelReason: [
-    { required: true, message: '取消理由不能为空' },
-  ],
-}
+const formSchema = createFormSchema({
+  cancelReason: [{ required: true, message: '取消理由不能为空' }],
+})
 const formRef = ref<FormInstance>()
 
 /** 返回上一页 */

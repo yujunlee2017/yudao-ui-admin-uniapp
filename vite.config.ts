@@ -1,8 +1,8 @@
+import type { ComponentResolver } from '@uni-helper/vite-plugin-uni-components'
 import path from 'node:path'
 import process from 'node:process'
 import Uni from '@uni-helper/plugin-uni'
-import Components from '@uni-helper/vite-plugin-uni-components'
-import { WotResolver } from '@uni-helper/vite-plugin-uni-components/resolvers'
+import Components, { kebabCase } from '@uni-helper/vite-plugin-uni-components'
 // @see https://uni-helper.js.org/vite-plugin-uni-layouts
 import UniLayouts from '@uni-helper/vite-plugin-uni-layouts'
 // @see https://github.com/uni-helper/vite-plugin-uni-manifest
@@ -28,6 +28,21 @@ import ViteRestart from 'vite-plugin-restart'
 import openDevTools from './scripts/open-dev-tools'
 import { createCopyNativeResourcesPlugin } from './vite-plugins/copy-native-resources'
 import syncManifestPlugin from './vite-plugins/sync-manifest-plugins'
+
+function WotResolver(): ComponentResolver {
+  return {
+    type: 'component',
+    resolve: (name: string) => {
+      if (name.match(/^Wd[A-Z]/)) {
+        const compName = kebabCase(name)
+        return {
+          name,
+          from: `@wot-ui/ui/components/${compName}/${compName}.vue`,
+        }
+      }
+    },
+  }
+}
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode }) => {
@@ -99,6 +114,7 @@ export default defineConfig(({ command, mode }) => {
       }),
       // Components 需要在 Uni 之前引入
       Components({
+        resolvers: [WotResolver()],
         extensions: ['vue'],
         deep: true, // 是否递归扫描子目录，
         directoryAsNamespace: false, // 是否把目录名作为命名空间前缀，true 时组件名为 目录名+组件名，
@@ -152,13 +168,6 @@ export default defineConfig(({ command, mode }) => {
         },
       ),
       syncManifestPlugin(),
-      Components({
-        resolvers: [WotResolver()],
-        extensions: ['vue'],
-        deep: true, // 是否递归扫描子目录，
-        directoryAsNamespace: false, // 是否把目录名作为命名空间前缀，true 时组件名为 目录名+组件名，
-        dts: 'src/types/components.d.ts', // 自动生成的组件类型声明文件路径（用于 TypeScript 支持）
-      }),
       // 自动打开开发者工具插件 (必须修改 .env 文件中的 VITE_WX_APPID)
       openDevTools(),
     ],
@@ -166,6 +175,13 @@ export default defineConfig(({ command, mode }) => {
       __VITE_APP_PROXY__: JSON.stringify(VITE_APP_PROXY_ENABLE),
     },
     css: {
+      preprocessorOptions: {
+        scss: {
+          // 使用 Sass modern compiler，并静默依赖中的 Sass deprecation 提示。
+          api: 'modern-compiler',
+          silenceDeprecations: ['legacy-js-api', 'import'],
+        },
+      },
       postcss: {
         plugins: [
           // autoprefixer({

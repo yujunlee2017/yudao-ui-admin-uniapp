@@ -9,41 +9,37 @@
 
     <!-- 表单区域 -->
     <view>
-      <wd-form ref="formRef" :model="formData" :rules="formRules">
+      <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
-          <wd-input
-            v-model="formData.name"
-            label="数据源名称"
-            label-width="200rpx"
-            prop="name"
-            clearable
-            placeholder="请输入数据源名称"
-          />
-          <wd-input
-            v-model="formData.url"
-            label="数据源连接"
-            label-width="200rpx"
-            prop="url"
-            clearable
-            placeholder="请输入数据源连接"
-          />
-          <wd-input
-            v-model="formData.username"
-            label="用户名"
-            label-width="200rpx"
-            prop="username"
-            clearable
-            placeholder="请输入用户名"
-          />
-          <wd-input
-            v-model="formData.password"
-            label="密码"
-            label-width="200rpx"
-            prop="password"
-            show-password
-            clearable
-            placeholder="请输入密码"
-          />
+          <wd-form-item title="数据源名称" title-width="200rpx" prop="name">
+            <wd-input
+              v-model="formData.name"
+              clearable
+              placeholder="请输入数据源名称"
+            />
+          </wd-form-item>
+          <wd-form-item title="数据源连接" title-width="200rpx" prop="url">
+            <wd-input
+              v-model="formData.url"
+              clearable
+              placeholder="请输入数据源连接"
+            />
+          </wd-form-item>
+          <wd-form-item title="用户名" title-width="200rpx" prop="username">
+            <wd-input
+              v-model="formData.username"
+              clearable
+              placeholder="请输入用户名"
+            />
+          </wd-form-item>
+          <wd-form-item title="密码" title-width="200rpx" prop="password">
+            <wd-input
+              v-model="formData.password"
+              show-password
+              clearable
+              placeholder="请输入密码"
+            />
+          </wd-form-item>
         </wd-cell-group>
       </wd-form>
     </view>
@@ -63,12 +59,13 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
+import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { DataSourceConfig } from '@/api/infra/data-source-config'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { useToast } from 'wot-design-uni'
 import { createDataSourceConfig, getDataSourceConfig, updateDataSourceConfig } from '@/api/infra/data-source-config'
 import { navigateBackPlus } from '@/utils'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   id?: number | any
@@ -91,12 +88,12 @@ const formData = ref<DataSourceConfig>({
   username: '',
   password: '',
 })
-const formRules = {
+const formSchema = createFormSchema({
   name: [{ required: true, message: '数据源名称不能为空' }],
   url: [{ required: true, message: '数据源连接不能为空' }],
   username: [{ required: true, message: '用户名不能为空' }],
   password: [{ required: true, message: '密码不能为空' }],
-}
+})
 const formRef = ref<FormInstance>()
 
 /** 返回上一页 */

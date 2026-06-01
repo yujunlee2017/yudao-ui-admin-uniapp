@@ -4,46 +4,44 @@
       <view class="mb-24rpx text-32rpx text-[#333] font-semibold">
         发送测试邮件
       </view>
-      <wd-form ref="sendFormRef" :model="sendFormData" :rules="sendFormRules">
+      <wd-form ref="sendFormRef" :model="sendFormData" :schema="sendFormSchema">
         <wd-cell-group border>
-          <wd-textarea
-            v-model="sendFormData.content"
-            label="模板内容"
-            label-width="180rpx"
-            disabled
-            :rows="3"
-          />
-          <wd-input
-            v-model="sendFormData.toMails"
-            label="收件邮箱"
-            label-width="180rpx"
-            prop="toMails"
-            clearable
-            placeholder="多个邮箱用逗号分隔"
-          />
-          <wd-input
-            v-model="sendFormData.ccMails"
-            label="抄送邮箱"
-            label-width="180rpx"
-            clearable
-            placeholder="多个邮箱用逗号分隔"
-          />
-          <wd-input
-            v-model="sendFormData.bccMails"
-            label="密送邮箱"
-            label-width="180rpx"
-            clearable
-            placeholder="多个邮箱用逗号分隔"
-          />
-          <template v-for="param in template?.params" :key="param">
-            <wd-input
-              v-model="sendFormData.templateParams[param]"
-              :label="`参数 ${param}`"
-              label-width="180rpx"
-              :prop="`templateParams.${param}`"
-              clearable
-              :placeholder="`请输入参数 ${param}`"
+          <wd-form-item title="模板内容" title-width="180rpx">
+            <wd-textarea
+              v-model="sendFormData.content"
+              disabled
+              :rows="3"
             />
+          </wd-form-item>
+          <wd-form-item title="收件邮箱" title-width="180rpx" prop="toMails">
+            <wd-input
+              v-model="sendFormData.toMails"
+              clearable
+              placeholder="多个邮箱用逗号分隔"
+            />
+          </wd-form-item>
+          <wd-form-item title="抄送邮箱" title-width="180rpx">
+            <wd-input
+              v-model="sendFormData.ccMails"
+              clearable
+              placeholder="多个邮箱用逗号分隔"
+            />
+          </wd-form-item>
+          <wd-form-item title="密送邮箱" title-width="180rpx">
+            <wd-input
+              v-model="sendFormData.bccMails"
+              clearable
+              placeholder="多个邮箱用逗号分隔"
+            />
+          </wd-form-item>
+          <template v-for="param in template?.params" :key="param">
+            <wd-form-item :title="`参数 ${param}`" title-width="180rpx" :prop="`templateParams.${param}`">
+              <wd-input
+                v-model="sendFormData.templateParams[param]"
+                clearable
+                :placeholder="`请输入参数 ${param}`"
+              />
+            </wd-form-item>
           </template>
         </wd-cell-group>
       </wd-form>
@@ -58,10 +56,11 @@
 
 <script lang="ts" setup>
 import type { MailTemplate } from '@/api/system/mail/template'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, ref, watch } from 'vue'
-import { useToast } from 'wot-design-uni'
 import { sendMail } from '@/api/system/mail/template'
 import { isEmail } from '@/utils/validator'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   modelValue: boolean
@@ -93,18 +92,16 @@ const sendFormData = ref({
   bccMails: '',
   templateParams: {} as Record<string, string>,
 })
-
-/** 发送表单校验规则 */
-const sendFormRules = computed(() => {
-  const rules: Record<string, any> = {
+const sendFormSchema = createFormSchema(() => {
+  return {
     toMails: [{ required: true, message: '收件邮箱不能为空' }],
+    ...Object.fromEntries(
+      (props.template?.params || []).map(param => [
+        `templateParams.${param}`,
+        [{ required: true, message: `参数 ${param} 不能为空` }],
+      ]),
+    ),
   }
-  if (props.template?.params) {
-    props.template.params.forEach((param) => {
-      rules[`templateParams.${param}`] = [{ required: true, message: `参数 ${param} 不能为空` }]
-    })
-  }
-  return rules
 })
 
 /** 格式化邮箱列表 */

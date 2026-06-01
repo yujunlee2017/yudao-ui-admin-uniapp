@@ -9,78 +9,72 @@
 
     <!-- 表单区域 -->
     <view>
-      <wd-form ref="formRef" :model="formData" :rules="formRules">
+      <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
-          <wd-input
-            v-model="formData.username"
-            label="用户名称"
-            label-width="180rpx"
-            prop="username"
-            clearable
-            placeholder="请输入用户名称"
-          />
-          <wd-input
-            v-if="!props.id"
-            v-model="formData.password"
-            label="用户密码"
-            label-width="180rpx"
-            prop="password"
-            show-password
-            clearable
-            placeholder="请输入用户密码"
-          />
-          <wd-input
-            v-model="formData.nickname"
-            label="用户昵称"
-            label-width="180rpx"
-            prop="nickname"
-            clearable
-            placeholder="请输入用户昵称"
-          />
+          <wd-form-item title="用户名称" title-width="180rpx" prop="username">
+            <wd-input
+              v-model="formData.username"
+              clearable
+              placeholder="请输入用户名称"
+            />
+          </wd-form-item>
+          <wd-form-item v-if="!props.id" title="用户密码" title-width="180rpx" prop="password">
+            <wd-input
+              v-model="formData.password"
+              show-password
+              clearable
+              placeholder="请输入用户密码"
+            />
+          </wd-form-item>
+          <wd-form-item title="用户昵称" title-width="180rpx" prop="nickname">
+            <wd-input
+              v-model="formData.nickname"
+              clearable
+              placeholder="请输入用户昵称"
+            />
+          </wd-form-item>
           <DeptPicker
             v-model="formData.deptId"
             label="归属部门"
           />
           <PostPicker v-model="formData.postIds" />
-          <wd-input
-            v-model="formData.email"
-            label="邮箱"
-            label-width="180rpx"
-            prop="email"
-            clearable
-            placeholder="请输入邮箱"
-          />
-          <wd-input
-            v-model="formData.mobile"
-            label="手机号码"
-            label-width="180rpx"
-            prop="mobile"
-            clearable
-            placeholder="请输入手机号码"
-          />
-          <wd-cell title="性别" title-width="180rpx" center prop="sex">
-            <wd-radio-group v-model="formData.sex" shape="button">
+          <wd-form-item title="邮箱" title-width="180rpx" prop="email">
+            <wd-input
+              v-model="formData.email"
+              clearable
+              placeholder="请输入邮箱"
+            />
+          </wd-form-item>
+          <wd-form-item title="手机号码" title-width="180rpx" prop="mobile">
+            <wd-input
+              v-model="formData.mobile"
+              clearable
+              placeholder="请输入手机号码"
+            />
+          </wd-form-item>
+          <wd-form-item title="性别" title-width="180rpx" center prop="sex">
+            <wd-radio-group v-model="formData.sex" type="button">
               <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.SYSTEM_USER_SEX)" :key="dict.value" :value="dict.value">
                 {{ dict.label }}
               </wd-radio>
             </wd-radio-group>
-          </wd-cell>
-          <wd-cell title="状态" title-width="180rpx" center prop="status">
+          </wd-form-item>
+          <wd-form-item title="状态" title-width="180rpx" center prop="status">
             <wd-switch
               v-model="formData.status"
               :active-value="CommonStatusEnum.ENABLE"
               :inactive-value="CommonStatusEnum.DISABLE"
             />
-          </wd-cell>
-          <wd-textarea
-            v-model="formData.remark"
-            label="备注"
-            label-width="180rpx"
-            placeholder="请输入备注"
-            :maxlength="200"
-            show-word-limit
-            clearable
-          />
+          </wd-form-item>
+          <wd-form-item title="备注" title-width="180rpx">
+            <wd-textarea
+              v-model="formData.remark"
+              placeholder="请输入备注"
+              :maxlength="200"
+              show-word-limit
+              clearable
+            />
+          </wd-form-item>
         </wd-cell-group>
       </wd-form>
     </view>
@@ -100,17 +94,17 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
+import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { User } from '@/api/system/user'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { useToast } from 'wot-design-uni'
 import { createUser, getUser, updateUser } from '@/api/system/user'
 import { getIntDictOptions } from '@/hooks/useDict'
 import DeptPicker from '@/pages-system/dept/form/components/dept-picker.vue'
 import PostPicker from '@/pages-system/post/form/components/post-picker.vue'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
-import { isEmail, isMobile } from '@/utils/validator'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   id?: number | any
@@ -139,15 +133,15 @@ const formData = ref<User>({
   status: CommonStatusEnum.ENABLE,
   remark: '',
 })
-const formRules = {
+const formSchema = createFormSchema({
   username: [{ required: true, message: '用户名称不能为空' }],
-  password: [{ required: true, message: '用户密码不能为空' }],
   nickname: [{ required: true, message: '用户昵称不能为空' }],
-  email: [{ required: false, validator: (value: string) => !value || isEmail(value), message: '请输入正确的邮箱地址' }],
-  mobile: [{ required: false, validator: (value: string) => !value || isMobile(value), message: '请输入正确的手机号码' }],
+  password: [{ required: () => !props.id, message: '用户密码不能为空' }],
+  email: [{ type: 'email', message: '请输入正确的邮箱地址' }],
+  mobile: [{ type: 'mobile', message: '请输入正确的手机号码' }],
   sex: [{ required: true, message: '性别不能为空' }],
   status: [{ required: true, message: '状态不能为空' }],
-}
+})
 const formRef = ref<FormInstance>()
 
 /** 返回上一页 */

@@ -9,42 +9,38 @@
 
     <!-- 表单区域 -->
     <view>
-      <wd-form ref="formRef" :model="formData" :rules="formRules">
+      <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
-          <wd-input
-            v-model="formData.category"
-            label="参数分类"
-            label-width="200rpx"
-            prop="category"
-            clearable
-            placeholder="请输入参数分类"
-          />
-          <wd-input
-            v-model="formData.name"
-            label="参数名称"
-            label-width="200rpx"
-            prop="name"
-            clearable
-            placeholder="请输入参数名称"
-          />
-          <wd-input
-            v-model="formData.key"
-            label="参数键名"
-            label-width="200rpx"
-            prop="key"
-            clearable
-            placeholder="请输入参数键名"
-          />
-          <wd-input
-            v-model="formData.value"
-            label="参数键值"
-            label-width="200rpx"
-            prop="value"
-            clearable
-            placeholder="请输入参数键值"
-          />
-          <wd-cell title="是否可见" title-width="200rpx" prop="visible" center>
-            <wd-radio-group v-model="formData.visible" shape="button">
+          <wd-form-item title="参数分类" title-width="200rpx" prop="category">
+            <wd-input
+              v-model="formData.category"
+              clearable
+              placeholder="请输入参数分类"
+            />
+          </wd-form-item>
+          <wd-form-item title="参数名称" title-width="200rpx" prop="name">
+            <wd-input
+              v-model="formData.name"
+              clearable
+              placeholder="请输入参数名称"
+            />
+          </wd-form-item>
+          <wd-form-item title="参数键名" title-width="200rpx" prop="key">
+            <wd-input
+              v-model="formData.key"
+              clearable
+              placeholder="请输入参数键名"
+            />
+          </wd-form-item>
+          <wd-form-item title="参数键值" title-width="200rpx" prop="value">
+            <wd-input
+              v-model="formData.value"
+              clearable
+              placeholder="请输入参数键值"
+            />
+          </wd-form-item>
+          <wd-form-item title="是否可见" title-width="200rpx" prop="visible" center>
+            <wd-radio-group v-model="formData.visible" type="button">
               <wd-radio :value="true">
                 是
               </wd-radio>
@@ -52,15 +48,14 @@
                 否
               </wd-radio>
             </wd-radio-group>
-          </wd-cell>
-          <wd-textarea
-            v-model="formData.remark"
-            label="备注"
-            label-width="200rpx"
-            prop="remark"
-            clearable
-            placeholder="请输入备注"
-          />
+          </wd-form-item>
+          <wd-form-item title="备注" title-width="200rpx" prop="remark">
+            <wd-textarea
+              v-model="formData.remark"
+              clearable
+              placeholder="请输入备注"
+            />
+          </wd-form-item>
         </wd-cell-group>
       </wd-form>
     </view>
@@ -80,12 +75,13 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
+import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { Config } from '@/api/infra/config'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { useToast } from 'wot-design-uni'
 import { createConfig, getConfig, updateConfig } from '@/api/infra/config'
 import { navigateBackPlus } from '@/utils'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   id?: number | any
@@ -111,13 +107,13 @@ const formData = ref<Config>({
   visible: true,
   remark: '',
 })
-const formRules = {
+const formSchema = createFormSchema({
   category: [{ required: true, message: '参数分类不能为空' }],
   name: [{ required: true, message: '参数名称不能为空' }],
   key: [{ required: true, message: '参数键名不能为空' }],
   value: [{ required: true, message: '参数键值不能为空' }],
   visible: [{ required: true, message: '是否可见不能为空' }],
-}
+})
 const formRef = ref<FormInstance>()
 
 /** 返回上一页 */

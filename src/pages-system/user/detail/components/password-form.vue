@@ -5,25 +5,23 @@
         <text class="text-32rpx text-[#333] font-semibold">重置密码</text>
         <wd-icon name="close" size="20px" @click="handleClose" />
       </view>
-      <wd-form ref="formRef" :model="formData" :rules="formRules">
-        <wd-input
-          v-model="formData.password"
-          label="新密码"
-          label-width="160rpx"
-          prop="password"
-          show-password
-          clearable
-          placeholder="请输入新密码"
-        />
-        <wd-input
-          v-model="formData.confirmPassword"
-          label="确认密码"
-          label-width="160rpx"
-          prop="confirmPassword"
-          show-password
-          clearable
-          placeholder="请再次输入新密码"
-        />
+      <wd-form ref="formRef" :model="formData" :schema="formSchema">
+        <wd-form-item title="新密码" title-width="160rpx" prop="password">
+          <wd-input
+            v-model="formData.password"
+            show-password
+            clearable
+            placeholder="请输入新密码"
+          />
+        </wd-form-item>
+        <wd-form-item title="确认密码" title-width="160rpx" prop="confirmPassword">
+          <wd-input
+            v-model="formData.confirmPassword"
+            show-password
+            clearable
+            placeholder="请再次输入新密码"
+          />
+        </wd-form-item>
       </wd-form>
       <view class="mt-32rpx">
         <wd-button type="primary" block :loading="loading" @click="handleConfirm">
@@ -35,10 +33,11 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
+import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, ref, watch } from 'vue'
-import { useToast } from 'wot-design-uni'
 import { resetUserPassword } from '@/api/system/user'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   modelValue: boolean
@@ -60,17 +59,13 @@ const formData = ref({
   password: '',
   confirmPassword: '',
 })
-const formRules = {
+const formSchema = createFormSchema({
   password: [{ required: true, message: '请输入新密码' }],
   confirmPassword: [
     { required: true, message: '请再次输入新密码' },
-    {
-      required: false,
-      validator: (value: string) => value === formData.value.password,
-      message: '两次输入的密码不一致',
-    },
+    { validator: (value, model) => value === model.password || '两次输入的密码不一致' },
   ],
-}
+})
 const formRef = ref<FormInstance>()
 
 /** 监听弹窗打开，重置表单 */

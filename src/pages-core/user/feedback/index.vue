@@ -9,19 +9,18 @@
 
     <!-- 表单区域 -->
     <view class="p-24rpx">
-      <wd-form ref="formRef" :model="formData" :rules="formRules">
+      <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group custom-class="cell-group" border>
-          <wd-textarea
-            v-model="formData.content"
-            label="反馈内容"
-            label-width="180rpx"
-            prop="content"
-            placeholder="请输入您的宝贵意见和建议"
-            :maxlength="500"
-            show-word-limit
-            clearable
-            :rows="5"
-          />
+          <wd-form-item title="反馈内容" title-width="180rpx" prop="content">
+            <wd-textarea
+              v-model="formData.content"
+              placeholder="请输入您的宝贵意见和建议"
+              :maxlength="500"
+              show-word-limit
+              clearable
+              :rows="5"
+            />
+          </wd-form-item>
           <wd-cell title="反馈图片" title-width="180rpx" />
           <!-- TODO @芋艿：图片上传的接入 -->
           <view class="px-24rpx pb-24rpx">
@@ -52,11 +51,12 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
-import type { UploadFile, UploadMethod } from 'wot-design-uni/components/wd-upload/types'
+import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
+import type { UploadFile, UploadMethod } from '@wot-ui/ui/components/wd-upload/types'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { ref } from 'vue'
-import { useToast } from 'wot-design-uni'
 import { getEnvBaseUrl, navigateBackPlus } from '@/utils/index'
+import { createFormSchema } from '@/utils/wot'
 
 definePage({
   style: {
@@ -71,16 +71,12 @@ const fileList = ref<UploadFile[]>([])
 const formData = ref({
   content: '',
 })
-const formRules = {
+const formSchema = createFormSchema({
   content: [
     { required: true, message: '请输入反馈内容' },
-    {
-      required: true,
-      validator: (value: string) => value.length >= 10,
-      message: '反馈内容至少10个字符',
-    },
+    { validator: value => String(value).length >= 10 || '反馈内容至少10个字符' },
   ],
-}
+})
 const formRef = ref<FormInstance>()
 
 /** 返回上一页 */
