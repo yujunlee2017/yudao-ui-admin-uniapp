@@ -246,3 +246,14 @@ export function getNavbarHeight() {
   return statusBarHeight + 44
   // #endif
 }
+
+/** 生成顶部弹窗样式，使弹窗从 navbar 下方开始，避免白色空洞 */
+export function getTopPopupStyle() {
+  const top = getNavbarHeight()
+  return `top: ${top}px; max-height: calc(100% - ${top}px);`
+}
+
+/** 生成顶部弹窗遮罩样式，使遮罩只覆盖 navbar 下方内容 */
+export function getTopPopupModalStyle() {
+  return `top: ${getNavbarHeight()}px;`
+}

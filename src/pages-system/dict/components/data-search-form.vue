@@ -5,8 +5,14 @@
   </view>
 
   <!-- 搜索弹窗 -->
-  <wd-popup v-model="visible" position="top" @close="visible = false">
-    <view class="yd-search-form-container" :style="{ paddingTop: `${getNavbarHeight()}px` }">
+  <wd-popup
+    v-model="visible"
+    position="top"
+    :custom-style="getTopPopupStyle()"
+    :modal-style="getTopPopupModalStyle()"
+    @close="visible = false"
+  >
+    <view class="yd-search-form-container">
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           字典类型
@@ -70,7 +76,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { getSimpleDictTypeList } from '@/api/system/dict/type'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
-import { getNavbarHeight } from '@/utils'
+import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { getWotPickerDisplay } from '@/utils/wot'
 

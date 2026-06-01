@@ -5,8 +5,14 @@
   </view>
 
   <!-- 搜索弹窗 -->
-  <wd-popup v-model="visible" position="top" @close="visible = false">
-    <view class="yd-search-form-container" :style="{ paddingTop: `${getNavbarHeight()}px` }">
+  <wd-popup
+    v-model="visible"
+    position="top"
+    :custom-style="getTopPopupStyle()"
+    :modal-style="getTopPopupModalStyle()"
+    @close="visible = false"
+  >
+    <view class="yd-search-form-container">
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           参数名称
@@ -95,7 +101,7 @@
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
-import { getNavbarHeight } from '@/utils'
+import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
 

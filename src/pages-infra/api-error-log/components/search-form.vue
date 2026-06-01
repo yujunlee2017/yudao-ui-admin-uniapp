@@ -7,9 +7,11 @@
   <wd-popup
     v-model="visible"
     position="top"
+    :custom-style="getTopPopupStyle()"
+    :modal-style="getTopPopupModalStyle()"
     @close="visible = false"
   >
-    <view class="yd-search-form-container" :style="{ paddingTop: `${getNavbarHeight()}px` }">
+    <view class="yd-search-form-container">
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           用户编号
@@ -99,7 +101,7 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
-import { getNavbarHeight } from '@/utils'
+import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { formatDate, formatDateRange } from '@/utils/date'
 
 const emit = defineEmits<{
