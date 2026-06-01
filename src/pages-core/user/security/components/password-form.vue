@@ -10,27 +10,34 @@
       <view class="mb-32rpx text-center text-32rpx text-[#333] font-semibold">
         修改密码
       </view>
-      <wd-input
-        v-model="formData.oldPassword"
-        label="旧密码"
-        placeholder="请输入旧密码"
-        show-password
-        clearable
-      />
-      <wd-input
-        v-model="formData.newPassword"
-        label="新密码"
-        placeholder="请输入新密码"
-        show-password
-        clearable
-      />
-      <wd-input
-        v-model="formData.confirmPassword"
-        label="确认密码"
-        placeholder="请再次输入新密码"
-        show-password
-        clearable
-      />
+      <wd-form ref="formRef" :model="formData" :schema="formSchema">
+        <wd-cell-group border>
+          <wd-form-item title="旧密码" title-width="160rpx" prop="oldPassword">
+            <wd-input
+              v-model="formData.oldPassword"
+              placeholder="请输入旧密码"
+              show-password
+              clearable
+            />
+          </wd-form-item>
+          <wd-form-item title="新密码" title-width="160rpx" prop="newPassword">
+            <wd-input
+              v-model="formData.newPassword"
+              placeholder="请输入新密码"
+              show-password
+              clearable
+            />
+          </wd-form-item>
+          <wd-form-item title="确认密码" title-width="160rpx" prop="confirmPassword">
+            <wd-input
+              v-model="formData.confirmPassword"
+              placeholder="请再次输入新密码"
+              show-password
+              clearable
+            />
+          </wd-form-item>
+        </wd-cell-group>
+      </wd-form>
       <view class="mt-30rpx">
         <wd-button block type="primary" :loading="submitting" @click="handleConfirm">
           确定
@@ -41,10 +48,11 @@
 </template>
 
 <script lang="ts" setup>
+import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, reactive, ref, watch } from 'vue'
-import { useToast } from 'wot-design-uni'
 import { updateUserPassword } from '@/api/system/user/profile'
-import { isBlank } from '@/utils/validator'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   modelValue: boolean
@@ -66,6 +74,15 @@ const formData = reactive({
   newPassword: '',
   confirmPassword: '',
 })
+const formSchema = createFormSchema({
+  oldPassword: [{ required: true, message: '请输入旧密码' }],
+  newPassword: [{ required: true, message: '请输入新密码' }],
+  confirmPassword: [
+    { required: true, message: '请确认新密码' },
+    { validator: (value, model) => value === model.newPassword || '两次输入的密码不一致' },
+  ],
+})
+const formRef = ref<FormInstance>()
 const submitting = ref(false)
 
 /** 监听弹窗打开，重置表单 */
@@ -87,25 +104,10 @@ function handleClose() {
 
 /** 处理确认 */
 async function handleConfirm() {
-  // 参数校验
-  if (isBlank(formData.oldPassword)) {
-    toast.warning('请输入旧密码')
+  const { valid } = await formRef.value!.validate()
+  if (!valid) {
     return
   }
-  if (isBlank(formData.newPassword)) {
-    toast.warning('请输入新密码')
-    return
-  }
-  if (isBlank(formData.confirmPassword)) {
-    toast.warning('请确认新密码')
-    return
-  }
-  if (formData.newPassword !== formData.confirmPassword) {
-    toast.warning('两次输入的密码不一致')
-    return
-  }
-
-  // 调用更新接口
   submitting.value = true
   try {
     await updateUserPassword({

@@ -9,26 +9,24 @@
 
     <!-- 表单区域 -->
     <view>
-      <wd-form ref="formRef" :model="formData" :rules="formRules">
+      <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
-          <wd-input
-            v-model="formData.title"
-            label="公告标题"
-            label-width="180rpx"
-            prop="title"
-            clearable
-            placeholder="请输入公告标题"
-          />
-          <wd-input
-            v-model="formData.content"
-            label="公告内容"
-            label-width="180rpx"
-            prop="content"
-            clearable
-            placeholder="请输入公告内容"
-          />
-          <wd-cell title="公告类型" title-width="180rpx" prop="type" center>
-            <wd-radio-group v-model="formData.type" shape="button">
+          <wd-form-item title="公告标题" title-width="180rpx" prop="title">
+            <wd-input
+              v-model="formData.title"
+              clearable
+              placeholder="请输入公告标题"
+            />
+          </wd-form-item>
+          <wd-form-item title="公告内容" title-width="180rpx" prop="content">
+            <wd-input
+              v-model="formData.content"
+              clearable
+              placeholder="请输入公告内容"
+            />
+          </wd-form-item>
+          <wd-form-item title="公告类型" title-width="180rpx" prop="type" center>
+            <wd-radio-group v-model="formData.type" type="button">
               <wd-radio
                 v-for="dict in getIntDictOptions(DICT_TYPE.SYSTEM_NOTICE_TYPE)"
                 :key="dict.value"
@@ -37,9 +35,9 @@
                 {{ dict.label }}
               </wd-radio>
             </wd-radio-group>
-          </wd-cell>
-          <wd-cell title="公告状态" title-width="180rpx" prop="status" center>
-            <wd-radio-group v-model="formData.status" shape="button">
+          </wd-form-item>
+          <wd-form-item title="公告状态" title-width="180rpx" prop="status" center>
+            <wd-radio-group v-model="formData.status" type="button">
               <wd-radio
                 v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)"
                 :key="dict.value"
@@ -48,7 +46,7 @@
                 {{ dict.label }}
               </wd-radio>
             </wd-radio-group>
-          </wd-cell>
+          </wd-form-item>
         </wd-cell-group>
       </wd-form>
     </view>
@@ -68,14 +66,15 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
+import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { Notice } from '@/api/system/notice'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { useToast } from 'wot-design-uni'
 import { createNotice, getNotice, updateNotice } from '@/api/system/notice'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   id?: number | any
@@ -98,12 +97,12 @@ const formData = ref<Notice>({
   type: undefined,
   status: CommonStatusEnum.ENABLE,
 })
-const formRules = {
+const formSchema = createFormSchema({
   title: [{ required: true, message: '公告标题不能为空' }],
   content: [{ required: true, message: '公告内容不能为空' }],
   type: [{ required: true, message: '公告类型不能为空' }],
   status: [{ required: true, message: '公告状态不能为空' }],
-}
+})
 const formRef = ref<FormInstance>()
 
 /** 返回上一页 */

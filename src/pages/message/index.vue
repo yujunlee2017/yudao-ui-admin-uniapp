@@ -57,7 +57,7 @@
 
       <!-- 加载更多 -->
       <view v-if="loadMoreState !== 'loading' && list.length === 0" class="py-100rpx text-center">
-        <wd-status-tip image="content" tip="暂无消息" />
+        <wd-empty icon="content" tip="暂无消息" />
       </view>
       <wd-loadmore
         v-if="list.length > 0"
@@ -75,8 +75,9 @@
 import type { NotifyMessage } from '@/api/system/notify/message'
 import type { LoadMoreState } from '@/http/types'
 import { onReachBottom } from '@dcloudio/uni-app'
+import { useDialog } from '@wot-ui/ui/components/wd-dialog'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
-import { useToast } from 'wot-design-uni'
 import {
   getMyNotifyMessagePage,
   updateAllNotifyMessageRead,
@@ -96,6 +97,7 @@ definePage({
 })
 
 const toast = useToast()
+const dialog = useDialog()
 const total = ref(0)
 const list = ref<NotifyMessage[]>([])
 const loadMoreState = ref<LoadMoreState>('loading')
@@ -166,22 +168,21 @@ async function handleReadOne(item: NotifyMessage, showToast = true) {
 }
 
 /** 标记全部已读 */
-function handleReadAll() {
-  uni.showModal({
-    title: '提示',
-    content: '确定要将所有消息标记为已读吗？',
-    success: async (res) => {
-      if (!res.confirm) {
-        return
-      }
-      await updateAllNotifyMessageRead()
-      toast.success('全部已读成功')
-      // 刷新列表
-      queryParams.value.pageNo = 1
-      list.value = []
-      await getList()
-    },
-  })
+async function handleReadAll() {
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: '确定要将所有消息标记为已读吗？',
+    })
+  } catch {
+    return
+  }
+  await updateAllNotifyMessageRead()
+  toast.success('全部已读成功')
+  // 刷新列表
+  queryParams.value.pageNo = 1
+  list.value = []
+  await getList()
 }
 
 /** 触底加载更多 */

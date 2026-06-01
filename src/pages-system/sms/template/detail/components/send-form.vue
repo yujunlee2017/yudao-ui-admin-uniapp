@@ -5,32 +5,30 @@
       <view class="mb-24rpx text-32rpx text-[#333] font-semibold">
         发送测试短信
       </view>
-      <wd-form ref="sendFormRef" :model="sendFormData" :rules="sendFormRules">
+      <wd-form ref="sendFormRef" :model="sendFormData" :schema="sendFormSchema">
         <wd-cell-group border>
-          <wd-textarea
-            v-model="sendFormData.content"
-            label="模板内容"
-            label-width="180rpx"
-            disabled
-            :rows="3"
-          />
-          <wd-input
-            v-model="sendFormData.mobile"
-            label="手机号码"
-            label-width="180rpx"
-            prop="mobile"
-            clearable
-            placeholder="请输入手机号码"
-          />
-          <template v-for="param in template?.params" :key="param">
-            <wd-input
-              v-model="sendFormData.templateParams[param]"
-              :label="`参数 ${param}`"
-              label-width="180rpx"
-              :prop="`templateParams.${param}`"
-              clearable
-              :placeholder="`请输入参数 ${param}`"
+          <wd-form-item title="模板内容" title-width="180rpx">
+            <wd-textarea
+              v-model="sendFormData.content"
+              disabled
+              :rows="3"
             />
+          </wd-form-item>
+          <wd-form-item title="手机号码" title-width="180rpx" prop="mobile">
+            <wd-input
+              v-model="sendFormData.mobile"
+              clearable
+              placeholder="请输入手机号码"
+            />
+          </wd-form-item>
+          <template v-for="param in template?.params" :key="param">
+            <wd-form-item :title="`参数 ${param}`" title-width="180rpx" :prop="`templateParams.${param}`">
+              <wd-input
+                v-model="sendFormData.templateParams[param]"
+                clearable
+                :placeholder="`请输入参数 ${param}`"
+              />
+            </wd-form-item>
           </template>
         </wd-cell-group>
       </wd-form>
@@ -45,9 +43,10 @@
 
 <script lang="ts" setup>
 import type { SmsTemplate } from '@/api/system/sms/template'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, ref, watch } from 'vue'
-import { useToast } from 'wot-design-uni'
 import { sendSms } from '@/api/system/sms/template'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   modelValue: boolean
@@ -77,18 +76,16 @@ const sendFormData = ref({
   mobile: '',
   templateParams: {} as Record<string, string>,
 })
-
-/** 发送表单校验规则 */
-const sendFormRules = computed(() => {
-  const rules: Record<string, any> = {
+const sendFormSchema = createFormSchema(() => {
+  return {
     mobile: [{ required: true, message: '手机号码不能为空' }],
+    ...Object.fromEntries(
+      (props.template?.params || []).map(param => [
+        `templateParams.${param}`,
+        [{ required: true, message: `参数 ${param} 不能为空` }],
+      ]),
+    ),
   }
-  if (props.template?.params) {
-    props.template.params.forEach((param) => {
-      rules[`templateParams.${param}`] = [{ required: true, message: `参数 ${param} 不能为空` }]
-    })
-  }
-  return rules
 })
 
 /** 初始化发送表单 */

@@ -5,8 +5,14 @@
   </view>
 
   <!-- 搜索弹窗 -->
-  <wd-popup v-model="visible" position="top" @close="visible = false">
-    <view class="yd-search-form-container" :style="{ paddingTop: `${getNavbarHeight()}px` }">
+  <wd-popup
+    v-model="visible"
+    position="top"
+    :custom-style="getTopPopupStyle()"
+    :modal-style="getTopPopupModalStyle()"
+    @close="visible = false"
+  >
+    <view class="yd-search-form-container">
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           用户编号
@@ -21,7 +27,7 @@
         <view class="yd-search-form-label">
           用户类型
         </view>
-        <wd-radio-group v-model="formData.userType" shape="button">
+        <wd-radio-group v-model="formData.userType" type="button">
           <wd-radio :value="-1">
             全部
           </wd-radio>
@@ -38,7 +44,7 @@
         <view class="yd-search-form-label">
           发送状态
         </view>
-        <wd-radio-group v-model="formData.sendStatus" shape="button">
+        <wd-radio-group v-model="formData.sendStatus" type="button">
           <wd-radio :value="-1">
             全部
           </wd-radio>
@@ -55,10 +61,20 @@
         <view class="yd-search-form-label">
           邮箱账号
         </view>
+        <view
+          class="flex items-center justify-between rounded-12rpx bg-[#f7f8fa] p-24rpx"
+          @click="pickerVisible.accountId = true"
+        >
+          <text class="text-28rpx text-[#333]">
+            {{ getWotPickerDisplay(accountOptions, formData.accountId, { placeholder: '请选择邮箱账号' }) }}
+          </text>
+          <wd-icon name="arrow-down" size="32rpx" color="#666" />
+        </view>
         <wd-picker
-          v-model="formData.accountId"
+          v-model:visible="pickerVisible.accountId"
+          :model-value="formData.accountId"
           :columns="accountOptions"
-          placeholder="请选择邮箱账号"
+          @confirm="({ value }) => formData.accountId = value[0]"
         />
       </view>
       <view class="yd-search-form-item">
@@ -90,7 +106,7 @@
         </view>
         <wd-datetime-picker-view v-if="visibleSendTime[0]" v-model="tempSendTime[0]" type="date" />
         <view v-if="visibleSendTime[0]" class="yd-search-form-date-range-actions">
-          <wd-button size="small" plain @click="visibleSendTime[0] = false">
+          <wd-button size="small" variant="plain" @click="visibleSendTime[0] = false">
             取消
           </wd-button>
           <wd-button size="small" type="primary" @click="handleSendTime0Confirm">
@@ -99,7 +115,7 @@
         </view>
         <wd-datetime-picker-view v-if="visibleSendTime[1]" v-model="tempSendTime[1]" type="date" />
         <view v-if="visibleSendTime[1]" class="yd-search-form-date-range-actions">
-          <wd-button size="small" plain @click="visibleSendTime[1] = false">
+          <wd-button size="small" variant="plain" @click="visibleSendTime[1] = false">
             取消
           </wd-button>
           <wd-button size="small" type="primary" @click="handleSendTime1Confirm">
@@ -108,7 +124,7 @@
         </view>
       </view>
       <view class="yd-search-form-actions">
-        <wd-button class="flex-1" plain @click="handleReset">
+        <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
         </wd-button>
         <wd-button class="flex-1" type="primary" @click="handleSearch">
@@ -123,16 +139,16 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { getSimpleMailAccountList } from '@/api/system/mail/account'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
-import { getNavbarHeight } from '@/utils'
+import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
+import { getWotPickerDisplay } from '@/utils/wot'
 
 const emit = defineEmits<{
   search: [data: Record<string, any>]
   reset: []
 }>()
 
-const visible = ref(false)
 const formData = reactive({
   sendTime: [undefined, undefined] as [number | undefined, number | undefined],
   userId: undefined as number | undefined,
@@ -141,6 +157,8 @@ const formData = reactive({
   accountId: undefined as number | undefined,
   templateId: undefined as number | undefined,
 })
+const visible = ref(false)
+const pickerVisible = ref<Record<string, boolean>>({})
 
 /** 邮箱账号列表 */
 const accountList = ref<{ id?: number, mail: string }[]>([])

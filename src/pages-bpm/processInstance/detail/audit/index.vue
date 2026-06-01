@@ -9,7 +9,7 @@
 
     <!-- 审批表单 -->
     <view class="p-24rpx">
-      <wd-form ref="formRef" :model="formData" :rules="formRules">
+      <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
           <!-- 下一个节点的审批人 -->
           <view v-if="isApprove && nextAssigneesActivityNode.length > 0" class="p-24rpx">
@@ -46,23 +46,22 @@
           </view>
 
           <!-- 审批意见 -->
-          <wd-textarea
-            v-model="formData.reason"
-            prop="reason"
-            label="审批意见："
-            label-width="180rpx"
-            placeholder="请输入审批意见"
-            :maxlength="500"
-            show-word-limit
-            clearable
-          />
+          <wd-form-item prop="reason" title="审批意见：" title-width="180rpx">
+            <wd-textarea
+              v-model="formData.reason"
+              placeholder="请输入审批意见"
+              :maxlength="500"
+              show-word-limit
+              clearable
+            />
+          </wd-form-item>
         </wd-cell-group>
       </wd-form>
 
       <!-- 提交按钮 -->
       <view class="mt-48rpx">
         <wd-button
-          :type="isApprove ? 'primary' : 'error'"
+          :type="isApprove ? 'primary' : 'danger'"
           block
           :loading="formLoading"
           :disabled="formLoading"
@@ -95,16 +94,17 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
+import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { ApprovalNodeInfo } from '@/api/bpm/processInstance'
 import type { Task } from '@/api/bpm/task'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, reactive, ref } from 'vue'
-import { useToast } from 'wot-design-uni'
 import { getApprovalDetail, getNextApproveNodes } from '@/api/bpm/processInstance'
 import { approveTask, rejectTask } from '@/api/bpm/task'
 import ProcessInstanceTimeline from '@/pages-bpm/processInstance/detail/components/time-line.vue'
 import { getEnvBaseUrl, navigateBackPlus } from '@/utils'
 import { BpmCandidateStrategyEnum } from '@/utils/constants'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   processInstanceId?: string
@@ -136,17 +136,8 @@ const formData = reactive({
   reason: '',
   signPicUrl: '', // 签名图片 URL
 })
-
-const formRules = computed(() => {
-  let rules = {}
-  if (taskInfo.value?.reasonRequire) {
-    rules = {
-      reason: [
-        { required: true, message: '审批意见不能为空' },
-      ],
-    }
-  }
-  return rules
+const formSchema = createFormSchema({
+  reason: [{ required: () => !!taskInfo.value?.reasonRequire, message: '审批意见不能为空' }],
 })
 
 const formRef = ref<FormInstance>()

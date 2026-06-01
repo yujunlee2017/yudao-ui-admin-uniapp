@@ -9,46 +9,42 @@
 
     <!-- 表单区域 -->
     <view>
-      <wd-form ref="formRef" :model="formData" :rules="formRules">
+      <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
-          <wd-input
-            v-model="formData.mail"
-            label="邮箱"
-            label-width="220rpx"
-            prop="mail"
-            clearable
-            placeholder="请输入邮箱"
-          />
-          <wd-input
-            v-model="formData.username"
-            label="用户名"
-            label-width="220rpx"
-            prop="username"
-            clearable
-            placeholder="请输入用户名"
-          />
-          <wd-input
-            v-model="formData.password"
-            label="密码"
-            label-width="220rpx"
-            prop="password"
-            clearable
-            placeholder="请输入密码"
-            show-password
-          />
-          <wd-input
-            v-model="formData.host"
-            label="SMTP 服务器域名"
-            label-width="220rpx"
-            prop="host"
-            clearable
-            placeholder="请输入 SMTP 服务器域名"
-          />
-          <wd-cell title="SMTP 服务器端口" title-width="220rpx" prop="port" center>
+          <wd-form-item title="邮箱" title-width="220rpx" prop="mail">
+            <wd-input
+              v-model="formData.mail"
+              clearable
+              placeholder="请输入邮箱"
+            />
+          </wd-form-item>
+          <wd-form-item title="用户名" title-width="220rpx" prop="username">
+            <wd-input
+              v-model="formData.username"
+              clearable
+              placeholder="请输入用户名"
+            />
+          </wd-form-item>
+          <wd-form-item title="密码" title-width="220rpx" prop="password">
+            <wd-input
+              v-model="formData.password"
+              clearable
+              placeholder="请输入密码"
+              show-password
+            />
+          </wd-form-item>
+          <wd-form-item title="SMTP 服务器域名" title-width="220rpx" prop="host">
+            <wd-input
+              v-model="formData.host"
+              clearable
+              placeholder="请输入 SMTP 服务器域名"
+            />
+          </wd-form-item>
+          <wd-form-item title="SMTP 服务器端口" title-width="220rpx" prop="port" center>
             <wd-input-number v-model="formData.port" :min="0" :max="65535" />
-          </wd-cell>
-          <wd-cell title="是否开启 SSL" title-width="220rpx" prop="sslEnable" center>
-            <wd-radio-group v-model="formData.sslEnable" shape="button">
+          </wd-form-item>
+          <wd-form-item title="是否开启 SSL" title-width="220rpx" prop="sslEnable" center>
+            <wd-radio-group v-model="formData.sslEnable" type="button">
               <wd-radio
                 v-for="dict in getBoolDictOptions(DICT_TYPE.INFRA_BOOLEAN_STRING)"
                 :key="String(dict.value)"
@@ -57,9 +53,9 @@
                 {{ dict.label }}
               </wd-radio>
             </wd-radio-group>
-          </wd-cell>
-          <wd-cell title="是否开启 STARTTLS" title-width="220rpx" prop="starttlsEnable" center>
-            <wd-radio-group v-model="formData.starttlsEnable" shape="button">
+          </wd-form-item>
+          <wd-form-item title="是否开启 STARTTLS" title-width="220rpx" prop="starttlsEnable" center>
+            <wd-radio-group v-model="formData.starttlsEnable" type="button">
               <wd-radio
                 v-for="dict in getBoolDictOptions(DICT_TYPE.INFRA_BOOLEAN_STRING)"
                 :key="String(dict.value)"
@@ -68,7 +64,7 @@
                 {{ dict.label }}
               </wd-radio>
             </wd-radio-group>
-          </wd-cell>
+          </wd-form-item>
         </wd-cell-group>
       </wd-form>
     </view>
@@ -89,14 +85,15 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
+import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { MailAccount } from '@/api/system/mail/account'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { useToast } from 'wot-design-uni'
 import { createMailAccount, getMailAccount, updateMailAccount } from '@/api/system/mail/account'
 import { getBoolDictOptions } from '@/hooks/useDict'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   id?: number | any
@@ -122,7 +119,7 @@ const formData = ref<MailAccount>({
   sslEnable: true,
   starttlsEnable: false,
 })
-const formRules = {
+const formSchema = createFormSchema({
   mail: [{ required: true, message: '邮箱不能为空' }],
   username: [{ required: true, message: '用户名不能为空' }],
   password: [{ required: true, message: '密码不能为空' }],
@@ -130,7 +127,7 @@ const formRules = {
   port: [{ required: true, message: 'SMTP 服务器端口不能为空' }],
   sslEnable: [{ required: true, message: '是否开启 SSL 不能为空' }],
   starttlsEnable: [{ required: true, message: '是否开启 STARTTLS 不能为空' }],
-}
+})
 const formRef = ref<FormInstance>()
 
 /** 返回上一页 */

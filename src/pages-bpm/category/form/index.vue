@@ -9,34 +9,31 @@
 
     <!-- 表单区域 -->
     <view>
-      <wd-form ref="formRef" :model="formData" :rules="formRules">
+      <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
-          <wd-input
-            v-model="formData.name"
-            label="分类名"
-            label-width="180rpx"
-            prop="name"
-            clearable
-            placeholder="请输入分类名"
-          />
-          <wd-input
-            v-model="formData.code"
-            label="分类标志"
-            label-width="180rpx"
-            prop="code"
-            clearable
-            placeholder="请输入分类标志"
-          />
-          <wd-textarea
-            v-model="formData.description"
-            label="分类描述"
-            label-width="180rpx"
-            prop="description"
-            clearable
-            placeholder="请输入分类描述"
-          />
-          <wd-cell title="分类状态" title-width="180rpx" prop="status" center>
-            <wd-radio-group v-model="formData.status" shape="button">
+          <wd-form-item title="分类名" title-width="180rpx" prop="name">
+            <wd-input
+              v-model="formData.name"
+              clearable
+              placeholder="请输入分类名"
+            />
+          </wd-form-item>
+          <wd-form-item title="分类标志" title-width="180rpx" prop="code">
+            <wd-input
+              v-model="formData.code"
+              clearable
+              placeholder="请输入分类标志"
+            />
+          </wd-form-item>
+          <wd-form-item title="分类描述" title-width="180rpx" prop="description">
+            <wd-textarea
+              v-model="formData.description"
+              clearable
+              placeholder="请输入分类描述"
+            />
+          </wd-form-item>
+          <wd-form-item title="分类状态" title-width="180rpx" prop="status" center>
+            <wd-radio-group v-model="formData.status" type="button">
               <wd-radio
                 v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)"
                 :key="dict.value"
@@ -45,16 +42,15 @@
                 {{ dict.label }}
               </wd-radio>
             </wd-radio-group>
-          </wd-cell>
-          <wd-input
-            v-model.number="formData.sort"
-            label="分类排序"
-            label-width="180rpx"
-            prop="sort"
-            type="number"
-            clearable
-            placeholder="请输入分类排序"
-          />
+          </wd-form-item>
+          <wd-form-item title="分类排序" title-width="180rpx" prop="sort">
+            <wd-input
+              v-model.number="formData.sort"
+              type="number"
+              clearable
+              placeholder="请输入分类排序"
+            />
+          </wd-form-item>
         </wd-cell-group>
       </wd-form>
     </view>
@@ -74,14 +70,15 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
+import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { Category } from '@/api/bpm/category'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { useToast } from 'wot-design-uni'
 import { createCategory, getCategory, updateCategory } from '@/api/bpm/category'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   id?: number | any
@@ -105,11 +102,11 @@ const formData = ref<Category>({
   description: '',
   sort: 0,
 })
-const formRules = {
+const formSchema = createFormSchema({
   name: [{ required: true, message: '分类名不能为空' }],
   code: [{ required: true, message: '分类标志不能为空' }],
   status: [{ required: true, message: '分类状态不能为空' }],
-}
+})
 const formRef = ref<FormInstance>()
 
 /** 返回上一页 */

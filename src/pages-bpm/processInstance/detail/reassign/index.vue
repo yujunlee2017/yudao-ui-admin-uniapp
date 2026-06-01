@@ -9,7 +9,7 @@
 
     <!-- 操作表单 -->
     <view class="p-24rpx">
-      <wd-form ref="formRef" :model="formData" :rules="formRules">
+      <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
           <!-- 用户选择 -->
           <UserPicker
@@ -19,18 +19,16 @@
             :label="`${isDelegate ? '接收人' : '新审批人'}：`"
             :placeholder="`请选择${isDelegate ? '接收人' : '新审批人'}`"
           />
-
           <!-- 审批意见 -->
-          <wd-textarea
-            v-model="formData.reason"
-            prop="reason"
-            label="审批意见："
-            label-width="180rpx"
-            placeholder="请输入审批意见"
-            :maxlength="500"
-            show-word-limit
-            clearable
-          />
+          <wd-form-item prop="reason" title="审批意见：" title-width="180rpx">
+            <wd-textarea
+              v-model="formData.reason"
+              placeholder="请输入审批意见"
+              :maxlength="500"
+              show-word-limit
+              clearable
+            />
+          </wd-form-item>
         </wd-cell-group>
         <!-- 提交按钮 -->
         <view class="mt-48rpx">
@@ -50,12 +48,13 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
+import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, reactive, ref } from 'vue'
-import { useToast } from 'wot-design-uni'
 import { delegateTask, transferTask } from '@/api/bpm/task'
 import UserPicker from '@/components/system-select/user-picker.vue'
 import { navigateBackPlus } from '@/utils'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   processInstanceId: string
@@ -80,14 +79,10 @@ const formData = reactive({
   userId: undefined as number | undefined,
   reason: '',
 })
-const formRules = {
-  userId: [
-    { required: true, message: `请选择${isDelegate.value ? '接收人' : '新审批人'}` },
-  ],
-  reason: [
-    { required: true, message: '审批意见不能为空' },
-  ],
-}
+const formSchema = createFormSchema({
+  userId: [{ required: true, message: () => `请选择${isDelegate.value ? '接收人' : '新审批人'}` }],
+  reason: [{ required: true, message: '审批意见不能为空' }],
+})
 const formRef = ref<FormInstance>()
 
 /** 返回上一页 */

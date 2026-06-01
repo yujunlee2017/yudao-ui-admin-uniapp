@@ -79,6 +79,10 @@ border-t-1
   // 表单项
   &-item {
     @apply mt-24rpx;
+
+    &:first-child {
+      @apply mt-0;
+    }
   }
 
   // 表单项标签

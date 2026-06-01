@@ -9,27 +9,32 @@
 
     <!-- 表单区域 -->
     <view>
-      <wd-form ref="formRef" :model="formData" :rules="formRules">
+      <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
-          <wd-input
-            v-model="formData.name"
-            label="应用名"
-            label-width="200rpx"
-            prop="name"
-            clearable
-            placeholder="请输入应用名"
-          />
-          <wd-cell title="社交平台" title-width="200rpx" prop="socialType" center>
-            <wd-picker
-              v-model="formData.socialType"
-              :columns="getIntDictOptions(DICT_TYPE.SYSTEM_SOCIAL_TYPE)"
-              label-key="label"
-              value-key="value"
-              placeholder="请选择社交平台"
+          <wd-form-item title="应用名" title-width="200rpx" prop="name">
+            <wd-input
+              v-model="formData.name"
+              clearable
+              placeholder="请输入应用名"
             />
-          </wd-cell>
-          <wd-cell title="用户类型" title-width="200rpx" prop="userType" center>
-            <wd-radio-group v-model="formData.userType" shape="button">
+          </wd-form-item>
+          <wd-form-item
+            title="社交平台"
+            title-width="200rpx"
+            prop="socialType"
+            is-link
+            :value="getWotPickerFormValue(getIntDictOptions(DICT_TYPE.SYSTEM_SOCIAL_TYPE), formData.socialType)"
+            placeholder="请选择社交平台"
+            @click="pickerVisible.socialType = true"
+          />
+          <wd-picker
+            v-model:visible="pickerVisible.socialType"
+            :model-value="formData.socialType"
+            :columns="getIntDictOptions(DICT_TYPE.SYSTEM_SOCIAL_TYPE)"
+            @confirm="({ value }) => formData.socialType = value[0]"
+          />
+          <wd-form-item title="用户类型" title-width="200rpx" prop="userType" center>
+            <wd-radio-group v-model="formData.userType" type="button">
               <wd-radio
                 v-for="dict in getIntDictOptions(DICT_TYPE.USER_TYPE)"
                 :key="dict.value"
@@ -38,43 +43,39 @@
                 {{ dict.label }}
               </wd-radio>
             </wd-radio-group>
-          </wd-cell>
-          <wd-input
-            v-model="formData.clientId"
-            label="应用编号"
-            label-width="200rpx"
-            prop="clientId"
-            clearable
-            placeholder="请输入应用编号，对应各平台的 appKey"
-          />
-          <wd-input
-            v-model="formData.clientSecret"
-            label="应用密钥"
-            label-width="200rpx"
-            prop="clientSecret"
-            clearable
-            placeholder="请输入应用密钥，对应各平台的 appSecret"
-          />
-          <wd-input
-            v-show="formData.socialType === 30"
-            v-model="formData.agentId"
-            label="agentId"
-            label-width="200rpx"
-            prop="agentId"
-            clearable
-            placeholder="授权方的网页应用 ID，有则填"
-          />
-          <wd-input
-            v-show="formData.socialType === 40"
-            v-model="formData.publicKey"
-            label="publicKey"
-            label-width="200rpx"
-            prop="publicKey"
-            clearable
-            placeholder="请输入 publicKey 公钥"
-          />
-          <wd-cell title="状态" title-width="200rpx" prop="status" center>
-            <wd-radio-group v-model="formData.status" shape="button">
+          </wd-form-item>
+          <wd-form-item title="应用编号" title-width="200rpx" prop="clientId">
+            <wd-input
+              v-model="formData.clientId"
+              clearable
+              placeholder="请输入应用编号，对应各平台的 appKey"
+            />
+          </wd-form-item>
+          <wd-form-item title="应用密钥" title-width="200rpx" prop="clientSecret">
+            <wd-input
+              v-model="formData.clientSecret"
+              clearable
+              placeholder="请输入应用密钥，对应各平台的 appSecret"
+            />
+          </wd-form-item>
+          <wd-form-item title="agentId" title-width="200rpx" prop="agentId">
+            <wd-input
+              v-show="formData.socialType === 30"
+              v-model="formData.agentId"
+              clearable
+              placeholder="授权方的网页应用 ID，有则填"
+            />
+          </wd-form-item>
+          <wd-form-item title="publicKey" title-width="200rpx" prop="publicKey">
+            <wd-input
+              v-show="formData.socialType === 40"
+              v-model="formData.publicKey"
+              clearable
+              placeholder="请输入 publicKey 公钥"
+            />
+          </wd-form-item>
+          <wd-form-item title="状态" title-width="200rpx" prop="status" center>
+            <wd-radio-group v-model="formData.status" type="button">
               <wd-radio
                 v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)"
                 :key="dict.value"
@@ -83,7 +84,7 @@
                 {{ dict.label }}
               </wd-radio>
             </wd-radio-group>
-          </wd-cell>
+          </wd-form-item>
         </wd-cell-group>
       </wd-form>
     </view>
@@ -103,14 +104,15 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
+import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { SocialClient } from '@/api/system/social/client'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { useToast } from 'wot-design-uni'
 import { createSocialClient, getSocialClient, updateSocialClient } from '@/api/system/social/client'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
+import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
 
 const props = defineProps<{
   id?: number | any
@@ -137,14 +139,15 @@ const formData = ref<SocialClient>({
   publicKey: '',
   status: CommonStatusEnum.ENABLE,
 })
-const formRules = {
+const formSchema = createFormSchema({
   name: [{ required: true, message: '应用名不能为空' }],
   socialType: [{ required: true, message: '社交平台不能为空' }],
   userType: [{ required: true, message: '用户类型不能为空' }],
   clientId: [{ required: true, message: '应用编号不能为空' }],
   clientSecret: [{ required: true, message: '应用密钥不能为空' }],
-}
+})
 const formRef = ref<FormInstance>()
+const pickerVisible = ref<Record<string, boolean>>({})
 
 /** 返回上一页 */
 function handleBack() {

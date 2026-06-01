@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { TagType } from 'wot-design-uni/components/wd-tag/types'
+import type { TagType } from '@wot-ui/ui/components/wd-tag/types'
 import { computed } from 'vue'
 
 import { getDictObj } from '@/hooks/useDict'
@@ -54,7 +54,7 @@ const dictTag = computed(() => {
   <wd-tag
     v-if="dictTag"
     :type="dictTag.tagType"
-    :plain="plain"
+    :variant="props.plain ? 'plain' : undefined"
     :custom-class="dictTag.cssClass"
   >
     {{ dictTag.label }}

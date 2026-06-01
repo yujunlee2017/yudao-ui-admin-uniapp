@@ -4,21 +4,22 @@
       <view class="mb-24rpx text-32rpx font-semibold">
         IP 查询
       </view>
-      <wd-input
-        v-model="ipAddress"
-        label="IP 地址"
-        label-width="160rpx"
-        placeholder="请输入 IP 地址"
-        clearable
-      />
-      <wd-input
-        v-model="ipResult"
-        label="地址"
-        label-width="160rpx"
-        placeholder="展示查询 IP 结果"
-        readonly
-        class="mt-24rpx"
-      />
+      <wd-cell-group border>
+        <wd-form-item title="IP 地址" title-width="160rpx">
+          <wd-input
+            v-model="ipAddress"
+            placeholder="请输入 IP 地址"
+            clearable
+          />
+        </wd-form-item>
+        <wd-form-item title="地址" title-width="160rpx">
+          <wd-input
+            v-model="ipResult"
+            placeholder="展示查询 IP 结果"
+            readonly
+          />
+        </wd-form-item>
+      </wd-cell-group>
       <wd-button type="primary" block class="mt-32rpx" @click="handleQueryIp">
         查询
       </wd-button>
@@ -27,6 +28,7 @@
 </template>
 
 <script lang="ts" setup>
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { ref, watch } from 'vue'
 import { getAreaByIp } from '@/api/system/area'
 import { isIp } from '@/utils/validator'
@@ -42,6 +44,7 @@ const emit = defineEmits<{
 const visible = ref(false)
 const ipAddress = ref('')
 const ipResult = ref('')
+const toast = useToast()
 
 watch(() => props.modelValue, (val) => {
   visible.value = val
@@ -58,15 +61,15 @@ watch(visible, (val) => {
 /** 查询 IP */
 async function handleQueryIp() {
   if (!ipAddress.value) {
-    uni.showToast({ title: '请输入 IP 地址', icon: 'none' })
+    toast.show('请输入 IP 地址')
     return
   }
   if (!isIp(ipAddress.value)) {
-    uni.showToast({ title: '请输入正确的 IP 地址', icon: 'none' })
+    toast.show('请输入正确的 IP 地址')
     return
   }
   ipResult.value = await getAreaByIp(ipAddress.value)
-  uni.showToast({ title: '查询成功', icon: 'success' })
+  toast.success('查询成功')
 }
 </script>
 

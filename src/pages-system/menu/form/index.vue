@@ -9,78 +9,71 @@
 
     <!-- 表单区域 -->
     <view>
-      <wd-form ref="formRef" :model="formData" :rules="formRules">
+      <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
           <MenuPicker v-model="formData.parentId" />
-          <wd-cell title="菜单类型" title-width="180rpx" prop="type">
-            <wd-radio-group v-model="formData.type" shape="button" @change="handleTypeChange">
+          <wd-form-item title="菜单类型" title-width="180rpx" prop="type">
+            <wd-radio-group v-model="formData.type" type="button" @change="handleTypeChange">
               <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.SYSTEM_MENU_TYPE)" :key="dict.value" :value="dict.value">
                 {{ dict.label }}
               </wd-radio>
             </wd-radio-group>
-          </wd-cell>
-          <wd-input
-            v-model="formData.name"
-            label="菜单名称"
-            label-width="180rpx"
-            prop="name"
-            clearable
-            placeholder="请输入菜单名称"
-          />
-          <wd-input
-            v-if="formData.type !== SystemMenuTypeEnum.BUTTON"
-            v-model="formData.icon"
-            label="菜单图标"
-            label-width="180rpx"
-            clearable
-            placeholder="请输入菜单图标"
-          />
-          <wd-input
-            v-if="formData.type !== SystemMenuTypeEnum.BUTTON"
-            v-model="formData.path"
-            label="路由地址"
-            label-width="180rpx"
-            prop="path"
-            clearable
-            placeholder="请输入路由地址"
-          />
-          <wd-input
-            v-if="formData.type === SystemMenuTypeEnum.MENU"
-            v-model="formData.component"
-            label="组件路径"
-            label-width="180rpx"
-            clearable
-            placeholder="例如：system/user/index"
-          />
-          <wd-input
-            v-if="formData.type === SystemMenuTypeEnum.MENU"
-            v-model="formData.componentName"
-            label="组件名称"
-            label-width="180rpx"
-            clearable
-            placeholder="例如：SystemUser"
-          />
-          <wd-input
-            v-if="formData.type !== SystemMenuTypeEnum.DIR"
-            v-model="formData.permission"
-            label="权限标识"
-            label-width="180rpx"
-            clearable
-            placeholder="请输入权限标识"
-          />
-          <wd-cell title="显示排序" title-width="180rpx" prop="sort" center>
+          </wd-form-item>
+          <wd-form-item title="菜单名称" title-width="180rpx" prop="name">
+            <wd-input
+              v-model="formData.name"
+              clearable
+              placeholder="请输入菜单名称"
+            />
+          </wd-form-item>
+          <wd-form-item v-if="formData.type !== SystemMenuTypeEnum.BUTTON" title="菜单图标" title-width="180rpx">
+            <wd-input
+              v-model="formData.icon"
+              clearable
+              placeholder="请输入菜单图标"
+            />
+          </wd-form-item>
+          <wd-form-item v-if="formData.type !== SystemMenuTypeEnum.BUTTON" title="路由地址" title-width="180rpx" prop="path">
+            <wd-input
+              v-model="formData.path"
+              clearable
+              placeholder="请输入路由地址"
+            />
+          </wd-form-item>
+          <wd-form-item v-if="formData.type === SystemMenuTypeEnum.MENU" title="组件路径" title-width="180rpx">
+            <wd-input
+              v-model="formData.component"
+              clearable
+              placeholder="例如：system/user/index"
+            />
+          </wd-form-item>
+          <wd-form-item v-if="formData.type === SystemMenuTypeEnum.MENU" title="组件名称" title-width="180rpx">
+            <wd-input
+              v-model="formData.componentName"
+              clearable
+              placeholder="例如：SystemUser"
+            />
+          </wd-form-item>
+          <wd-form-item v-if="formData.type !== SystemMenuTypeEnum.DIR" title="权限标识" title-width="180rpx">
+            <wd-input
+              v-model="formData.permission"
+              clearable
+              placeholder="请输入权限标识"
+            />
+          </wd-form-item>
+          <wd-form-item title="显示排序" title-width="180rpx" prop="sort" center>
             <wd-input-number
               v-model="formData.sort"
               :min="0"
             />
-          </wd-cell>
-          <wd-cell title="菜单状态" title-width="180rpx" prop="status" center>
+          </wd-form-item>
+          <wd-form-item title="菜单状态" title-width="180rpx" prop="status" center>
             <wd-switch
               v-model="formData.status"
               :active-value="CommonStatusEnum.ENABLE"
               :inactive-value="CommonStatusEnum.DISABLE"
             />
-          </wd-cell>
+          </wd-form-item>
           <wd-cell v-if="formData.type !== SystemMenuTypeEnum.BUTTON" title="显示状态" title-width="180rpx" center>
             <wd-switch
               v-model="formData.visible"
@@ -121,14 +114,15 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
+import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { Menu } from '@/api/system/menu'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { useToast } from 'wot-design-uni'
 import { createMenu, getMenu, updateMenu } from '@/api/system/menu'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE, SystemMenuTypeEnum } from '@/utils/constants'
+import { createFormSchema } from '@/utils/wot'
 import MenuPicker from './components/menu-picker.vue'
 
 const props = defineProps<{
@@ -162,12 +156,12 @@ const formData = ref<Menu>({
   keepAlive: true,
   alwaysShow: true,
 })
-const formRules = {
+const formSchema = createFormSchema({
   name: [{ required: true, message: '菜单名称不能为空' }],
   type: [{ required: true, message: '菜单类型不能为空' }],
   sort: [{ required: true, message: '显示排序不能为空' }],
   status: [{ required: true, message: '状态不能为空' }],
-}
+})
 const formRef = ref<FormInstance>()
 
 /** 返回上一页 */

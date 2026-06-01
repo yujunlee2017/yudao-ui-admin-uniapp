@@ -9,7 +9,7 @@
 
     <!-- 操作表单 -->
     <view class="p-24rpx">
-      <wd-form ref="formRef" :model="formData" :rules="formRules">
+      <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
           <!-- 加签处理人 -->
           <UserPicker
@@ -19,27 +19,24 @@
             label="加签处理人："
             label-width="200rpx"
             placeholder="请选择加签处理人"
-            :rules="formRules.userIds"
           />
-
           <!-- 审批意见 -->
-          <wd-textarea
-            v-model="formData.reason"
-            prop="reason"
-            label="审批意见："
-            label-width="200rpx"
-            placeholder="请输入审批意见"
-            :maxlength="500"
-            show-word-limit
-            clearable
-          />
+          <wd-form-item prop="reason" title="审批意见：" title-width="200rpx">
+            <wd-textarea
+              v-model="formData.reason"
+              placeholder="请输入审批意见"
+              :maxlength="500"
+              show-word-limit
+              clearable
+            />
+          </wd-form-item>
         </wd-cell-group>
         <!-- 提交按钮 -->
         <view class="mt-48rpx flex gap-16rpx">
           <wd-button
             type="primary"
             class="flex-1"
-            plain
+            variant="plain"
             :loading="formLoading"
             :disabled="formLoading"
             @click="handleSubmit('before')"
@@ -62,12 +59,13 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
+import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, reactive, ref } from 'vue'
-import { useToast } from 'wot-design-uni'
 import { signCreateTask } from '@/api/bpm/task'
 import UserPicker from '@/components/system-select/user-picker.vue'
 import { navigateBackPlus } from '@/utils'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   processInstanceId: string
@@ -89,14 +87,10 @@ const formData = reactive({
   userIds: [] as number[],
   reason: '',
 })
-const formRules = {
-  userIds: [
-    { required: true, message: '加签处理人不能为空', validator: (value: number[]) => value.length > 0 },
-  ],
-  reason: [
-    { required: true, message: '审批意见不能为空' },
-  ],
-}
+const formSchema = createFormSchema({
+  userIds: [{ required: true, message: '加签处理人不能为空' }],
+  reason: [{ required: true, message: '审批意见不能为空' }],
+})
 const formRef = ref<FormInstance>()
 
 /** 返回上一页 */

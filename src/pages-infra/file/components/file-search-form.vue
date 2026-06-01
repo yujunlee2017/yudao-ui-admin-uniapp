@@ -5,8 +5,14 @@
   </view>
 
   <!-- 搜索弹窗 -->
-  <wd-popup v-model="visible" position="top" @close="visible = false">
-    <view class="yd-search-form-container" :style="{ paddingTop: `${getNavbarHeight()}px` }">
+  <wd-popup
+    v-model="visible"
+    position="top"
+    :custom-style="getTopPopupStyle()"
+    :modal-style="getTopPopupModalStyle()"
+    @close="visible = false"
+  >
+    <view class="yd-search-form-container">
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           文件路径
@@ -46,7 +52,7 @@
         </view>
         <wd-datetime-picker-view v-if="visibleCreateTime[0]" v-model="tempCreateTime[0]" type="date" />
         <view v-if="visibleCreateTime[0]" class="yd-search-form-date-range-actions">
-          <wd-button size="small" plain @click="visibleCreateTime[0] = false">
+          <wd-button size="small" variant="plain" @click="visibleCreateTime[0] = false">
             取消
           </wd-button>
           <wd-button size="small" type="primary" @click="handleCreateTime0Confirm">
@@ -55,7 +61,7 @@
         </view>
         <wd-datetime-picker-view v-if="visibleCreateTime[1]" v-model="tempCreateTime[1]" type="date" />
         <view v-if="visibleCreateTime[1]" class="yd-search-form-date-range-actions">
-          <wd-button size="small" plain @click="visibleCreateTime[1] = false">
+          <wd-button size="small" variant="plain" @click="visibleCreateTime[1] = false">
             取消
           </wd-button>
           <wd-button size="small" type="primary" @click="handleCreateTime1Confirm">
@@ -64,7 +70,7 @@
         </view>
       </view>
       <view class="yd-search-form-actions">
-        <wd-button class="flex-1" plain @click="handleReset">
+        <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
         </wd-button>
         <wd-button class="flex-1" type="primary" @click="handleSearch">
@@ -77,7 +83,7 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
-import { getNavbarHeight } from '@/utils'
+import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { formatDate, formatDateRange } from '@/utils/date'
 
 const emit = defineEmits<{

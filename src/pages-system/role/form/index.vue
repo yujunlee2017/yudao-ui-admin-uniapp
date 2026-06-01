@@ -9,46 +9,44 @@
 
     <!-- 表单区域 -->
     <view>
-      <wd-form ref="formRef" :model="formData" :rules="formRules">
+      <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
-          <wd-input
-            v-model="formData.name"
-            label="角色名称"
-            label-width="180rpx"
-            prop="name"
-            clearable
-            placeholder="请输入角色名称"
-          />
-          <wd-input
-            v-model="formData.code"
-            label="角色标识"
-            label-width="180rpx"
-            prop="code"
-            clearable
-            placeholder="请输入角色标识"
-          />
-          <wd-cell title="显示顺序" title-width="180rpx" prop="sort" center>
+          <wd-form-item title="角色名称" title-width="180rpx" prop="name">
+            <wd-input
+              v-model="formData.name"
+              clearable
+              placeholder="请输入角色名称"
+            />
+          </wd-form-item>
+          <wd-form-item title="角色标识" title-width="180rpx" prop="code">
+            <wd-input
+              v-model="formData.code"
+              clearable
+              placeholder="请输入角色标识"
+            />
+          </wd-form-item>
+          <wd-form-item title="显示顺序" title-width="180rpx" prop="sort" center>
             <wd-input-number
               v-model="formData.sort"
               :min="0"
             />
-          </wd-cell>
-          <wd-cell title="状态" title-width="180rpx" prop="status" center>
+          </wd-form-item>
+          <wd-form-item title="状态" title-width="180rpx" prop="status" center>
             <wd-switch
               v-model="formData.status"
               :active-value="CommonStatusEnum.ENABLE"
               :inactive-value="CommonStatusEnum.DISABLE"
             />
-          </wd-cell>
-          <wd-textarea
-            v-model="formData.remark"
-            label="备注"
-            label-width="180rpx"
-            placeholder="请输入备注"
-            :maxlength="200"
-            show-word-limit
-            clearable
-          />
+          </wd-form-item>
+          <wd-form-item title="备注" title-width="180rpx">
+            <wd-textarea
+              v-model="formData.remark"
+              placeholder="请输入备注"
+              :maxlength="200"
+              show-word-limit
+              clearable
+            />
+          </wd-form-item>
         </wd-cell-group>
       </wd-form>
     </view>
@@ -68,13 +66,14 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
+import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { Role } from '@/api/system/role'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { useToast } from 'wot-design-uni'
 import { createRole, getRole, updateRole } from '@/api/system/role'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum } from '@/utils/constants'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   id?: number | any
@@ -98,12 +97,12 @@ const formData = ref<Role>({
   status: CommonStatusEnum.ENABLE,
   remark: '',
 })
-const formRules = {
+const formSchema = createFormSchema({
   name: [{ required: true, message: '角色名称不能为空' }],
   code: [{ required: true, message: '角色标识不能为空' }],
   sort: [{ required: true, message: '显示顺序不能为空' }],
   status: [{ required: true, message: '状态不能为空' }],
-}
+})
 const formRef = ref<FormInstance>()
 
 /** 返回上一页 */
