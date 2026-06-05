@@ -2,6 +2,8 @@ const PRE = 'wd'
 
 export default {
   button: `${PRE}-button`,
+  calendar: 'fc-calendar',
+  cascader: 'fc-cascader',
   cell: `${PRE}-cell`,
   checkbox: 'fc-checkbox',
   datePicker: 'fc-date-picker',

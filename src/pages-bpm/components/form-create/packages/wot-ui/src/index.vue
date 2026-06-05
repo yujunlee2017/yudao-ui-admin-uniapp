@@ -181,8 +181,35 @@
             @update:model-value="handleUpdate(rule, $event)"
           />
 
+          <FcCascader
+            v-else-if="isCascaderType(rule)"
+            :model-value="getValue(rule)"
+            :rule="rule"
+            :title-width="titleWidth"
+            :disabled="isDisabled(rule)"
+            @update:model-value="handleUpdate(rule, $event)"
+          />
+
+          <FcCalendar
+            v-else-if="isCalendarType(rule)"
+            :model-value="getValue(rule)"
+            :rule="rule"
+            :title-width="titleWidth"
+            :disabled="isDisabled(rule)"
+            @update:model-value="handleUpdate(rule, $event)"
+          />
+
           <FcTreeSelect
             v-else-if="isTreeSelectType(rule)"
+            :model-value="getValue(rule)"
+            :rule="rule"
+            :title-width="titleWidth"
+            :disabled="isDisabled(rule)"
+            @update:model-value="handleUpdate(rule, $event)"
+          />
+
+          <FcTransfer
+            v-else-if="isTransferType(rule)"
             :model-value="getValue(rule)"
             :rule="rule"
             :title-width="titleWidth"
@@ -289,10 +316,13 @@
             @update:model-value="handleUpdate(rule, $event)"
           />
 
-          <FcGroup
-            v-else-if="isUnsupportedFormContainerType(rule)"
+          <FcSubForm
+            v-else-if="isSubFormType(rule)"
+            :model-value="getValue(rule)"
             :rule="rule"
             :title-width="titleWidth"
+            :disabled="isDisabled(rule)"
+            @update:model-value="handleUpdate(rule, $event)"
           />
 
           <FcUnsupported
@@ -360,12 +390,13 @@ import {
   FcApiSelect,
   FcAreaSelect,
   FcButton,
+  FcCalendar,
+  FcCascader,
   FcCheckbox,
   FcDatePicker,
   FcDeptSelect,
   FcDictSelect,
   FcDivider,
-  FcGroup,
   FcHtml,
   FcIframe,
   FcImage,
@@ -373,10 +404,12 @@ import {
   FcRichText,
   FcSelect,
   FcSignature,
+  FcSubForm,
   FcTag,
   FcTimePicker,
   FcTitle,
   FcTreeSelect,
+  FcTransfer,
   FcUnsupported,
   FcUploader,
   FcUserSelect,
@@ -391,6 +424,8 @@ import {
   isApiSelectType,
   isAreaSelectType,
   isButtonType,
+  isCalendarType,
+  isCascaderType,
   isDatePickerType,
   isDeptSelectType,
   isDictSelectType,
@@ -405,12 +440,13 @@ import {
   isRichTextType,
   isSelectType,
   isSignatureType,
+  isSubFormType,
   isTagType,
   isTextareaType,
   isTimePickerType,
   isTitleType,
   isTreeSelectType,
-  isUnsupportedFormContainerType,
+  isTransferType,
   isUnsupportedInteractionType,
   isUploadType,
   isUserSelectType,

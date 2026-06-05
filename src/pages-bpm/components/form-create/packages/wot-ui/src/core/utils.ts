@@ -12,8 +12,11 @@ const TIME_TYPES = new Set(['timePicker', 'TimePicker'])
 const BUTTON_TYPES = new Set(['button', 'Button', 'elButton', 'ElButton', 'el-button'])
 const UPLOAD_TYPES = new Set(['upload', 'uploader', 'uploadFile', 'uploadImage', 'uploadImages', 'FileUpload', 'ImageUpload', 'ImagesUpload', 'UploadFile', 'UploadImg', 'UploadImgs'])
 const SELECT_TYPES = new Set(['select'])
+const CASCADER_TYPES = new Set(['cascader', 'Cascader', 'elCascader', 'ElCascader'])
+const CALENDAR_TYPES = new Set(['calendar', 'Calendar', 'elCalendar', 'ElCalendar'])
 const TREE_SELECT_TYPES = new Set(['treeSelect', 'TreeSelect', 'treeSelectMultiple', 'tree', 'Tree'])
-const UNSUPPORTED_FORM_CONTAINER_TYPES = new Set(['group', 'subForm', 'fcSubForm', 'array', 'tableForm', 'subTable', 'fcTableForm'])
+const TRANSFER_TYPES = new Set(['transfer', 'Transfer', 'elTransfer', 'ElTransfer'])
+const SUB_FORM_TYPES = new Set(['group', 'Group', 'fcGroup', 'FcGroup', 'array', 'Array', 'tableForm', 'subTable', 'fcTableForm'])
 const ALERT_TYPES = new Set(['alert', 'elAlert', 'ElAlert'])
 const TITLE_TYPES = new Set(['title', 'Title', 'fcTitle', 'FcTitle'])
 const HTML_TYPES = new Set(['html', 'Html', 'HTML'])
@@ -24,7 +27,7 @@ const IFRAME_TYPES = new Set(['iframe', 'Iframe', 'IframeComponent', 'frame', 'F
 const RICH_TEXT_TYPES = new Set(['Editor', 'editor', 'Tinymce', 'tinymce', 'wangEditor', 'WangEditor', 'richText', 'RichText'])
 const SIGNATURE_TYPES = new Set(['signature', 'Signature', 'signaturePad', 'SignaturePad', 'sign', 'Sign'])
 const AREA_SELECT_TYPES = new Set(['AreaSelect'])
-const UNSUPPORTED_INTERACTION_TYPES = new Set(['transfer', 'Transfer', 'elTransfer', 'ElTransfer'])
+const UNSUPPORTED_INTERACTION_TYPES = new Set<string>()
 
 export function getWotType(rule: NormalizedFormCreateRule) {
   return alias[rule.type as keyof typeof alias] || rule.type
@@ -50,6 +53,14 @@ export function isTimePickerType(rule: NormalizedFormCreateRule) {
   return TIME_TYPES.has(rule.type)
 }
 
+export function isCascaderType(rule: NormalizedFormCreateRule) {
+  return CASCADER_TYPES.has(rule.type)
+}
+
+export function isCalendarType(rule: NormalizedFormCreateRule) {
+  return CALENDAR_TYPES.has(rule.type)
+}
+
 export function isButtonType(rule: NormalizedFormCreateRule) {
   return BUTTON_TYPES.has(rule.type)
 }
@@ -58,8 +69,12 @@ export function isUploadType(rule: NormalizedFormCreateRule) {
   return UPLOAD_TYPES.has(rule.type)
 }
 
-export function isUnsupportedFormContainerType(rule: NormalizedFormCreateRule) {
-  return UNSUPPORTED_FORM_CONTAINER_TYPES.has(rule.type)
+export function isSubFormType(rule: NormalizedFormCreateRule) {
+  return SUB_FORM_TYPES.has(rule.type)
+}
+
+export function isTransferType(rule: NormalizedFormCreateRule) {
+  return TRANSFER_TYPES.has(rule.type)
 }
 
 export function isAlertType(rule: NormalizedFormCreateRule) {

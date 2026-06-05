@@ -53,6 +53,19 @@ export function getDefaultValueByType(type: string): FormCreateValue {
     case 'FileUpload':
     case 'ImagesUpload':
     case 'UploadImgs':
+    case 'group':
+    case 'Group':
+    case 'fcGroup':
+    case 'FcGroup':
+    case 'array':
+    case 'Array':
+    case 'tableForm':
+    case 'subTable':
+    case 'fcTableForm':
+    case 'transfer':
+    case 'Transfer':
+    case 'elTransfer':
+    case 'ElTransfer':
       return []
     case 'ImageUpload':
     case 'UploadImg':
@@ -96,6 +109,18 @@ function getDefaultValue(rule: NormalizedFormCreateRule): FormCreateValue {
   const isMultiple = rule.type === 'treeSelectMultiple' || rule.props?.multiple || rule.props?.mode === 'multiple'
   if ((rule.type === 'select' || rule.type.endsWith('Select') || rule.type === 'treeSelectMultiple') && isMultiple) {
     return []
+  }
+  if (rule.type === 'cascader' || rule.type === 'Cascader') {
+    const emitPath = rule.props?.emitPath ?? rule.props?.props?.emitPath
+    if (emitPath !== false) {
+      return []
+    }
+  }
+  if (rule.type === 'calendar' || rule.type === 'Calendar') {
+    const calendarType = String(rule.props?.type || 'date').toLowerCase()
+    if (calendarType === 'dates' || calendarType === 'multiple' || calendarType.includes('range')) {
+      return []
+    }
   }
   return getDefaultValueByType(rule.type)
 }
