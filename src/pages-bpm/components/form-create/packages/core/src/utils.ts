@@ -105,7 +105,7 @@ export function createInitialFormData(
   return data
 }
 
-function getDefaultValue(rule: NormalizedFormCreateRule): FormCreateValue {
+export function getDefaultValue(rule: NormalizedFormCreateRule): FormCreateValue {
   const isMultiple = rule.type === 'treeSelectMultiple' || rule.props?.multiple || rule.props?.mode === 'multiple'
   if ((rule.type === 'select' || rule.type.endsWith('Select') || rule.type === 'treeSelectMultiple') && isMultiple) {
     return []
@@ -129,12 +129,12 @@ export function getAllowedFieldSet(rules: FormCreateRule[]) {
   return new Set(rules.map(rule => rule.field).filter(Boolean) as string[])
 }
 
-export function isRuleHidden(rule: FormCreateRule, state?: { hidden?: boolean }) {
-  return state?.hidden === true || rule.hidden === true || rule.display === false
+export function isRuleHidden(rule: FormCreateRule, state?: { controlHidden?: boolean, hidden?: boolean }) {
+  return state?.hidden === true || state?.controlHidden === true || rule.hidden === true || rule.display === false
 }
 
-export function isRuleDisabled(globalDisabled: boolean, state?: { disabled?: boolean }) {
-  return globalDisabled || state?.disabled === true
+export function isRuleDisabled(globalDisabled: boolean, state?: { controlDisabled?: boolean, disabled?: boolean }) {
+  return globalDisabled || state?.disabled === true || state?.controlDisabled === true
 }
 
 export { isEmptyValue }

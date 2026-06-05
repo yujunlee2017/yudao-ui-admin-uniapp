@@ -21,7 +21,7 @@ export function createFormSchema(
           await validateSubFormRule(rule, value, issues)
           continue
         }
-        for (const validateRule of getValidateRules(rule)) {
+        for (const validateRule of getValidateRules(rule, fieldStates[rule.field])) {
           if (validateRule.required && isEmptyValue(value)) {
             issues.push(createIssue(rule.field, validateRule.message || `${rule.title || '该字段'}不能为空`))
             break
@@ -53,7 +53,7 @@ export function createFormSchema(
       const prop = normalizePath(path)
       const rule = rules().find(item => item.field === prop)
       if (rule) {
-        return getValidateRules(rule).some(item => item.required)
+        return getValidateRules(rule, fieldStates[rule.field]).some(item => item.required)
       }
       const childRule = findSubFormChildRule(rules(), prop)
       return !!(childRule && getValidateRules(childRule).some(item => item.required))

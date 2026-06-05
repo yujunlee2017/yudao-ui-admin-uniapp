@@ -377,14 +377,16 @@ import type {
 } from '../../../types/typing'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import {
+  applyControlRules,
   createApi,
   createFormSchema,
+  getDefaultValue,
   createInitialFormData,
   isRuleDisabled,
   isRuleHidden,
   normalizeRules,
 } from '../../core/src'
-import { deepMerge } from '../../utils/src'
+import { deepMerge, hasOwn } from '../../utils/src'
 import {
   FcAlert,
   FcApiSelect,
@@ -479,12 +481,15 @@ const emit = defineEmits<{
 
 const formRef = ref<FormInstance>()
 const formData = ref<Record<string, any>>({})
+const initialFormValues = ref<Record<string, any>>({})
 const fieldStates = reactive<Record<string, FormCreateFieldState>>({})
 
 const formOption = computed(() => getConfig(props.option))
 const titleWidth = computed(() => getTitleWidth(formOption.value))
 const parsedRules = computed(() => parseRules(props.rule))
-const rules = computed(() => normalizeRules(parsedRules.value))
+const baseRules = computed(() => normalizeRules(parsedRules.value))
+const controlResult = computed(() => applyControlRules(baseRules.value, formData.value))
+const rules = computed(() => controlResult.value.rules)
 const visibleRules = computed(() => rules.value.filter(rule => !isRuleHidden(rule, fieldStates[rule.field || ''])))
 const formSchema = computed(() => createFormSchema(() => rules.value, fieldStates))
 
@@ -495,16 +500,41 @@ watch(
       if (rule.field && !fieldStates[rule.field]) {
         fieldStates[rule.field] = {}
       }
+      if (rule.field && !hasOwn(formData.value, rule.field)) {
+        formData.value[rule.field] = hasOwn(initialFormValues.value, rule.field)
+          ? initialFormValues.value[rule.field]
+          : rule.value !== undefined ? rule.value : getDefaultValue(rule)
+      }
     })
   },
   { immediate: true },
 )
 
 watch(
+  () => controlResult.value.fieldStates,
+  (nextStates) => {
+    const fields = new Set([
+      ...Object.keys(fieldStates),
+      ...Object.keys(nextStates),
+    ])
+    fields.forEach((field) => {
+      if (!fieldStates[field]) {
+        fieldStates[field] = {}
+      }
+      fieldStates[field].controlHidden = nextStates[field]?.controlHidden
+      fieldStates[field].controlDisabled = nextStates[field]?.controlDisabled
+      fieldStates[field].controlRequired = nextStates[field]?.controlRequired
+    })
+  },
+  { deep: true, immediate: true },
+)
+
+watch(
   () => [props.modelValue, props.option?.formData, props.rule],
   () => {
     const initialValues = deepMerge<Record<string, any>>(formOption.value.formData || {}, props.modelValue || {})
-    formData.value = createInitialFormData(rules.value, initialValues)
+    initialFormValues.value = initialValues
+    formData.value = createInitialFormData(baseRules.value, initialValues)
   },
   { deep: true, immediate: true },
 )

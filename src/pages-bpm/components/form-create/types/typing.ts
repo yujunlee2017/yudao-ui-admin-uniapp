@@ -29,6 +29,18 @@ export interface FormCreateValidateRule {
   [key: string]: any
 }
 
+export interface FormCreateControl {
+  value?: any
+  condition?: string
+  method?: 'hidden' | 'display' | 'show' | 'if' | 'disabled' | 'enabled' | 'required' | string
+  rule?: Array<FormCreateRule | string>
+  append?: string
+  prepend?: string
+  child?: boolean
+  handle?: (value: any, api?: FormCreateApi) => boolean
+  [key: string]: any
+}
+
 export interface FormCreateRule {
   type: string
   field?: string
@@ -44,6 +56,8 @@ export interface FormCreateRule {
   info?: string
   name?: string
   className?: string
+  control?: FormCreateControl | FormCreateControl[]
+  effect?: Record<string, any>
   [key: string]: any
 }
 
@@ -59,6 +73,10 @@ export interface FormCreateOption {
 export interface FormCreateFieldState {
   disabled?: boolean
   hidden?: boolean
+  required?: boolean
+  controlDisabled?: boolean
+  controlHidden?: boolean
+  controlRequired?: boolean
 }
 
 export interface NormalizedFormCreateRule extends FormCreateRule {

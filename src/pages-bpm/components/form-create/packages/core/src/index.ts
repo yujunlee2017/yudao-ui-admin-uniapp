@@ -1,4 +1,5 @@
 export { createApi } from './api'
+export { applyControlRules } from './control'
 export { default as getConfig } from './config'
 export { createFieldStates, createFormSchema } from './manager'
 export { getRequiredRule, getValidateRules } from './provider'
