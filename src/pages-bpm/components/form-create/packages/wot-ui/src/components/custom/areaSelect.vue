@@ -23,8 +23,8 @@
 </template>
 
 <script lang="ts" setup>
-import type { Area } from '@/api/system/area'
 import type { NormalizedFormCreateRule } from '../../../../../types/typing'
+import type { Area } from '@/api/system/area'
 import { computed, onMounted, ref } from 'vue'
 import { getAreaTree } from '@/api/system/area'
 import { getPlaceholder } from '../../core/utils'
@@ -38,7 +38,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: any]
-  change: [value: any]
+  'change': [value: any]
 }>()
 
 const areaList = ref<Area[]>([])

@@ -1,5 +1,5 @@
 <template>
-  <view :class="['fc-display-alert', `fc-display-alert--${alertType}`]">
+  <view class="fc-display-alert" :class="[`fc-display-alert--${alertType}`]">
     <view v-if="title" class="fc-display-alert__title">
       {{ title }}
     </view>

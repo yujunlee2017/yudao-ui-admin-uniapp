@@ -31,7 +31,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: any]
-  change: [value: any]
+  'change': [value: any]
 }>()
 
 const visible = ref(false)

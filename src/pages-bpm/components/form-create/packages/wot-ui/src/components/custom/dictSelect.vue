@@ -30,9 +30,9 @@
 import type { NormalizedFormCreateRule } from '../../../../../types/typing'
 import { computed, ref, watch } from 'vue'
 import { useDictStore } from '@/store/dict'
+import { getPlaceholder } from '../../core/utils'
 import { loadDictOptions } from './api'
 import { formatSelectedSummary, isMultipleSelect, normalizeSelectValue } from './utils'
-import { getPlaceholder } from '../../core/utils'
 
 const props = defineProps<{
   disabled?: boolean
@@ -43,7 +43,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: any]
-  change: [value: any]
+  'change': [value: any]
 }>()
 
 const dictStore = useDictStore()
@@ -92,6 +92,9 @@ async function open() {
   }
   if (loadError.value && !loading.value) {
     showLoadError(loadError.value)
+    if (options.value.length === 0) {
+      return
+    }
   }
   pickerValue.value = normalizeSelectValue(props.modelValue, isMultiple.value)
   visible.value = true
@@ -109,7 +112,7 @@ async function loadOptions() {
   const dictType = props.rule.props?.dictType || ''
   if (!dictType) {
     options.value = []
-    loadError.value = ''
+    loadError.value = '未配置字典类型'
     return
   }
 
@@ -134,7 +137,7 @@ async function loadOptions() {
 function showLoadError(message: string) {
   uni.showToast({
     icon: 'none',
-    title: message,
+    title: `无法选择，原因：${message}`,
   })
 }
 </script>

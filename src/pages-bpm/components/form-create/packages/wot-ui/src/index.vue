@@ -52,6 +52,30 @@
             :rule="rule"
           />
 
+          <FcIframe
+            v-else-if="isIframeType(rule)"
+            :rule="rule"
+            :title-width="titleWidth"
+          />
+
+          <FcRichText
+            v-else-if="isRichTextType(rule)"
+            :model-value="getValue(rule)"
+            :rule="rule"
+            :title-width="titleWidth"
+            :disabled="isDisabled(rule)"
+            @update:model-value="handleUpdate(rule, $event)"
+          />
+
+          <FcSignature
+            v-else-if="isSignatureType(rule)"
+            :model-value="getValue(rule)"
+            :rule="rule"
+            :title-width="titleWidth"
+            :disabled="isDisabled(rule)"
+            @update:model-value="handleUpdate(rule, $event)"
+          />
+
           <FcButton
             v-else-if="isButtonType(rule)"
             :rule="rule"
@@ -100,12 +124,14 @@
             center
           >
             <wd-input-number
-              :model-value="getValue(rule)"
+              v-bind="getRuleProps(rule)"
+              :model-value="getInputNumberValue(rule)"
               :min="rule.props?.min ?? 0"
               :max="rule.props?.max"
               :step="rule.props?.step || 1"
+              :allow-null="rule.props?.allowNull ?? true"
+              :update-on-init="rule.props?.updateOnInit ?? false"
               :disabled="isDisabled(rule)"
-              v-bind="getRuleProps(rule)"
               @update:model-value="handleUpdate(rule, $event)"
             />
           </wd-form-item>
@@ -312,11 +338,49 @@
 
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
-import type { FormCreateApi, FormCreateFieldState, FormCreateOption, FormCreateRule, NormalizedFormCreateRule } from '../../../types/typing'
+import type {
+  FormCreateApi,
+  FormCreateFieldState,
+  FormCreateOption,
+  FormCreateRule,
+  NormalizedFormCreateRule,
+} from '../../../types/typing'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { createApi, createFormSchema, createInitialFormData, isRuleDisabled, isRuleHidden, normalizeRules } from '../../core/src'
+import {
+  createApi,
+  createFormSchema,
+  createInitialFormData,
+  isRuleDisabled,
+  isRuleHidden,
+  normalizeRules,
+} from '../../core/src'
 import { deepMerge } from '../../utils/src'
-import { FcAlert, FcApiSelect, FcAreaSelect, FcButton, FcCheckbox, FcDatePicker, FcDeptSelect, FcDictSelect, FcDivider, FcGroup, FcHtml, FcImage, FcRadio, FcSelect, FcTag, FcTimePicker, FcTitle, FcTreeSelect, FcUnsupported, FcUploader, FcUserSelect } from './components'
+import {
+  FcAlert,
+  FcApiSelect,
+  FcAreaSelect,
+  FcButton,
+  FcCheckbox,
+  FcDatePicker,
+  FcDeptSelect,
+  FcDictSelect,
+  FcDivider,
+  FcGroup,
+  FcHtml,
+  FcIframe,
+  FcImage,
+  FcRadio,
+  FcRichText,
+  FcSelect,
+  FcSignature,
+  FcTag,
+  FcTimePicker,
+  FcTitle,
+  FcTreeSelect,
+  FcUnsupported,
+  FcUploader,
+  FcUserSelect,
+} from './components'
 import getConfig from './core/config'
 import {
   getInputType,
@@ -329,15 +393,18 @@ import {
   isButtonType,
   isDatePickerType,
   isDeptSelectType,
-  isDividerType,
   isDictSelectType,
+  isDividerType,
   isHtmlType,
+  isIframeType,
   isImageType,
   isInputNumberType,
   isInputType,
   isLayoutGapType,
   isLayoutTitleType,
+  isRichTextType,
   isSelectType,
+  isSignatureType,
   isTagType,
   isTextareaType,
   isTimePickerType,
@@ -408,6 +475,11 @@ watch(
 
 function getValue(rule: NormalizedFormCreateRule) {
   return rule.field ? formData.value[rule.field] : undefined
+}
+
+function getInputNumberValue(rule: NormalizedFormCreateRule) {
+  const value = getValue(rule)
+  return value === undefined || value === null ? '' : value
 }
 
 function handleUpdate(rule: NormalizedFormCreateRule, value: any) {

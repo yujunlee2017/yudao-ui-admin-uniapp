@@ -12,16 +12,19 @@ const TIME_TYPES = new Set(['timePicker', 'TimePicker'])
 const BUTTON_TYPES = new Set(['button', 'Button', 'elButton', 'ElButton', 'el-button'])
 const UPLOAD_TYPES = new Set(['upload', 'uploader', 'uploadFile', 'uploadImage', 'uploadImages', 'FileUpload', 'ImageUpload', 'ImagesUpload', 'UploadFile', 'UploadImg', 'UploadImgs'])
 const SELECT_TYPES = new Set(['select'])
-const TREE_SELECT_TYPES = new Set(['treeSelect', 'TreeSelect', 'treeSelectMultiple'])
+const TREE_SELECT_TYPES = new Set(['treeSelect', 'TreeSelect', 'treeSelectMultiple', 'tree', 'Tree'])
 const UNSUPPORTED_FORM_CONTAINER_TYPES = new Set(['group', 'subForm', 'fcSubForm', 'array', 'tableForm', 'subTable', 'fcTableForm'])
 const ALERT_TYPES = new Set(['alert', 'elAlert', 'ElAlert'])
 const TITLE_TYPES = new Set(['title', 'Title', 'fcTitle', 'FcTitle'])
-const HTML_TYPES = new Set(['html', 'Html', 'HTML', 'richText', 'RichText'])
+const HTML_TYPES = new Set(['html', 'Html', 'HTML'])
 const DIVIDER_TYPES = new Set(['divider', 'Divider', 'elDivider', 'ElDivider'])
 const TAG_TYPES = new Set(['tag', 'Tag', 'elTag', 'ElTag'])
 const IMAGE_TYPES = new Set(['image', 'Image', 'img', 'Img', 'elImage', 'ElImage'])
+const IFRAME_TYPES = new Set(['iframe', 'Iframe', 'IframeComponent', 'frame', 'Frame'])
+const RICH_TEXT_TYPES = new Set(['Editor', 'editor', 'Tinymce', 'tinymce', 'wangEditor', 'WangEditor', 'richText', 'RichText'])
+const SIGNATURE_TYPES = new Set(['signature', 'Signature', 'signaturePad', 'SignaturePad', 'sign', 'Sign'])
 const AREA_SELECT_TYPES = new Set(['AreaSelect'])
-const UNSUPPORTED_INTERACTION_TYPES = new Set(['transfer', 'Transfer', 'elTransfer', 'ElTransfer', 'tree', 'Tree', 'signature', 'Signature', 'signaturePad', 'SignaturePad', 'sign', 'Sign', 'Editor', 'Tinymce', 'tinymce', 'wangEditor', 'WangEditor', 'iframe', 'Iframe', 'IframeComponent', 'frame', 'Frame'])
+const UNSUPPORTED_INTERACTION_TYPES = new Set(['transfer', 'Transfer', 'elTransfer', 'ElTransfer'])
 
 export function getWotType(rule: NormalizedFormCreateRule) {
   return alias[rule.type as keyof typeof alias] || rule.type
@@ -81,6 +84,18 @@ export function isTagType(rule: NormalizedFormCreateRule) {
 
 export function isImageType(rule: NormalizedFormCreateRule) {
   return IMAGE_TYPES.has(rule.type)
+}
+
+export function isIframeType(rule: NormalizedFormCreateRule) {
+  return IFRAME_TYPES.has(rule.type)
+}
+
+export function isRichTextType(rule: NormalizedFormCreateRule) {
+  return RICH_TEXT_TYPES.has(rule.type)
+}
+
+export function isSignatureType(rule: NormalizedFormCreateRule) {
+  return SIGNATURE_TYPES.has(rule.type)
 }
 
 export function isUnsupportedInteractionType(rule: NormalizedFormCreateRule) {

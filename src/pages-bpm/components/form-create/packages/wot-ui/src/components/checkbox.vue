@@ -31,7 +31,7 @@ defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: any[]]
-  change: [value: any[]]
+  'change': [value: any[]]
 }>()
 
 function handleChange({ value }: { value: any[] }) {

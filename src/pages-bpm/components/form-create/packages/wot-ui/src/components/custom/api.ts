@@ -1,7 +1,7 @@
-import type { Dept } from '@/api/system/dept'
-import type { User } from '@/api/system/user'
 import type { FormCreateOptionItem, NormalizedFormCreateRule } from '../../../../../types/typing'
 import type { CustomSelectOption } from './types'
+import type { Dept } from '@/api/system/dept'
+import type { User } from '@/api/system/user'
 import { getSimpleDeptList } from '@/api/system/dept'
 import { getSimpleUserList } from '@/api/system/user'
 import { getDictOptions } from '@/hooks/useDict'
@@ -53,12 +53,13 @@ function toUserOption(user: User): CustomSelectOption | undefined {
     return undefined
   }
   const displayLabel = user.nickname || user.username || String(user.id)
+  const deptLabel = user.deptName || '未分配部门'
   const description = [user.username, user.deptName, user.mobile].filter(Boolean).join(' / ')
   return {
     avatar: user.avatar,
     description,
     displayLabel,
-    label: description ? `${displayLabel} ${description}` : displayLabel,
+    label: `${displayLabel}  [${deptLabel}]`,
     raw: user as unknown as Record<string, any>,
     value: user.id,
   }

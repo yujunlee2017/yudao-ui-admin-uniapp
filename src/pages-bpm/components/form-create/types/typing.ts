@@ -1,6 +1,14 @@
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { Ref } from 'vue'
 
+export const FORM_FIELD_PERMISSION = {
+  HIDDEN: '3',
+  READ: '1',
+  WRITE: '2',
+} as const
+
+export type FormFieldPermission = typeof FORM_FIELD_PERMISSION[keyof typeof FORM_FIELD_PERMISSION]
+
 export type FormCreateValue = string | number | boolean | null | undefined | any[] | Record<string, any>
 
 export interface FormCreateOptionItem {
@@ -74,7 +82,7 @@ export interface FormCreateApi {
   coverValue: (values: Record<string, any>) => void
   disabled: (status: boolean, field?: string) => void
   hidden: (status: boolean, field?: string) => void
-  setFieldPermission: (field: string, permission: string) => void
+  setFieldPermission: (field: string, permission: FormFieldPermission | string) => void
 }
 
 export interface FormCreateApiContext {

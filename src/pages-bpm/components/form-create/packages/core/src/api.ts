@@ -1,4 +1,5 @@
 import type { FormCreateApi, FormCreateApiContext } from '../../../types/typing'
+import { FORM_FIELD_PERMISSION } from '../../../types/typing'
 
 export function createApi(ctx: FormCreateApiContext): FormCreateApi {
   const setFieldState = (field: string | undefined, key: 'disabled' | 'hidden', value: boolean) => {
@@ -54,13 +55,13 @@ export function createApi(ctx: FormCreateApiContext): FormCreateApi {
       setFieldState(field, 'hidden', status)
     },
     setFieldPermission(field, permission) {
-      if (permission === '1') {
+      if (permission === FORM_FIELD_PERMISSION.READ) {
         api.hidden(false, field)
         api.disabled(true, field)
-      } else if (permission === '2') {
+      } else if (permission === FORM_FIELD_PERMISSION.WRITE) {
         api.hidden(false, field)
         api.disabled(false, field)
-      } else if (permission === '3') {
+      } else if (permission === FORM_FIELD_PERMISSION.HIDDEN) {
         api.hidden(true, field)
       }
     },

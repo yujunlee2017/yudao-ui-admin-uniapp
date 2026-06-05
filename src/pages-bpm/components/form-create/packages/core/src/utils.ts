@@ -1,4 +1,9 @@
-import type { FormCreateOptionItem, FormCreateRule, FormCreateValue, NormalizedFormCreateRule } from '../../../types/typing'
+import type {
+  FormCreateOptionItem,
+  FormCreateRule,
+  FormCreateValue,
+  NormalizedFormCreateRule,
+} from '../../../types/typing'
 import { getRuleChildren, hasOwn, isEmptyValue } from '../../utils/src'
 
 export function normalizeRules(rules: FormCreateRule[] = []): NormalizedFormCreateRule[] {

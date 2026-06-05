@@ -1,13 +1,15 @@
 import type { FormCreateRule } from '../../../../types/typing'
 import { normalizeOptions } from '../../../core/src'
 import card from './card'
+import collapse from './collapse'
 import hidden from './hidden'
 import row from './row'
 import space from './space'
 import table from './table'
+import tabs from './tabs'
 
 const OPTION_TYPES = new Set(['checkbox', 'radio', 'select'])
-const LAYOUT_PARSERS = [row, table, card, space]
+const LAYOUT_PARSERS = [row, table, card, tabs, collapse, space]
 
 export function parseRules(rules: FormCreateRule[] = []): FormCreateRule[] {
   return rules.flatMap((rule, index) => parseRuleNode(rule, String(index)))
@@ -47,4 +49,4 @@ function parseBaseRule(rule: FormCreateRule): FormCreateRule {
   return rule
 }
 
-export default [hidden, row, table, card, space]
+export default [hidden, row, table, card, tabs, collapse, space]

@@ -62,7 +62,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: any]
-  change: [value: any]
+  'change': [value: any]
 }>()
 
 const visible = ref(false)
@@ -70,7 +70,10 @@ const pickerValue = ref<TreeSelectValue[]>([])
 
 const placeholder = computed(() => getPlaceholder(props.rule, '请选择'))
 const isMultiple = computed(() =>
-  props.rule.type === 'treeSelectMultiple' || !!props.rule.props?.multiple || props.rule.props?.mode === 'multiple',
+  props.rule.type === 'treeSelectMultiple'
+  || !!props.rule.props?.multiple
+  || !!props.rule.props?.showCheckbox
+  || props.rule.props?.mode === 'multiple',
 )
 const checkStrictly = computed(() => props.rule.props?.checkStrictly !== false)
 const treeOptions = computed(() => normalizeTreeOptions(getTreeData()))
@@ -100,7 +103,8 @@ function open() {
 }
 
 function handleCascaderConfirm({ value }: { value: any }) {
-  const nextValue = value === '' ? undefined : value
+  const selected = Array.isArray(value) ? value.at(-1) : value
+  const nextValue = selected === '' || selected === undefined ? undefined : selected
   emit('update:modelValue', nextValue)
   emit('change', nextValue)
 }
@@ -165,8 +169,8 @@ function getFieldNames() {
   const fieldProps = props.rule.props?.props || props.rule.props?.fieldNames || {}
   return {
     children: fieldProps.children || props.rule.props?.childrenKey || 'children',
-    label: fieldProps.label || props.rule.props?.labelKey || props.rule.props?.textKey,
-    value: fieldProps.value || props.rule.props?.valueKey,
+    label: fieldProps.label || props.rule.props?.labelKey || props.rule.props?.textKey || 'label',
+    value: fieldProps.value || props.rule.props?.nodeKey || props.rule.props?.valueKey,
   }
 }
 

@@ -29,9 +29,9 @@
 <script lang="ts" setup>
 import type { NormalizedFormCreateRule } from '../../../../../types/typing'
 import { computed, ref, watch } from 'vue'
+import { getPlaceholder } from '../../core/utils'
 import { loadUserOptions } from './api'
 import { formatSelectedSummary, isMultipleSelect, normalizeSelectValue } from './utils'
-import { getPlaceholder } from '../../core/utils'
 
 const props = defineProps<{
   disabled?: boolean
@@ -42,7 +42,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: any]
-  change: [value: any]
+  'change': [value: any]
 }>()
 
 const loading = ref(false)
