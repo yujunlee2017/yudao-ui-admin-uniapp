@@ -24,7 +24,9 @@
 
         <view v-show="!isItemCollapsed(itemIndex)" class="fc-sub-form__body">
           <template v-for="childRule in getItemRules(itemIndex)" :key="`${itemIndex}_${childRule.__fcId}`">
-            <view v-if="isLayoutTitleType(childRule)" class="fc-sub-form__layout-title">
+            <view v-if="isHiddenFieldType(childRule)" style="display: none" />
+
+            <view v-else-if="isLayoutTitleType(childRule)" class="fc-sub-form__layout-title">
               {{ childRule.title }}
             </view>
 
@@ -180,6 +182,15 @@
               @update:model-value="setItemValue(itemIndex, childRule.field, $event)"
             />
 
+            <FcColorPicker
+              v-else-if="isColorPickerType(childRule)"
+              :model-value="getItemValue(itemIndex, childRule.field)"
+              :rule="getRenderRule(childRule, itemIndex)"
+              :title-width="childTitleWidth"
+              :disabled="isChildDisabled(childRule, itemIndex)"
+              @update:model-value="setItemValue(itemIndex, childRule.field, $event)"
+            />
+
             <FcRadio
               v-else-if="childRule.type === 'radio'"
               :model-value="getItemValue(itemIndex, childRule.field)"
@@ -234,11 +245,12 @@
               />
             </wd-form-item>
 
-            <wd-form-item v-else-if="childRule.type === 'slider'" :title="childRule.title" :title-width="childTitleWidth" :prop="getChildProp(itemIndex, childRule.field)" layout="vertical">
+            <wd-form-item v-else-if="isSliderType(childRule)" :title="childRule.title" :title-width="childTitleWidth" :prop="getChildProp(itemIndex, childRule.field)" layout="vertical">
               <wd-slider
                 :model-value="getItemValue(itemIndex, childRule.field)"
                 :disabled="isChildDisabled(childRule, itemIndex)"
                 v-bind="getRuleProps(childRule)"
+                :range="isSliderRangeType(childRule)"
                 @change="setItemValue(itemIndex, childRule.field, $event)"
               />
             </wd-form-item>
@@ -265,6 +277,7 @@
               v-else-if="isSubFormType(childRule)"
               :model-value="getItemValue(itemIndex, childRule.field)"
               :rule="getRenderRule(childRule, itemIndex)"
+              :api="api"
               :option="option"
               :title-width="childTitleWidth"
               :disabled="isChildDisabled(childRule, itemIndex)"
@@ -298,10 +311,10 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormCreateOption, FormCreateRule, NormalizedFormCreateRule } from '../../../../types/typing'
-import type { FormCreateProviderContext } from '../../../core/src/provider'
-import { computed, ref, watch } from 'vue'
-import { applyControlRules, applyRuleProviders, getDefaultValue, isRuleDisabled, isRuleHidden, normalizeSubFormRules } from '../../../core/src'
+import type { FormCreateApi, FormCreateOption, FormCreateRule, NormalizedFormCreateRule } from '../../../../types/typing'
+import type { FormCreateProviderContext, FormCreateProviderState } from '../../../core/src/provider'
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
+import { applyControlRules, applyRuleProviders, getDefaultValue, isRuleDisabled, isRuleHidden, normalizeSubFormRules, resolveRuleFetchEffects } from '../../../core/src'
 import {
   INTERNAL_LAYOUT_TITLE_TYPE,
   getInputType,
@@ -313,10 +326,12 @@ import {
   isButtonType,
   isCalendarType,
   isCascaderType,
+  isColorPickerType,
   isDatePickerType,
   isDeptSelectType,
   isDictSelectType,
   isDividerType,
+  isHiddenFieldType,
   isHtmlType,
   isIframeType,
   isImageType,
@@ -327,6 +342,8 @@ import {
   isRichTextType,
   isSelectType,
   isSignatureType,
+  isSliderRangeType,
+  isSliderType,
   isSubFormType,
   isTagType,
   isTextareaType,
@@ -342,6 +359,7 @@ import FcButton from './button.vue'
 import FcCalendar from './calendar.vue'
 import FcCascader from './cascader.vue'
 import FcCheckbox from './checkbox.vue'
+import FcColorPicker from './colorPicker.vue'
 import { FcApiSelect, FcAreaSelect, FcDeptSelect, FcDictSelect, FcUserSelect } from './custom'
 import FcDatePicker from './datePicker.vue'
 import { FcAlert, FcDivider, FcHtml, FcImage, FcTag, FcTitle } from './display'
@@ -360,6 +378,7 @@ defineOptions({
 })
 
 const props = defineProps<{
+  api?: FormCreateApi
   disabled?: boolean
   modelValue?: any
   option?: FormCreateOption
@@ -373,6 +392,8 @@ const emit = defineEmits<{
 }>()
 
 const collapsedRows = ref<Record<number, boolean>>({})
+const providerStates = reactive<Record<string, Record<string, FormCreateProviderState>>>({})
+const EMPTY_PROVIDER_STATES: Record<string, FormCreateProviderState> = {}
 const baseChildRules = computed(() => normalizeSubFormRules(props.rule, parseRules, {
   createColumnTitleRule,
 }))
@@ -386,10 +407,27 @@ const collapseEnabled = computed(() => props.rule.props?.collapse === true || pr
 const defaultCollapsed = computed(() => props.rule.props?.defaultCollapsed === true || props.rule.props?.collapsed === true)
 const canRemove = computed(() => !props.disabled && rows.value.length > min.value)
 const canAdd = computed(() => !props.disabled && (!max.value || rows.value.length < max.value))
+let providerFetchVersion = 0
+let providerFetchTimer: ReturnType<typeof setTimeout> | undefined
 
 watch(
   () => [props.modelValue, baseChildRules.value, min.value, expand.value],
   () => ensureRows(),
+  { deep: true, immediate: true },
+)
+
+watch(
+  () => baseChildRules.value,
+  () => {
+    clearProviderStates()
+    scheduleProviderFetchEffects()
+  },
+  { deep: true },
+)
+
+watch(
+  () => [rows.value, props.option?.globalData],
+  () => scheduleProviderFetchEffects(),
   { deep: true, immediate: true },
 )
 
@@ -456,9 +494,27 @@ function getItemRules(itemIndex: number) {
 
 function getItemProviderContext(itemIndex: number): FormCreateProviderContext {
   return {
+    api: props.api,
     formData: rows.value[itemIndex] || {},
     option: props.option,
+    states: getItemProviderStates(itemIndex) || EMPTY_PROVIDER_STATES,
   }
+}
+
+function getItemProviderStates(itemIndex: number) {
+  return providerStates[getProviderStateKey(itemIndex)]
+}
+
+function ensureItemProviderStates(itemIndex: number) {
+  const key = String(itemIndex)
+  if (!providerStates[key]) {
+    providerStates[key] = {}
+  }
+  return providerStates[key]
+}
+
+function getProviderStateKey(itemIndex: number) {
+  return String(itemIndex)
 }
 
 function getItemFieldState(itemIndex: number, rule: NormalizedFormCreateRule) {
@@ -536,6 +592,7 @@ function removeItem(itemIndex: number) {
   const nextRows = [...rows.value]
   nextRows.splice(itemIndex, 1)
   removeCollapsedRow(itemIndex)
+  removeProviderRow(itemIndex)
   emitValue(nextRows)
 }
 
@@ -547,6 +604,7 @@ function moveItem(fromIndex: number, toIndex: number) {
   const [item] = nextRows.splice(fromIndex, 1)
   nextRows.splice(toIndex, 0, item)
   moveCollapsedRow(fromIndex, toIndex)
+  moveProviderRow(fromIndex, toIndex)
   emitValue(nextRows)
 }
 
@@ -578,6 +636,44 @@ function moveCollapsedRow(fromIndex: number, toIndex: number) {
     }
   })
   collapsedRows.value = nextCollapsed
+}
+
+function clearProviderStates() {
+  Object.keys(providerStates).forEach((key) => {
+    delete providerStates[key]
+  })
+}
+
+function removeProviderRow(removeIndex: number) {
+  const nextStates: Record<string, Record<string, FormCreateProviderState>> = {}
+  Object.entries(providerStates).forEach(([key, value]) => {
+    const index = Number(key)
+    if (!Number.isInteger(index) || index === removeIndex) {
+      return
+    }
+    nextStates[String(index > removeIndex ? index - 1 : index)] = value
+  })
+  clearProviderStates()
+  Object.assign(providerStates, nextStates)
+}
+
+function moveProviderRow(fromIndex: number, toIndex: number) {
+  const nextStates: Record<string, Record<string, FormCreateProviderState>> = {}
+  Object.entries(providerStates).forEach(([key, value]) => {
+    const index = Number(key)
+    if (!Number.isInteger(index)) {
+      return
+    }
+    if (index === fromIndex) {
+      nextStates[String(toIndex)] = value
+    } else if (index === toIndex) {
+      nextStates[String(fromIndex)] = value
+    } else {
+      nextStates[key] = value
+    }
+  })
+  clearProviderStates()
+  Object.assign(providerStates, nextStates)
 }
 
 function emitValue(value: Record<string, any>[]) {
@@ -634,6 +730,52 @@ function getLayoutGapHeight(rule: NormalizedFormCreateRule) {
   }
   return '24rpx'
 }
+
+function scheduleProviderFetchEffects() {
+  providerFetchVersion += 1
+  const version = providerFetchVersion
+  if (providerFetchTimer) {
+    clearTimeout(providerFetchTimer)
+  }
+  providerFetchTimer = setTimeout(() => {
+    providerFetchTimer = undefined
+    void refreshProviderFetchEffects(version)
+  }, 300)
+}
+
+async function refreshProviderFetchEffects(version: number) {
+  const results: Array<{
+    results: Awaited<ReturnType<typeof resolveRuleFetchEffects>>
+    states: Record<string, FormCreateProviderState>
+  }> = []
+  for (let itemIndex = 0; itemIndex < rows.value.length; itemIndex += 1) {
+    const states = ensureItemProviderStates(itemIndex)
+    const context = getItemProviderContext(itemIndex)
+    const controlResult = getItemControlResult(itemIndex)
+    const itemResults = await resolveRuleFetchEffects(controlResult.rules, context)
+    results.push({ results: itemResults, states })
+  }
+  if (version !== providerFetchVersion) {
+    return
+  }
+  results.forEach(({ results: itemResults, states }) => {
+    itemResults.forEach((result) => {
+      if (!states[result.fieldId]) {
+        states[result.fieldId] = {}
+      }
+      states[result.fieldId].fetchLoaded = true
+      states[result.fieldId].fetchPatch = result.patch
+    })
+  })
+}
+
+onBeforeUnmount(() => {
+  providerFetchVersion += 1
+  if (providerFetchTimer) {
+    clearTimeout(providerFetchTimer)
+    providerFetchTimer = undefined
+  }
+})
 </script>
 
 <style lang="scss" scoped>

@@ -12,7 +12,9 @@
     >
       <wd-cell-group :border="formOption.form?.border !== false">
         <template v-for="rule in visibleRules" :key="rule.__fcId">
-          <view v-if="isLayoutTitleType(rule)" class="fc-wot__layout-title">
+          <view v-if="isHiddenFieldType(rule)" style="display: none" />
+
+          <view v-else-if="isLayoutTitleType(rule)" class="fc-wot__layout-title">
             {{ rule.title }}
           </view>
 
@@ -226,6 +228,15 @@
             @update:model-value="handleUpdate(rule, $event)"
           />
 
+          <FcColorPicker
+            v-else-if="isColorPickerType(rule)"
+            :model-value="getValue(rule)"
+            :rule="rule"
+            :title-width="titleWidth"
+            :disabled="isDisabled(rule)"
+            @update:model-value="handleUpdate(rule, $event)"
+          />
+
           <FcRadio
             v-else-if="rule.type === 'radio'"
             :model-value="getValue(rule)"
@@ -293,7 +304,7 @@
           </wd-form-item>
 
           <wd-form-item
-            v-else-if="rule.type === 'slider'"
+            v-else-if="isSliderType(rule)"
             :title="rule.title"
             :title-width="titleWidth"
             :prop="rule.field"
@@ -303,6 +314,7 @@
               :model-value="getValue(rule)"
               :disabled="isDisabled(rule)"
               v-bind="getRuleProps(rule)"
+              :range="isSliderRangeType(rule)"
               @change="handleUpdate(rule, $event)"
             />
           </wd-form-item>
@@ -320,6 +332,7 @@
             v-else-if="isSubFormType(rule)"
             :model-value="getValue(rule)"
             :rule="rule"
+            :api="api"
             :option="formOption"
             :title-width="titleWidth"
             :disabled="isDisabled(rule)"
@@ -342,14 +355,11 @@
             :title="rule.title || rule.type"
             :title-width="titleWidth"
             :prop="rule.field"
+            layout="vertical"
           >
-            <wd-input
-              :model-value="getValue(rule)"
-              :placeholder="getPlaceholder(rule)"
-              :disabled="isDisabled(rule)"
-              clearable
-              @update:model-value="handleUpdate(rule, $event)"
-            />
+            <view class="fc-wot__unsupported">
+              暂不支持「{{ rule.title || rule.type }}」组件
+            </view>
           </wd-form-item>
         </template>
 
@@ -393,6 +403,7 @@ import {
   FcCalendar,
   FcCascader,
   FcCheckbox,
+  FcColorPicker,
   FcDatePicker,
   FcDeptSelect,
   FcDictSelect,
@@ -425,10 +436,12 @@ import {
   isButtonType,
   isCalendarType,
   isCascaderType,
+  isColorPickerType,
   isDatePickerType,
   isDeptSelectType,
   isDictSelectType,
   isDividerType,
+  isHiddenFieldType,
   isHtmlType,
   isIframeType,
   isImageType,
@@ -439,6 +452,8 @@ import {
   isRichTextType,
   isSelectType,
   isSignatureType,
+  isSliderRangeType,
+  isSliderType,
   isSubFormType,
   isTagType,
   isTextareaType,
@@ -480,13 +495,17 @@ const formData = ref<Record<string, any>>({})
 const initialFormValues = ref<Record<string, any>>({})
 const fieldStates = reactive<Record<string, FormCreateFieldState>>({})
 const providerStates = reactive<Record<string, FormCreateProviderState>>({})
+const apiRulePatches = reactive<Record<string, Partial<NormalizedFormCreateRule>>>({})
 let api: FormCreateApi
 
 const formOption = computed(() => getConfig(props.option))
+const globalDisabled = computed(() => props.disabled || props.readonly || props.preview)
 const titleWidth = computed(() => getTitleWidth(formOption.value))
 const parsedRules = computed(() => parseRules(props.rule))
 const baseRules = computed(() => normalizeRules(parsedRules.value))
-const controlResult = computed(() => applyControlRules(baseRules.value, formData.value))
+const patchedBaseRules = computed(() => applyApiRulePatches(baseRules.value))
+const controlResult = computed(() => applyControlRules(patchedBaseRules.value, formData.value))
+const providerSourceRules = computed(() => applyApiRulePatches(controlResult.value.rules))
 const providerContext: FormCreateProviderContext = {
   get api() {
     return api
@@ -499,7 +518,7 @@ const providerContext: FormCreateProviderContext = {
   },
   states: providerStates,
 }
-const rules = computed(() => applyRuleProviders(controlResult.value.rules, providerContext))
+const rules = computed(() => applyRuleProviders(providerSourceRules.value, providerContext))
 const visibleRules = computed(() => rules.value.filter(rule => !isRuleHidden(rule, fieldStates[rule.field || ''])))
 const formSchema = computed(() => createFormSchema(() => rules.value, fieldStates, parseRules, providerContext))
 
@@ -527,8 +546,7 @@ function emitChange(field?: string, value?: any) {
 }
 
 function isDisabled(rule: NormalizedFormCreateRule) {
-  const globalDisabled = props.disabled || props.readonly || props.preview || !!rule.props?.disabled
-  return isRuleDisabled(globalDisabled, fieldStates[rule.field || ''], rule)
+  return isRuleDisabled(globalDisabled.value || !!rule.props?.disabled, fieldStates[rule.field || ''], rule)
 }
 
 function formatDisplayValue(value: any) {
@@ -552,12 +570,23 @@ function getLayoutGapHeight(rule: NormalizedFormCreateRule) {
   return '24rpx'
 }
 
+function applyApiRulePatches(nextRules: NormalizedFormCreateRule[]) {
+  return nextRules.map((rule) => {
+    const patch = apiRulePatches[rule.__fcId]
+    return patch ? deepMerge<NormalizedFormCreateRule>(rule, patch) : rule
+  })
+}
+
 api = createApi({
+  disabled: globalDisabled,
   emitChange: () => emitChange(),
   fieldStates,
   formData,
   formRef,
+  initialFormData: initialFormValues,
   option: formOption,
+  refresh: () => scheduleProviderFetchEffects(),
+  rulePatches: apiRulePatches,
   rules,
 })
 
@@ -630,7 +659,7 @@ function scheduleProviderFetchEffects() {
 
 async function refreshProviderFetchEffects() {
   const version = ++providerFetchVersion
-  const results = await resolveRuleFetchEffects(controlResult.value.rules, providerContext)
+  const results = await resolveRuleFetchEffects(providerSourceRules.value, providerContext)
   if (version !== providerFetchVersion) {
     return
   }

@@ -4,16 +4,19 @@ import alias from './alias'
 export const INTERNAL_LAYOUT_TITLE_TYPE = '__fcLayoutTitle'
 export const INTERNAL_LAYOUT_GAP_TYPE = '__fcLayoutGap'
 
-const INPUT_TYPES = new Set(['input', 'Input', 'field'])
+const INPUT_TYPES = new Set(['input', 'Input', 'field', 'password', 'url', 'email', 'search', 'text'])
+const HIDDEN_TYPES = new Set(['hidden', 'Hidden'])
 const TEXTAREA_TYPES = new Set(['textarea'])
 const NUMBER_TYPES = new Set(['inputNumber', 'InputNumber', 'number'])
 const DATE_TYPES = new Set(['datePicker', 'DatePicker'])
-const TIME_TYPES = new Set(['timePicker', 'TimePicker'])
+const TIME_TYPES = new Set(['timePicker', 'TimePicker', 'time'])
 const BUTTON_TYPES = new Set(['button', 'Button', 'elButton', 'ElButton', 'el-button'])
 const UPLOAD_TYPES = new Set(['upload', 'uploader', 'uploadFile', 'uploadImage', 'uploadImages', 'FileUpload', 'ImageUpload', 'ImagesUpload', 'UploadFile', 'UploadImg', 'UploadImgs'])
-const SELECT_TYPES = new Set(['select'])
+const SELECT_TYPES = new Set(['select', 'selectMultiple'])
+const SLIDER_TYPES = new Set(['slider', 'sliderRange'])
+const COLOR_PICKER_TYPES = new Set(['colorPicker', 'ColorPicker', 'elColorPicker', 'ElColorPicker', 'color-picker'])
 const CASCADER_TYPES = new Set(['cascader', 'Cascader', 'elCascader', 'ElCascader'])
-const CALENDAR_TYPES = new Set(['calendar', 'Calendar', 'elCalendar', 'ElCalendar'])
+const CALENDAR_TYPES = new Set(['calendar', 'Calendar', 'elCalendar', 'ElCalendar', 'date', 'datetime', 'month', 'week', 'dateRange', 'daterange', 'datetimeRange', 'datetimerange', 'monthRange', 'monthrange', 'weekRange', 'weekrange'])
 const TREE_SELECT_TYPES = new Set(['treeSelect', 'TreeSelect', 'treeSelectMultiple', 'tree', 'Tree'])
 const TRANSFER_TYPES = new Set(['transfer', 'Transfer', 'elTransfer', 'ElTransfer'])
 const SUB_FORM_TYPES = new Set(['group', 'Group', 'fcGroup', 'FcGroup', 'array', 'Array', 'tableForm', 'subTable', 'fcTableForm'])
@@ -34,6 +37,10 @@ export function getWotType(rule: NormalizedFormCreateRule) {
 
 export function isInputType(rule: NormalizedFormCreateRule) {
   return INPUT_TYPES.has(rule.type)
+}
+
+export function isHiddenFieldType(rule: NormalizedFormCreateRule) {
+  return HIDDEN_TYPES.has(rule.type)
 }
 
 export function isTextareaType(rule: NormalizedFormCreateRule) {
@@ -124,6 +131,18 @@ export function isSelectType(rule: NormalizedFormCreateRule) {
   return SELECT_TYPES.has(rule.type)
 }
 
+export function isSliderType(rule: NormalizedFormCreateRule) {
+  return SLIDER_TYPES.has(rule.type)
+}
+
+export function isSliderRangeType(rule: NormalizedFormCreateRule) {
+  return rule.type === 'sliderRange' || rule.props?.range === true
+}
+
+export function isColorPickerType(rule: NormalizedFormCreateRule) {
+  return COLOR_PICKER_TYPES.has(rule.type)
+}
+
 export function isTreeSelectType(rule: NormalizedFormCreateRule) {
   return TREE_SELECT_TYPES.has(rule.type)
 }
@@ -149,7 +168,14 @@ export function isDeptSelectType(rule: NormalizedFormCreateRule) {
 }
 
 export function getInputType(rule: NormalizedFormCreateRule) {
-  return rule.props?.type || 'text'
+  const typeMap: Record<string, string> = {
+    email: 'email',
+    password: 'password',
+    search: 'search',
+    text: 'text',
+    url: 'url',
+  }
+  return rule.props?.type || typeMap[rule.type] || 'text'
 }
 
 export function getPlaceholder(rule: NormalizedFormCreateRule, prefix: '请输入' | '请选择' = '请输入') {

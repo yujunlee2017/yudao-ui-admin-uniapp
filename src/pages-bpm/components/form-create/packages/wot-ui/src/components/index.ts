@@ -2,6 +2,7 @@ import FcButton from './button.vue'
 import FcCalendar from './calendar.vue'
 import FcCascader from './cascader.vue'
 import FcCheckbox from './checkbox.vue'
+import FcColorPicker from './colorPicker.vue'
 import { FcApiSelect, FcAreaSelect, FcDeptSelect, FcDictSelect, FcUserSelect } from './custom'
 import FcDatePicker from './datePicker.vue'
 import { FcAlert, FcDivider, FcHtml, FcImage, FcTag, FcTitle } from './display'
@@ -24,6 +25,7 @@ export {
   FcCalendar,
   FcCascader,
   FcCheckbox,
+  FcColorPicker,
   FcDatePicker,
   FcDeptSelect,
   FcDictSelect,

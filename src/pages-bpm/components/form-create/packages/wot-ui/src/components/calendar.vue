@@ -43,7 +43,7 @@ const emit = defineEmits<{
 const visible = ref(false)
 
 const placeholder = computed(() => getPlaceholder(props.rule, '请选择'))
-const calendarType = computed(() => normalizeCalendarType(props.rule.props?.type))
+const calendarType = computed(() => normalizeCalendarType(props.rule.props?.type || props.rule.type))
 const valueFormat = computed(() => props.rule.props?.valueFormat || props.rule.props?.format)
 const calendarValue = computed(() => normalizeCalendarValue(props.modelValue))
 const minDate = computed(() => normalizeTimestamp(props.rule.props?.minDate || props.rule.props?.min, valueFormat.value))

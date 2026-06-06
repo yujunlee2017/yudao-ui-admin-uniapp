@@ -1,9 +1,21 @@
 import type { FormCreateApi, FormCreateApiContext } from '../../../types/typing'
 import { FORM_FIELD_PERMISSION } from '../../../types/typing'
+import { deepMerge, hasOwn } from '../../utils/src'
 import { fetchProviderData, getProviderData, translate } from './provider'
+import { getDefaultValue, isRuleDisabled, isRuleHidden } from './utils'
 
 export function createApi(ctx: FormCreateApiContext): FormCreateApi {
-  const setFieldState = (field: string | undefined, key: 'disabled' | 'hidden', value: boolean) => {
+  const normalizeFields = (fields?: string | string[]) => {
+    if (fields === undefined) {
+      return api.fields()
+    }
+    return Array.isArray(fields) ? fields : [fields]
+  }
+
+  const findRule = (field: string) =>
+    ctx.rules.value.find(rule => rule.field === field || rule.name === field || rule.__fcId === field)
+
+  const setFieldState = (field: string | undefined, key: 'disabled' | 'hidden' | 'required', value: boolean) => {
     if (field) {
       if (!ctx.fieldStates[field]) {
         ctx.fieldStates[field] = {}
@@ -22,12 +34,56 @@ export function createApi(ctx: FormCreateApiContext): FormCreateApi {
     })
   }
 
+  const ensureGlobalData = () => {
+    const option = ctx.option?.value
+    if (!option) {
+      return undefined
+    }
+    if (!option.globalData) {
+      option.globalData = {}
+    }
+    return option.globalData
+  }
+
   const api: FormCreateApi = {
     async validate() {
       if (!ctx.formRef.value) {
         return { valid: true, errors: [] }
       }
       return ctx.formRef.value.validate()
+    },
+    async validateField(field, callback) {
+      const result = ctx.formRef.value
+        ? await ctx.formRef.value.validate(field)
+        : { valid: true, errors: [] }
+      callback?.(result)
+      return result
+    },
+    async validateFields(fields, callback) {
+      const result = ctx.formRef.value
+        ? await ctx.formRef.value.validate(Array.isArray(fields) ? fields : [fields])
+        : { valid: true, errors: [] }
+      callback?.(result)
+      return result
+    },
+    clearValidateState() {
+      ctx.formRef.value?.reset()
+    },
+    resetFields(fields) {
+      const nextData = { ...ctx.formData.value }
+      normalizeFields(fields).forEach((field) => {
+        const rule = findRule(field)
+        if (!rule?.field) {
+          return
+        }
+        nextData[rule.field] = ctx.initialFormData?.value && hasOwn(ctx.initialFormData.value, rule.field)
+          ? ctx.initialFormData.value[rule.field]
+          : getDefaultValue(rule)
+      })
+      ctx.formData.value = nextData
+      ctx.formRef.value?.reset()
+      ctx.emitChange()
+      ctx.refresh?.()
     },
     formData() {
       return { ...ctx.formData.value }
@@ -37,6 +93,50 @@ export function createApi(ctx: FormCreateApiContext): FormCreateApi {
     },
     getValue(field) {
       return ctx.formData.value[field]
+    },
+    fields() {
+      return ctx.rules.value.map(rule => rule.field).filter(Boolean) as string[]
+    },
+    getRule(field) {
+      return findRule(field)
+    },
+    updateRule(field, rule) {
+      const target = findRule(field)
+      if (!target || !ctx.rulePatches) {
+        return
+      }
+      ctx.rulePatches[target.__fcId] = {
+        ...rule,
+        __fcId: target.__fcId,
+        __originType: target.__originType,
+      }
+      if (target.field && hasOwn(rule, 'value')) {
+        ctx.formData.value[target.field] = rule.value
+        ctx.emitChange()
+      }
+      ctx.refresh?.()
+    },
+    mergeRule(field, rule) {
+      const target = findRule(field)
+      if (!target || !ctx.rulePatches) {
+        return
+      }
+      ctx.rulePatches[target.__fcId] = {
+        ...deepMerge(ctx.rulePatches[target.__fcId], rule),
+        __fcId: target.__fcId,
+        __originType: target.__originType,
+      } as Partial<typeof target>
+      if (target.field && hasOwn(rule, 'value')) {
+        ctx.formData.value[target.field] = rule.value
+        ctx.emitChange()
+      }
+      ctx.refresh?.()
+    },
+    refresh() {
+      ctx.refresh?.()
+    },
+    sync() {
+      ctx.refresh?.()
     },
     fetch(option) {
       return fetchProviderData(option, {
@@ -52,22 +152,92 @@ export function createApi(ctx: FormCreateApiContext): FormCreateApi {
         option: ctx.option?.value,
       }, defaultValue)
     },
-    setValue(values) {
+    async getGlobalData(name) {
+      const source = ctx.option?.value.globalData?.[name]
+      if (source?.type === 'fetch') {
+        return api.fetch({ key: name })
+      }
+      return api.getData(`$globalData.${name}`)
+    },
+    setGlobalData(name, value) {
+      const globalData = ensureGlobalData()
+      if (!globalData) {
+        return
+      }
+      globalData[name] = { type: 'static', data: value }
+      ctx.refresh?.()
+    },
+    setGlobalVar(name, value) {
+      const globalData = ensureGlobalData()
+      if (!globalData) {
+        return
+      }
+      const vars = globalData.$var?.data && typeof globalData.$var.data === 'object'
+        ? globalData.$var.data
+        : {}
+      vars[name] = value
+      globalData.$var = { type: 'static', data: vars }
+      ctx.refresh?.()
+    },
+    getGlobalEvent(name) {
+      const event = ctx.option?.value.globalEvent?.[name]
+      if (typeof event === 'function') {
+        return event
+      }
+      if (event && typeof event.handle === 'function') {
+        return event.handle
+      }
+      return undefined
+    },
+    emitGlobalEvent(name, ...args) {
+      return api.getGlobalEvent(name)?.(...args)
+    },
+    setValue(values, value) {
+      const nextValues = typeof values === 'string' ? { [values]: value } : values
       ctx.formData.value = {
         ...ctx.formData.value,
-        ...values,
+        ...nextValues,
       }
       ctx.emitChange()
+      ctx.refresh?.()
     },
     coverValue(values) {
       ctx.formData.value = { ...values }
       ctx.emitChange()
+      ctx.refresh?.()
     },
     disabled(status, field) {
       setFieldState(field, 'disabled', status)
     },
+    disabledStatus(field) {
+      const rule = findRule(field)
+      return rule ? isRuleDisabled(!!ctx.disabled?.value, rule.field ? ctx.fieldStates[rule.field] : undefined, rule) : undefined
+    },
+    display(status, field) {
+      setFieldState(field, 'hidden', !status)
+    },
+    displayStatus(field) {
+      const hidden = api.hiddenStatus(field)
+      return hidden === undefined ? undefined : !hidden
+    },
     hidden(status, field) {
       setFieldState(field, 'hidden', status)
+    },
+    hiddenStatus(field) {
+      const rule = findRule(field)
+      return rule ? isRuleHidden(rule, rule.field ? ctx.fieldStates[rule.field] : undefined) : undefined
+    },
+    required(status, field) {
+      setFieldState(field, 'required', status)
+    },
+    setEffect(field, attr, value) {
+      const effectKey = attr.startsWith('$') ? attr.slice(1) : attr
+      api.mergeRule(field, {
+        [`$${effectKey}`]: value,
+        effect: {
+          [effectKey]: value,
+        },
+      })
     },
     t(id, params) {
       return translate(id, params, {

@@ -114,6 +114,9 @@ export function getProviderData(id: string, context: FormCreateProviderContext =
   if (id.startsWith('$globalData.')) {
     return getGlobalData(id.slice('$globalData.'.length), context, defaultValue)
   }
+  if (id.startsWith('$var.')) {
+    return getGlobalVar(id.slice('$var.'.length), context, defaultValue)
+  }
   if (id.startsWith('$t.')) {
     return translate(id.slice('$t.'.length), undefined, context) || defaultValue
   }
@@ -343,8 +346,11 @@ function parseFetchBody(body: any, option: FormCreateFetchOption, rule?: FormCre
 
 function getGlobalData(id: string, context: FormCreateProviderContext, defaultValue?: any) {
   const source = getGlobalDataSource(id, context)
-  if (!source) {
+  if (source === undefined || source === null) {
     return defaultValue
+  }
+  if (typeof source !== 'object') {
+    return source
   }
   const [, ...paths] = id.split('.')
   if (source.type === 'static') {
@@ -354,6 +360,20 @@ function getGlobalData(id: string, context: FormCreateProviderContext, defaultVa
     return getByPath(source.data ?? source.result, paths.join('.'), defaultValue)
   }
   return getByPath(source, paths.join('.'), defaultValue)
+}
+
+function getGlobalVar(id: string, context: FormCreateProviderContext, defaultValue?: any) {
+  const source = context.option?.globalData?.$var
+  if (source === undefined || source === null) {
+    return defaultValue
+  }
+  if (source.type === 'static') {
+    return getByPath(source.data ?? source.result, id, defaultValue)
+  }
+  if (typeof source === 'object' && ('data' in source || 'result' in source)) {
+    return getByPath(source.data ?? source.result, id, defaultValue)
+  }
+  return getByPath(source, id, defaultValue)
 }
 
 function getGlobalDataSource(id: string, context: FormCreateProviderContext) {

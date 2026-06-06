@@ -115,6 +115,7 @@ export interface FormCreateOption {
   submitBtn?: boolean | Record<string, any>
   resetBtn?: boolean | Record<string, any>
   formData?: Record<string, any>
+  globalEvent?: Record<string, ((...args: any[]) => any) | { handle?: (...args: any[]) => any }>
   globalData?: Record<string, any>
   messages?: Record<string, string>
   t?: (id: string, params?: Record<string, any>) => string | undefined
@@ -144,15 +145,37 @@ export interface FormCreateManager {
 
 export interface FormCreateApi {
   validate: () => Promise<{ valid: boolean, errors: { prop: string, message: string }[] }>
+  validateField: (field: string, callback?: (result: { valid: boolean, errors: { prop: string, message: string }[] }) => void) => Promise<{ valid: boolean, errors: { prop: string, message: string }[] }>
+  validateFields: (fields: string | string[], callback?: (result: { valid: boolean, errors: { prop: string, message: string }[] }) => void) => Promise<{ valid: boolean, errors: { prop: string, message: string }[] }>
+  /** Wot UI Form 只暴露整表 reset，fields 参数仅为兼容 form-create 调用签名。 */
+  clearValidateState: (fields?: string | string[]) => void
+  resetFields: (fields?: string | string[]) => void
   formData: () => Record<string, any>
   getFormData: () => Record<string, any>
   getValue: (field: string) => any
+  fields: () => string[]
+  getRule: (field: string) => NormalizedFormCreateRule | undefined
+  updateRule: (field: string, rule: Partial<FormCreateRule>) => void
+  mergeRule: (field: string, rule: Partial<FormCreateRule>) => void
+  refresh: () => void
+  sync: (field?: string | string[]) => void
   fetch: (option: FormCreateFetchOption) => Promise<any>
   getData: (id: string, defaultValue?: any) => any
-  setValue: (values: Record<string, any>) => void
+  getGlobalData: (name: string) => Promise<any>
+  setGlobalData: (name: string, value: any) => void
+  setGlobalVar: (name: string, value: any) => void
+  getGlobalEvent: (name: string) => ((...args: any[]) => any) | undefined
+  emitGlobalEvent: (name: string, ...args: any[]) => any
+  setValue: (values: Record<string, any> | string, value?: any) => void
   coverValue: (values: Record<string, any>) => void
   disabled: (status: boolean, field?: string) => void
+  disabledStatus: (field: string) => boolean | undefined
+  display: (status: boolean, field?: string) => void
+  displayStatus: (field: string) => boolean | undefined
   hidden: (status: boolean, field?: string) => void
+  hiddenStatus: (field: string) => boolean | undefined
+  required: (status: boolean, field?: string) => void
+  setEffect: (field: string, attr: string, value: any) => void
   t: (id: string, params?: Record<string, any>) => string | undefined
   setFieldPermission: (field: string, permission: FormFieldPermission | string) => void
 }
@@ -160,8 +183,12 @@ export interface FormCreateApi {
 export interface FormCreateApiContext {
   formRef: Ref<FormInstance | undefined>
   formData: Ref<Record<string, any>>
+  disabled?: Readonly<Ref<boolean>>
+  initialFormData?: Readonly<Ref<Record<string, any>>>
   option?: Readonly<Ref<FormCreateOption>>
   rules: Readonly<Ref<NormalizedFormCreateRule[]>>
+  rulePatches?: Record<string, Partial<NormalizedFormCreateRule>>
   fieldStates: Record<string, FormCreateFieldState>
   emitChange: () => void
+  refresh?: () => void
 }

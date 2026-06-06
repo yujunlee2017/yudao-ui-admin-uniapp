@@ -46,6 +46,7 @@ export function normalizeOptions(options?: FormCreateOptionItem[]) {
 export function getDefaultValueByType(type: string): FormCreateValue {
   switch (type) {
     case 'checkbox':
+    case 'selectMultiple':
     case 'upload':
     case 'uploadFile':
     case 'uploadImage':
@@ -80,6 +81,8 @@ export function getDefaultValueByType(type: string): FormCreateValue {
     case 'rate':
     case 'slider':
       return 0
+    case 'sliderRange':
+      return [0, 100]
     default:
       return ''
   }
@@ -107,8 +110,11 @@ export function createInitialFormData(
 
 export function getDefaultValue(rule: NormalizedFormCreateRule): FormCreateValue {
   const isMultiple = rule.type === 'treeSelectMultiple' || rule.props?.multiple || rule.props?.mode === 'multiple'
-  if ((rule.type === 'select' || rule.type.endsWith('Select') || rule.type === 'treeSelectMultiple') && isMultiple) {
+  if ((rule.type === 'select' || rule.type === 'selectMultiple' || rule.type.endsWith('Select') || rule.type === 'treeSelectMultiple') && isMultiple) {
     return []
+  }
+  if (rule.type === 'sliderRange' || rule.props?.range === true) {
+    return [rule.props?.min ?? 0, rule.props?.max ?? 100]
   }
   if (rule.type === 'cascader' || rule.type === 'Cascader') {
     const emitPath = rule.props?.emitPath ?? rule.props?.props?.emitPath
@@ -116,8 +122,8 @@ export function getDefaultValue(rule: NormalizedFormCreateRule): FormCreateValue
       return []
     }
   }
-  if (rule.type === 'calendar' || rule.type === 'Calendar') {
-    const calendarType = String(rule.props?.type || 'date').toLowerCase()
+  if (rule.type === 'calendar' || rule.type === 'Calendar' || ['date', 'datetime', 'month', 'week', 'dateRange', 'daterange', 'datetimeRange', 'datetimerange', 'monthRange', 'monthrange', 'weekRange', 'weekrange'].includes(rule.type)) {
+    const calendarType = String(rule.props?.type || rule.type || 'date').toLowerCase()
     if (calendarType === 'dates' || calendarType === 'multiple' || calendarType.includes('range')) {
       return []
     }
