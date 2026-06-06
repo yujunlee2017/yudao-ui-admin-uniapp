@@ -89,7 +89,7 @@
               <wd-input-number
                 v-bind="getRuleProps(childRule)"
                 :model-value="getInputNumberValue(itemIndex, childRule.field)"
-                :min="childRule.props?.min ?? 0"
+                :min="childRule.props?.min"
                 :max="childRule.props?.max"
                 :step="childRule.props?.step || 1"
                 :allow-null="childRule.props?.allowNull ?? true"
@@ -374,7 +374,6 @@ const baseChildRules = computed(() => normalizeSubFormRules(props.rule, parseRul
   createColumnTitleRule,
 }))
 const rows = computed(() => normalizeRows(props.modelValue))
-const itemControlResults = computed(() => rows.value.map(row => applyControlRules(baseChildRules.value, row || {})))
 const childTitleWidth = computed(() => props.rule.props?.childTitleWidth || props.rule.props?.labelWidth || props.titleWidth || '180rpx')
 const min = computed(() => normalizeCount(props.rule.props?.min))
 const max = computed(() => normalizeCount(props.rule.props?.max))
@@ -446,13 +445,35 @@ function fillDefaultRow(row: Record<string, any>, rules: NormalizedFormCreateRul
 }
 
 function getItemRules(itemIndex: number) {
-  const result = itemControlResults.value[itemIndex]
+  const result = getItemControlResult(itemIndex)
   const rules = result?.rules || baseChildRules.value
   return rules.filter(rule => !isRuleHidden(rule, getItemFieldState(itemIndex, rule)))
 }
 
 function getItemFieldState(itemIndex: number, rule: NormalizedFormCreateRule) {
-  return rule.field ? itemControlResults.value[itemIndex]?.fieldStates[rule.field] : undefined
+  return rule.field ? getItemControlResult(itemIndex)?.fieldStates[rule.field] : undefined
+}
+
+let controlCacheRules: NormalizedFormCreateRule[] | undefined
+let rowControlCache = new WeakMap<Record<string, any>, ReturnType<typeof applyControlRules>>()
+
+function getItemControlResult(itemIndex: number) {
+  const rules = baseChildRules.value
+  if (controlCacheRules !== rules) {
+    controlCacheRules = rules
+    rowControlCache = new WeakMap<Record<string, any>, ReturnType<typeof applyControlRules>>()
+  }
+  const row = rows.value[itemIndex]
+  if (!row) {
+    return applyControlRules(rules, {})
+  }
+  const cached = rowControlCache.get(row)
+  if (cached) {
+    return cached
+  }
+  const result = applyControlRules(rules, row)
+  rowControlCache.set(row, result)
+  return result
 }
 
 function getRenderRule(rule: NormalizedFormCreateRule, itemIndex: number): NormalizedFormCreateRule {
@@ -554,7 +575,7 @@ function emitValue(value: Record<string, any>[]) {
 }
 
 function isChildDisabled(rule: NormalizedFormCreateRule, itemIndex: number) {
-  return isRuleDisabled(!!props.disabled || !!rule.props?.disabled, getItemFieldState(itemIndex, rule))
+  return isRuleDisabled(!!props.disabled || !!rule.props?.disabled, getItemFieldState(itemIndex, rule), rule)
 }
 
 function toggleItem(itemIndex: number) {

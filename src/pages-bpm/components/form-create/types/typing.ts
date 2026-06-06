@@ -31,7 +31,7 @@ export interface FormCreateValidateRule {
 
 export interface FormCreateControl {
   value?: any
-  condition?: string
+  condition?: '==' | '!=' | '<>' | '>' | '>=' | '<' | '<=' | 'in' | 'notIn' | 'on' | 'notOn' | 'between' | 'notBetween' | 'empty' | 'notEmpty' | 'pattern' | string
   method?: 'hidden' | 'display' | 'show' | 'if' | 'disabled' | 'enabled' | 'required' | string
   rule?: Array<FormCreateRule | string>
   append?: string

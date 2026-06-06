@@ -129,12 +129,32 @@ export function getAllowedFieldSet(rules: FormCreateRule[]) {
   return new Set(rules.map(rule => rule.field).filter(Boolean) as string[])
 }
 
-export function isRuleHidden(rule: FormCreateRule, state?: { controlHidden?: boolean, hidden?: boolean }) {
-  return state?.hidden === true || state?.controlHidden === true || rule.hidden === true || rule.display === false
+export function getRuleEffect(rule: FormCreateRule, name: string) {
+  const effectKey = `$${name}`
+  if (hasOwn(rule, effectKey)) {
+    return rule[effectKey]
+  }
+  if (rule.effect && hasOwn(rule.effect, name)) {
+    return rule.effect[name]
+  }
+  return undefined
 }
 
-export function isRuleDisabled(globalDisabled: boolean, state?: { controlDisabled?: boolean, disabled?: boolean }) {
-  return globalDisabled || state?.disabled === true || state?.controlDisabled === true
+export function isRuleHidden(rule: FormCreateRule, state?: { controlHidden?: boolean, hidden?: boolean }) {
+  return state?.hidden === true
+    || state?.controlHidden === true
+    || rule.hidden === true
+    || rule.display === false
+    || getRuleEffect(rule, 'hidden') === true
+    || getRuleEffect(rule, 'display') === false
+    || getRuleEffect(rule, 'show') === false
+}
+
+export function isRuleDisabled(globalDisabled: boolean, state?: { controlDisabled?: boolean, disabled?: boolean }, rule?: FormCreateRule) {
+  return globalDisabled
+    || state?.disabled === true
+    || state?.controlDisabled === true
+    || (rule ? getRuleEffect(rule, 'disabled') === true : false)
 }
 
 export { isEmptyValue }

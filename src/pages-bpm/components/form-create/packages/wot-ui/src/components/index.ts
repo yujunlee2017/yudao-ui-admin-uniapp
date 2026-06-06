@@ -14,7 +14,6 @@ import FcSubForm from './subForm.vue'
 import FcTimePicker from './timePicker.vue'
 import FcTransfer from './transfer.vue'
 import FcTreeSelect from './treeSelect.vue'
-import FcUnsupported from './unsupported.vue'
 import FcUploader from './uploader.vue'
 
 export {
@@ -42,7 +41,6 @@ export {
   FcTitle,
   FcTransfer,
   FcTreeSelect,
-  FcUnsupported,
   FcUploader,
   FcUserSelect,
 }

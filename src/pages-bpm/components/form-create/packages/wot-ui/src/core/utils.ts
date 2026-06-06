@@ -27,7 +27,6 @@ const IFRAME_TYPES = new Set(['iframe', 'Iframe', 'IframeComponent', 'frame', 'F
 const RICH_TEXT_TYPES = new Set(['Editor', 'editor', 'Tinymce', 'tinymce', 'wangEditor', 'WangEditor', 'richText', 'RichText'])
 const SIGNATURE_TYPES = new Set(['signature', 'Signature', 'signaturePad', 'SignaturePad', 'sign', 'Sign'])
 const AREA_SELECT_TYPES = new Set(['AreaSelect'])
-const UNSUPPORTED_INTERACTION_TYPES = new Set<string>()
 
 export function getWotType(rule: NormalizedFormCreateRule) {
   return alias[rule.type as keyof typeof alias] || rule.type
@@ -111,10 +110,6 @@ export function isRichTextType(rule: NormalizedFormCreateRule) {
 
 export function isSignatureType(rule: NormalizedFormCreateRule) {
   return SIGNATURE_TYPES.has(rule.type)
-}
-
-export function isUnsupportedInteractionType(rule: NormalizedFormCreateRule) {
-  return UNSUPPORTED_INTERACTION_TYPES.has(rule.type)
 }
 
 export function isLayoutTitleType(rule: NormalizedFormCreateRule) {

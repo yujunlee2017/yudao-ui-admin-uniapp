@@ -126,7 +126,7 @@
             <wd-input-number
               v-bind="getRuleProps(rule)"
               :model-value="getInputNumberValue(rule)"
-              :min="rule.props?.min ?? 0"
+              :min="rule.props?.min"
               :max="rule.props?.max"
               :step="rule.props?.step || 1"
               :allow-null="rule.props?.allowNull ?? true"
@@ -325,12 +325,6 @@
             @update:model-value="handleUpdate(rule, $event)"
           />
 
-          <FcUnsupported
-            v-else-if="isUnsupportedInteractionType(rule)"
-            :rule="rule"
-            :title-width="titleWidth"
-          />
-
           <wd-form-item
             v-else-if="rule.type === 'span'"
             :title="rule.title"
@@ -412,7 +406,6 @@ import {
   FcTitle,
   FcTransfer,
   FcTreeSelect,
-  FcUnsupported,
   FcUploader,
   FcUserSelect,
 } from './components'
@@ -449,7 +442,6 @@ import {
   isTitleType,
   isTransferType,
   isTreeSelectType,
-  isUnsupportedInteractionType,
   isUploadType,
   isUserSelectType,
 } from './core/utils'
@@ -564,7 +556,7 @@ function emitChange(field?: string, value?: any) {
 
 function isDisabled(rule: NormalizedFormCreateRule) {
   const globalDisabled = props.disabled || props.readonly || props.preview || !!rule.props?.disabled
-  return isRuleDisabled(globalDisabled, fieldStates[rule.field || ''])
+  return isRuleDisabled(globalDisabled, fieldStates[rule.field || ''], rule)
 }
 
 function formatDisplayValue(value: any) {

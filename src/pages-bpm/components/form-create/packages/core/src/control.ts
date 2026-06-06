@@ -4,7 +4,7 @@ import type {
   FormCreateRule,
   NormalizedFormCreateRule,
 } from '../../../types/typing'
-import { normalizeRules } from './utils'
+import { isEmptyValue, normalizeRules } from './utils'
 
 type ControlFieldState = Pick<FormCreateFieldState, 'controlDisabled' | 'controlHidden' | 'controlRequired'>
 
@@ -154,6 +154,7 @@ function isControlMatched(control: FormCreateControl, value: any) {
 function compareValue(value: any, compare: any, condition: string) {
   switch (condition) {
     case '!=':
+    case '<>':
       return !isEqual(value, compare)
     case '>':
       return value > compare
@@ -175,9 +176,31 @@ function compareValue(value: any, compare: any, condition: string) {
       return Array.isArray(compare) ? value > compare[0] && value < compare[1] : false
     case 'notBetween':
       return Array.isArray(compare) ? value < compare[0] || value > compare[1] : false
+    case 'empty':
+      return isEmptyValue(value)
+    case 'notEmpty':
+      return !isEmptyValue(value)
+    case 'pattern':
+      return testPattern(value, compare)
     case '==':
     default:
       return isEqual(value, compare)
+  }
+}
+
+function testPattern(value: any, compare: any) {
+  if (compare === undefined || compare === null || value === undefined || value === null) {
+    return false
+  }
+  if (!['string', 'number', 'boolean', 'bigint'].includes(typeof value)) {
+    return false
+  }
+  try {
+    const pattern = compare instanceof RegExp ? compare : new RegExp(compare)
+    return pattern.test(String(value ?? ''))
+  } catch (error) {
+    console.warn('[form-create] control.pattern create RegExp failed:', error)
+    return false
   }
 }
 
