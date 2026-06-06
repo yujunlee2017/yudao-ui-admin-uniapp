@@ -32,19 +32,19 @@
 
             <view v-else-if="isLayoutGapType(childRule)" class="fc-sub-form__layout-gap" :style="{ height: getLayoutGapHeight(childRule) }" />
 
-            <FcAlert v-else-if="isAlertType(childRule)" :rule="getRenderRule(childRule, itemIndex)" />
+            <FcAlert v-else-if="isAlertType(childRule)" :rule="getRenderRule(childRule, itemIndex)" style="" />
 
-            <FcTitle v-else-if="isTitleType(childRule)" :rule="getRenderRule(childRule, itemIndex)" />
+            <FcTitle v-else-if="isTitleType(childRule)" :rule="getRenderRule(childRule, itemIndex)" style="" />
 
-            <FcHtml v-else-if="isHtmlType(childRule)" :rule="getRenderRule(childRule, itemIndex)" />
+            <FcHtml v-else-if="isHtmlType(childRule)" :rule="getRenderRule(childRule, itemIndex)" style="" />
 
-            <FcDivider v-else-if="isDividerType(childRule)" :rule="getRenderRule(childRule, itemIndex)" />
+            <FcDivider v-else-if="isDividerType(childRule)" :rule="getRenderRule(childRule, itemIndex)" style="" />
 
-            <FcTag v-else-if="isTagType(childRule)" :rule="getRenderRule(childRule, itemIndex)" />
+            <FcTag v-else-if="isTagType(childRule)" :rule="getRenderRule(childRule, itemIndex)" style="" />
 
-            <FcImage v-else-if="isImageType(childRule)" :rule="getRenderRule(childRule, itemIndex)" />
+            <FcImage v-else-if="isImageType(childRule)" :rule="getRenderRule(childRule, itemIndex)" style="" />
 
-            <FcIframe v-else-if="isIframeType(childRule)" :rule="getRenderRule(childRule, itemIndex)" :title-width="childTitleWidth" />
+            <FcIframe v-else-if="isIframeType(childRule)" :rule="getRenderRule(childRule, itemIndex)" :title-width="childTitleWidth" style="" />
 
             <FcRichText
               v-else-if="isRichTextType(childRule)"
@@ -52,6 +52,7 @@
               :rule="getRenderRule(childRule, itemIndex)"
               :title-width="childTitleWidth"
               :disabled="isChildDisabled(childRule, itemIndex)"
+              style=""
               @update:model-value="setItemValue(itemIndex, childRule.field, $event)"
             />
 
@@ -61,6 +62,7 @@
               :rule="getRenderRule(childRule, itemIndex)"
               :title-width="childTitleWidth"
               :disabled="isChildDisabled(childRule, itemIndex)"
+              style=""
               @update:model-value="setItemValue(itemIndex, childRule.field, $event)"
             />
 
@@ -107,6 +109,7 @@
               :rule="getRenderRule(childRule, itemIndex)"
               :title-width="childTitleWidth"
               :disabled="isChildDisabled(childRule, itemIndex)"
+              style=""
               @update:model-value="setItemValue(itemIndex, childRule.field, $event)"
             />
 
@@ -116,6 +119,7 @@
               :rule="getRenderRule(childRule, itemIndex)"
               :title-width="childTitleWidth"
               :disabled="isChildDisabled(childRule, itemIndex)"
+              style=""
               @update:model-value="setItemValue(itemIndex, childRule.field, $event)"
             />
 
@@ -125,6 +129,7 @@
               :rule="getRenderRule(childRule, itemIndex)"
               :title-width="childTitleWidth"
               :disabled="isChildDisabled(childRule, itemIndex)"
+              style=""
               @update:model-value="setItemValue(itemIndex, childRule.field, $event)"
             />
 
@@ -134,6 +139,7 @@
               :rule="getRenderRule(childRule, itemIndex)"
               :title-width="childTitleWidth"
               :disabled="isChildDisabled(childRule, itemIndex)"
+              style=""
               @update:model-value="setItemValue(itemIndex, childRule.field, $event)"
             />
 
@@ -143,6 +149,7 @@
               :rule="getRenderRule(childRule, itemIndex)"
               :title-width="childTitleWidth"
               :disabled="isChildDisabled(childRule, itemIndex)"
+              style=""
               @update:model-value="setItemValue(itemIndex, childRule.field, $event)"
             />
 
@@ -152,6 +159,7 @@
               :rule="getRenderRule(childRule, itemIndex)"
               :title-width="childTitleWidth"
               :disabled="isChildDisabled(childRule, itemIndex)"
+              style=""
               @update:model-value="setItemValue(itemIndex, childRule.field, $event)"
             />
 
@@ -161,6 +169,7 @@
               :rule="getRenderRule(childRule, itemIndex)"
               :title-width="childTitleWidth"
               :disabled="isChildDisabled(childRule, itemIndex)"
+              style=""
               @update:model-value="setItemValue(itemIndex, childRule.field, $event)"
             />
 
@@ -170,6 +179,7 @@
               :rule="getRenderRule(childRule, itemIndex)"
               :title-width="childTitleWidth"
               :disabled="isChildDisabled(childRule, itemIndex)"
+              style=""
               @update:model-value="setItemValue(itemIndex, childRule.field, $event)"
             />
 
@@ -179,6 +189,7 @@
               :rule="getRenderRule(childRule, itemIndex)"
               :title-width="childTitleWidth"
               :disabled="isChildDisabled(childRule, itemIndex)"
+              style=""
               @update:model-value="setItemValue(itemIndex, childRule.field, $event)"
             />
 
@@ -188,6 +199,7 @@
               :rule="getRenderRule(childRule, itemIndex)"
               :title-width="childTitleWidth"
               :disabled="isChildDisabled(childRule, itemIndex)"
+              style=""
               @update:model-value="setItemValue(itemIndex, childRule.field, $event)"
             />
 
@@ -197,6 +209,7 @@
               :rule="getRenderRule(childRule, itemIndex)"
               :title-width="childTitleWidth"
               :disabled="isChildDisabled(childRule, itemIndex)"
+              style=""
               @update:model-value="setItemValue(itemIndex, childRule.field, $event)"
             />
 
@@ -206,6 +219,7 @@
               :rule="getRenderRule(childRule, itemIndex)"
               :title-width="childTitleWidth"
               :disabled="isChildDisabled(childRule, itemIndex)"
+              style=""
               @update:model-value="setItemValue(itemIndex, childRule.field, $event)"
             />
 
@@ -224,6 +238,7 @@
               :rule="getRenderRule(childRule, itemIndex)"
               :title-width="childTitleWidth"
               :disabled="isChildDisabled(childRule, itemIndex)"
+              style=""
               @update:model-value="setItemValue(itemIndex, childRule.field, $event)"
             />
 
@@ -233,6 +248,7 @@
               :rule="getRenderRule(childRule, itemIndex)"
               :title-width="childTitleWidth"
               :disabled="isChildDisabled(childRule, itemIndex)"
+              style=""
               @update:model-value="setItemValue(itemIndex, childRule.field, $event)"
             />
 
@@ -261,6 +277,7 @@
               :rule="getRenderRule(childRule, itemIndex)"
               :title-width="childTitleWidth"
               :disabled="isChildDisabled(childRule, itemIndex)"
+              style=""
               @update:model-value="setItemValue(itemIndex, childRule.field, $event)"
             />
 
@@ -270,6 +287,7 @@
               :rule="getRenderRule(childRule, itemIndex)"
               :title-width="childTitleWidth"
               :disabled="isChildDisabled(childRule, itemIndex)"
+              style=""
               @update:model-value="setItemValue(itemIndex, childRule.field, $event)"
             />
 
@@ -281,10 +299,17 @@
               :option="option"
               :title-width="childTitleWidth"
               :disabled="isChildDisabled(childRule, itemIndex)"
+              style=""
               @update:model-value="setItemValue(itemIndex, childRule.field, $event)"
             />
 
-            <FcButton v-else-if="isButtonType(childRule)" :rule="getRenderRule(childRule, itemIndex)" :disabled="isChildDisabled(childRule, itemIndex)" />
+            <FcButton
+              v-else-if="isButtonType(childRule)"
+              :rule="getRenderRule(childRule, itemIndex)"
+              :disabled="isChildDisabled(childRule, itemIndex)"
+              style=""
+              @click="handleChildRuleEvent(getRenderRule(childRule, itemIndex), 'click')"
+            />
 
             <wd-form-item v-else-if="childRule.type === 'span'" :title="childRule.title" :title-width="childTitleWidth" :prop="getChildProp(itemIndex, childRule.field)">
               <view class="fc-sub-form__text">
@@ -319,6 +344,7 @@ import {
   INTERNAL_LAYOUT_TITLE_TYPE,
   getInputType,
   getPlaceholder,
+  getRuleEventHandler,
   getRuleProps,
   isAlertType,
   isApiSelectType,
@@ -360,9 +386,18 @@ import FcCalendar from './calendar.vue'
 import FcCascader from './cascader.vue'
 import FcCheckbox from './checkbox.vue'
 import FcColorPicker from './colorPicker.vue'
-import { FcApiSelect, FcAreaSelect, FcDeptSelect, FcDictSelect, FcUserSelect } from './custom'
+import FcApiSelect from './custom/apiSelect.vue'
+import FcAreaSelect from './custom/areaSelect.vue'
+import FcDeptSelect from './custom/deptSelect.vue'
+import FcDictSelect from './custom/dictSelect.vue'
+import FcUserSelect from './custom/userSelect.vue'
 import FcDatePicker from './datePicker.vue'
-import { FcAlert, FcDivider, FcHtml, FcImage, FcTag, FcTitle } from './display'
+import FcAlert from './display/alert.vue'
+import FcDivider from './display/divider.vue'
+import FcHtml from './display/html.vue'
+import FcImage from './display/image.vue'
+import FcTag from './display/tag.vue'
+import FcTitle from './display/title.vue'
 import FcIframe from './iframe.vue'
 import FcRadio from './radio.vue'
 import FcRichText from './richText.vue'
@@ -576,6 +611,22 @@ function setItemValue(itemIndex: number, field: string | undefined, value: any) 
     [field]: value,
   }
   emitValue(nextRows)
+  const rule = getItemRules(itemIndex).find(item => item.field === field)
+  if (rule) {
+    handleChildRuleEvent(getRenderRule(rule, itemIndex), 'change', value)
+  }
+}
+
+function handleChildRuleEvent(rule: NormalizedFormCreateRule, eventName: string, ...args: any[]) {
+  const handler = getRuleEventHandler(rule, eventName)
+  if (typeof handler !== 'function') {
+    return
+  }
+  try {
+    handler(...args, rule, props.api)
+  } catch (error) {
+    console.warn(`[form-create] child rule ${eventName} event failed`, error)
+  }
 }
 
 function addItem() {

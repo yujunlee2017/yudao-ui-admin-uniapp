@@ -1,27 +1,29 @@
 <template>
-  <wd-form-item
-    :title="rule.title"
-    :title-width="titleWidth"
-    :prop="rule.field"
-    :value="displayValue"
-    :placeholder="placeholder"
-    :is-link="!disabled"
-    @click="open"
-  />
+  <view class="fc-transfer">
+    <wd-form-item
+      :title="rule.title"
+      :title-width="titleWidth"
+      :prop="rule.field"
+      :value="displayValue"
+      :placeholder="placeholder"
+      :is-link="!disabled"
+      @click="open"
+    />
 
-  <wd-select-picker
-    v-model="pickerValue"
-    v-model:visible="visible"
-    :title="rule.title || '请选择'"
-    :columns="columns"
-    :filter-placeholder="rule.props?.filterPlaceholder || '搜索选项'"
-    custom-content-class="fc-transfer__content"
-    filterable
-    label-key="label"
-    type="checkbox"
-    value-key="value"
-    @confirm="handleConfirm"
-  />
+    <wd-select-picker
+      v-model="pickerValue"
+      v-model:visible="visible"
+      :title="rule.title || '请选择'"
+      :columns="columns"
+      :filter-placeholder="rule.props?.filterPlaceholder || '搜索选项'"
+      custom-content-class="fc-transfer__content"
+      filterable
+      label-key="label"
+      type="checkbox"
+      value-key="value"
+      @confirm="handleConfirm"
+    />
+  </view>
 </template>
 
 <script lang="ts" setup>

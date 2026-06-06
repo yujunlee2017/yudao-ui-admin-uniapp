@@ -89,6 +89,19 @@ export interface FormCreateRule {
   name?: string
   className?: string
   control?: FormCreateControl | FormCreateControl[]
+  link?: string | string[]
+  update?: (
+    value: any,
+    rule: NormalizedFormCreateRule,
+    api: FormCreateApi,
+    context: {
+      field?: string
+      formData: Record<string, any>
+      linkField?: string
+      origin?: NormalizedFormCreateRule
+      value?: any
+    }
+  ) => boolean | Partial<FormCreateRule> | void
   effect?: {
     componentValidate?: FormCreateComponentValidateEffect
     disabled?: boolean
@@ -118,6 +131,11 @@ export interface FormCreateOption {
   globalEvent?: Record<string, ((...args: any[]) => any) | { handle?: (...args: any[]) => any }>
   globalData?: Record<string, any>
   messages?: Record<string, string>
+  onChange?: (data: Record<string, any>, field?: string, value?: any, api?: FormCreateApi) => void
+  onMounted?: (api: FormCreateApi) => void
+  onReset?: (api: FormCreateApi) => void
+  onSubmit?: (data: Record<string, any>, api?: FormCreateApi) => void
+  onValidateFail?: (errors: { prop: string, message: string }[], api?: FormCreateApi) => void
   t?: (id: string, params?: Record<string, any>) => string | undefined
   [key: string]: any
 }
@@ -149,6 +167,13 @@ export interface FormCreateApi {
   validateFields: (fields: string | string[], callback?: (result: { valid: boolean, errors: { prop: string, message: string }[] }) => void) => Promise<{ valid: boolean, errors: { prop: string, message: string }[] }>
   /** Wot UI Form 只暴露整表 reset，fields 参数仅为兼容 form-create 调用签名。 */
   clearValidateState: (fields?: string | string[]) => void
+  onSubmit: (fn: FormCreateOption['onSubmit']) => void
+  submit: (callback?: FormCreateOption['onSubmit']) => Promise<{ valid: boolean, errors: { prop: string, message: string }[], data: Record<string, any> }>
+  changeStatus: () => boolean
+  clearChangeStatus: () => void
+  hideForm: (status?: boolean) => void
+  /** 仅序列化 JSON 可表达的规则属性，函数类配置不会被保留。 */
+  toJson: (space?: number) => string | undefined
   resetFields: (fields?: string | string[]) => void
   formData: () => Record<string, any>
   getFormData: () => Record<string, any>
@@ -183,12 +208,17 @@ export interface FormCreateApi {
 export interface FormCreateApiContext {
   formRef: Ref<FormInstance | undefined>
   formData: Ref<Record<string, any>>
+  changeStatus?: Ref<boolean>
   disabled?: Readonly<Ref<boolean>>
+  hidden?: Ref<boolean>
   initialFormData?: Readonly<Ref<Record<string, any>>>
   option?: Readonly<Ref<FormCreateOption>>
   rules: Readonly<Ref<NormalizedFormCreateRule[]>>
   rulePatches?: Record<string, Partial<NormalizedFormCreateRule>>
   fieldStates: Record<string, FormCreateFieldState>
   emitChange: () => void
+  emitReset?: () => void
+  emitSubmit?: (data: Record<string, any>) => void
+  emitValidateFail?: (errors: { prop: string, message: string }[]) => void
   refresh?: () => void
 }

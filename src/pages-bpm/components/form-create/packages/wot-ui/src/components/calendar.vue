@@ -1,24 +1,26 @@
 <template>
-  <wd-form-item
-    :title="rule.title"
-    :title-width="titleWidth"
-    :prop="rule.field"
-    :value="displayValue"
-    :placeholder="placeholder"
-    :is-link="!disabled"
-    @click="open"
-  />
+  <view class="fc-calendar">
+    <wd-form-item
+      :title="rule.title"
+      :title-width="titleWidth"
+      :prop="rule.field"
+      :value="displayValue"
+      :placeholder="placeholder"
+      :is-link="!disabled"
+      @click="open"
+    />
 
-  <wd-calendar
-    v-model:visible="visible"
-    :model-value="calendarValue"
-    :type="calendarType"
-    :title="rule.title || placeholder"
-    :min-date="minDate"
-    :max-date="maxDate"
-    v-bind="componentProps"
-    @confirm="handleConfirm"
-  />
+    <wd-calendar
+      v-model:visible="visible"
+      :model-value="calendarValue"
+      :type="calendarType"
+      :title="rule.title || placeholder"
+      :min-date="minDate"
+      :max-date="maxDate"
+      v-bind="componentProps"
+      @confirm="handleConfirm"
+    />
+  </view>
 </template>
 
 <script lang="ts" setup>

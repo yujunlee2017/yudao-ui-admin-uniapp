@@ -1,6 +1,6 @@
 import type { FormCreateApi, FormCreateApiContext } from '../../../types/typing'
 import { FORM_FIELD_PERMISSION } from '../../../types/typing'
-import { deepMerge, hasOwn } from '../../utils/src'
+import { deepMerge, hasOwn, toJson as stringifyJson } from '../../utils/src'
 import { fetchProviderData, getProviderData, translate } from './provider'
 import { getDefaultValue, isRuleDisabled, isRuleHidden } from './utils'
 
@@ -45,17 +45,26 @@ export function createApi(ctx: FormCreateApiContext): FormCreateApi {
     return option.globalData
   }
 
+  const emitValidateFail = (result: { valid: boolean, errors: { prop: string, message: string }[] }) => {
+    if (!result.valid) {
+      ctx.emitValidateFail?.(result.errors)
+    }
+  }
+
   const api: FormCreateApi = {
     async validate() {
       if (!ctx.formRef.value) {
         return { valid: true, errors: [] }
       }
-      return ctx.formRef.value.validate()
+      const result = await ctx.formRef.value.validate()
+      emitValidateFail(result)
+      return result
     },
     async validateField(field, callback) {
       const result = ctx.formRef.value
         ? await ctx.formRef.value.validate(field)
         : { valid: true, errors: [] }
+      emitValidateFail(result)
       callback?.(result)
       return result
     },
@@ -63,11 +72,45 @@ export function createApi(ctx: FormCreateApiContext): FormCreateApi {
       const result = ctx.formRef.value
         ? await ctx.formRef.value.validate(Array.isArray(fields) ? fields : [fields])
         : { valid: true, errors: [] }
+      emitValidateFail(result)
       callback?.(result)
       return result
     },
     clearValidateState() {
       ctx.formRef.value?.reset()
+    },
+    onSubmit(fn) {
+      if (ctx.option?.value) {
+        ctx.option.value.onSubmit = fn
+      }
+    },
+    async submit(callback) {
+      const result = await api.validate()
+      const data = api.formData()
+      if (result.valid) {
+        callback?.(data, api)
+        ctx.emitSubmit?.(data)
+      }
+      return {
+        ...result,
+        data,
+      }
+    },
+    changeStatus() {
+      return !!ctx.changeStatus?.value
+    },
+    clearChangeStatus() {
+      if (ctx.changeStatus) {
+        ctx.changeStatus.value = false
+      }
+    },
+    hideForm(status = true) {
+      if (ctx.hidden) {
+        ctx.hidden.value = status
+      }
+    },
+    toJson(space) {
+      return stringifyJson(ctx.rules.value, space)
     },
     resetFields(fields) {
       const nextData = { ...ctx.formData.value }
@@ -83,6 +126,7 @@ export function createApi(ctx: FormCreateApiContext): FormCreateApi {
       ctx.formData.value = nextData
       ctx.formRef.value?.reset()
       ctx.emitChange()
+      ctx.emitReset?.()
       ctx.refresh?.()
     },
     formData() {

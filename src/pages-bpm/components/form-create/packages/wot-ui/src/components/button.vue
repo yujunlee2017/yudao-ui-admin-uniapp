@@ -24,6 +24,10 @@ const props = defineProps<{
   rule: NormalizedFormCreateRule
 }>()
 
+const emit = defineEmits<{
+  click: []
+}>()
+
 const buttonText = computed(() => {
   const childrenText = Array.isArray(props.rule.children)
     ? props.rule.children.filter(item => typeof item === 'string').join('')
@@ -60,10 +64,7 @@ function handleClick() {
   if (props.disabled || props.rule.props?.disabled) {
     return
   }
-  const onClick = props.rule.on?.click || props.rule.props?.onClick || props.rule.props?.on?.click
-  if (typeof onClick === 'function') {
-    onClick(props.rule)
-  }
+  emit('click')
 }
 </script>
 

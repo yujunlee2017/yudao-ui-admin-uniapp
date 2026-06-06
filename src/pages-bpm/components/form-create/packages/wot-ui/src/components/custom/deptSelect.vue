@@ -1,36 +1,37 @@
 <template>
-  <wd-form-item
-    :title="rule.title"
-    :title-width="titleWidth"
-    :prop="rule.field"
-    :value="displayValue"
-    :placeholder="placeholder"
-    :is-link="!disabled"
-    @click="open"
-  />
+  <view class="fc-dept-select-field">
+    <wd-form-item
+      :title="rule.title"
+      :title-width="titleWidth"
+      :prop="rule.field"
+      :value="displayValue"
+      :placeholder="placeholder"
+      :is-link="!disabled"
+      @click="open"
+    />
 
-  <wd-cascader
-    v-if="!isMultiple"
-    v-model="selectedValue"
-    v-model:visible="cascaderVisible"
-    :options="deptOptions"
-    value-key="value"
-    text-key="name"
-    children-key="children"
-    check-strictly
-    :title="rule.title || '选择部门'"
-    @update:model-value="handleSingleChange"
-  />
+    <wd-cascader
+      v-if="!isMultiple"
+      v-model="selectedValue"
+      v-model:visible="cascaderVisible"
+      :options="deptOptions"
+      value-key="value"
+      text-key="name"
+      children-key="children"
+      check-strictly
+      :title="rule.title || '选择部门'"
+      @update:model-value="handleSingleChange"
+    />
 
-  <wd-popup
-    v-else
-    v-model="multiVisible"
-    position="bottom"
-    round
-    safe-area-inset-bottom
-    custom-style="height: 78vh; overflow: hidden;"
-  >
-    <view class="fc-dept-select">
+    <wd-popup
+      v-else
+      v-model="multiVisible"
+      position="bottom"
+      round
+      safe-area-inset-bottom
+      custom-style="height: 78vh; overflow: hidden;"
+    >
+      <view class="fc-dept-select">
       <view class="fc-dept-select__header">
         <wd-button size="small" variant="plain" @click="clearMultiValue">
           清空
@@ -101,8 +102,9 @@
           确定
         </wd-button>
       </view>
-    </view>
-  </wd-popup>
+      </view>
+    </wd-popup>
+  </view>
 </template>
 
 <script lang="ts" setup>

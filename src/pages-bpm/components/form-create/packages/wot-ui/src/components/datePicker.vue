@@ -1,20 +1,22 @@
 <template>
-  <wd-form-item
-    :title="rule.title"
-    :title-width="titleWidth"
-    :prop="rule.field"
-    :value="displayValue"
-    :placeholder="placeholder"
-    is-link
-    @click="open"
-  />
-  <wd-datetime-picker
-    v-model:visible="visible"
-    :model-value="pickerValue"
-    :type="pickerType"
-    :title="placeholder"
-    @confirm="handleConfirm"
-  />
+  <view class="fc-date-picker">
+    <wd-form-item
+      :title="rule.title"
+      :title-width="titleWidth"
+      :prop="rule.field"
+      :value="displayValue"
+      :placeholder="placeholder"
+      is-link
+      @click="open"
+    />
+    <wd-datetime-picker
+      v-model:visible="visible"
+      :model-value="pickerValue"
+      :type="pickerType"
+      :title="placeholder"
+      @confirm="handleConfirm"
+    />
+  </view>
 </template>
 
 <script lang="ts" setup>

@@ -1,25 +1,27 @@
 <template>
-  <wd-form-item
-    :title="rule.title"
-    :title-width="titleWidth"
-    :prop="rule.field"
-    :value="displayValue"
-    :placeholder="placeholder"
-    :is-link="!disabled"
-    @click="open"
-  />
+  <view class="fc-area-select">
+    <wd-form-item
+      :title="rule.title"
+      :title-width="titleWidth"
+      :prop="rule.field"
+      :value="displayValue"
+      :placeholder="placeholder"
+      :is-link="!disabled"
+      @click="open"
+    />
 
-  <wd-cascader
-    v-model:visible="visible"
-    :model-value="cascaderValue"
-    :options="areaList"
-    :title="rule.title || '请选择地区'"
-    :check-strictly="checkStrictly"
-    text-key="name"
-    value-key="id"
-    children-key="children"
-    @confirm="handleConfirm"
-  />
+    <wd-cascader
+      v-model:visible="visible"
+      :model-value="cascaderValue"
+      :options="areaList"
+      :title="rule.title || '请选择地区'"
+      :check-strictly="checkStrictly"
+      text-key="name"
+      value-key="id"
+      children-key="children"
+      @confirm="handleConfirm"
+    />
+  </view>
 </template>
 
 <script lang="ts" setup>

@@ -1,47 +1,49 @@
 <template>
-  <wd-form-item
-    v-if="isMultiple"
-    :title="rule.title"
-    :title-width="titleWidth"
-    :prop="rule.field"
-    center
-  >
-    <wd-checkbox-group
-      :model-value="Array.isArray(modelValue) ? modelValue : []"
-      :disabled="disabled"
-      :type="rule.props?.type || 'button'"
-      :direction="rule.props?.direction || 'horizontal'"
-      @change="handleMultipleChange"
+  <view class="fc-select">
+    <wd-form-item
+      v-if="isMultiple"
+      :title="rule.title"
+      :title-width="titleWidth"
+      :prop="rule.field"
+      center
     >
-      <wd-checkbox
-        v-for="option in columns"
-        :key="String(option.value)"
-        :name="option.value"
-        :disabled="option.disabled"
+      <wd-checkbox-group
+        :model-value="Array.isArray(modelValue) ? modelValue : []"
+        :disabled="disabled"
+        :type="rule.props?.type || 'button'"
+        :direction="rule.props?.direction || 'horizontal'"
+        @change="handleMultipleChange"
       >
-        {{ option.label || option.text || option.value }}
-      </wd-checkbox>
-    </wd-checkbox-group>
-  </wd-form-item>
+        <wd-checkbox
+          v-for="option in columns"
+          :key="String(option.value)"
+          :name="option.value"
+          :disabled="option.disabled"
+        >
+          {{ option.label || option.text || option.value }}
+        </wd-checkbox>
+      </wd-checkbox-group>
+    </wd-form-item>
 
-  <wd-form-item
-    v-else
-    :title="rule.title"
-    :title-width="titleWidth"
-    :prop="rule.field"
-    :value="displayValue"
-    :placeholder="placeholder"
-    is-link
-    @click="open"
-  />
-  <wd-picker
-    v-model:visible="visible"
-    :model-value="pickerValue"
-    :columns="columns"
-    label-key="label"
-    value-key="value"
-    @confirm="handleConfirm"
-  />
+    <wd-form-item
+      v-else
+      :title="rule.title"
+      :title-width="titleWidth"
+      :prop="rule.field"
+      :value="displayValue"
+      :placeholder="placeholder"
+      is-link
+      @click="open"
+    />
+    <wd-picker
+      v-model:visible="visible"
+      :model-value="pickerValue"
+      :columns="columns"
+      label-key="label"
+      value-key="value"
+      @confirm="handleConfirm"
+    />
+  </view>
 </template>
 
 <script lang="ts" setup>

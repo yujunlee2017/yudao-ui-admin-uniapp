@@ -1,29 +1,31 @@
 <template>
-  <wd-form-item
-    :title="rule.title"
-    :title-width="titleWidth"
-    :prop="rule.field"
-    :value="displayValue"
-    :placeholder="placeholder"
-    :is-link="!disabled"
-    @click="open"
-  />
+  <view class="fc-user-select">
+    <wd-form-item
+      :title="rule.title"
+      :title-width="titleWidth"
+      :prop="rule.field"
+      :value="displayValue"
+      :placeholder="placeholder"
+      :is-link="!disabled"
+      @click="open"
+    />
 
-  <wd-select-picker
-    v-model="pickerValue"
-    v-model:visible="visible"
-    :title="rule.title || '选择用户'"
-    :columns="options"
-    :type="isMultiple ? 'checkbox' : 'radio'"
-    :show-confirm="isMultiple"
-    :loading="loading"
-    :filter-placeholder="rule.props?.filterPlaceholder || '搜索用户'"
-    custom-content-class="fc-custom-select__content"
-    filterable
-    label-key="label"
-    value-key="value"
-    @confirm="handleConfirm"
-  />
+    <wd-select-picker
+      v-model="pickerValue"
+      v-model:visible="visible"
+      :title="rule.title || '选择用户'"
+      :columns="options"
+      :type="isMultiple ? 'checkbox' : 'radio'"
+      :show-confirm="isMultiple"
+      :loading="loading"
+      :filter-placeholder="rule.props?.filterPlaceholder || '搜索用户'"
+      custom-content-class="fc-custom-select__content"
+      filterable
+      label-key="label"
+      value-key="value"
+      @confirm="handleConfirm"
+    />
+  </view>
 </template>
 
 <script lang="ts" setup>

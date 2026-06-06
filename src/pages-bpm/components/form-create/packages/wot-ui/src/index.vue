@@ -1,16 +1,17 @@
 <template>
   <view class="fc-wot">
-    <wd-form
-      ref="formRef"
-      :model="formData"
-      :schema="formSchema"
-      :border="formOption.form?.border"
-      :error-type="formOption.form?.errorType || 'toast'"
-      :layout="formOption.form?.layout"
-      :title-width="titleWidth"
-      :value-align="formOption.form?.valueAlign"
-    >
-      <wd-cell-group :border="formOption.form?.border !== false">
+    <view class="fc-wot__content" :style="{ display: hidden ? 'none' : 'block' }">
+      <wd-form
+        ref="formRef"
+        :model="formData"
+        :schema="formSchema"
+        :border="formOption.form?.border"
+        :error-type="formOption.form?.errorType || 'toast'"
+        :layout="formOption.form?.layout"
+        :title-width="titleWidth"
+        :value-align="formOption.form?.valueAlign"
+      >
+        <wd-cell-group :border="formOption.form?.border !== false">
         <template v-for="rule in visibleRules" :key="rule.__fcId">
           <view v-if="isHiddenFieldType(rule)" style="display: none" />
 
@@ -27,37 +28,44 @@
           <FcAlert
             v-else-if="isAlertType(rule)"
             :rule="rule"
+            style=""
           />
 
           <FcTitle
             v-else-if="isTitleType(rule)"
             :rule="rule"
+            style=""
           />
 
           <FcHtml
             v-else-if="isHtmlType(rule)"
             :rule="rule"
+            style=""
           />
 
           <FcDivider
             v-else-if="isDividerType(rule)"
             :rule="rule"
+            style=""
           />
 
           <FcTag
             v-else-if="isTagType(rule)"
             :rule="rule"
+            style=""
           />
 
           <FcImage
             v-else-if="isImageType(rule)"
             :rule="rule"
+            style=""
           />
 
           <FcIframe
             v-else-if="isIframeType(rule)"
             :rule="rule"
             :title-width="titleWidth"
+            style=""
           />
 
           <FcRichText
@@ -66,6 +74,7 @@
             :rule="rule"
             :title-width="titleWidth"
             :disabled="isDisabled(rule)"
+            style=""
             @update:model-value="handleUpdate(rule, $event)"
           />
 
@@ -75,6 +84,7 @@
             :rule="rule"
             :title-width="titleWidth"
             :disabled="isDisabled(rule)"
+            style=""
             @update:model-value="handleUpdate(rule, $event)"
           />
 
@@ -82,6 +92,8 @@
             v-else-if="isButtonType(rule)"
             :rule="rule"
             :disabled="isDisabled(rule)"
+            style=""
+            @click="handleRuleEvent(rule, 'click')"
           />
 
           <wd-form-item
@@ -144,6 +156,7 @@
             :rule="rule"
             :title-width="titleWidth"
             :disabled="isDisabled(rule)"
+            style=""
             @update:model-value="handleUpdate(rule, $event)"
           />
 
@@ -153,6 +166,7 @@
             :rule="rule"
             :title-width="titleWidth"
             :disabled="isDisabled(rule)"
+            style=""
             @update:model-value="handleUpdate(rule, $event)"
           />
 
@@ -162,6 +176,7 @@
             :rule="rule"
             :title-width="titleWidth"
             :disabled="isDisabled(rule)"
+            style=""
             @update:model-value="handleUpdate(rule, $event)"
           />
 
@@ -171,6 +186,7 @@
             :rule="rule"
             :title-width="titleWidth"
             :disabled="isDisabled(rule)"
+            style=""
             @update:model-value="handleUpdate(rule, $event)"
           />
 
@@ -180,6 +196,7 @@
             :rule="rule"
             :title-width="titleWidth"
             :disabled="isDisabled(rule)"
+            style=""
             @update:model-value="handleUpdate(rule, $event)"
           />
 
@@ -189,6 +206,7 @@
             :rule="rule"
             :title-width="titleWidth"
             :disabled="isDisabled(rule)"
+            style=""
             @update:model-value="handleUpdate(rule, $event)"
           />
 
@@ -198,6 +216,7 @@
             :rule="rule"
             :title-width="titleWidth"
             :disabled="isDisabled(rule)"
+            style=""
             @update:model-value="handleUpdate(rule, $event)"
           />
 
@@ -207,6 +226,7 @@
             :rule="rule"
             :title-width="titleWidth"
             :disabled="isDisabled(rule)"
+            style=""
             @update:model-value="handleUpdate(rule, $event)"
           />
 
@@ -216,6 +236,7 @@
             :rule="rule"
             :title-width="titleWidth"
             :disabled="isDisabled(rule)"
+            style=""
             @update:model-value="handleUpdate(rule, $event)"
           />
 
@@ -225,6 +246,7 @@
             :rule="rule"
             :title-width="titleWidth"
             :disabled="isDisabled(rule)"
+            style=""
             @update:model-value="handleUpdate(rule, $event)"
           />
 
@@ -234,6 +256,7 @@
             :rule="rule"
             :title-width="titleWidth"
             :disabled="isDisabled(rule)"
+            style=""
             @update:model-value="handleUpdate(rule, $event)"
           />
 
@@ -243,6 +266,7 @@
             :rule="rule"
             :title-width="titleWidth"
             :disabled="isDisabled(rule)"
+            style=""
             @update:model-value="handleUpdate(rule, $event)"
           />
 
@@ -252,6 +276,7 @@
             :rule="rule"
             :title-width="titleWidth"
             :disabled="isDisabled(rule)"
+            style=""
             @update:model-value="handleUpdate(rule, $event)"
           />
 
@@ -276,6 +301,7 @@
             :rule="rule"
             :title-width="titleWidth"
             :disabled="isDisabled(rule)"
+            style=""
             @update:model-value="handleUpdate(rule, $event)"
           />
 
@@ -285,6 +311,7 @@
             :rule="rule"
             :title-width="titleWidth"
             :disabled="isDisabled(rule)"
+            style=""
             @update:model-value="handleUpdate(rule, $event)"
           />
 
@@ -325,6 +352,7 @@
             :rule="rule"
             :title-width="titleWidth"
             :disabled="isDisabled(rule)"
+            style=""
             @update:model-value="handleUpdate(rule, $event)"
           />
 
@@ -336,6 +364,7 @@
             :option="formOption"
             :title-width="titleWidth"
             :disabled="isDisabled(rule)"
+            style=""
             @update:model-value="handleUpdate(rule, $event)"
           />
 
@@ -366,8 +395,9 @@
         <view v-if="visibleRules.length === 0" class="fc-wot__empty">
           暂无表单字段
         </view>
-      </wd-cell-group>
-    </wd-form>
+        </wd-cell-group>
+      </wd-form>
+    </view>
   </view>
 </template>
 
@@ -395,39 +425,38 @@ import {
 } from '../../core/src'
 import type { FormCreateProviderContext, FormCreateProviderState } from '../../core/src/provider'
 import { deepMerge, hasOwn } from '../../utils/src'
-import {
-  FcAlert,
-  FcApiSelect,
-  FcAreaSelect,
-  FcButton,
-  FcCalendar,
-  FcCascader,
-  FcCheckbox,
-  FcColorPicker,
-  FcDatePicker,
-  FcDeptSelect,
-  FcDictSelect,
-  FcDivider,
-  FcHtml,
-  FcIframe,
-  FcImage,
-  FcRadio,
-  FcRichText,
-  FcSelect,
-  FcSignature,
-  FcSubForm,
-  FcTag,
-  FcTimePicker,
-  FcTitle,
-  FcTransfer,
-  FcTreeSelect,
-  FcUploader,
-  FcUserSelect,
-} from './components'
+import FcButton from './components/button.vue'
+import FcCalendar from './components/calendar.vue'
+import FcCascader from './components/cascader.vue'
+import FcCheckbox from './components/checkbox.vue'
+import FcColorPicker from './components/colorPicker.vue'
+import FcApiSelect from './components/custom/apiSelect.vue'
+import FcAreaSelect from './components/custom/areaSelect.vue'
+import FcDeptSelect from './components/custom/deptSelect.vue'
+import FcDictSelect from './components/custom/dictSelect.vue'
+import FcUserSelect from './components/custom/userSelect.vue'
+import FcDatePicker from './components/datePicker.vue'
+import FcAlert from './components/display/alert.vue'
+import FcDivider from './components/display/divider.vue'
+import FcHtml from './components/display/html.vue'
+import FcImage from './components/display/image.vue'
+import FcTag from './components/display/tag.vue'
+import FcTitle from './components/display/title.vue'
+import FcIframe from './components/iframe.vue'
+import FcRadio from './components/radio.vue'
+import FcRichText from './components/richText.vue'
+import FcSelect from './components/select.vue'
+import FcSignature from './components/signature.vue'
+import FcSubForm from './components/subForm.vue'
+import FcTimePicker from './components/timePicker.vue'
+import FcTransfer from './components/transfer.vue'
+import FcTreeSelect from './components/treeSelect.vue'
+import FcUploader from './components/uploader.vue'
 import getConfig from './core/config'
 import {
   getInputType,
   getPlaceholder,
+  getRuleEventHandler,
   getRuleProps,
   getTitleWidth,
   isAlertType,
@@ -487,7 +516,11 @@ const emit = defineEmits<{
   'update:api': [api: FormCreateApi]
   'update:modelValue': [data: Record<string, any>]
   'change': [data: Record<string, any>, field?: string, value?: any]
+  'emit-event': [name: string, ...args: any[]]
   'mounted': [api: FormCreateApi]
+  'reset': [api: FormCreateApi]
+  'submit': [data: Record<string, any>, api: FormCreateApi]
+  'validate-fail': [errors: { prop: string, message: string }[], api: FormCreateApi]
 }>()
 
 const formRef = ref<FormInstance>()
@@ -496,6 +529,8 @@ const initialFormValues = ref<Record<string, any>>({})
 const fieldStates = reactive<Record<string, FormCreateFieldState>>({})
 const providerStates = reactive<Record<string, FormCreateProviderState>>({})
 const apiRulePatches = reactive<Record<string, Partial<NormalizedFormCreateRule>>>({})
+const changeStatus = ref(false)
+const hidden = ref(false)
 let api: FormCreateApi
 
 const formOption = computed(() => getConfig(props.option))
@@ -536,13 +571,124 @@ function handleUpdate(rule: NormalizedFormCreateRule, value: any) {
     return
   }
   formData.value[rule.field] = value
+  changeStatus.value = true
+  handleRuleEvent(rule, 'change', value)
   emitChange(rule.field, value)
+  runRuleUpdates(rule, value)
 }
 
 function emitChange(field?: string, value?: any) {
+  changeStatus.value = true
   const data = { ...formData.value }
   emit('update:modelValue', data)
   emit('change', data, field, value)
+  callOptionHook('onChange', data, field, value)
+  emit('emit-event', 'change', data, field, value, api)
+}
+
+function callOptionHook(name: keyof FormCreateOption, ...args: any[]) {
+  const handler = formOption.value[name]
+  if (typeof handler !== 'function') {
+    return
+  }
+  try {
+    handler(...args, api)
+  } catch (error) {
+    console.warn(`[form-create] option.${String(name)} failed`, error)
+  }
+}
+
+function handleRuleEvent(rule: NormalizedFormCreateRule, eventName: string, ...args: any[]) {
+  const handler = getRuleEventHandler(rule, eventName)
+  if (typeof handler === 'function') {
+    try {
+      handler(...args, rule, api)
+    } catch (error) {
+      console.warn(`[form-create] rule ${eventName} event failed`, error)
+    }
+  }
+  emit('emit-event', eventName, ...args, rule, api)
+}
+
+function getRuleLinks(rule: NormalizedFormCreateRule) {
+  if (!rule.link) {
+    return []
+  }
+  return Array.isArray(rule.link) ? rule.link : [rule.link]
+}
+
+function isPartialRule(value: unknown): value is Partial<FormCreateRule> {
+  return !!value
+    && typeof value === 'object'
+    && !Array.isArray(value)
+    && typeof (value as { then?: unknown }).then !== 'function'
+}
+
+function runRuleUpdates(sourceRule: NormalizedFormCreateRule, value: any) {
+  if (!sourceRule.field && !sourceRule.name) {
+    return
+  }
+  const sourceFields = [sourceRule.field, sourceRule.name].filter(Boolean) as string[]
+  const visited = new Set<string>()
+  runRuleUpdate(sourceRule, sourceRule.field, value, sourceRule, visited)
+  rules.value.forEach((rule) => {
+    if (rule.__fcId === sourceRule.__fcId || typeof rule.update !== 'function') {
+      return
+    }
+    const links = getRuleLinks(rule)
+    if (links.some(link => sourceFields.includes(link))) {
+      runRuleUpdate(rule, sourceRule.field, value, sourceRule, visited)
+    }
+  })
+}
+
+function runRuleUpdate(
+  rule: NormalizedFormCreateRule,
+  linkField: string | undefined,
+  value: any,
+  origin: NormalizedFormCreateRule,
+  visited: Set<string>,
+) {
+  if (typeof rule.update !== 'function' || visited.has(rule.__fcId)) {
+    return
+  }
+  visited.add(rule.__fcId)
+  try {
+    const result = rule.update(rule.field ? formData.value[rule.field] : value, rule, api, {
+      field: rule.field,
+      formData: { ...formData.value },
+      linkField,
+      origin,
+      value,
+    })
+    if (typeof result === 'boolean') {
+      if (rule.field) {
+        api.hidden(result, rule.field)
+      }
+    } else if (isPartialRule(result)) {
+      api.mergeRule(rule.__fcId, result)
+    }
+  } catch (error) {
+    console.warn('[form-create] rule.update failed', error)
+  }
+}
+
+function emitReset() {
+  callOptionHook('onReset')
+  emit('reset', api)
+  emit('emit-event', 'reset', api)
+}
+
+function emitSubmit(data: Record<string, any>) {
+  callOptionHook('onSubmit', data)
+  emit('submit', data, api)
+  emit('emit-event', 'submit', data, api)
+}
+
+function emitValidateFail(errors: { prop: string, message: string }[]) {
+  callOptionHook('onValidateFail', errors)
+  emit('validate-fail', errors, api)
+  emit('emit-event', 'validate-fail', errors, api)
 }
 
 function isDisabled(rule: NormalizedFormCreateRule) {
@@ -578,11 +724,16 @@ function applyApiRulePatches(nextRules: NormalizedFormCreateRule[]) {
 }
 
 api = createApi({
+  changeStatus,
   disabled: globalDisabled,
   emitChange: () => emitChange(),
+  emitReset,
+  emitSubmit,
+  emitValidateFail,
   fieldStates,
   formData,
   formRef,
+  hidden,
   initialFormData: initialFormValues,
   option: formOption,
   refresh: () => scheduleProviderFetchEffects(),
@@ -682,6 +833,8 @@ onBeforeUnmount(() => {
 onMounted(() => {
   emit('update:api', api)
   emit('mounted', api)
+  callOptionHook('onMounted')
+  emit('emit-event', 'mounted', api)
 })
 
 defineExpose({

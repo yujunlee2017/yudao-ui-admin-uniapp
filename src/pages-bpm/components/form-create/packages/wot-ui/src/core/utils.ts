@@ -189,6 +189,24 @@ export function getTitleWidth(option: FormCreateOption) {
 export function getRuleProps(rule: NormalizedFormCreateRule) {
   const props = { ...(rule.props || {}) }
   delete props.modelValue
+  delete props.on
+  delete props.onChange
+  delete props.onClick
   delete props.options
   return props
+}
+
+export function toRuleEventHandlerName(eventName: string) {
+  return `on${eventName
+    .split(/[-_:]/)
+    .filter(Boolean)
+    .map(item => item.charAt(0).toUpperCase() + item.slice(1))
+    .join('')}`
+}
+
+export function getRuleEventHandler(rule: NormalizedFormCreateRule, eventName: string) {
+  const handlerName = toRuleEventHandlerName(eventName)
+  return rule.on?.[eventName]
+    || rule.props?.on?.[eventName]
+    || rule.props?.[handlerName]
 }

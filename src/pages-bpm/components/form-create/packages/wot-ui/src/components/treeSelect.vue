@@ -1,41 +1,43 @@
 <template>
-  <wd-form-item
-    :title="rule.title"
-    :title-width="titleWidth"
-    :prop="rule.field"
-    :value="displayValue"
-    :placeholder="placeholder"
-    :is-link="!disabled"
-    @click="open"
-  />
+  <view class="fc-tree-select">
+    <wd-form-item
+      :title="rule.title"
+      :title-width="titleWidth"
+      :prop="rule.field"
+      :value="displayValue"
+      :placeholder="placeholder"
+      :is-link="!disabled"
+      @click="open"
+    />
 
-  <wd-cascader
-    v-if="!isMultiple"
-    v-model:visible="visible"
-    :model-value="cascaderValue"
-    :options="treeOptions"
-    :title="rule.title || '请选择'"
-    :check-strictly="checkStrictly"
-    text-key="text"
-    value-key="value"
-    children-key="children"
-    @confirm="handleCascaderConfirm"
-  />
+    <wd-cascader
+      v-if="!isMultiple"
+      v-model:visible="visible"
+      :model-value="cascaderValue"
+      :options="treeOptions"
+      :title="rule.title || '请选择'"
+      :check-strictly="checkStrictly"
+      text-key="text"
+      value-key="value"
+      children-key="children"
+      @confirm="handleCascaderConfirm"
+    />
 
-  <wd-select-picker
-    v-else
-    v-model="pickerValue"
-    v-model:visible="visible"
-    :title="rule.title || '请选择'"
-    :columns="flatOptions"
-    :filter-placeholder="rule.props?.filterPlaceholder || '搜索选项'"
-    custom-content-class="fc-tree-select__content"
-    filterable
-    label-key="label"
-    type="checkbox"
-    value-key="value"
-    @confirm="handleMultipleConfirm"
-  />
+    <wd-select-picker
+      v-else
+      v-model="pickerValue"
+      v-model:visible="visible"
+      :title="rule.title || '请选择'"
+      :columns="flatOptions"
+      :filter-placeholder="rule.props?.filterPlaceholder || '搜索选项'"
+      custom-content-class="fc-tree-select__content"
+      filterable
+      label-key="label"
+      type="checkbox"
+      value-key="value"
+      @confirm="handleMultipleConfirm"
+    />
+  </view>
 </template>
 
 <script lang="ts" setup>

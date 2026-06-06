@@ -1,26 +1,28 @@
 <template>
-  <wd-form-item
-    :title="rule.title"
-    :title-width="titleWidth"
-    :prop="rule.field"
-    :value="displayValue"
-    :placeholder="placeholder"
-    :is-link="!disabled"
-    @click="open"
-  />
+  <view class="fc-cascader">
+    <wd-form-item
+      :title="rule.title"
+      :title-width="titleWidth"
+      :prop="rule.field"
+      :value="displayValue"
+      :placeholder="placeholder"
+      :is-link="!disabled"
+      @click="open"
+    />
 
-  <wd-cascader
-    v-model:visible="visible"
-    :model-value="cascaderValue"
-    :options="options"
-    :title="rule.title || '请选择'"
-    :check-strictly="checkStrictly"
-    text-key="text"
-    value-key="value"
-    children-key="children"
-    v-bind="componentProps"
-    @confirm="handleConfirm"
-  />
+    <wd-cascader
+      v-model:visible="visible"
+      :model-value="cascaderValue"
+      :options="options"
+      :title="rule.title || '请选择'"
+      :check-strictly="checkStrictly"
+      text-key="text"
+      value-key="value"
+      children-key="children"
+      v-bind="componentProps"
+      @confirm="handleConfirm"
+    />
+  </view>
 </template>
 
 <script lang="ts" setup>
