@@ -133,7 +133,7 @@ async function getList() {
   }
 }
 
-/** 搜索 */
+/** 搜索按钮操作 */
 function handleQuery(data?: Record<string, any>) {
   queryParams.value = { ...data }
   // 重置面包屑
@@ -142,7 +142,7 @@ function handleQuery(data?: Record<string, any>) {
   getList()
 }
 
-/** 重置 */
+/** 重置按钮操作 */
 function handleReset() {
   handleQuery()
 }

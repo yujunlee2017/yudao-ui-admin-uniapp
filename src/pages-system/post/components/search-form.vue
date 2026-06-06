@@ -95,13 +95,13 @@ const placeholder = computed(() => {
   return conditions.length > 0 ? conditions.join(' | ') : '搜索岗位'
 })
 
-/** 搜索 */
+/** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
   emit('search', { ...formData })
 }
 
-/** 重置 */
+/** 重置按钮操作 */
 function handleReset() {
   formData.name = undefined
   formData.code = undefined

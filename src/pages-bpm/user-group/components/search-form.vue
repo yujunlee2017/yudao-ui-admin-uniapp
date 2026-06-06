@@ -137,7 +137,7 @@ const placeholder = computed(() => {
   return conditions.length > 0 ? conditions.join(' | ') : '搜索用户分组'
 })
 
-/** 搜索 */
+/** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
   emit('search', {
@@ -147,7 +147,7 @@ function handleSearch() {
   })
 }
 
-/** 重置 */
+/** 重置按钮操作 */
 function handleReset() {
   formData.name = undefined
   formData.status = -1

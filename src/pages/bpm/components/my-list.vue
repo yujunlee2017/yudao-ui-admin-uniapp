@@ -103,7 +103,7 @@ function loadMore() {
   getList()
 }
 
-/** 搜索 */
+/** 搜索按钮操作 */
 function handleSearch(data?: Record<string, any>) {
   queryParams.value = {
     ...data,
@@ -114,7 +114,7 @@ function handleSearch(data?: Record<string, any>) {
   getList()
 }
 
-/** 重置 */
+/** 重置按钮操作 */
 function handleReset() {
   handleSearch()
 }

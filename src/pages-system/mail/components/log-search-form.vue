@@ -215,7 +215,7 @@ function handleSendTime1Confirm() {
   visibleSendTime.value[1] = false
 }
 
-/** 搜索 */
+/** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
   const dateRange = formatDateRange(formData.sendTime)
@@ -230,7 +230,7 @@ function handleSearch() {
   })
 }
 
-/** 重置 */
+/** 重置按钮操作 */
 function handleReset() {
   formData.sendTime = [undefined, undefined]
   formData.userId = undefined

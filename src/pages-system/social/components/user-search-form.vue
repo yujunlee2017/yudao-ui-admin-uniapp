@@ -95,7 +95,7 @@ const placeholder = computed(() => {
   return conditions.length > 0 ? conditions.join(' | ') : '搜索三方用户'
 })
 
-/** 搜索 */
+/** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
   emit('search', {
@@ -105,7 +105,7 @@ function handleSearch() {
   })
 }
 
-/** 重置 */
+/** 重置按钮操作 */
 function handleReset() {
   formData.type = -1
   formData.nickname = undefined

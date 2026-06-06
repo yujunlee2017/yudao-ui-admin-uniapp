@@ -194,7 +194,7 @@ function handleCreateTime1Confirm() {
   visibleCreateTime.value[1] = false
 }
 
-/** 搜索 */
+/** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
   const dateRange = formatDateRange(formData.createTime)
@@ -208,7 +208,7 @@ function handleSearch() {
   })
 }
 
-/** 重置 */
+/** 重置按钮操作 */
 function handleReset() {
   formData.status = -1
   formData.code = undefined

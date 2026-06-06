@@ -155,7 +155,7 @@ function handleBeginTime1Confirm() {
   visibleBeginTime.value[1] = false
 }
 
-/** 搜索 */
+/** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
   emit('search', {
@@ -166,7 +166,7 @@ function handleSearch() {
   })
 }
 
-/** 重置 */
+/** 重置按钮操作 */
 function handleReset() {
   formData.jobId = undefined
   formData.handlerName = undefined
