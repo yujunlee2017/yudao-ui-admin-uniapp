@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { onHide, onLaunch, onShow } from '@dcloudio/uni-app'
+import { onMounted, onUnmounted } from 'vue'
 import { navigateToInterceptor } from '@/router/interceptor'
 import { useDictStore, useTokenStore } from '@/store'
+import { tabbarStore } from '@/tabbar/store'
 
 onLaunch((options) => {
   console.log('App.vue onLaunch', options)
@@ -24,10 +26,29 @@ onShow((options) => {
   } else {
     navigateToInterceptor.invoke({ url: '/' })
   }
+  tabbarStore.syncCurIdxByCurrentPageAsync()
 })
 onHide(() => {
   console.log('App Hide')
 })
+
+// #ifdef H5
+function syncTabbarWhenPageVisible() {
+  if (document.visibilityState === 'visible') {
+    tabbarStore.syncCurIdxByCurrentPageAsync()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('visibilitychange', syncTabbarWhenPageVisible)
+  window.addEventListener('pageshow', syncTabbarWhenPageVisible)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', syncTabbarWhenPageVisible)
+  window.removeEventListener('pageshow', syncTabbarWhenPageVisible)
+})
+// #endif
 </script>
 
 <style lang="scss">

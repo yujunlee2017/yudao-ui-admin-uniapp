@@ -33,6 +33,11 @@ export function judgeIsExcludePath(path: string) {
   return EXCLUDE_LOGIN_PATH_LIST.includes(path) || (isDev && allExcludeLoginPages.some(page => page.path === path))
 }
 
+function allowRoute(path: string) {
+  tabbarStore.setAutoCurIdx(path)
+  return true
+}
+
 export const navigateToInterceptor = {
   // 注意，这里的url是 '/' 开头的，如 '/pages/index/index'，跟 'pages.json' 里面的 path 不同
   // 增加对相对路径的处理，BY 网友 @ideal
@@ -71,12 +76,9 @@ export const navigateToInterceptor = {
       }
     }
 
-    // 处理直接进入路由非首页时，tabbarIndex 不正确的问题
-    tabbarStore.setAutoCurIdx(path)
-
     // 小程序里面使用平台自带的登录，则不走下面的逻辑
     if (isMp && !LOGIN_PAGE_ENABLE_IN_MP) {
-      return true // 明确表示允许路由继续执行
+      return allowRoute(path) // 明确表示允许路由继续执行
     }
 
     const tokenStore = useTokenStore().updateNowTime()
@@ -85,7 +87,7 @@ export const navigateToInterceptor = {
     // 不管黑白名单，登录了就直接去吧（但是当前不能是登录页）
     if (tokenStore.hasLogin) {
       if (path !== LOGIN_PAGE) {
-        return true // 明确表示允许路由继续执行
+        return allowRoute(path) // 明确表示允许路由继续执行
       } else {
         console.log('已经登录，但是还在登录页', myQuery.redirect)
         const url = myQuery.redirect || HOME_PAGE
@@ -108,12 +110,12 @@ export const navigateToInterceptor = {
     if (isNeedLoginMode) {
       // 需要登录里面的 EXCLUDE_LOGIN_PATH_LIST 表示白名单，可以直接通过
       if (judgeIsExcludePath(path)) {
-        return true // 明确表示允许路由继续执行
+        return allowRoute(path) // 明确表示允许路由继续执行
       }
       // 否则需要重定向到登录页
       else {
         if (path === LOGIN_PAGE) {
-          return true // 明确表示允许路由继续执行
+          return allowRoute(path) // 明确表示允许路由继续执行
         }
         FG_LOG_ENABLE && console.log('1 isNeedLogin(白名单策略) url:', fullPath)
         toLoginPage({ queryString: redirectQuery })
@@ -130,7 +132,7 @@ export const navigateToInterceptor = {
         toLoginPage({ queryString: redirectQuery })
         return false // 修改为false，阻止原路由继续执行
       }
-      return true // 明确表示允许路由继续执行
+      return allowRoute(path) // 明确表示允许路由继续执行
     }
     // #endregion 2/2 默认不需要登录的情况(黑名单策略) ---------------------------
   },

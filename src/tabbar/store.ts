@@ -29,8 +29,34 @@ export function isPageTabbar(path: string) {
   if (selectedTabbarStrategy === TABBAR_STRATEGY_MAP.NO_TABBAR) {
     return false
   }
-  const _path = path.split('?')[0]
+  const _path = normalizeRoutePath(path)
+  // '/' 当做首页
+  if (_path === '/') {
+    return true
+  }
   return tabbarList.some(item => item.pagePath === _path)
+}
+
+export function normalizeRoutePath(path?: string) {
+  if (!path) {
+    return ''
+  }
+  const _path = path.split('?')[0]
+  return _path.startsWith('/') ? _path : `/${_path}`
+}
+
+function getCurrentPagePath() {
+  const pages = getCurrentPages()
+  const currentPage = pages[pages.length - 1]
+  return normalizeRoutePath(currentPage?.route)
+}
+
+function findTabbarIndexByPath(path?: string) {
+  const normalizedPath = normalizeRoutePath(path)
+  if (normalizedPath === '/') {
+    return 0
+  }
+  return tabbarList.findIndex(item => item.pagePath === normalizedPath)
 }
 
 /**
@@ -42,9 +68,13 @@ const tabbarStore = reactive({
   curIdx: uni.getStorageSync('app-tabbar-index') || 0,
   prevIdx: uni.getStorageSync('app-tabbar-index') || 0,
   setCurIdx(idx: number) {
+    const item = tabbarList[idx]
+    if (!item) {
+      return
+    }
     const tokenStore = useTokenStore().updateNowTime()
     // 已登录 或 (url 需要登录 && 在白名单 || 不需要登录 && 不在黑名单) （关于 白名单|黑名单 逻辑： src/router/interceptor.ts）
-    if (tokenStore.hasLogin || (isNeedLoginMode && judgeIsExcludePath(tabbarList[idx].pagePath)) || (!isNeedLoginMode && !judgeIsExcludePath(tabbarList[idx].pagePath))) {
+    if (tokenStore.hasLogin || (isNeedLoginMode && judgeIsExcludePath(item.pagePath)) || (!isNeedLoginMode && !judgeIsExcludePath(item.pagePath))) {
       this.curIdx = idx
       uni.setStorageSync('app-tabbar-index', idx)
     }
@@ -55,26 +85,35 @@ const tabbarStore = reactive({
     }
   },
   setAutoCurIdx(path: string) {
-    // '/' 当做首页
-    if (path === '/') {
-      this.setCurIdx(0)
-      return
-    }
-    const index = tabbarList.findIndex(item => item.pagePath === path)
+    const index = findTabbarIndexByPath(path)
     FG_LOG_ENABLE && console.log('index:', index, path)
     // console.log('tabbarList:', tabbarList)
-    if (index === -1) {
-      const pagesPathList = getCurrentPages().map(item => item.route.startsWith('/') ? item.route : `/${item.route}`)
-      // console.log(pagesPathList)
-      const flag = tabbarList.some(item => pagesPathList.includes(item.pagePath))
-      if (!flag) {
-        this.setCurIdx(0)
-        return
-      }
-    }
-    else {
+    if (index >= 0) {
       this.setCurIdx(index)
+      return
     }
+
+    if (this.curIdx < 0 || this.curIdx >= tabbarList.length) {
+      this.setCurIdx(0)
+    }
+  },
+  syncCurIdxByCurrentPage() {
+    const currentPath = getCurrentPagePath()
+    if (currentPath) {
+      this.setAutoCurIdx(currentPath)
+    }
+  },
+  syncCurIdxByCurrentPageAsync() {
+    setTimeout(() => {
+      this.syncCurIdxByCurrentPage()
+    }, 0)
+  },
+  isCurrentRouteTabbarItem(index: number) {
+    const item = tabbarList[index]
+    if (!item) {
+      return false
+    }
+    return findTabbarIndexByPath(getCurrentPagePath()) === index
   },
   restorePrevIdx() {
     if (this.prevIdx === this.curIdx)

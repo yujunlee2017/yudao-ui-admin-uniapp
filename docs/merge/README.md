@@ -44,7 +44,7 @@ git fetch unibest main
 | 2026-02 | [2026-02.md](./2026-02.md) | 已部分合并 `b9ef57a5` 的 token 响应式和 `SKIP_OPEN_DEVTOOLS`；未引入 CLI、demo、upload 和依赖升级。 |
 | 2026-03 | [2026-03.md](./2026-03.md) | 已部分合并 `7ccd1640` 的 `bump-version` 和 H5 dev Eruda；角色 tabbar 单独立需求。 |
 | 2026-04 | [2026-04.md](./2026-04.md) | 已合并 `UniOptimization` 平台限制和 VS Code TypeScript SDK 配置；CLI Wot UI 2 提交跳过。 |
-| 2026-05 | [2026-05.md](./2026-05.md) | 已合并低风险配置修复；tabbar 同步单独专项。 |
+| 2026-05 | [2026-05.md](./2026-05.md) | 已合并低风险配置修复，并部分合并 tabbar 同步专项。 |
 
 ## 建议分支
 

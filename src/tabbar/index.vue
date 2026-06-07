@@ -23,8 +23,8 @@ function handleClickBulge() {
 }
 
 function handleClick(index: number) {
-  // 点击原来的不做操作
-  if (index === tabbarStore.curIdx) {
+  // 当前高亮和真实页面都已经是目标 tab 时，不重复跳转
+  if (index === tabbarStore.curIdx && tabbarStore.isCurrentRouteTabbarItem(index)) {
     return
   }
   if (tabbarList[index].isBulge) {
@@ -32,12 +32,27 @@ function handleClick(index: number) {
     return
   }
   const url = tabbarList[index].pagePath
+  const prevIdx = tabbarStore.curIdx
+  const syncTabbarAfterNavigation = () => {
+    tabbarStore.syncCurIdxByCurrentPageAsync()
+  }
+  const restoreTabbarWhenNavigationFailed = () => {
+    tabbarStore.setCurIdx(prevIdx)
+  }
   tabbarStore.setCurIdx(index)
   if (tabbarCacheEnable) {
-    uni.switchTab({ url })
+    uni.switchTab({
+      url,
+      success: syncTabbarAfterNavigation,
+      fail: restoreTabbarWhenNavigationFailed,
+    })
   }
   else {
-    uni.navigateTo({ url })
+    uni.navigateTo({
+      url,
+      success: syncTabbarAfterNavigation,
+      fail: restoreTabbarWhenNavigationFailed,
+    })
   }
 }
 // #ifndef MP-WEIXIN || MP-ALIPAY
