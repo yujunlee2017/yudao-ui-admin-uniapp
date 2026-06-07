@@ -26,6 +26,7 @@ import AutoImport from 'unplugin-auto-import/vite'
 import { defineConfig, loadEnv } from 'vite'
 import ViteRestart from 'vite-plugin-restart'
 import openDevTools from './scripts/open-dev-tools'
+import vitePluginEruda from './scripts/vite-plugin-eruda'
 import { createCopyNativeResourcesPlugin } from './vite-plugins/copy-native-resources'
 import syncManifestPlugin from './vite-plugins/sync-manifest-plugins'
 
@@ -167,6 +168,9 @@ export default defineConfig(({ command, mode }) => {
         },
       ),
       syncManifestPlugin(),
+      vitePluginEruda({
+        open: UNI_PLATFORM === 'h5' && mode === 'development',
+      }),
       // 自动打开开发者工具插件 (必须修改 .env 文件中的 VITE_WX_APPID)
       // 上传或 CI 场景可通过 SKIP_OPEN_DEVTOOLS=true 跳过
       SKIP_OPEN_DEVTOOLS !== 'true' && openDevTools({ mode }),
