@@ -1,5 +1,5 @@
 <template>
-  <view class="yd-page-container">
+  <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="请假列表"
@@ -10,92 +10,93 @@
     <!-- 搜索组件 -->
     <LeaveSearchForm @search="handleSearch" @reset="handleReset" />
 
-    <view class="bpm-list">
-      <!-- 请假列表 -->
-      <view
-        v-for="item in list"
-        :key="item.id"
-        class="bpm-card"
-        @click="handleDetail(item)"
-      >
-        <view class="bpm-card-content">
-          <view class="bpm-card-header">
-            <view class="bpm-card-title">
-              <dict-tag :type="DICT_TYPE.BPM_OA_LEAVE_TYPE" :value="item.type" />
-            </view>
-            <dict-tag :type="DICT_TYPE.BPM_PROCESS_INSTANCE_STATUS" :value="item.status" />
-          </view>
-          <view class="bpm-summary">
-            <view class="bpm-summary-item">
-              <text class="text-[#999]">开始时间：</text>
-              <text>{{ formatDateTime(item.startTime) }}</text>
-            </view>
-            <view class="bpm-summary-item">
-              <text class="text-[#999]">结束时间：</text>
-              <text>{{ formatDateTime(item.endTime) }}</text>
-            </view>
-            <view class="bpm-summary-item">
-              <text class="text-[#999]">请假原因：</text>
-              <text>{{ item.reason }}</text>
-            </view>
-          </view>
-          <view class="bpm-card-info">
-            <view class="bpm-user">
-              <view class="bpm-avatar">
-                {{ userNickname?.[0] }}
+    <z-paging
+      ref="pagingRef"
+      v-model="list"
+      :fixed="false"
+      class="min-h-0 flex-1"
+      :default-page-size="10"
+      :refresher-enabled="true"
+      :inside-more="true"
+      :loading-more-default-as-loading="true"
+      empty-view-text="暂无请假记录"
+      @query="queryList"
+    >
+      <view class="bpm-list">
+        <!-- 请假列表 -->
+        <view
+          v-for="item in list"
+          :key="item.id"
+          class="bpm-card"
+          @click="handleDetail(item)"
+        >
+          <view class="bpm-card-content">
+            <view class="bpm-card-header">
+              <view class="bpm-card-title">
+                <dict-tag :type="DICT_TYPE.BPM_OA_LEAVE_TYPE" :value="item.type" />
               </view>
-              <text class="bpm-nickname">{{ userNickname }}</text>
+              <dict-tag :type="DICT_TYPE.BPM_PROCESS_INSTANCE_STATUS" :value="item.status" />
             </view>
-            <text class="bpm-time">{{ formatDateTime(item.createTime) }}</text>
+            <view class="bpm-summary">
+              <view class="bpm-summary-item">
+                <text class="text-[#999]">开始时间：</text>
+                <text>{{ formatDateTime(item.startTime) }}</text>
+              </view>
+              <view class="bpm-summary-item">
+                <text class="text-[#999]">结束时间：</text>
+                <text>{{ formatDateTime(item.endTime) }}</text>
+              </view>
+              <view class="bpm-summary-item">
+                <text class="text-[#999]">请假原因：</text>
+                <text>{{ item.reason }}</text>
+              </view>
+            </view>
+            <view class="bpm-card-info">
+              <view class="bpm-user">
+                <view class="bpm-avatar">
+                  {{ userNickname?.[0] }}
+                </view>
+                <text class="bpm-nickname">{{ userNickname }}</text>
+              </view>
+              <text class="bpm-time">{{ formatDateTime(item.createTime) }}</text>
+            </view>
+          </view>
+          <view class="bpm-actions">
+            <view class="bpm-action-btn" @click.stop="handleDetail(item)">
+              <wd-icon name="eye" size="32rpx" />
+              <text class="ml-8rpx">详情</text>
+            </view>
+            <view class="bpm-action-btn" @click.stop="handleProgress(item)">
+              <wd-icon name="list" size="32rpx" />
+              <text class="ml-8rpx">审批进度</text>
+            </view>
+            <view
+              v-if="item.status === BpmProcessInstanceStatus.RUNNING"
+              class="bpm-action-btn text-[#ff4d4f]!"
+              @click.stop="handleCancel(item)"
+            >
+              <wd-icon name="close" size="32rpx" color="#ff4d4f" />
+              <text class="ml-8rpx">取消</text>
+            </view>
           </view>
         </view>
-        <view class="bpm-actions">
-          <view class="bpm-action-btn" @click.stop="handleDetail(item)">
-            <wd-icon name="eye" size="32rpx" />
-            <text class="ml-8rpx">详情</text>
-          </view>
-          <view class="bpm-action-btn" @click.stop="handleProgress(item)">
-            <wd-icon name="list" size="32rpx" />
-            <text class="ml-8rpx">审批进度</text>
-          </view>
-          <view
-            v-if="item.status === BpmProcessInstanceStatus.RUNNING"
-            class="bpm-action-btn text-[#ff4d4f]!"
-            @click.stop="handleCancel(item)"
-          >
-            <wd-icon name="close" size="32rpx" color="#ff4d4f" />
-            <text class="ml-8rpx">取消</text>
-          </view>
-        </view>
-      </view>
 
-      <!-- 加载更多 -->
-      <view v-if="loadMoreState !== 'loading' && list.length === 0" class="bpm-empty">
-        <wd-empty icon="content" tip="暂无请假记录" />
+        <!-- 新增按钮 -->
+        <wd-fab
+          position="right-bottom"
+          type="primary"
+          :expandable="false"
+          @click="handleCreate"
+        />
       </view>
-      <wd-loadmore
-        v-if="list.length > 0"
-        :state="loadMoreState"
-        @reload="loadMore"
-      />
-
-      <!-- 新增按钮 -->
-      <wd-fab
-        position="right-bottom"
-        type="primary"
-        :expandable="false"
-        @click="handleCreate"
-      />
-    </view>
+    </z-paging>
   </view>
 </template>
 
 <script lang="ts" setup>
 import type { Leave } from '@/api/bpm/oa/leave'
-import type { LoadMoreState } from '@/http/types'
-import { onReachBottom } from '@dcloudio/uni-app'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { getLeavePage } from '@/api/bpm/oa/leave'
 import { cancelProcessInstanceByStartUser } from '@/api/bpm/processInstance'
 import { useUserStore } from '@/store'
@@ -116,13 +117,9 @@ const userStore = useUserStore()
 const toast = useToast()
 const userNickname = computed(() => userStore.userInfo?.nickname || '')
 
-const total = ref(0) // 列表总数
 const list = ref<Leave[]>([]) // 列表数据
-const loadMoreState = ref<LoadMoreState>('loading') // 分页加载状态
-const queryParams = ref({
-  pageNo: 1,
-  pageSize: 10,
-}) // 查询参数
+const pagingRef = ref<any>() // 分页组件引用
+const queryParams = ref<Record<string, any>>({}) // 查询参数
 
 /** 返回上一页 */
 function handleBack() {
@@ -130,37 +127,29 @@ function handleBack() {
 }
 
 /** 查询请假记录列表 */
-async function getList() {
-  loadMoreState.value = 'loading'
+async function queryList(pageNo: number, pageSize: number) {
   try {
-    const data = await getLeavePage(queryParams.value)
-    list.value = [...list.value, ...data.list]
-    total.value = data.total
-    loadMoreState.value = list.value.length >= total.value ? 'finished' : 'loading'
+    const params = {
+      ...queryParams.value,
+      pageNo,
+      pageSize,
+    }
+    const data = await getLeavePage(params)
+    pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
-    queryParams.value.pageNo = queryParams.value.pageNo > 1 ? queryParams.value.pageNo - 1 : 1
-    loadMoreState.value = 'error'
+    pagingRef.value?.complete(false)
   }
 }
 
-/** 加载更多 */
-function loadMore() {
-  if (loadMoreState.value === 'finished') {
-    return
-  }
-  queryParams.value.pageNo++
-  getList()
+/** 重新加载 */
+function reload() {
+  pagingRef.value?.reload()
 }
 
 /** 搜索按钮操作 */
 function handleSearch(data?: Record<string, any>) {
-  queryParams.value = {
-    ...data,
-    pageNo: 1,
-    pageSize: queryParams.value.pageSize,
-  }
-  list.value = []
-  getList()
+  queryParams.value = { ...data }
+  reload()
 }
 
 /** 重置按钮操作 */
@@ -207,13 +196,4 @@ function handleCreate() {
   uni.navigateTo({ url: '/pages-bpm/oa/leave/create/index' })
 }
 
-/** 触底加载更多 */
-onReachBottom(() => {
-  loadMore()
-})
-
-/** 初始化 */
-onMounted(() => {
-  getList()
-})
 </script>

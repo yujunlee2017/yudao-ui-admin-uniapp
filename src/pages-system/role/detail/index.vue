@@ -46,6 +46,7 @@
 import type { Role } from '@/api/system/role'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { deleteRole, getRole } from '@/api/system/role'
 import { useAccess } from '@/hooks/useAccess'
@@ -77,7 +78,7 @@ function handleBack() {
 
 /** 加载角色详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!props.id || deleting.value) {
     return
   }
   try {
@@ -113,6 +114,7 @@ async function handleDelete() {
   try {
     await deleteRole(props.id)
     toast.success('删除成功')
+    uni.$emit('system:role:reload')
     setTimeout(() => {
       handleBack()
     }, 500)
@@ -123,7 +125,13 @@ async function handleDelete() {
 
 /** 初始化 */
 onMounted(() => {
+  uni.$on('system:role:reload', getDetail)
   getDetail()
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('system:role:reload', getDetail)
 })
 </script>
 

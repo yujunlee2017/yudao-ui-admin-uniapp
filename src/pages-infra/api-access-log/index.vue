@@ -1,5 +1,5 @@
 <template>
-  <view class="yd-page-container">
+  <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="API 访问日志"
@@ -11,67 +11,68 @@
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
     <!-- 日志列表 -->
-    <view class="p-24rpx">
-      <view
-        v-for="item in list"
-        :key="item.id"
-        class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm"
-        @click="handleDetail(item)"
-      >
-        <view class="p-24rpx">
-          <view class="mb-16rpx flex items-center justify-between gap-16rpx">
-            <view class="min-w-0 flex-1 truncate text-28rpx text-[#333] font-semibold">
-              {{ item.requestMethod }} {{ item.requestUrl }}
+    <z-paging
+      ref="pagingRef"
+      v-model="list"
+      :fixed="false"
+      class="min-h-0 flex-1"
+      :default-page-size="10"
+      :refresher-enabled="true"
+      :inside-more="true"
+      :loading-more-default-as-loading="true"
+      empty-view-text="暂无日志数据"
+      @query="queryList"
+    >
+      <view class="p-24rpx">
+        <view
+          v-for="item in list"
+          :key="item.id"
+          class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm"
+          @click="handleDetail(item)"
+        >
+          <view class="p-24rpx">
+            <view class="mb-16rpx flex items-center justify-between gap-16rpx">
+              <view class="min-w-0 flex-1 truncate text-28rpx text-[#333] font-semibold">
+                {{ item.requestMethod }} {{ item.requestUrl }}
+              </view>
+              <view class="flex-shrink-0">
+                <wd-tag v-if="item.resultCode === 0" type="success" variant="plain">
+                  成功
+                </wd-tag>
+                <wd-tag v-else type="danger" variant="plain">
+                  失败
+                </wd-tag>
+              </view>
             </view>
-            <view class="flex-shrink-0">
-              <wd-tag v-if="item.resultCode === 0" type="success" variant="plain">
-                成功
-              </wd-tag>
-              <wd-tag v-else type="danger" variant="plain">
-                失败
-              </wd-tag>
+            <view class="mb-12rpx flex items-center text-26rpx text-[#666]">
+              <text class="mr-8rpx text-[#999]">应用名：</text>
+              <text>{{ item.applicationName }}</text>
             </view>
-          </view>
-          <view class="mb-12rpx flex items-center text-26rpx text-[#666]">
-            <text class="mr-8rpx text-[#999]">应用名：</text>
-            <text>{{ item.applicationName }}</text>
-          </view>
-          <view class="mb-12rpx flex items-center text-26rpx text-[#666]">
-            <text class="mr-8rpx text-[#999]">用户编号：</text>
-            <text>{{ item.userId }}</text>
-          </view>
-          <view class="mb-12rpx flex items-center text-26rpx text-[#666]">
-            <text class="mr-8rpx text-[#999]">执行时长：</text>
-            <text>{{ item.duration }} ms</text>
-          </view>
-          <view v-if="item.operateName" class="mb-12rpx flex items-center text-26rpx text-[#666]">
-            <text class="mr-8rpx text-[#999]">操作名：</text>
-            <text class="line-clamp-1">{{ item.operateName }}</text>
-          </view>
-          <view class="flex items-center text-24rpx text-[#999]">
-            <text>{{ formatDateTime(item.beginTime) }}</text>
+            <view class="mb-12rpx flex items-center text-26rpx text-[#666]">
+              <text class="mr-8rpx text-[#999]">用户编号：</text>
+              <text>{{ item.userId }}</text>
+            </view>
+            <view class="mb-12rpx flex items-center text-26rpx text-[#666]">
+              <text class="mr-8rpx text-[#999]">执行时长：</text>
+              <text>{{ item.duration }} ms</text>
+            </view>
+            <view v-if="item.operateName" class="mb-12rpx flex items-center text-26rpx text-[#666]">
+              <text class="mr-8rpx text-[#999]">操作名：</text>
+              <text class="line-clamp-1">{{ item.operateName }}</text>
+            </view>
+            <view class="flex items-center text-24rpx text-[#999]">
+              <text>{{ formatDateTime(item.beginTime) }}</text>
+            </view>
           </view>
         </view>
       </view>
-
-      <!-- 加载更多 -->
-      <view v-if="loadMoreState !== 'loading' && list.length === 0" class="py-100rpx text-center">
-        <wd-empty icon="content" tip="暂无日志数据" />
-      </view>
-      <wd-loadmore
-        v-if="list.length > 0"
-        :state="loadMoreState"
-        @reload="loadMore"
-      />
-    </view>
+    </z-paging>
   </view>
 </template>
 
 <script lang="ts" setup>
 import type { ApiAccessLog } from '@/api/infra/api-access-log'
-import type { LoadMoreState } from '@/http/types'
-import { onReachBottom } from '@dcloudio/uni-app'
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import { getApiAccessLogPage } from '@/api/infra/api-access-log'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
@@ -84,13 +85,9 @@ definePage({
   },
 })
 
-const total = ref(0) // 列表总数
 const list = ref<ApiAccessLog[]>([]) // 列表数据
-const loadMoreState = ref<LoadMoreState>('loading') // 分页加载状态
-const queryParams = ref({
-  pageNo: 1,
-  pageSize: 10,
-}) // 查询参数
+const pagingRef = ref<any>() // 分页组件引用
+const queryParams = ref<Record<string, any>>({}) // 查询参数
 
 /** 返回上一页 */
 function handleBack() {
@@ -98,28 +95,24 @@ function handleBack() {
 }
 
 /** 查询日志列表 */
-async function getList() {
-  loadMoreState.value = 'loading'
+async function queryList(pageNo: number, pageSize: number) {
   try {
-    const data = await getApiAccessLogPage(queryParams.value)
-    list.value = [...list.value, ...data.list]
-    total.value = data.total
-    loadMoreState.value = list.value.length >= total.value ? 'finished' : 'loading'
+    const params = {
+      ...queryParams.value,
+      pageNo,
+      pageSize,
+    }
+    const data = await getApiAccessLogPage(params)
+    pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
-    queryParams.value.pageNo = queryParams.value.pageNo > 1 ? queryParams.value.pageNo - 1 : 1
-    loadMoreState.value = 'error'
+    pagingRef.value?.complete(false)
   }
 }
 
 /** 搜索按钮操作 */
 function handleQuery(data?: Record<string, any>) {
-  queryParams.value = {
-    ...data,
-    pageNo: 1,
-    pageSize: queryParams.value.pageSize,
-  }
-  list.value = []
-  getList()
+  queryParams.value = { ...data }
+  reload()
 }
 
 /** 重置按钮操作 */
@@ -127,13 +120,9 @@ function handleReset() {
   handleQuery()
 }
 
-/** 加载更多 */
-function loadMore() {
-  if (loadMoreState.value === 'finished') {
-    return
-  }
-  queryParams.value.pageNo++
-  getList()
+/** 重新加载 */
+function reload() {
+  pagingRef.value?.reload()
 }
 
 /** 查看详情 */
@@ -143,15 +132,6 @@ function handleDetail(item: ApiAccessLog) {
   })
 }
 
-/** 触底加载更多 */
-onReachBottom(() => {
-  loadMore()
-})
-
-/** 初始化 */
-onMounted(() => {
-  getList()
-})
 </script>
 
 <style lang="scss" scoped>

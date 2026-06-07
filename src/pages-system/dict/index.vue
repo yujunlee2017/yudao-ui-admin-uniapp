@@ -1,5 +1,5 @@
 <template>
-  <view class="yd-page-container">
+  <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="字典管理"
@@ -15,8 +15,8 @@
       </wd-tabs>
     </view>
     <!-- 列表内容 -->
-    <TypeList v-show="tabType === 'type'" @select="handleTypeSelect" />
-    <DataList v-show="tabType === 'data'" :dict-type="selectedDictType" />
+    <TypeList v-show="tabType === 'type'" @select="handleTypeSelect" class="min-h-0 flex-1" />
+    <DataList v-show="tabType === 'data'" :dict-type="selectedDictType" class="min-h-0 flex-1" />
   </view>
 </template>
 

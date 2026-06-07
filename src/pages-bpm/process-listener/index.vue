@@ -1,5 +1,5 @@
 <template>
-  <view class="yd-page-container">
+  <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="流程监听器管理"
@@ -11,51 +11,54 @@
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
     <!-- 流程监听器列表 -->
-    <view class="p-24rpx">
-      <view
-        v-for="item in list"
-        :key="item.id"
-        class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm"
-        @click="handleDetail(item)"
-      >
-        <view class="p-24rpx">
-          <view class="mb-16rpx flex items-center justify-between gap-16rpx">
-            <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-              {{ item.name }}
+    <z-paging
+      ref="pagingRef"
+      v-model="list"
+      :fixed="false"
+      class="min-h-0 flex-1"
+      :default-page-size="10"
+      :refresher-enabled="true"
+      :inside-more="true"
+      :loading-more-default-as-loading="true"
+      empty-view-text="暂无流程监听器数据"
+      @query="queryList"
+    >
+      <view class="p-24rpx">
+        <view
+          v-for="item in list"
+          :key="item.id"
+          class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm"
+          @click="handleDetail(item)"
+        >
+          <view class="p-24rpx">
+            <view class="mb-16rpx flex items-center justify-between gap-16rpx">
+              <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
+                {{ item.name }}
+              </view>
+              <view class="shrink-0">
+                <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="item.status" />
+              </view>
             </view>
-            <view class="shrink-0">
-              <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="item.status" />
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">监听器类型：</text>
+              <dict-tag :type="DICT_TYPE.BPM_PROCESS_LISTENER_TYPE" :value="item.type" />
             </view>
-          </view>
-          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-            <text class="mr-8rpx shrink-0 text-[#999]">监听器类型：</text>
-            <dict-tag :type="DICT_TYPE.BPM_PROCESS_LISTENER_TYPE" :value="item.type" />
-          </view>
-          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-            <text class="mr-8rpx text-[#999]">监听事件：</text>
-            <text>{{ item.event }}</text>
-          </view>
-          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-            <text class="mr-8rpx text-[#999]">值类型：</text>
-            <dict-tag :type="DICT_TYPE.BPM_PROCESS_LISTENER_VALUE_TYPE" :value="item.valueType" />
-          </view>
-          <view class="mb-12rpx text-28rpx text-[#666]">
-            <text class="mr-8rpx text-[#999]">值：</text>
-            <text class="break-all">{{ item.value }}</text>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx text-[#999]">监听事件：</text>
+              <text>{{ item.event }}</text>
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx text-[#999]">值类型：</text>
+              <dict-tag :type="DICT_TYPE.BPM_PROCESS_LISTENER_VALUE_TYPE" :value="item.valueType" />
+            </view>
+            <view class="mb-12rpx text-28rpx text-[#666]">
+              <text class="mr-8rpx text-[#999]">值：</text>
+              <text class="break-all">{{ item.value }}</text>
+            </view>
           </view>
         </view>
       </view>
-
-      <!-- 加载更多 -->
-      <view v-if="loadMoreState !== 'loading' && list.length === 0" class="py-100rpx text-center">
-        <wd-empty icon="content" tip="暂无流程监听器数据" />
-      </view>
-      <wd-loadmore
-        v-if="list.length > 0"
-        :state="loadMoreState"
-        @reload="loadMore"
-      />
-    </view>
+    </z-paging>
 
     <!-- 新增按钮 -->
     <wd-fab
@@ -70,9 +73,7 @@
 
 <script lang="ts" setup>
 import type { ProcessListener } from '@/api/bpm/process-listener'
-import type { LoadMoreState } from '@/http/types'
-import { onReachBottom } from '@dcloudio/uni-app'
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import { getProcessListenerPage } from '@/api/bpm/process-listener'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
@@ -87,13 +88,9 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
-const total = ref(0) // 列表总数
 const list = ref<ProcessListener[]>([]) // 列表数据
-const loadMoreState = ref<LoadMoreState>('loading') // 分页加载状态
-const queryParams = ref({
-  pageNo: 1,
-  pageSize: 10,
-}) // 查询参数
+const pagingRef = ref<any>() // 分页组件引用
+const queryParams = ref<Record<string, any>>({}) // 查询参数
 
 /** 返回上一页 */
 function handleBack() {
@@ -101,28 +98,24 @@ function handleBack() {
 }
 
 /** 查询流程监听器列表 */
-async function getList() {
-  loadMoreState.value = 'loading'
+async function queryList(pageNo: number, pageSize: number) {
   try {
-    const data = await getProcessListenerPage(queryParams.value)
-    list.value = [...list.value, ...data.list]
-    total.value = data.total
-    loadMoreState.value = list.value.length >= total.value ? 'finished' : 'loading'
+    const params = {
+      ...queryParams.value,
+      pageNo,
+      pageSize,
+    }
+    const data = await getProcessListenerPage(params)
+    pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
-    queryParams.value.pageNo = queryParams.value.pageNo > 1 ? queryParams.value.pageNo - 1 : 1
-    loadMoreState.value = 'error'
+    pagingRef.value?.complete(false)
   }
 }
 
 /** 搜索按钮操作 */
 function handleQuery(data?: Record<string, any>) {
-  queryParams.value = {
-    ...data,
-    pageNo: 1,
-    pageSize: queryParams.value.pageSize,
-  }
-  list.value = []
-  getList()
+  queryParams.value = { ...data }
+  reload()
 }
 
 /** 重置按钮操作 */
@@ -130,13 +123,9 @@ function handleReset() {
   handleQuery()
 }
 
-/** 加载更多 */
-function loadMore() {
-  if (loadMoreState.value === 'finished') {
-    return
-  }
-  queryParams.value.pageNo++
-  getList()
+/** 重新加载 */
+function reload() {
+  pagingRef.value?.reload()
 }
 
 /** 新增流程监听器 */
@@ -153,15 +142,6 @@ function handleDetail(item: ProcessListener) {
   })
 }
 
-/** 触底加载更多 */
-onReachBottom(() => {
-  loadMore()
-})
-
-/** 初始化 */
-onMounted(() => {
-  getList()
-})
 </script>
 
 <style lang="scss" scoped>

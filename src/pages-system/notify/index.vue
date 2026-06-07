@@ -1,5 +1,5 @@
 <template>
-  <view class="yd-page-container">
+  <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="站内信管理"
@@ -15,8 +15,8 @@
       </wd-tabs>
     </view>
     <!-- 列表内容 -->
-    <TemplateList v-show="tabType === 'template'" />
-    <MessageList v-show="tabType === 'message'" />
+    <TemplateList v-show="tabType === 'template'" class="min-h-0 flex-1" />
+    <MessageList v-show="tabType === 'message'" class="min-h-0 flex-1" />
   </view>
 </template>
 

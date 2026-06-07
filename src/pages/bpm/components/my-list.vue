@@ -1,67 +1,68 @@
 <template>
-  <view>
+  <view class="h-full min-h-0 flex flex-col">
     <!-- 搜索组件 -->
     <MySearchForm @search="handleSearch" @reset="handleReset" />
 
-    <view class="bpm-list">
-      <!-- 我的列表 -->
-      <view
-        v-for="item in list"
-        :key="item.id"
-        class="bpm-card"
-        @click="handleDetail(item)"
-      >
-        <view class="bpm-card-content">
-          <view class="bpm-card-header">
-            <view class="bpm-card-title">
-              {{ item.name }}
-            </view>
-            <dict-tag :type="DICT_TYPE.BPM_PROCESS_INSTANCE_STATUS" :value="item.status" />
-          </view>
-          <view v-if="item.summary?.length" class="bpm-summary">
-            <view v-for="(s, idx) in item.summary" :key="idx" class="bpm-summary-item">
-              <text class="text-[#999]">{{ s.key }}：</text>
-              <text>{{ s.value }}</text>
-            </view>
-          </view>
-          <view class="bpm-card-info">
-            <view class="bpm-user">
-              <view class="bpm-avatar">
-                {{ userNickname?.[0] }}
+    <z-paging
+      ref="pagingRef"
+      v-model="list"
+      :fixed="false"
+      class="min-h-0 flex-1"
+      :default-page-size="10"
+      :refresher-enabled="true"
+      :inside-more="true"
+      :loading-more-default-as-loading="true"
+      empty-view-text="暂无发起的流程"
+      @query="queryList"
+    >
+      <view class="bpm-list">
+        <!-- 我的列表 -->
+        <view
+          v-for="item in list"
+          :key="item.id"
+          class="bpm-card"
+          @click="handleDetail(item)"
+        >
+          <view class="bpm-card-content">
+            <view class="bpm-card-header">
+              <view class="bpm-card-title">
+                {{ item.name }}
               </view>
-              <text class="bpm-nickname">{{ userNickname }}</text>
+              <dict-tag :type="DICT_TYPE.BPM_PROCESS_INSTANCE_STATUS" :value="item.status" />
             </view>
-            <text class="bpm-time">{{ formatDateTime(item.startTime) }}</text>
+            <view v-if="item.summary?.length" class="bpm-summary">
+              <view v-for="(s, idx) in item.summary" :key="idx" class="bpm-summary-item">
+                <text class="text-[#999]">{{ s.key }}：</text>
+                <text>{{ s.value }}</text>
+              </view>
+            </view>
+            <view class="bpm-card-info">
+              <view class="bpm-user">
+                <view class="bpm-avatar">
+                  {{ userNickname?.[0] }}
+                </view>
+                <text class="bpm-nickname">{{ userNickname }}</text>
+              </view>
+              <text class="bpm-time">{{ formatDateTime(item.startTime) }}</text>
+            </view>
           </view>
         </view>
-      </view>
 
-      <!-- 加载更多 -->
-      <view v-if="loadMoreState !== 'loading' && list.length === 0" class="bpm-empty">
-        <wd-empty icon="content" tip="暂无发起的流程" />
+        <!-- 新增按钮 -->
+        <view
+          class="fixed bottom-200rpx right-32rpx z-10 h-100rpx w-100rpx flex items-center justify-center rounded-full bg-[#1890ff] shadow-lg"
+          @click="handleCreate"
+        >
+          <wd-icon name="plus" size="24px" color="#fff" />
+        </view>
       </view>
-      <wd-loadmore
-        v-if="list.length > 0"
-        :state="loadMoreState"
-        @reload="loadMore"
-      />
-
-      <!-- 新增按钮 -->
-      <view
-        class="fixed bottom-200rpx right-32rpx z-10 h-100rpx w-100rpx flex items-center justify-center rounded-full bg-[#1890ff] shadow-lg"
-        @click="handleCreate"
-      >
-        <wd-icon name="plus" size="24px" color="#fff" />
-      </view>
-    </view>
+    </z-paging>
   </view>
 </template>
 
 <script lang="ts" setup>
 import type { ProcessInstance } from '@/api/bpm/processInstance'
-import type { LoadMoreState } from '@/http/types'
-import { onReachBottom } from '@dcloudio/uni-app'
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { getProcessInstanceMyPage } from '@/api/bpm/processInstance'
 import { useUserStore } from '@/store'
 import { DICT_TYPE } from '@/utils/constants'
@@ -72,46 +73,34 @@ import '../styles/index.scss'
 const userStore = useUserStore()
 const userNickname = computed(() => userStore.userInfo?.nickname || '')
 
-const total = ref(0) // 列表总数
 const list = ref<ProcessInstance[]>([]) // 列表数据
-const loadMoreState = ref<LoadMoreState>('loading') // 分页加载状态
-const queryParams = ref({
-  pageNo: 1,
-  pageSize: 10,
-}) // 查询参数
+const pagingRef = ref<any>() // 分页组件引用
+const queryParams = ref<Record<string, any>>({}) // 查询参数
 
 /** 查询我的流程列表 */
-async function getList() {
-  loadMoreState.value = 'loading'
+async function queryList(pageNo: number, pageSize: number) {
   try {
-    const data = await getProcessInstanceMyPage(queryParams.value)
-    list.value = [...list.value, ...data.list]
-    total.value = data.total
-    loadMoreState.value = list.value.length >= total.value ? 'finished' : 'loading'
+    const params = {
+      ...queryParams.value,
+      pageNo,
+      pageSize,
+    }
+    const data = await getProcessInstanceMyPage(params)
+    pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
-    queryParams.value.pageNo = queryParams.value.pageNo > 1 ? queryParams.value.pageNo - 1 : 1
-    loadMoreState.value = 'error'
+    pagingRef.value?.complete(false)
   }
 }
 
-/** 加载更多 */
-function loadMore() {
-  if (loadMoreState.value === 'finished') {
-    return
-  }
-  queryParams.value.pageNo++
-  getList()
+/** 重新加载 */
+function reload() {
+  pagingRef.value?.reload()
 }
 
 /** 搜索按钮操作 */
 function handleSearch(data?: Record<string, any>) {
-  queryParams.value = {
-    ...data,
-    pageNo: 1,
-    pageSize: queryParams.value.pageSize,
-  }
-  list.value = []
-  getList()
+  queryParams.value = { ...data }
+  reload()
 }
 
 /** 重置按钮操作 */
@@ -129,13 +118,4 @@ function handleCreate() {
   uni.navigateTo({ url: '/pages-bpm/processInstance/create/index' })
 }
 
-/** 触底加载更多 */
-onReachBottom(() => {
-  loadMore()
-})
-
-/** 初始化 */
-onMounted(() => {
-  getList()
-})
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <view class="yd-page-container">
+  <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="操作日志管理"
@@ -11,61 +11,62 @@
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
     <!-- 操作日志列表 -->
-    <view class="p-24rpx">
-      <view
-        v-for="item in list"
-        :key="item.id"
-        class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm"
-        @click="handleDetail(item)"
-      >
-        <view class="p-24rpx">
-          <view class="mb-16rpx flex items-center justify-between">
-            <view class="text-32rpx text-[#333] font-semibold">
-              {{ item.type }} / {{ item.subType }}
+    <z-paging
+      ref="pagingRef"
+      v-model="list"
+      :fixed="false"
+      class="min-h-0 flex-1"
+      :default-page-size="10"
+      :refresher-enabled="true"
+      :inside-more="true"
+      :loading-more-default-as-loading="true"
+      empty-view-text="暂无操作日志数据"
+      @query="queryList"
+    >
+      <view class="p-24rpx">
+        <view
+          v-for="item in list"
+          :key="item.id"
+          class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm"
+          @click="handleDetail(item)"
+        >
+          <view class="p-24rpx">
+            <view class="mb-16rpx flex items-center justify-between">
+              <view class="text-32rpx text-[#333] font-semibold">
+                {{ item.type }} / {{ item.subType }}
+              </view>
+              <dict-tag :type="DICT_TYPE.USER_TYPE" :value="item.userType" />
             </view>
-            <dict-tag :type="DICT_TYPE.USER_TYPE" :value="item.userType" />
-          </view>
-          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-            <text class="mr-8rpx text-[#999]">操作人：</text>
-            <text class="line-clamp-1">{{ item.userName }}</text>
-          </view>
-          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-            <text class="mr-8rpx shrink-0 text-[#999]">操作内容：</text>
-            <text class="min-w-0 flex-1 truncate">{{ item.action }}</text>
-          </view>
-          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-            <text class="mr-8rpx text-[#999]">操作时间：</text>
-            <text class="line-clamp-1">{{ formatDateTime(item.createTime) }}</text>
-          </view>
-          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-            <text class="mr-8rpx text-[#999]">业务编号：</text>
-            <text class="line-clamp-1">{{ item.bizId }}</text>
-          </view>
-          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-            <text class="mr-8rpx text-[#999]">操作 IP：</text>
-            <text class="line-clamp-1">{{ item.userIp }}</text>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx text-[#999]">操作人：</text>
+              <text class="line-clamp-1">{{ item.userName }}</text>
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">操作内容：</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.action }}</text>
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx text-[#999]">操作时间：</text>
+              <text class="line-clamp-1">{{ formatDateTime(item.createTime) }}</text>
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx text-[#999]">业务编号：</text>
+              <text class="line-clamp-1">{{ item.bizId }}</text>
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx text-[#999]">操作 IP：</text>
+              <text class="line-clamp-1">{{ item.userIp }}</text>
+            </view>
           </view>
         </view>
       </view>
-
-      <!-- 加载更多 -->
-      <view v-if="loadMoreState !== 'loading' && list.length === 0" class="py-100rpx text-center">
-        <wd-empty icon="content" tip="暂无操作日志数据" />
-      </view>
-      <wd-loadmore
-        v-if="list.length > 0"
-        :state="loadMoreState"
-        @reload="loadMore"
-      />
-    </view>
+    </z-paging>
   </view>
 </template>
 
 <script lang="ts" setup>
 import type { OperateLog } from '@/api/system/operate-log'
-import type { LoadMoreState } from '@/http/types'
-import { onReachBottom } from '@dcloudio/uni-app'
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import { getOperateLogPage } from '@/api/system/operate-log'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -79,13 +80,9 @@ definePage({
   },
 })
 
-const total = ref(0) // 列表总数
 const list = ref<OperateLog[]>([]) // 列表数据
-const loadMoreState = ref<LoadMoreState>('loading') // 分页加载状态
-const queryParams = ref({
-  pageNo: 1,
-  pageSize: 10,
-}) // 查询参数
+const pagingRef = ref<any>() // 分页组件引用
+const queryParams = ref<Record<string, any>>({}) // 查询参数
 
 /** 返回上一页 */
 function handleBack() {
@@ -93,28 +90,24 @@ function handleBack() {
 }
 
 /** 查询操作日志列表 */
-async function getList() {
-  loadMoreState.value = 'loading'
+async function queryList(pageNo: number, pageSize: number) {
   try {
-    const data = await getOperateLogPage(queryParams.value)
-    list.value = [...list.value, ...data.list]
-    total.value = data.total
-    loadMoreState.value = list.value.length >= total.value ? 'finished' : 'loading'
+    const params = {
+      ...queryParams.value,
+      pageNo,
+      pageSize,
+    }
+    const data = await getOperateLogPage(params)
+    pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
-    queryParams.value.pageNo = queryParams.value.pageNo > 1 ? queryParams.value.pageNo - 1 : 1
-    loadMoreState.value = 'error'
+    pagingRef.value?.complete(false)
   }
 }
 
 /** 搜索按钮操作 */
 function handleQuery(data?: Record<string, any>) {
-  queryParams.value = {
-    ...data,
-    pageNo: 1,
-    pageSize: queryParams.value.pageSize,
-  }
-  list.value = []
-  getList()
+  queryParams.value = { ...data }
+  reload()
 }
 
 /** 重置按钮操作 */
@@ -122,13 +115,9 @@ function handleReset() {
   handleQuery()
 }
 
-/** 加载更多 */
-function loadMore() {
-  if (loadMoreState.value === 'finished') {
-    return
-  }
-  queryParams.value.pageNo++
-  getList()
+/** 重新加载 */
+function reload() {
+  pagingRef.value?.reload()
 }
 
 /** 查看详情 */
@@ -138,15 +127,6 @@ function handleDetail(item: OperateLog) {
   })
 }
 
-/** 触底加载更多 */
-onReachBottom(() => {
-  loadMore()
-})
-
-/** 初始化 */
-onMounted(() => {
-  getList()
-})
 </script>
 
 <style lang="scss" scoped>

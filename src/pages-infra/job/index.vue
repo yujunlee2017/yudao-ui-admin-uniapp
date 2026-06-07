@@ -1,5 +1,5 @@
 <template>
-  <view class="yd-page-container">
+  <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="定时任务"
@@ -15,8 +15,8 @@
       </wd-tabs>
     </view>
     <!-- 列表内容 -->
-    <JobList v-show="tabType === 'job'" @view-log="handleViewLog" />
-    <LogList v-show="tabType === 'log'" :job-id="selectedJobId" />
+    <JobList v-show="tabType === 'job'" @view-log="handleViewLog" class="min-h-0 flex-1" />
+    <LogList v-show="tabType === 'log'" :job-id="selectedJobId" class="min-h-0 flex-1" />
   </view>
 </template>
 

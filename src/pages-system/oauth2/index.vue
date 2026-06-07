@@ -1,5 +1,5 @@
 <template>
-  <view class="yd-page-container">
+  <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="OAuth2.0 管理"
@@ -16,8 +16,8 @@
     </view>
 
     <!-- 列表内容 -->
-    <ClientList v-show="tabType === 'client'" />
-    <TokenList v-show="tabType === 'token'" />
+    <ClientList v-show="tabType === 'client'" class="min-h-0 flex-1" />
+    <TokenList v-show="tabType === 'token'" class="min-h-0 flex-1" />
   </view>
 </template>
 

@@ -1,58 +1,60 @@
 <template>
-  <view>
+  <view class="h-full min-h-0 flex flex-col">
     <!-- 搜索组件 -->
     <LogSearchForm @search="handleQuery" @reset="handleReset" />
 
     <!-- 日志列表 -->
-    <view class="p-24rpx">
-      <view
-        v-for="item in list"
-        :key="item.id"
-        class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm"
-        @click="handleDetail(item)"
-      >
-        <view class="p-24rpx">
-          <view class="mb-16rpx flex items-center justify-between">
-            <view class="text-32rpx text-[#333] font-semibold">
-              {{ item.mobile }}
+    <z-paging
+      ref="pagingRef"
+      v-model="list"
+      :fixed="false"
+      class="min-h-0 flex-1"
+      :default-page-size="10"
+      :refresher-enabled="true"
+      :inside-more="true"
+      :loading-more-default-as-loading="true"
+      empty-view-text="暂无短信日志数据"
+      @query="queryList"
+    >
+      <view class="p-24rpx">
+        <view
+          v-for="item in list"
+          :key="item.id"
+          class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm"
+          @click="handleDetail(item)"
+        >
+          <view class="p-24rpx">
+            <view class="mb-16rpx flex items-center justify-between">
+              <view class="text-32rpx text-[#333] font-semibold">
+                {{ item.mobile }}
+              </view>
+              <dict-tag :type="DICT_TYPE.SYSTEM_SMS_SEND_STATUS" :value="item.sendStatus" />
             </view>
-            <dict-tag :type="DICT_TYPE.SYSTEM_SMS_SEND_STATUS" :value="item.sendStatus" />
-          </view>
-          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-            <text class="mr-8rpx shrink-0 text-[#999]">短信渠道：</text>
-            <dict-tag :type="DICT_TYPE.SYSTEM_SMS_CHANNEL_CODE" :value="item.channelCode" />
-          </view>
-          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-            <text class="mr-8rpx shrink-0 text-[#999]">短信类型：</text>
-            <dict-tag :type="DICT_TYPE.SYSTEM_SMS_TEMPLATE_TYPE" :value="item.templateType" />
-          </view>
-          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-            <text class="mr-8rpx shrink-0 text-[#999]">短信内容：</text>
-            <text class="min-w-0 flex-1 truncate">{{ item.templateContent }}</text>
-          </view>
-          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-            <text class="mr-8rpx text-[#999]">发送时间：</text>
-            <text>{{ formatDateTime(item.sendTime) || '-' }}</text>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">短信渠道：</text>
+              <dict-tag :type="DICT_TYPE.SYSTEM_SMS_CHANNEL_CODE" :value="item.channelCode" />
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">短信类型：</text>
+              <dict-tag :type="DICT_TYPE.SYSTEM_SMS_TEMPLATE_TYPE" :value="item.templateType" />
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">短信内容：</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.templateContent }}</text>
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx text-[#999]">发送时间：</text>
+              <text>{{ formatDateTime(item.sendTime) || '-' }}</text>
+            </view>
           </view>
         </view>
       </view>
-
-      <!-- 加载更多 -->
-      <view v-if="loadMoreState !== 'loading' && list.length === 0" class="py-100rpx text-center">
-        <wd-empty icon="content" tip="暂无短信日志数据" />
-      </view>
-      <wd-loadmore
-        v-if="list.length > 0"
-        :state="loadMoreState"
-        @reload="loadMore"
-      />
-    </view>
+    </z-paging>
   </view>
 </template>
 
 <script lang="ts" setup>
 import type { SmsLog } from '@/api/system/sms/log'
-import type { LoadMoreState } from '@/http/types'
 import { ref } from 'vue'
 import { getSmsLogPage } from '@/api/system/sms/log'
 import { DICT_TYPE } from '@/utils/constants'
@@ -63,37 +65,29 @@ const props = defineProps<{
   active?: boolean
 }>()
 
-const total = ref(0) // 列表总数
 const list = ref<SmsLog[]>([]) // 列表数据
-const loadMoreState = ref<LoadMoreState>('loading') // 分页加载状态
-const queryParams = ref({
-  pageNo: 1,
-  pageSize: 10,
-}) // 查询参数
+const pagingRef = ref<any>() // 分页组件引用
+const queryParams = ref<Record<string, any>>({}) // 查询参数
 
 /** 查询列表 */
-async function getList() {
-  loadMoreState.value = 'loading'
+async function queryList(pageNo: number, pageSize: number) {
   try {
-    const data = await getSmsLogPage(queryParams.value)
-    list.value = [...list.value, ...data.list]
-    total.value = data.total
-    loadMoreState.value = list.value.length >= total.value ? 'finished' : 'loading'
+    const params = {
+      ...queryParams.value,
+      pageNo,
+      pageSize,
+    }
+    const data = await getSmsLogPage(params)
+    pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
-    queryParams.value.pageNo = queryParams.value.pageNo > 1 ? queryParams.value.pageNo - 1 : 1
-    loadMoreState.value = 'error'
+    pagingRef.value?.complete(false)
   }
 }
 
 /** 搜索按钮操作 */
 function handleQuery(data?: Record<string, any>) {
-  queryParams.value = {
-    ...data,
-    pageNo: 1,
-    pageSize: queryParams.value.pageSize,
-  }
-  list.value = []
-  getList()
+  queryParams.value = { ...data }
+  reload()
 }
 
 /** 重置按钮操作 */
@@ -101,13 +95,9 @@ function handleReset() {
   handleQuery()
 }
 
-/** 加载更多 */
-function loadMore() {
-  if (loadMoreState.value === 'finished') {
-    return
-  }
-  queryParams.value.pageNo++
-  getList()
+/** 重新加载 */
+function reload() {
+  pagingRef.value?.reload()
 }
 
 /** 查看详情 */
@@ -117,13 +107,4 @@ function handleDetail(item: SmsLog) {
   })
 }
 
-/** 触底加载更多 */
-onReachBottom(() => {
-  loadMore()
-})
-
-/** 初始化 */
-onMounted(() => {
-  getList()
-})
 </script>

@@ -69,6 +69,7 @@
 
 <script lang="ts" setup>
 import type { User } from '@/api/system/user'
+import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
@@ -127,7 +128,7 @@ function handleBack() {
 
 /** 加载用户详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!props.id || deleting.value) {
     return
   }
   try {
@@ -163,6 +164,7 @@ async function handleDelete() {
   try {
     await deleteUser(Number(props.id))
     toast.success('删除成功')
+    uni.$emit('system:user:reload')
     setTimeout(() => {
       handleBack()
     }, 500)
@@ -199,12 +201,18 @@ async function handleUpdateStatus() {
     willEnable ? CommonStatusEnum.ENABLE : CommonStatusEnum.DISABLE,
   )
   toast.success(willEnable ? '开启成功' : '禁用成功')
-  await getDetail()
+  uni.$emit('system:user:reload')
 }
 
 /** 初始化 */
 onMounted(() => {
+  uni.$on('system:user:reload', getDetail)
   getDetail()
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('system:user:reload', getDetail)
 })
 </script>
 

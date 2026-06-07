@@ -1,5 +1,5 @@
 <template>
-  <view class="yd-page-container">
+  <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="我的消息"
@@ -10,61 +10,64 @@
     <SearchForm @search="handleQuery" @reset="handleReset" @read-all="handleReadAll" />
 
     <!-- 消息列表 -->
-    <view class="p-24rpx">
-      <view
-        v-for="item in list"
-        :key="item.id"
-        class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm"
-        @click="handleDetail(item)"
-      >
-        <view class="p-24rpx">
-          <!-- 消息头部 -->
-          <view class="mb-16rpx flex items-center justify-between">
-            <view class="flex items-center">
-              <view
-                v-if="!item.readStatus"
-                class="mr-8rpx h-12rpx w-12rpx flex-shrink-0 rounded-full bg-red-500"
-              />
-              <view class="text-32rpx text-[#333] font-semibold">
-                {{ item.templateNickname }}
+    <z-paging
+      ref="pagingRef"
+      v-model="list"
+      :fixed="false"
+      class="min-h-0 flex-1"
+      :default-page-size="10"
+      :refresher-enabled="true"
+      :inside-more="true"
+      :loading-more-default-as-loading="true"
+      empty-view-text="暂无消息"
+      @query="queryList"
+    >
+      <view class="p-24rpx">
+        <view
+          v-for="item in list"
+          :key="item.id"
+          class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm"
+          @click="handleDetail(item)"
+        >
+          <view class="p-24rpx">
+            <!-- 消息头部 -->
+            <view class="mb-16rpx flex items-center justify-between">
+              <view class="flex items-center">
+                <view
+                  v-if="!item.readStatus"
+                  class="mr-8rpx h-12rpx w-12rpx flex-shrink-0 rounded-full bg-red-500"
+                />
+                <view class="text-32rpx text-[#333] font-semibold">
+                  {{ item.templateNickname }}
+                </view>
+              </view>
+              <view class="text-26rpx text-[#999]">
+                {{ formatDateTime(item.createTime) }}
               </view>
             </view>
-            <view class="text-26rpx text-[#999]">
-              {{ formatDateTime(item.createTime) }}
+            <!-- 消息内容 -->
+            <view class="mb-12rpx rounded-8rpx bg-[#f7f8f9] p-20rpx">
+              <view class="line-clamp-1 mb-8rpx text-30rpx text-[#323333] font-bold">
+                {{ getDictLabel(DICT_TYPE.SYSTEM_NOTIFY_TEMPLATE_TYPE, item.templateType) }}
+              </view>
+              <view class="line-clamp-2 text-28rpx text-[#777]">
+                {{ item.templateContent }}
+              </view>
             </view>
-          </view>
-          <!-- 消息内容 -->
-          <view class="mb-12rpx rounded-8rpx bg-[#f7f8f9] p-20rpx">
-            <view class="line-clamp-1 mb-8rpx text-30rpx text-[#323333] font-bold">
-              {{ getDictLabel(DICT_TYPE.SYSTEM_NOTIFY_TEMPLATE_TYPE, item.templateType) }}
-            </view>
-            <view class="line-clamp-2 text-28rpx text-[#777]">
-              {{ item.templateContent }}
-            </view>
-          </view>
-          <!-- 底部操作区 -->
-          <view class="flex items-center justify-between text-26rpx text-[#999]">
-            <view
-              v-if="!item.readStatus"
-              class="text-[#1890ff]"
-              @click.stop="handleReadOne(item)"
-            >
-              标记已读
+            <!-- 底部操作区 -->
+            <view class="flex items-center justify-between text-26rpx text-[#999]">
+              <view
+                v-if="!item.readStatus"
+                class="text-[#1890ff]"
+                @click.stop="handleReadOne(item)"
+              >
+                标记已读
+              </view>
             </view>
           </view>
         </view>
       </view>
-
-      <!-- 加载更多 -->
-      <view v-if="loadMoreState !== 'loading' && list.length === 0" class="py-100rpx text-center">
-        <wd-empty icon="content" tip="暂无消息" />
-      </view>
-      <wd-loadmore
-        v-if="list.length > 0"
-        :state="loadMoreState"
-        @reload="loadMore"
-      />
-    </view>
+    </z-paging>
 
     <!-- 详情弹窗 -->
     <DetailPopup ref="detailPopupRef" />
@@ -73,11 +76,9 @@
 
 <script lang="ts" setup>
 import type { NotifyMessage } from '@/api/system/notify/message'
-import type { LoadMoreState } from '@/http/types'
-import { onReachBottom } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import {
   getMyNotifyMessagePage,
   updateAllNotifyMessageRead,
@@ -98,38 +99,30 @@ definePage({
 
 const toast = useToast()
 const dialog = useDialog()
-const total = ref(0) // 列表总数
 const list = ref<NotifyMessage[]>([]) // 列表数据
-const loadMoreState = ref<LoadMoreState>('loading') // 分页加载状态
-const queryParams = ref({
-  pageNo: 1,
-  pageSize: 10,
-}) // 查询参数
+const pagingRef = ref<any>() // 分页组件引用
+const queryParams = ref<Record<string, any>>({}) // 查询参数
 const detailPopupRef = ref<InstanceType<typeof DetailPopup>>() // 详情弹窗
 
 /** 查询消息列表 */
-async function getList() {
-  loadMoreState.value = 'loading'
+async function queryList(pageNo: number, pageSize: number) {
   try {
-    const data = await getMyNotifyMessagePage(queryParams.value)
-    list.value = [...list.value, ...data.list]
-    total.value = data.total
-    loadMoreState.value = list.value.length >= total.value ? 'finished' : 'loading'
+    const params = {
+      ...queryParams.value,
+      pageNo,
+      pageSize,
+    }
+    const data = await getMyNotifyMessagePage(params)
+    pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
-    queryParams.value.pageNo = queryParams.value.pageNo > 1 ? queryParams.value.pageNo - 1 : 1
-    loadMoreState.value = 'error'
+    pagingRef.value?.complete(false)
   }
 }
 
 /** 搜索按钮操作 */
 function handleQuery(data?: Record<string, any>) {
-  queryParams.value = {
-    ...data,
-    pageNo: 1,
-    pageSize: queryParams.value.pageSize,
-  }
-  list.value = []
-  getList()
+  queryParams.value = { ...data }
+  reload()
 }
 
 /** 重置按钮操作 */
@@ -137,13 +130,9 @@ function handleReset() {
   handleQuery()
 }
 
-/** 加载更多 */
-function loadMore() {
-  if (loadMoreState.value === 'finished') {
-    return
-  }
-  queryParams.value.pageNo++
-  getList()
+/** 重新加载 */
+function reload() {
+  pagingRef.value?.reload()
 }
 
 /** 查看详情 */
@@ -180,20 +169,9 @@ async function handleReadAll() {
   await updateAllNotifyMessageRead()
   toast.success('全部已读成功')
   // 刷新列表
-  queryParams.value.pageNo = 1
-  list.value = []
-  await getList()
+  reload()
 }
 
-/** 触底加载更多 */
-onReachBottom(() => {
-  loadMore()
-})
-
-/** 初始化 */
-onMounted(() => {
-  getList()
-})
 </script>
 
 <style lang="scss" scoped>

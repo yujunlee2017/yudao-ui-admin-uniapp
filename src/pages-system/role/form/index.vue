@@ -134,6 +134,7 @@ async function handleSubmit() {
       await createRole(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('system:role:reload')
     setTimeout(() => {
       handleBack()
     }, 500)

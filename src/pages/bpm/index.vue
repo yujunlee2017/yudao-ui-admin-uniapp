@@ -1,5 +1,5 @@
 <template>
-  <view class="yd-page-container">
+  <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="审批"
@@ -16,10 +16,10 @@
       </wd-tabs>
     </view>
     <!-- 列表内容 -->
-    <TodoList v-show="tabType === 'todo'" />
-    <DoneList v-show="tabType === 'done'" />
-    <MyList v-show="tabType === 'my'" />
-    <CopyList v-show="tabType === 'copy'" />
+    <TodoList v-show="tabType === 'todo'" class="min-h-0 flex-1" />
+    <DoneList v-show="tabType === 'done'" class="min-h-0 flex-1" />
+    <MyList v-show="tabType === 'my'" class="min-h-0 flex-1" />
+    <CopyList v-show="tabType === 'copy'" class="min-h-0 flex-1" />
   </view>
 </template>
 

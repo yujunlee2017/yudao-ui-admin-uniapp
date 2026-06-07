@@ -43,6 +43,11 @@ border-t-1
   background-color: #f5f5f5;
 }
 
+// 分页容器：配合 yd-page-container 与 z-paging 的 fixed=false 布局
+.yd-page-container-paging {
+  @apply h-screen flex flex-col overflow-hidden;
+}
+
 // ==================== 详情页底部操作按钮 ====================
 .yd-detail-footer {
   position: fixed;

@@ -1,5 +1,5 @@
 <template>
-  <view class="yd-page-container">
+  <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="短信管理"
@@ -16,9 +16,9 @@
       </wd-tabs>
     </view>
     <!-- 列表内容 -->
-    <ChannelList v-show="tabType === 'channel'" />
-    <TemplateList v-show="tabType === 'template'" />
-    <LogList v-show="tabType === 'log'" />
+    <ChannelList v-show="tabType === 'channel'" class="min-h-0 flex-1" />
+    <TemplateList v-show="tabType === 'template'" class="min-h-0 flex-1" />
+    <LogList v-show="tabType === 'log'" class="min-h-0 flex-1" />
   </view>
 </template>
 

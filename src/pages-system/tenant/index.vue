@@ -1,5 +1,5 @@
 <template>
-  <view class="yd-page-container">
+  <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="租户管理"
@@ -16,8 +16,8 @@
     </view>
 
     <!-- 列表内容 -->
-    <TenantList v-show="tabType === 'tenant'" />
-    <PackageList v-show="tabType === 'package'" />
+    <TenantList v-show="tabType === 'tenant'" class="min-h-0 flex-1" />
+    <PackageList v-show="tabType === 'package'" class="min-h-0 flex-1" />
   </view>
 </template>
 

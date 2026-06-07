@@ -1,5 +1,5 @@
 <template>
-  <view class="yd-page-container">
+  <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="文件管理"
@@ -15,8 +15,8 @@
       </wd-tabs>
     </view>
     <!-- 列表内容 -->
-    <FileList v-show="tabType === 'file'" />
-    <ConfigList v-show="tabType === 'config'" />
+    <FileList v-show="tabType === 'file'" class="min-h-0 flex-1" />
+    <ConfigList v-show="tabType === 'config'" class="min-h-0 flex-1" />
   </view>
 </template>
 

@@ -1,5 +1,5 @@
 <template>
-  <view class="yd-page-container">
+  <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="三方用户管理"
@@ -16,8 +16,8 @@
     </view>
 
     <!-- 列表内容 -->
-    <ClientList v-show="tabType === 'client'" />
-    <UserList v-show="tabType === 'user'" />
+    <ClientList v-show="tabType === 'client'" class="min-h-0 flex-1" />
+    <UserList v-show="tabType === 'user'" class="min-h-0 flex-1" />
   </view>
 </template>
 

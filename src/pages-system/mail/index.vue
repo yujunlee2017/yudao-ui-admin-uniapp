@@ -1,5 +1,5 @@
 <template>
-  <view class="yd-page-container">
+  <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="邮件管理"
@@ -16,9 +16,9 @@
       </wd-tabs>
     </view>
     <!-- 列表内容 -->
-    <AccountList v-show="tabType === 'account'" />
-    <TemplateList v-show="tabType === 'template'" />
-    <LogList v-show="tabType === 'log'" />
+    <AccountList v-show="tabType === 'account'" class="min-h-0 flex-1" />
+    <TemplateList v-show="tabType === 'template'" class="min-h-0 flex-1" />
+    <LogList v-show="tabType === 'log'" class="min-h-0 flex-1" />
   </view>
 </template>
 

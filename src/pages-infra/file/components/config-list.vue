@@ -1,68 +1,71 @@
 <template>
-  <view>
+  <view class="h-full min-h-0 flex flex-col">
     <!-- 搜索组件 -->
     <ConfigSearchForm @search="handleQuery" @reset="handleReset" />
 
     <!-- 文件配置列表 -->
-    <view class="p-24rpx">
-      <view
-        v-for="item in list"
-        :key="item.id"
-        class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm"
-        @click="handleDetail(item)"
-      >
-        <view class="p-24rpx">
-          <view class="mb-16rpx flex items-center justify-between">
-            <view class="text-32rpx text-[#333] font-semibold">
-              {{ item.name }}
-            </view>
-            <view class="flex items-center gap-8rpx">
-              <view v-if="item.master" class="rounded-4rpx bg-green-500 px-8rpx py-2rpx text-24rpx text-white">
-                主配置
+    <z-paging
+      ref="pagingRef"
+      v-model="list"
+      :fixed="false"
+      class="min-h-0 flex-1"
+      :default-page-size="10"
+      :refresher-enabled="true"
+      :inside-more="true"
+      :loading-more-default-as-loading="true"
+      empty-view-text="暂无文件配置数据"
+      @query="queryList"
+    >
+      <view class="p-24rpx">
+        <view
+          v-for="item in list"
+          :key="item.id"
+          class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm"
+          @click="handleDetail(item)"
+        >
+          <view class="p-24rpx">
+            <view class="mb-16rpx flex items-center justify-between">
+              <view class="text-32rpx text-[#333] font-semibold">
+                {{ item.name }}
               </view>
-              <dict-tag :type="DICT_TYPE.INFRA_FILE_STORAGE" :value="item.storage" />
+              <view class="flex items-center gap-8rpx">
+                <view v-if="item.master" class="rounded-4rpx bg-green-500 px-8rpx py-2rpx text-24rpx text-white">
+                  主配置
+                </view>
+                <dict-tag :type="DICT_TYPE.INFRA_FILE_STORAGE" :value="item.storage" />
+              </view>
             </view>
-          </view>
-          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-            <text class="mr-8rpx shrink-0 text-[#999]">配置编号：</text>
-            <text>{{ item.id }}</text>
-          </view>
-          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-            <text class="mr-8rpx shrink-0 text-[#999]">备注：</text>
-            <text class="min-w-0 flex-1 truncate">{{ item.remark || '-' }}</text>
-          </view>
-          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-            <text class="mr-8rpx text-[#999]">创建时间：</text>
-            <text>{{ formatDateTime(item.createTime) }}</text>
-          </view>
-          <!-- 操作按钮 -->
-          <view class="mt-16rpx flex justify-end gap-16rpx">
-            <wd-button
-              v-if="hasAccessByCodes(['infra:file-config:update']) && !item.master"
-              size="small" type="info" @click.stop="handleMaster(item)"
-            >
-              设为主配置
-            </wd-button>
-            <wd-button
-              v-if="hasAccessByCodes(['infra:file-config:update'])"
-              size="small" type="info" @click.stop="handleTest(item)"
-            >
-              测试
-            </wd-button>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">配置编号：</text>
+              <text>{{ item.id }}</text>
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">备注：</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.remark || '-' }}</text>
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx text-[#999]">创建时间：</text>
+              <text>{{ formatDateTime(item.createTime) }}</text>
+            </view>
+            <!-- 操作按钮 -->
+            <view class="mt-16rpx flex justify-end gap-16rpx">
+              <wd-button
+                v-if="hasAccessByCodes(['infra:file-config:update']) && !item.master"
+                size="small" type="info" @click.stop="handleMaster(item)"
+              >
+                设为主配置
+              </wd-button>
+              <wd-button
+                v-if="hasAccessByCodes(['infra:file-config:update'])"
+                size="small" type="info" @click.stop="handleTest(item)"
+              >
+                测试
+              </wd-button>
+            </view>
           </view>
         </view>
       </view>
-
-      <!-- 加载更多 -->
-      <view v-if="loadMoreState !== 'loading' && list.length === 0" class="py-100rpx text-center">
-        <wd-empty icon="content" tip="暂无文件配置数据" />
-      </view>
-      <wd-loadmore
-        v-if="list.length > 0"
-        :state="loadMoreState"
-        @reload="loadMore"
-      />
-    </view>
+    </z-paging>
 
     <!-- 新增按钮 -->
     <wd-fab
@@ -77,7 +80,6 @@
 
 <script lang="ts" setup>
 import type { FileConfig } from '@/api/infra/file/config'
-import type { LoadMoreState } from '@/http/types'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { ref } from 'vue'
@@ -90,37 +92,29 @@ import ConfigSearchForm from './config-search-form.vue'
 const { hasAccessByCodes } = useAccess()
 const toast = useToast()
 const dialog = useDialog()
-const total = ref(0) // 列表总数
 const list = ref<FileConfig[]>([]) // 列表数据
-const loadMoreState = ref<LoadMoreState>('loading') // 分页加载状态
-const queryParams = ref({
-  pageNo: 1,
-  pageSize: 10,
-}) // 查询参数
+const pagingRef = ref<any>() // 分页组件引用
+const queryParams = ref<Record<string, any>>({}) // 查询参数
 
 /** 查询列表 */
-async function getList() {
-  loadMoreState.value = 'loading'
+async function queryList(pageNo: number, pageSize: number) {
   try {
-    const data = await getFileConfigPage(queryParams.value)
-    list.value = [...list.value, ...data.list]
-    total.value = data.total
-    loadMoreState.value = list.value.length >= total.value ? 'finished' : 'loading'
+    const params = {
+      ...queryParams.value,
+      pageNo,
+      pageSize,
+    }
+    const data = await getFileConfigPage(params)
+    pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
-    queryParams.value.pageNo = queryParams.value.pageNo > 1 ? queryParams.value.pageNo - 1 : 1
-    loadMoreState.value = 'error'
+    pagingRef.value?.complete(false)
   }
 }
 
 /** 搜索按钮操作 */
 function handleQuery(data?: Record<string, any>) {
-  queryParams.value = {
-    ...data,
-    pageNo: 1,
-    pageSize: queryParams.value.pageSize,
-  }
-  list.value = []
-  getList()
+  queryParams.value = { ...data }
+  reload()
 }
 
 /** 重置按钮操作 */
@@ -128,13 +122,9 @@ function handleReset() {
   handleQuery()
 }
 
-/** 加载更多 */
-function loadMore() {
-  if (loadMoreState.value === 'finished') {
-    return
-  }
-  queryParams.value.pageNo++
-  getList()
+/** 重新加载 */
+function reload() {
+  pagingRef.value?.reload()
 }
 
 /** 新增 */
@@ -201,13 +191,4 @@ async function handleMaster(item: FileConfig) {
   }
 }
 
-/** 触底加载更多 */
-onReachBottom(() => {
-  loadMore()
-})
-
-/** 初始化 */
-onMounted(() => {
-  getList()
-})
 </script>

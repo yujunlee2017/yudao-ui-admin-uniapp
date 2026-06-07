@@ -173,6 +173,7 @@ async function handleSubmit() {
       await createUser(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('system:user:reload')
     setTimeout(() => {
       handleBack()
     }, 500)
