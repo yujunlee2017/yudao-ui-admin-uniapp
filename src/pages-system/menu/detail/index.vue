@@ -101,7 +101,7 @@ async function getDetail() {
     if (formData.value?.parentId === 0) {
       parentMenuName.value = '主类目'
     } else if (formData.value?.parentId) {
-      // TODO @芋艿：后续这里可以优化，由后端返回 menuName；
+      // TODO @AI：改成链式的父菜单名字
       const menuList = await getSimpleMenuList()
       const parent = menuList.find(item => item.id === formData.value?.parentId)
       parentMenuName.value = parent?.name || '-'

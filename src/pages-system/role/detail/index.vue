@@ -36,9 +36,21 @@
         >
           删除
         </wd-button>
+        <wd-button
+          v-if="hasMoreActions"
+          class="flex-1" type="info" @click="moreActionVisible = true"
+        >
+          更多
+        </wd-button>
       </view>
-      <!-- TODO @芋艿：1）数据权限；2）菜单权限 -->
     </view>
+
+    <!-- 更多操作菜单 -->
+    <wd-action-sheet v-model="moreActionVisible" :actions="moreActions" @select="handleMoreAction" />
+    <!-- 菜单权限弹窗 -->
+    <MenuPermissionForm v-model="menuPermissionVisible" :role="formData" @success="getDetail" />
+    <!-- 数据权限弹窗 -->
+    <DataPermissionForm v-model="dataPermissionVisible" :role="formData" @success="getDetail" />
   </view>
 </template>
 
@@ -47,12 +59,14 @@ import type { Role } from '@/api/system/role'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onUnload } from '@dcloudio/uni-app'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { deleteRole, getRole } from '@/api/system/role'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
+import DataPermissionForm from './components/data-permission-form.vue'
+import MenuPermissionForm from './components/menu-permission-form.vue'
 
 const props = defineProps<{
   id?: number | any
@@ -70,6 +84,22 @@ const dialog = useDialog()
 const toast = useToast()
 const formData = ref<Role>() // 详情数据
 const deleting = ref(false) // 删除状态
+const moreActionVisible = ref(false) // 更多操作菜单
+const menuPermissionVisible = ref(false) // 菜单权限弹窗
+const dataPermissionVisible = ref(false) // 数据权限弹窗
+const moreActions = computed(() => {
+  const actions: Array<{ name: string, value: string }> = []
+  // 分配菜单权限
+  if (hasAccessByCodes(['system:permission:assign-role-menu'])) {
+    actions.push({ name: '菜单权限', value: 'assignMenu' })
+  }
+  // 分配数据权限
+  if (hasAccessByCodes(['system:permission:assign-role-data-scope'])) {
+    actions.push({ name: '数据权限', value: 'assignDataScope' })
+  }
+  return actions
+})
+const hasMoreActions = computed(() => !!formData.value?.id && moreActions.value.length > 0)
 
 /** 返回上一页 */
 function handleBack() {
@@ -120,6 +150,15 @@ async function handleDelete() {
     }, 500)
   } finally {
     deleting.value = false
+  }
+}
+
+/** 更多操作 */
+function handleMoreAction({ item }: { item: { value: string } }) {
+  if (item.value === 'assignMenu') {
+    menuPermissionVisible.value = true
+  } else if (item.value === 'assignDataScope') {
+    dataPermissionVisible.value = true
   }
 }
 
