@@ -1,5 +1,5 @@
 <template>
-  <view v-if="useDefaultSlot" @click="visible = true">
+  <view v-if="useDefaultSlot" @click="handleOpen">
     <slot />
   </view>
   <wd-form-item
@@ -7,17 +7,17 @@
     :title="label"
     :title-width="labelWidth"
     :prop="prop || undefined"
-    is-link
+    :is-link="!disabled"
     :value="selectedLabel"
     :placeholder="placeholder"
-    @click="visible = true"
+    @click="handleOpen"
   />
   <wd-cell
     v-else
-    is-link
+    :is-link="!disabled"
     :value="selectedLabel"
     :placeholder="placeholder"
-    @click="visible = true"
+    @click="handleOpen"
   />
 
   <wd-select-picker
@@ -45,6 +45,7 @@ const props = withDefaults(defineProps<{
   label?: string
   placeholder?: string
   prop?: string
+  disabled?: boolean
   useDefaultSlot?: boolean
 }>(), {
   labelWidth: '180rpx',
@@ -52,6 +53,7 @@ const props = withDefaults(defineProps<{
   label: '',
   placeholder: '请选择',
   prop: '',
+  disabled: false,
   useDefaultSlot: false,
 })
 
@@ -73,6 +75,14 @@ const selectedLabel = computed(() => {
   }
   return getUserNickname(Number(selectedId.value))
 })
+
+/** 打开选择弹窗 */
+function handleOpen() {
+  if (props.disabled) {
+    return
+  }
+  visible.value = true
+}
 
 /** 根据用户 ID 获取昵称 */
 function getUserNickname(userId: number | undefined): string {
