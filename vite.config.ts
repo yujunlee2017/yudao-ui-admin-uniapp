@@ -62,6 +62,21 @@ function YudaoUiResolver(): ComponentResolver {
   }
 }
 
+/** z-paging 分页组件解析器：H5 端由 Vite 自动导入 */
+function ZPagingResolver(): ComponentResolver {
+  return {
+    type: 'component',
+    resolve: (name: string) => {
+      if (name === 'ZPaging') {
+        return {
+          name,
+          from: 'z-paging/components/z-paging/z-paging.vue',
+        }
+      }
+    },
+  }
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode }) => {
   // @see https://unocss.dev/
@@ -107,7 +122,7 @@ export default defineConfig(({ command, mode }) => {
       UniPlatform(),
       UniManifest(),
       UniComponents({
-        resolvers: [WotResolver(), YudaoUiResolver()],
+        resolvers: [WotResolver(), YudaoUiResolver(), ZPagingResolver()],
         extensions: ['vue'],
         deep: true, // 是否递归扫描子目录，
         directoryAsNamespace: false, // 是否把目录名作为命名空间前缀，true 时组件名为 目录名+组件名，
