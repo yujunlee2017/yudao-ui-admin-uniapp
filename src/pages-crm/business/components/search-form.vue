@@ -43,8 +43,10 @@ import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 const emit = defineEmits<{ search: [data: Record<string, any>], reset: [] }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-// TODO @AI：这个下面是不是要换行？name、customerId 这种？可以写到 agents.md 里
-const formData = reactive<Record<string, any>>({ name: undefined, customerId: undefined }) // 搜索表单数据
+const formData = reactive<Record<string, any>>({
+  name: undefined,
+  customerId: undefined,
+}) // 搜索表单数据
 const placeholder = ref('搜索商机') // 搜索框占位
 
 /** 搜索按钮操作 */

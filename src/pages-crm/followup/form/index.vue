@@ -107,8 +107,17 @@ const contactPickerVisible = ref(false) // 关联联系人选择器
 const businessPickerVisible = ref(false) // 关联商机选择器
 const contactOptions = ref<Contact[]>([]) // 关联联系人选项
 const businessOptions = ref<Business[]>([]) // 关联商机选项
-// TODO @AI：formData 参考下别的 form 组件；user form
-const formData = ref<FollowUpRecord>({ bizId: bizId.value, bizType: bizType.value, content: '', businessIds: [], contactIds: [], fileUrls: [], picUrls: [] }) // 表单数据
+const formData = ref<FollowUpRecord>({
+  bizId: bizId.value,
+  bizType: bizType.value,
+  type: undefined,
+  content: '',
+  nextTime: undefined,
+  picUrls: [],
+  fileUrls: [],
+  contactIds: [],
+  businessIds: [],
+}) // 表单数据
 const formSchema = createFormSchema({
   type: [{ required: true, message: '跟进类型不能为空' }],
   content: [{ required: true, message: '跟进内容不能为空' }],
@@ -223,8 +232,7 @@ function formatSelectedLabel(ids: number[], options: { id?: number, name?: strin
 }
 
 /** 初始化 */
-onMounted(() => {
-  // TODO @AI：需要 await？看看别的模块，是不是也有类似问题！
-  loadRelatedOptions()
+onMounted(async () => {
+  await loadRelatedOptions()
 })
 </script>

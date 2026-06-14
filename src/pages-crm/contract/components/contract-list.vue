@@ -38,10 +38,18 @@ async function getList() {
   }
   loading.value = true
   try {
-    // TODO @AI：这里是不是有换行风格？
+    // TODO @AI：是不是要翻页？？？
     const data = props.businessId
-      ? await getContractPageByBusiness({ pageNo: 1, pageSize: 20, businessId: props.businessId })
-      : await getContractPageByCustomer({ pageNo: 1, pageSize: 20, customerId: props.customerId! })
+      ? await getContractPageByBusiness({
+          pageNo: 1,
+          pageSize: 20,
+          businessId: props.businessId,
+        })
+      : await getContractPageByCustomer({
+          pageNo: 1,
+          pageSize: 20,
+          customerId: props.customerId!,
+        })
     list.value = data.list
   } catch {
     list.value = []

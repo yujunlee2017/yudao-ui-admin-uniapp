@@ -91,8 +91,25 @@ const toast = useToast()
 const userStore = useUserStore()
 const getTitle = computed(() => props.id ? '编辑联系人' : '新增联系人')
 const formLoading = ref(false) // 表单提交状态
-// TODO @AI：formData 参考下别的 form 组件；user form
-const formData = ref<Contact>({ name: '', customerId: undefined, ownerUserId: undefined, master: false }) // 表单数据
+const formData = ref<Contact>({
+  id: undefined,
+  name: '',
+  customerId: undefined,
+  ownerUserId: undefined,
+  mobile: '',
+  telephone: '',
+  email: '',
+  wechat: '',
+  qq: '',
+  post: '',
+  master: false,
+  sex: undefined,
+  parentId: undefined,
+  areaId: undefined,
+  detailAddress: '',
+  contactNextTime: undefined,
+  remark: '',
+}) // 表单数据
 const formRef = ref<FormInstance>() // 表单组件引用
 const pickerVisible = ref<Record<string, boolean>>({}) // 选择器显示状态
 const areaTree = ref<any[]>([]) // 地区树数据
@@ -157,7 +174,6 @@ async function handleSubmit() {
 /** 初始化 */
 onMounted(async () => {
   areaTree.value = await getAreaTree()
-  // TODO @AI：需要 await？看看别的模块，是不是也有类似问题！
-  getDetail()
+  await getDetail()
 })
 </script>

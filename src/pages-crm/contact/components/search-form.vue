@@ -63,8 +63,14 @@ import CrmPicker from '@/pages-crm/components/crm-picker.vue'
 const emit = defineEmits<{ search: [data: Record<string, any>], reset: [] }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-// TODO @AI：这个下面是不是要换行？name、mobile、customerId、telephone 这种？可以写到 agents.md 里
-const formData = reactive<Record<string, any>>({ name: undefined, mobile: undefined, customerId: undefined, telephone: undefined, email: undefined, wechat: undefined }) // 搜索表单数据
+const formData = reactive<Record<string, any>>({
+  name: undefined,
+  mobile: undefined,
+  customerId: undefined,
+  telephone: undefined,
+  email: undefined,
+  wechat: undefined,
+}) // 搜索表单数据
 const placeholder = ref('搜索联系人') // 搜索框占位
 
 /** 搜索按钮操作 */

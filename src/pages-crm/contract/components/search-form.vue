@@ -67,8 +67,12 @@ const emit = defineEmits<{ search: [data: Record<string, any>], reset: [] }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
 const dateVisible = reactive<Record<string, boolean>>({}) // 日期选择器显示状态
-// TODO @AI：这个下面是不是要换行？no、name、customerId、orderDate 这种？可以写到 agents.md 里
-const formData = reactive<Record<string, any>>({ no: undefined, name: undefined, customerId: undefined, orderDate: ['', ''] }) // 搜索表单数据
+const formData = reactive<Record<string, any>>({
+  no: undefined,
+  name: undefined,
+  customerId: undefined,
+  orderDate: ['', ''],
+}) // 搜索表单数据
 const placeholder = ref('搜索合同') // 搜索框占位
 
 /** 搜索按钮操作 */

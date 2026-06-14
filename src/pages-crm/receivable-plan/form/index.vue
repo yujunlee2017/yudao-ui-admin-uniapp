@@ -82,8 +82,18 @@ const toast = useToast()
 const userStore = useUserStore()
 const getTitle = computed(() => props.id ? '编辑回款计划' : '新增回款计划')
 const formLoading = ref(false) // 表单提交状态
-// TODO @AI：formData 参考下别的 form 组件；user form
-const formData = ref<ReceivablePlan>({ customerId: undefined, contractId: undefined, ownerUserId: undefined }) // 表单数据
+const formData = ref<ReceivablePlan>({
+  id: undefined,
+  customerId: undefined,
+  contractId: undefined,
+  period: undefined,
+  price: undefined,
+  returnTime: undefined,
+  remindDays: undefined,
+  returnType: undefined,
+  ownerUserId: undefined,
+  remark: '',
+}) // 表单数据
 const formRef = ref<FormInstance>() // 表单组件引用
 const pickerVisible = ref<Record<string, boolean>>({}) // 选择器显示状态
 const formSchema = createFormSchema({
@@ -157,9 +167,8 @@ async function handleSubmit() {
 }
 
 /** 初始化 */
-onMounted(() => {
+onMounted(async () => {
   applyQueryDefaults()
-  // TODO @AI：需要 await？看看别的模块，是不是也有类似问题！
-  getDetail()
+  await getDetail()
 })
 </script>
