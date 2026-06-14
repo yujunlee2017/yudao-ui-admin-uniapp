@@ -267,8 +267,7 @@ const yearVisible = ref(false) // 年份选择器显隐
 const intervalVisible = ref(false) // 时间间隔选择器显隐
 
 const now = new Date()
-// 筛选条件：时间用时间戳便于 picker 绑定，最终通过 formatDateRange 转换成接口需要的 times
-const filters = reactive({
+const filters = reactive({ // 筛选条件：时间用时间戳便于 picker 绑定，最终通过 formatDateRange 转换成接口需要的 times
   // 性能模式默认本年；其余模式默认最近 30 天
   startTime: now.getTime() - 3600 * 1000 * 24 * 30, // 开始日期（时间戳）
   endTime: now.getTime(), // 结束日期（时间戳）
@@ -301,7 +300,6 @@ const periodText = computed(() => {
   const times = queryParams.value.times || []
   return times.length === 2 ? `${formatDate(times[0])} 至 ${formatDate(times[1])}` : '默认统计周期'
 })
-const sections = computed<StatisticsSection[]>(() => sectionMap[props.mode])
 
 const customerColumns: StatisticsColumn[] = [
   { prop: 'time', label: '时间' },
@@ -478,6 +476,8 @@ const sectionMap: Record<StatisticsMode, StatisticsSection[]> = {
     { title: '跟进客户数排行', columns: rankColumns, load: getFollowCustomerCountRank },
   ],
 }
+
+const sections = computed<StatisticsSection[]>(() => sectionMap[props.mode])
 
 /** 返回上一页 */
 function handleBack() {

@@ -55,8 +55,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { getBusinessPageByContact } from '@/api/crm/business'
 import { createContactBusinessList, deleteContactBusinessList } from '@/api/crm/contact'
 import { useAccess } from '@/hooks/useAccess'
-
-import CrmPicker from './crm-picker.vue'
+import CrmPicker from '@/pages-crm/components/crm-picker.vue'
 
 interface PickerOption {
   id: number | string

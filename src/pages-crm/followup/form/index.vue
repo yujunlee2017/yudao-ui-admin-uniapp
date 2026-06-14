@@ -1,0 +1,228 @@
+<template>
+  <view class="yd-page-container">
+    <!-- 顶部导航栏 -->
+    <wd-navbar
+      title="写跟进"
+      left-arrow placeholder safe-area-inset-top fixed
+      @click-left="handleBack"
+    />
+
+    <!-- 表单区域 -->
+    <view>
+      <wd-form ref="formRef" :model="formData" :schema="formSchema">
+        <wd-cell-group border>
+          <wd-form-item title="跟进类型" title-width="200rpx" prop="type" center>
+            <wd-radio-group v-model="formData.type" type="button">
+              <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.CRM_FOLLOW_UP_TYPE)" :key="dict.value" :value="dict.value">
+                {{ dict.label }}
+              </wd-radio>
+            </wd-radio-group>
+          </wd-form-item>
+          <wd-form-item title="跟进内容" title-width="200rpx" prop="content">
+            <wd-textarea v-model="formData.content" placeholder="请输入跟进内容" :maxlength="500" show-word-limit clearable />
+          </wd-form-item>
+          <wd-form-item title="下次联系" title-width="200rpx" prop="nextTime" is-link :value="formatDateTime(formData.nextTime) || ''" placeholder="请选择下次联系时间" @click="nextTimeVisible = true" />
+          <wd-datetime-picker v-model="formData.nextTime" v-model:visible="nextTimeVisible" title="请选择下次联系时间" type="datetime" />
+          <wd-form-item title="图片" title-width="200rpx">
+            <view class="w-full">
+              <view v-if="formData.picUrls?.length" class="mb-16rpx flex flex-wrap gap-12rpx">
+                <view v-for="(url, index) in formData.picUrls" :key="url" class="relative">
+                  <image class="h-120rpx w-120rpx rounded-8rpx bg-[#f5f5f5]" mode="aspectFill" :src="url" @click="handlePreviewImage(formData.picUrls!, url)" />
+                  <view class="absolute right-0 top-0 h-36rpx w-36rpx flex items-center justify-center rounded-full bg-[rgba(0,0,0,0.55)] text-24rpx text-white" @click.stop="formData.picUrls?.splice(index, 1)">
+                    ×
+                  </view>
+                </view>
+              </view>
+              <wd-button size="small" type="primary" variant="plain" :loading="uploading" @click="handleChooseImages">
+                上传图片
+              </wd-button>
+            </view>
+          </wd-form-item>
+          <wd-form-item title="附件" title-width="200rpx">
+            <view class="w-full">
+              <view v-for="(url, index) in formData.fileUrls || []" :key="url" class="mb-12rpx flex items-center justify-between gap-16rpx rounded-8rpx bg-[#f7f8fa] px-16rpx py-12rpx text-26rpx">
+                <text class="min-w-0 flex-1 truncate text-[#333]">{{ getFileName(url) }}</text>
+                <wd-button size="small" type="danger" variant="plain" @click="formData.fileUrls?.splice(index, 1)">
+                  删除
+                </wd-button>
+              </view>
+              <wd-button size="small" type="primary" variant="plain" :loading="uploading" @click="handleChooseFiles">
+                上传附件
+              </wd-button>
+            </view>
+          </wd-form-item>
+          <template v-if="canSelectRelated">
+            <wd-form-item title="关联联系人" title-width="200rpx" is-link :value="contactSelectedLabel" placeholder="请选择关联联系人" @click="contactPickerVisible = true" />
+            <wd-select-picker v-model="formData.contactIds" v-model:visible="contactPickerVisible" title="关联联系人" :columns="contactOptions" value-key="id" label-key="name" type="checkbox" filterable />
+            <wd-form-item title="关联商机" title-width="200rpx" is-link :value="businessSelectedLabel" placeholder="请选择关联商机" @click="businessPickerVisible = true" />
+            <wd-select-picker v-model="formData.businessIds" v-model:visible="businessPickerVisible" title="关联商机" :columns="businessOptions" value-key="id" label-key="name" type="checkbox" filterable />
+          </template>
+        </wd-cell-group>
+      </wd-form>
+    </view>
+
+    <!-- 底部保存按钮 -->
+    <view class="yd-detail-footer">
+      <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
+        保存
+      </wd-button>
+    </view>
+  </view>
+</template>
+
+<script lang="ts" setup>
+import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
+import type { Business } from '@/api/crm/business'
+import type { Contact } from '@/api/crm/contact'
+import type { FollowUpRecord } from '@/api/crm/followup'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { computed, onMounted, ref } from 'vue'
+import { getBusinessPageByCustomer } from '@/api/crm/business'
+import { getContactPageByCustomer } from '@/api/crm/contact'
+import { createFollowUpRecord } from '@/api/crm/followup'
+import { BizTypeEnum } from '@/api/crm/permission'
+import { uploadFile } from '@/api/infra/file'
+import { getIntDictOptions } from '@/hooks/useDict'
+import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
+import { formatDateTime } from '@/utils/date'
+import { createFormSchema } from '@/utils/wot'
+
+const props = defineProps<{ bizId?: number | any, bizType?: number | any }>()
+definePage({
+  style: {
+    navigationBarTitleText: '',
+    navigationStyle: 'custom',
+  },
+})
+
+const toast = useToast()
+const bizId = computed(() => Number(props.bizId))
+const bizType = computed(() => Number(props.bizType))
+const formLoading = ref(false) // 表单提交状态
+const formRef = ref<FormInstance>() // 表单组件引用
+const nextTimeVisible = ref(false) // 时间选择器显示状态
+const uploading = ref(false) // 附件上传状态
+const contactPickerVisible = ref(false) // 关联联系人选择器
+const businessPickerVisible = ref(false) // 关联商机选择器
+const contactOptions = ref<Contact[]>([]) // 关联联系人选项
+const businessOptions = ref<Business[]>([]) // 关联商机选项
+const formData = ref<FollowUpRecord>({ bizId: bizId.value, bizType: bizType.value, content: '', businessIds: [], contactIds: [], fileUrls: [], picUrls: [] }) // 表单数据
+const formSchema = createFormSchema({
+  type: [{ required: true, message: '跟进类型不能为空' }],
+  content: [{ required: true, message: '跟进内容不能为空' }],
+  nextTime: [{ required: true, message: '下次联系时间不能为空' }],
+})
+const canSelectRelated = computed(() => bizType.value === BizTypeEnum.CRM_CUSTOMER)
+const contactSelectedLabel = computed(() => formatSelectedLabel(formData.value.contactIds || [], contactOptions.value))
+const businessSelectedLabel = computed(() => formatSelectedLabel(formData.value.businessIds || [], businessOptions.value))
+
+/** 返回上一页 */
+function handleBack() {
+  navigateBackPlus()
+}
+
+/** 提交表单 */
+async function handleSubmit() {
+  const { valid } = await formRef.value.validate()
+  if (!valid) {
+    return
+  }
+  formLoading.value = true
+  try {
+    await createFollowUpRecord({
+      ...formData.value,
+      bizId: bizId.value,
+      bizType: bizType.value,
+      businessIds: formData.value.businessIds || [],
+      contactIds: formData.value.contactIds || [],
+      fileUrls: formData.value.fileUrls || [],
+      picUrls: formData.value.picUrls || [],
+    })
+    toast.success('保存成功')
+    uni.$emit('crm:followup:reload')
+    setTimeout(() => handleBack(), 500)
+  } finally {
+    formLoading.value = false
+  }
+}
+
+/** 上传图片 */
+function handleChooseImages() {
+  uni.chooseImage({
+    count: 6,
+    success: async (res) => {
+      const filePaths = Array.isArray(res.tempFilePaths) ? res.tempFilePaths : [res.tempFilePaths].filter(Boolean)
+      uploading.value = true
+      try {
+        const urls = await Promise.all(filePaths.map(filePath => uploadFile(filePath, 'crm/followup')))
+        formData.value.picUrls = [...(formData.value.picUrls || []), ...urls]
+      } finally {
+        uploading.value = false
+      }
+    },
+  })
+}
+
+/** 上传附件 */
+function handleChooseFiles() {
+  const chooseFile = (uni as any).chooseFile
+  if (!chooseFile) {
+    toast.show('当前端暂不支持附件选择')
+    return
+  }
+  chooseFile({
+    count: 6,
+    success: async (res: { tempFiles?: { path: string }[], tempFilePaths?: string[] }) => {
+      const filePaths = res.tempFiles?.map(file => file.path) || res.tempFilePaths || []
+      uploading.value = true
+      try {
+        const urls = await Promise.all(filePaths.map(filePath => uploadFile(filePath, 'crm/followup')))
+        formData.value.fileUrls = [...(formData.value.fileUrls || []), ...urls]
+      } finally {
+        uploading.value = false
+      }
+    },
+  })
+}
+
+/** 预览图片 */
+function handlePreviewImage(urls: string[], current: string) {
+  uni.previewImage({ urls, current })
+}
+
+/** 获取文件名 */
+function getFileName(url: string) {
+  if (!url) {
+    return ''
+  }
+  const path = url.split('?')[0]
+  return decodeURIComponent(path.substring(path.lastIndexOf('/') + 1))
+}
+
+/** 加载关联数据（仅客户支持关联联系人/商机） */
+async function loadRelatedOptions() {
+  if (!canSelectRelated.value || !bizId.value) {
+    return
+  }
+  const [contactData, businessData] = await Promise.all([
+    getContactPageByCustomer({ pageNo: 1, pageSize: 100, customerId: bizId.value }),
+    getBusinessPageByCustomer({ pageNo: 1, pageSize: 100, customerId: bizId.value }),
+  ])
+  contactOptions.value = contactData.list
+  businessOptions.value = businessData.list
+}
+
+/** 格式化已选关联数据 */
+function formatSelectedLabel(ids: number[], options: { id?: number, name?: string }[]) {
+  if (!ids.length) {
+    return ''
+  }
+  return ids.map(id => options.find(item => item.id === id)?.name || `${id}`).join('、')
+}
+
+/** 初始化 */
+onMounted(() => {
+  loadRelatedOptions()
+})
+</script>

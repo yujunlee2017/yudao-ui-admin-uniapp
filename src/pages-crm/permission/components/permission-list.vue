@@ -1,8 +1,8 @@
 <!-- TODO @AI：应该拿到所属模块的 components 里 -->
 <template>
-  <view class="mt-24rpx">
-    <!-- 团队成员 -->
-    <view class="mb-16rpx flex items-center justify-between px-24rpx">
+  <view :class="embedded ? '' : 'mt-24rpx'">
+    <!-- 团队成员（嵌入模式由外层底部操作触发新增/退出） -->
+    <view v-if="!embedded" class="mb-16rpx flex items-center justify-between px-24rpx">
       <text class="text-30rpx text-[#333] font-semibold">团队成员</text>
       <view class="flex gap-12rpx">
         <wd-button v-if="canQuitTeam" size="small" type="danger" variant="plain" @click="handleQuit">
@@ -152,12 +152,15 @@ const props = withDefaults(defineProps<{
   bizId: number
   bizType: number
   showAction?: boolean
+  embedded?: boolean // 嵌入模式：隐藏头部，由外层底部操作触发新增/退出
 }>(), {
   showAction: true,
+  embedded: false,
 })
 
 const emit = defineEmits<{
   quitTeam: []
+  canQuitChange: [boolean]
 }>()
 
 const dialog = useDialog()
@@ -303,8 +306,13 @@ watch(
   },
 )
 
+// 同步「可退出团队」状态，供外层底部操作显示退出按钮
+watch(canQuitTeam, value => emit('canQuitChange', value), { immediate: true })
+
 defineExpose({
   getList,
+  openAdd: handleAdd,
+  quit: handleQuit,
 })
 
 /** 初始化 */

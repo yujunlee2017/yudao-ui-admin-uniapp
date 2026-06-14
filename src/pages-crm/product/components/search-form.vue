@@ -1,0 +1,103 @@
+<template>
+  <!-- 搜索框入口 -->
+  <view @click="visible = true">
+    <wd-search :placeholder="placeholder" hide-cancel disabled />
+  </view>
+
+  <!-- 搜索弹窗 -->
+  <wd-popup v-model="visible" position="top" :custom-style="getTopPopupStyle()" :modal-style="getTopPopupModalStyle()" @close="visible = false">
+    <view class="yd-search-form-container">
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
+          产品名称
+        </view>
+        <wd-input v-model="formData.name" placeholder="请输入产品名称" clearable />
+      </view>
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
+          产品编码
+        </view>
+        <wd-input v-model="formData.no" placeholder="请输入产品编码" clearable />
+      </view>
+      <view
+        v-for="dict in dictFilters"
+        :key="dict.prop"
+        class="yd-search-form-item"
+      >
+        <view class="yd-search-form-label">
+          {{ dict.label }}
+        </view>
+        <view class="flex items-center justify-between rounded-12rpx bg-[#f7f8fa] p-24rpx" @click="pickerVisible[dict.prop] = true">
+          <text class="text-28rpx" :class="formData[dict.prop] === -1 ? 'text-[#999]' : 'text-[#333]'">
+            {{ getDictDisplay(dict.dictType, formData[dict.prop]) }}
+          </text>
+          <wd-icon name="arrow-down" size="32rpx" color="#666" />
+        </view>
+        <wd-picker
+          v-model:visible="pickerVisible[dict.prop]"
+          :model-value="formData[dict.prop]"
+          :columns="getDictColumns(dict.dictType)"
+          label-key="label"
+          value-key="value"
+          @confirm="({ value }) => formData[dict.prop] = value[0]"
+        />
+      </view>
+      <view class="yd-search-form-actions">
+        <wd-button class="flex-1" variant="plain" @click="handleReset">
+          重置
+        </wd-button>
+        <wd-button class="flex-1" type="primary" @click="handleSearch">
+          搜索
+        </wd-button>
+      </view>
+    </view>
+  </wd-popup>
+</template>
+
+<script lang="ts" setup>
+import { reactive, ref } from 'vue'
+import { getIntDictOptions } from '@/hooks/useDict'
+import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
+import { getWotPickerDisplay } from '@/utils/wot'
+
+const emit = defineEmits<{ search: [data: Record<string, any>], reset: [] }>()
+
+const dictFilters = [ // 字典筛选项（上架状态用 picker）
+  { prop: 'status', label: '上架状态', dictType: DICT_TYPE.CRM_PRODUCT_STATUS },
+]
+
+const visible = ref(false) // 搜索弹窗显示状态
+const pickerVisible = reactive<Record<string, boolean>>({}) // 字典选择器显示状态
+const formData = reactive<Record<string, any>>({ name: undefined, no: undefined, status: -1 }) // 搜索表单数据
+const placeholder = ref('搜索产品') // 搜索框占位
+
+/** 字典选项（含「全部」） */
+function getDictColumns(dictType: string) {
+  return [{ label: '全部', value: -1 }, ...getIntDictOptions(dictType)]
+}
+
+/** 字典当前展示文案 */
+function getDictDisplay(dictType: string, value: number) {
+  return getWotPickerDisplay(getDictColumns(dictType), value, { placeholder: '全部' })
+}
+
+/** 搜索按钮操作 */
+function handleSearch() {
+  visible.value = false
+  emit('search', {
+    name: formData.name,
+    no: formData.no,
+    status: formData.status === -1 ? undefined : formData.status,
+  })
+}
+
+/** 重置按钮操作 */
+function handleReset() {
+  formData.name = undefined
+  formData.no = undefined
+  formData.status = -1
+  visible.value = false
+  emit('reset')
+}
+</script>

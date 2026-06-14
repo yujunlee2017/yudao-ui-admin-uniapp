@@ -1,4 +1,4 @@
-<!-- TODO @AI：这种是不是全局封装下组件，来进行使用？？？ -->
+<!-- TODO @AI：写下组件的作用！ -->
 <template>
   <view v-if="useDefaultSlot" @click="handleOpen">
     <slot />

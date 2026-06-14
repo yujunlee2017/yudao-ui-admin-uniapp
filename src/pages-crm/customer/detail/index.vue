@@ -1,15 +1,133 @@
 <template>
-  <CrmEntityDetail :id="props.id" :config="config" />
+  <view class="yd-page-container">
+    <!-- 顶部导航栏 -->
+    <wd-navbar
+      title="客户详情"
+      left-arrow placeholder safe-area-inset-top fixed
+      @click-left="handleBack"
+    />
+
+    <!-- 详情分类 -->
+    <view class="bg-white">
+      <wd-tabs v-model="tabIndex">
+        <wd-tab v-for="tab in tabs" :key="tab.key" :title="tab.title" />
+      </wd-tabs>
+    </view>
+
+    <!-- 基本信息 -->
+    <wd-cell-group v-if="activeTab === 'basic'" border>
+      <template v-for="field in detailFields" :key="field.prop">
+        <wd-cell v-if="field.dictType" :title="field.label">
+          <dict-tag v-if="hasValue(field.prop)" :type="field.dictType" :value="formData[field.prop]" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell v-else :title="field.label" :value="formatValue(field)" />
+      </template>
+    </wd-cell-group>
+
+    <!-- 跟进记录 -->
+    <CrmFollowupRecords v-else-if="activeTab === 'followup' && customerId" ref="followupRef" embedded :biz-id="customerId" :biz-type="bizType" />
+
+    <!-- 团队成员 -->
+    <!--  TODO @AI：编辑的时候，crm 类型不能为空 -->
+    <CrmPermissionTeam v-else-if="activeTab === 'team' && customerId" ref="teamRef" embedded :biz-id="customerId" :biz-type="bizType" @quit-team="handleQuitTeam" @can-quit-change="(v: boolean) => teamCanQuit = v" />
+
+    <!-- 操作日志 -->
+    <CrmOperateLogs v-else-if="activeTab === 'log' && customerId" :biz-id="customerId" :biz-type="bizType" />
+
+    <!-- 关联数据：各模块自己的列表组件 -->
+    <ContactList v-else-if="activeTab === 'contacts' && customerId" ref="listRef" :customer-id="customerId" />
+    <BusinessList v-else-if="activeTab === 'businesses' && customerId" ref="listRef" :customer-id="customerId" />
+    <ContractList v-else-if="activeTab === 'contracts' && customerId" ref="listRef" :customer-id="customerId" />
+    <ReceivablePlanList v-else-if="activeTab === 'plans' && customerId" ref="listRef" :customer-id="customerId" />
+    <ReceivableList v-else-if="activeTab === 'receivables' && customerId" ref="listRef" :customer-id="customerId" />
+
+    <!-- 底部操作（按 tab 区分，只放当前模块的操作） -->
+    <view v-if="hasFooter" class="yd-detail-footer">
+      <view class="yd-detail-footer-actions">
+        <template v-if="activeTab === 'basic'">
+          <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+            编辑
+          </wd-button>
+          <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+            删除
+          </wd-button>
+          <wd-button v-if="moreActions.length" class="flex-1" type="info" @click="moreActionVisible = true">
+            更多
+          </wd-button>
+        </template>
+        <wd-button v-else-if="activeTab === 'followup'" class="flex-1" type="primary" @click="followupRef?.openAdd()">
+          写跟进
+        </wd-button>
+        <template v-else-if="activeTab === 'team'">
+          <wd-button v-if="teamCanQuit" class="flex-1" type="danger" variant="plain" @click="teamRef?.quit()">
+            退出团队
+          </wd-button>
+          <wd-button class="flex-1" type="primary" @click="teamRef?.openAdd()">
+            新增成员
+          </wd-button>
+        </template>
+        <wd-button v-else-if="canRelatedAdd" class="flex-1" type="primary" @click="listRef?.openAdd()">
+          {{ activeTabConfig.addLabel }}
+        </wd-button>
+      </view>
+    </view>
+
+    <!-- 业务操作菜单 -->
+    <wd-action-sheet v-model="moreActionVisible" :actions="moreActions" @select="handleMoreAction" />
+
+    <!-- 转移 -->
+    <CrmTransferForm ref="transferFormRef" :biz-type="bizType" @success="getDetail" />
+
+    <!-- 公海分配 -->
+    <wd-popup v-model="distributeVisible" position="bottom" safe-area-inset-bottom custom-style="border-radius: 24rpx 24rpx 0 0;">
+      <view class="bg-white pb-32rpx">
+        <view class="flex items-center justify-between border-b border-[#f5f5f5] px-24rpx py-24rpx">
+          <view class="text-32rpx text-[#333] font-semibold">
+            分配客户
+          </view>
+          <wd-icon name="close" size="36rpx" @click="distributeVisible = false" />
+        </view>
+        <wd-form ref="distributeFormRef" :model="distributeFormData" :schema="distributeFormSchema">
+          <wd-cell-group border>
+            <UserPicker v-model="distributeFormData.ownerUserId" type="radio" label="负责人" prop="ownerUserId" label-width="220rpx" placeholder="请选择负责人" />
+          </wd-cell-group>
+        </wd-form>
+        <view class="p-24rpx">
+          <wd-button type="primary" block :loading="actionLoading" @click="handleDistributeSubmit">
+            确定
+          </wd-button>
+        </view>
+      </view>
+    </wd-popup>
+  </view>
 </template>
 
 <script lang="ts" setup>
-import CrmEntityDetail from '@/pages-crm/components/crm-entity-detail.vue'
-import { crmEntityConfigs } from '@/pages-crm/config/entities'
+import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
+import { onUnload } from '@dcloudio/uni-app'
+import { useDialog } from '@wot-ui/ui/components/wd-dialog'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { computed, onMounted, ref } from 'vue'
+import { deleteCustomer, distributeCustomer, getCustomer, lockCustomer, putCustomerPool, receiveCustomer, updateCustomerDealStatus } from '@/api/crm/customer'
+import { BizTypeEnum } from '@/api/crm/permission'
+import UserPicker from '@/components/system-select/user-picker.vue'
+import { useAccess } from '@/hooks/useAccess'
+import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
+import { formatDateTime } from '@/utils/date'
+import { createFormSchema } from '@/utils/wot'
+import BusinessList from '@/pages-crm/business/components/business-list.vue'
+import ContactList from '@/pages-crm/contact/components/contact-list.vue'
+import ContractList from '@/pages-crm/contract/components/contract-list.vue'
+import ReceivableList from '@/pages-crm/receivable/components/receivable-list.vue'
+import ReceivablePlanList from '@/pages-crm/receivable-plan/components/receivable-plan-list.vue'
+import CrmFollowupRecords from '@/pages-crm/followup/components/followup-list.vue'
+import CrmOperateLogs from '@/pages-crm/operate-log/components/operate-log-list.vue'
+import CrmPermissionTeam from '@/pages-crm/permission/components/permission-list.vue'
+import CrmTransferForm from '@/pages-crm/permission/components/transfer-form.vue'
 
-const props = defineProps<{
-  id?: number | any
-}>()
-
+const props = defineProps<{ id?: number | any }>()
 definePage({
   style: {
     navigationBarTitleText: '',
@@ -17,5 +135,286 @@ definePage({
   },
 })
 
-const config = crmEntityConfigs.customer
+const bizType = BizTypeEnum.CRM_CUSTOMER
+// TODO @AI：这种顺序，应该和 vue3 + ep 一致，除了【基础信息】在前面以外；别的模块一起看下；
+const tabs: { key: string, title: string, addLabel?: string, addPermission?: string }[] = [
+  { key: 'basic', title: '基本信息' },
+  { key: 'followup', title: '跟进记录' },
+  { key: 'contacts', title: '联系人', addLabel: '新增联系人', addPermission: 'crm:contact:create' },
+  { key: 'businesses', title: '商机', addLabel: '新增商机', addPermission: 'crm:business:create' },
+  { key: 'contracts', title: '合同', addLabel: '新增合同', addPermission: 'crm:contract:create' },
+  { key: 'plans', title: '回款计划', addLabel: '新增回款计划', addPermission: 'crm:receivable-plan:create' },
+  { key: 'receivables', title: '回款', addLabel: '新增回款', addPermission: 'crm:receivable:create' },
+  { key: 'team', title: '团队成员' },
+  { key: 'log', title: '操作日志' },
+] // tab 配置；关联 tab 带「新增」标签与权限（底部操作用）
+// TODO @AI：detailFields 不太对；参考 vue3 + ep 的做法，以及 admin uniapp 的做法，应该直接写在 html 里；
+const detailFields: { label: string, prop: string, dictType?: string, type?: 'bool' | 'datetime' }[] = [ // 基本信息字段
+  { label: '客户名称', prop: 'name' },
+  { label: '客户来源', prop: 'source', dictType: DICT_TYPE.CRM_CUSTOMER_SOURCE },
+  { label: '手机', prop: 'mobile' },
+  { label: '负责人', prop: 'ownerUserName' },
+  { label: '电话', prop: 'telephone' },
+  { label: '邮箱', prop: 'email' },
+  { label: '微信', prop: 'wechat' },
+  { label: 'QQ', prop: 'qq' },
+  { label: '客户行业', prop: 'industryId', dictType: DICT_TYPE.CRM_CUSTOMER_INDUSTRY },
+  { label: '客户级别', prop: 'level', dictType: DICT_TYPE.CRM_CUSTOMER_LEVEL },
+  { label: '地区', prop: 'areaName' },
+  { label: '详细地址', prop: 'detailAddress' },
+  { label: '下次联系时间', prop: 'contactNextTime', type: 'datetime' },
+  { label: '最后跟进时间', prop: 'contactLastTime', type: 'datetime' },
+  { label: '最后跟进内容', prop: 'contactLastContent' },
+  { label: '备注', prop: 'remark' },
+  { label: '创建时间', prop: 'createTime', type: 'datetime' },
+  { label: '锁定状态', prop: 'lockStatus', type: 'bool' },
+  { label: '成交状态', prop: 'dealStatus', type: 'bool' },
+]
+
+const { hasAccessByCodes } = useAccess()
+const dialog = useDialog()
+const toast = useToast()
+const formData = ref<Record<string, any>>({}) // 详情数据
+const tabIndex = ref(0) // 当前详情分类下标
+const deleting = ref(false) // 删除状态
+const actionLoading = ref(false) // 业务操作状态
+const moreActionVisible = ref(false) // 业务操作菜单显示状态
+const teamCanQuit = ref(false) // 是否可退出团队
+const followupRef = ref<{ openAdd: () => void }>() // 跟进记录引用
+const teamRef = ref<{ openAdd: () => void, quit: () => void }>() // 团队成员引用
+const listRef = ref<{ openAdd: () => void }>() // 当前关联列表引用
+const transferFormRef = ref<InstanceType<typeof CrmTransferForm>>() // 转移表单引用
+const distributeVisible = ref(false) // 分配弹窗显示状态
+const distributeFormRef = ref<FormInstance>() // 分配表单引用
+const distributeFormData = ref({ ownerUserId: undefined as number | undefined }) // 分配表单数据
+const distributeFormSchema = createFormSchema({ ownerUserId: [{ required: true, message: '负责人不能为空' }] })
+const customerId = computed(() => Number(props.id))
+const activeTabConfig = computed(() => tabs[tabIndex.value])
+const activeTab = computed(() => activeTabConfig.value.key)
+const canUpdate = computed(() => hasAccessByCodes(['crm:customer:update']))
+const canDelete = computed(() => hasAccessByCodes(['crm:customer:delete']))
+const canRelatedAdd = computed(() => {
+  const permission = activeTabConfig.value.addPermission
+  return !!permission && hasAccessByCodes([permission])
+})
+const moreActions = computed(() => {
+  const data = formData.value
+  if (!data?.id) {
+    return []
+  }
+  const actions = [
+    { name: '转移', value: 'transfer' },
+    { name: data.dealStatus ? '标记未成交' : '标记已成交', value: 'deal' },
+    { name: data.lockStatus ? '解锁客户' : '锁定客户', value: 'lock' },
+  ]
+  if (!data.ownerUserId) {
+    actions.push({ name: '领取', value: 'receive' })
+    actions.push({ name: '分配', value: 'distribute' })
+  } else {
+    actions.push({ name: '放入公海', value: 'putPool' })
+  }
+  return actions
+})
+const hasFooter = computed(() => {
+  switch (activeTab.value) {
+    case 'log':
+      return false
+    case 'basic':
+      return canUpdate.value || canDelete.value || moreActions.value.length > 0
+    case 'followup':
+      return true
+    case 'team':
+      return true
+    default:
+      return canRelatedAdd.value
+  }
+})
+
+// TODO @AI：如果上面的放到 html 里，这里就不需要了。
+/** 字段是否有值 */
+function hasValue(prop: string) {
+  const value = formData.value[prop]
+  return value !== undefined && value !== null && value !== ''
+}
+
+// TODO @AI：如果上面的放到 html 里，这里就不需要了。
+/** 格式化基本信息字段值 */
+function formatValue(field: { prop: string, type?: 'bool' | 'datetime' }) {
+  const value = formData.value[field.prop]
+  if (value === undefined || value === null || value === '') {
+    return '-'
+  }
+  if (field.type === 'datetime') {
+    return formatDateTime(value) || '-'
+  }
+  if (field.type === 'bool') {
+    return value ? '是' : '否'
+  }
+  return String(value)
+}
+
+/** 返回上一页 */
+function handleBack() {
+  navigateBackPlus('/pages-crm/customer/index')
+}
+
+/** 加载详情 */
+async function getDetail() {
+  if (!customerId.value) {
+    return
+  }
+  try {
+    toast.loading('加载中...')
+    formData.value = await getCustomer(customerId.value)
+  } finally {
+    toast.close()
+  }
+}
+
+// TODO @AI：不要搞这样的封装，每个自己写！
+/** 执行业务操作（确认 → 调用 → 刷新） */
+async function runAction(message: string, action: () => Promise<any>, successMessage: string, options: { back?: boolean } = {}) {
+  try {
+    await dialog.confirm({ title: '提示', msg: message })
+  } catch {
+    return
+  }
+  actionLoading.value = true
+  try {
+    await action()
+    toast.success(successMessage)
+    uni.$emit('crm:customer:reload')
+    if (options.back) {
+      setTimeout(() => handleBack(), 500)
+    } else {
+      await getDetail()
+    }
+  } finally {
+    actionLoading.value = false
+  }
+}
+
+/** 业务操作菜单选择 */
+function handleMoreAction({ item }: { item: { value: string } }) {
+  const handlers: Record<string, () => void> = {
+    transfer: handleTransfer,
+    deal: handleUpdateDealStatus,
+    lock: handleToggleLock,
+    receive: handleReceive,
+    distribute: handleDistribute,
+    putPool: handlePutPool,
+  }
+  handlers[item.value]?.()
+}
+
+/** 转移 */
+function handleTransfer() {
+  transferFormRef.value?.open(customerId.value)
+}
+
+/** 更新成交状态 */
+function handleUpdateDealStatus() {
+  const nextStatus = !formData.value.dealStatus
+  runAction(
+    `确定更新成交状态为【${nextStatus ? '已成交' : '未成交'}】吗？`,
+    () => updateCustomerDealStatus(customerId.value, nextStatus),
+    '更新成交状态成功',
+  )
+}
+
+/** 锁定或解锁客户 */
+function handleToggleLock() {
+  const nextStatus = !formData.value.lockStatus
+  runAction(
+    `确定${nextStatus ? '锁定' : '解锁'}客户【${formData.value.name || ''}】吗？`,
+    () => lockCustomer(customerId.value, nextStatus),
+    `${nextStatus ? '锁定' : '解锁'}成功`,
+  )
+}
+
+/** 领取客户 */
+function handleReceive() {
+  runAction(
+    `确定领取客户【${formData.value.name || ''}】吗？`,
+    () => receiveCustomer([customerId.value]),
+    '领取成功',
+  )
+}
+
+/** 打开分配客户弹窗 */
+function handleDistribute() {
+  distributeFormData.value.ownerUserId = undefined
+  distributeVisible.value = true
+}
+
+/** 提交分配客户 */
+async function handleDistributeSubmit() {
+  const { valid } = await distributeFormRef.value.validate()
+  if (!valid || !distributeFormData.value.ownerUserId) {
+    return
+  }
+  actionLoading.value = true
+  try {
+    await distributeCustomer([customerId.value], distributeFormData.value.ownerUserId)
+    toast.success('分配成功')
+    distributeVisible.value = false
+    uni.$emit('crm:customer:reload')
+    await getDetail()
+  } finally {
+    actionLoading.value = false
+  }
+}
+
+/** 放入公海 */
+function handlePutPool() {
+  runAction(
+    `确定将客户【${formData.value.name || ''}】放入公海吗？`,
+    () => putCustomerPool(customerId.value),
+    '放入公海成功',
+    { back: true },
+  )
+}
+
+/** 退出团队后返回 */
+function handleQuitTeam() {
+  uni.$emit('crm:customer:reload')
+  setTimeout(() => handleBack(), 500)
+}
+
+/** 编辑 */
+function handleEdit() {
+  uni.navigateTo({ url: `/pages-crm/customer/form/index?id=${customerId.value}` })
+}
+
+/** 删除 */
+async function handleDelete() {
+  if (!customerId.value) {
+    return
+  }
+  try {
+    await dialog.confirm({ title: '提示', msg: '确定要删除该客户吗？' })
+  } catch {
+    return
+  }
+  deleting.value = true
+  try {
+    await deleteCustomer(customerId.value)
+    toast.success('删除成功')
+    uni.$emit('crm:customer:reload')
+    setTimeout(() => handleBack(), 500)
+  } finally {
+    deleting.value = false
+  }
+}
+
+/** 初始化 */
+onMounted(() => {
+  getDetail()
+  uni.$on('crm:customer:reload', getDetail)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('crm:customer:reload', getDetail)
+})
 </script>
