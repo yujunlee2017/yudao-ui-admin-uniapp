@@ -40,10 +40,10 @@
         <view
           v-for="(status, index) in formData.statuses"
           :key="index"
-          class="border-t border-[#f5f5f5] px-24rpx py-20rpx"
+          class="mx-24rpx mb-20rpx rounded-12rpx bg-[#f7f8fa] p-24rpx"
         >
           <view class="mb-16rpx flex items-center justify-between">
-            <text class="text-28rpx text-[#666]">阶段 {{ index + 1 }}</text>
+            <text class="text-28rpx text-[#333] font-semibold">阶段 {{ index + 1 }}</text>
             <wd-button
               size="small"
               type="danger"

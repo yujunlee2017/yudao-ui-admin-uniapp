@@ -38,7 +38,7 @@
         <view
           v-for="(row, index) in formData.products || []"
           :key="index"
-          class="border-t border-[#f5f5f5] px-24rpx py-20rpx"
+          class="mx-24rpx mb-20rpx rounded-12rpx bg-[#f7f8fa] p-24rpx"
         >
           <view class="mb-12rpx text-28rpx text-[#333] font-semibold">
             {{ row.productName || '-' }}

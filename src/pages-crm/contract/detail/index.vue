@@ -43,7 +43,7 @@
         <view class="flex items-center justify-between px-24rpx py-20rpx">
           <text class="text-30rpx text-[#333] font-semibold">产品清单</text>
         </view>
-        <view v-for="(row, index) in products" :key="index" class="border-t border-[#f5f5f5] px-24rpx py-20rpx">
+        <view v-for="(row, index) in products" :key="index" class="mx-24rpx mb-20rpx rounded-12rpx bg-[#f7f8fa] p-24rpx">
           <view class="mb-12rpx text-28rpx text-[#333] font-semibold">
             {{ row.productName || '-' }}
           </view>

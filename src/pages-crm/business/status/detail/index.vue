@@ -20,7 +20,7 @@
       <view
         v-for="(status, index) in formData.statuses || []"
         :key="index"
-        class="flex items-center justify-between border-t border-[#f5f5f5] px-24rpx py-20rpx"
+        class="mx-24rpx mb-20rpx flex items-center justify-between rounded-12rpx bg-[#f7f8fa] p-24rpx"
       >
         <text class="text-28rpx text-[#333]">{{ status.name || '-' }}</text>
         <text class="text-28rpx text-[#999]">{{ status.percent ?? 0 }}%</text>
