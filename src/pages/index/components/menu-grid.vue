@@ -81,9 +81,16 @@ function getIconStyle(menu: MenuItem) {
 
 <style lang="scss" scoped>
 :deep(.wd-grid-item__text) {
+  width: 100%;
+  min-height: 64rpx;
   font-size: 24rpx;
+  line-height: 32rpx;
   color: #333;
-  overflow: visible;
-  white-space: nowrap;
+  overflow: hidden;
+  display: -webkit-box;
+  white-space: normal;
+  word-break: break-all;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 </style>
