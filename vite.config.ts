@@ -138,6 +138,7 @@ export default defineConfig(({ command, mode }) => {
           'src/pages-infra', // “基础设施”模块
           'src/pages-bpm', // “工作流程”模块
           'src/pages-crm', // “客户管理”模块
+          'src/pages-statistics', // “统计中心”模块
           'src/pages-iot', // “物联网”模块
           'src/pages-member', // “会员中心”模块
           'src/pages-pay', // “支付管理”模块
@@ -162,7 +163,11 @@ export default defineConfig(({ command, mode }) => {
       }),
       // 若存在改变 pages.json 的插件，请将 UniKuRoot 放置其后
       UniKuRoot({
-        excludePages: ['**/components/**/**.*', '**/sections/**/**.*'],
+        excludePages: [
+          '**/components/**/**.*',
+          '**/sections/**/**.*',
+          'src/pages-crm/statistics/**',
+        ],
       }),
       Uni(),
       {
