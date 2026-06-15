@@ -84,13 +84,13 @@ interface RightOperationType {
   variant: ButtonVariant
 }
 const operationIconsMap: Record<number, string> = {
-  [BpmTaskOperationButtonTypeEnum.TRANSFER]: 'transfer',
-  [BpmTaskOperationButtonTypeEnum.ADD_SIGN]: 'add',
-  [BpmTaskOperationButtonTypeEnum.DELEGATE]: 'share',
+  [BpmTaskOperationButtonTypeEnum.TRANSFER]: 'swap',
+  [BpmTaskOperationButtonTypeEnum.ADD_SIGN]: 'user-add',
+  [BpmTaskOperationButtonTypeEnum.DELEGATE]: 'send',
   [BpmTaskOperationButtonTypeEnum.RETURN]: 'arrow-left',
   [BpmTaskOperationButtonTypeEnum.COPY]: 'copy',
-  [BpmTaskOperationButtonTypeEnum.DELETE_SIGN]: 'remove',
-  [BpmTaskOperationButtonTypeEnum.PROCESS_START_CANCEL]: 'stop-circle',
+  [BpmTaskOperationButtonTypeEnum.DELETE_SIGN]: 'minus',
+  [BpmTaskOperationButtonTypeEnum.PROCESS_START_CANCEL]: 'close-circle',
 }
 
 const userStore = useUserStore()

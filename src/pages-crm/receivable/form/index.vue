@@ -68,6 +68,7 @@ import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { Receivable } from '@/api/crm/receivable'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
+import { CrmAuditStatusEnum } from '@/api/crm/permission'
 import { createReceivable, getReceivable, updateReceivable } from '@/api/crm/receivable'
 import UserPicker from '@/components/system-select/user-picker.vue'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
@@ -110,9 +111,9 @@ const formSchema = createFormSchema({
   ownerUserId: [{ required: true, message: '负责人不能为空' }],
 })
 
-/** 合同选项过滤：仅展示已审批合同 */
+/** 合同选项过滤：仅展示已审核通过的合同 */
 function contractFilter(raw: Record<string, any>) {
-  return raw.auditStatus === 20
+  return raw.auditStatus === CrmAuditStatusEnum.APPROVE
 }
 
 /** 回款计划选项过滤：仅展示未关联回款的计划 */

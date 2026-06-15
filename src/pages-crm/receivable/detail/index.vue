@@ -76,7 +76,7 @@ import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { deleteReceivable, getReceivable, submitReceivable } from '@/api/crm/receivable'
-import { BizTypeEnum } from '@/api/crm/permission'
+import { BizTypeEnum, CrmAuditStatusEnum } from '@/api/crm/permission'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -113,13 +113,16 @@ const receivableId = computed(() => Number(props.id))
 const activeTab = computed(() => tabs[tabIndex.value].key)
 const canUpdate = computed(() => hasAccessByCodes(['crm:receivable:update']))
 const canDelete = computed(() => hasAccessByCodes(['crm:receivable:delete']))
+const isDraft = computed(() => Number(formData.value.auditStatus) === CrmAuditStatusEnum.DRAFT) // 未提交（草稿）
 const moreActions = computed(() => {
   const data = formData.value
   if (!data?.id) {
     return []
   }
-  const actions = [{ name: '提交审核', value: 'submit' }]
-  if (data.processInstanceId) {
+  const actions: { name: string, value: string }[] = []
+  if (isDraft.value) {
+    actions.push({ name: '提交审核', value: 'submit' })
+  } else {
     actions.push({ name: '查看审批', value: 'viewProcess' })
   }
   return actions

@@ -42,6 +42,15 @@ export enum PermissionLevelEnum {
   WRITE = 3,
 }
 
+/** CRM 审批状态枚举（对应后端 CrmAuditStatusEnum） */
+export enum CrmAuditStatusEnum {
+  DRAFT = 0, // 未提交
+  PROCESS = 10, // 审批中
+  APPROVE = 20, // 审核通过
+  REJECT = 30, // 审核不通过
+  CANCEL = 40, // 已取消
+}
+
 /** 获得数据权限列表 */
 export function getPermissionList(params: Record<string, any>) {
   return http.get<Permission[]>('/crm/permission/list', params)

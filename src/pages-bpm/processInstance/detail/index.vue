@@ -40,11 +40,14 @@
       </view>
     </view>
 
-    <!-- 区域：PC 专属能力提示 -->
+    <!-- 区域：流程图（仅 PC 预览，移动端不支持） -->
     <view class="mx-24rpx mt-24rpx rounded-16rpx bg-white">
       <view class="p-24rpx">
-        <view class="mb-20rpx flex items-center justify-between">
-          <text class="text-28rpx text-[#333] font-bold">流程辅助</text>
+        <view class="flex items-center justify-between">
+          <view class="flex items-center">
+            <text class="text-28rpx text-[#333] font-bold">流程图</text>
+            <text class="ml-12rpx rounded-6rpx bg-[#fff7e6] px-10rpx py-2rpx text-20rpx text-[#fa8c16]">PC</text>
+          </view>
           <wd-button
             icon="printer"
             size="small"
@@ -56,18 +59,7 @@
             打印
           </wd-button>
         </view>
-        <view class="flex items-start rounded-12rpx bg-[#f7f8fa] p-20rpx">
-          <view class="h-64rpx w-64rpx flex items-center justify-center rounded-full bg-[#e6f4ff]">
-            <wd-icon name="desktop" size="36rpx" color="#1890ff" />
-          </view>
-          <view class="ml-18rpx flex-1">
-            <view class="mb-8rpx flex items-center">
-              <text class="text-26rpx text-[#333] font-medium">流程图预览</text>
-              <text class="ml-12rpx rounded-6rpx bg-[#fff7e6] px-10rpx py-2rpx text-20rpx text-[#fa8c16]">PC</text>
-            </view>
-            <text class="text-24rpx text-[#999] leading-36rpx">仅 PC 支持预览，请前往 PC 端查看 BPMN 或简易流程图。</text>
-          </view>
-        </view>
+        <text class="mt-16rpx block text-24rpx text-[#999] leading-36rpx">仅 PC 支持预览，请前往 PC 端查看 BPMN 或简易流程图。</text>
       </view>
     </view>
 

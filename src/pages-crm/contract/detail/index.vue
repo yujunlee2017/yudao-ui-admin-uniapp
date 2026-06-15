@@ -87,7 +87,7 @@
     <view v-if="hasFooter" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <template v-if="activeTab === 'basic'">
-          <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+          <wd-button v-if="canUpdate && isDraft" class="flex-1" type="warning" @click="handleEdit">
             编辑
           </wd-button>
           <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
@@ -131,7 +131,7 @@ import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { deleteContract, getContract, submitContract } from '@/api/crm/contract'
-import { BizTypeEnum } from '@/api/crm/permission'
+import { BizTypeEnum, CrmAuditStatusEnum } from '@/api/crm/permission'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -180,6 +180,7 @@ const activeTab = computed(() => tabs[tabIndex.value].key)
 const isPagingTab = computed(() => ['plans', 'receivables'].includes(activeTab.value)) // 关系列表 tab 用 z-paging 固定高布局
 const canUpdate = computed(() => hasAccessByCodes(['crm:contract:update']))
 const canDelete = computed(() => hasAccessByCodes(['crm:contract:delete']))
+const isDraft = computed(() => Number(formData.value.auditStatus) === CrmAuditStatusEnum.DRAFT) // 未提交（草稿）
 const canCreatePlan = computed(() => hasAccessByCodes(['crm:receivable-plan:create']))
 const canCreateReceivable = computed(() => hasAccessByCodes(['crm:receivable:create']))
 const moreActions = computed(() => {
@@ -187,11 +188,12 @@ const moreActions = computed(() => {
   if (!data?.id) {
     return []
   }
-  const actions = [
+  const actions: { name: string, value: string }[] = [
     { name: '转移', value: 'transfer' },
-    { name: '提交审核', value: 'submit' },
   ]
-  if (data.processInstanceId) {
+  if (isDraft.value) {
+    actions.push({ name: '提交审核', value: 'submit' })
+  } else {
     actions.push({ name: '查看审批', value: 'viewProcess' })
   }
   return actions
