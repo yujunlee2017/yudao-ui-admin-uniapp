@@ -1,1 +1,5 @@
 export { default as YdTreeSelect } from './yd-tree-select/yd-tree-select.vue'
+export { default as YdUploadFile } from './yd-upload-file/yd-upload-file.vue'
+export { default as YdUploadImg } from './yd-upload-img/yd-upload-img.vue'
+export { default as YdUploadImgs } from './yd-upload-imgs/yd-upload-imgs.vue'
+export { default as YdUpload } from './yd-upload/yd-upload.vue'

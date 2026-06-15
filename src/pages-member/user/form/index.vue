@@ -44,20 +44,7 @@
             />
           </wd-form-item>
           <wd-form-item title="头像" title-width="180rpx" prop="avatar">
-            <view class="flex items-center gap-16rpx">
-              <wd-img
-                v-if="formData.avatar"
-                :src="formData.avatar"
-                :width="48"
-                :height="48"
-                mode="aspectFill"
-                round
-              />
-              <text v-else class="text-26rpx text-[#999]">未上传</text>
-              <wd-button size="small" type="primary" variant="plain" :loading="avatarUploading" @click="handleChooseAvatar">
-                上传
-              </wd-button>
-            </view>
+            <yd-upload-img v-model="formData.avatar" directory="avatar" />
           </wd-form-item>
           <wd-form-item title="真实名字" title-width="180rpx" prop="name">
             <wd-input
@@ -136,7 +123,6 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
 import { getMemberUser, updateMemberUser } from '@/api/member/user'
 import { getAreaTree } from '@/api/system/area'
-import { uploadFile } from '@/api/infra/file'
 import { getIntDictOptions } from '@/hooks/useDict'
 import MemberGroupPicker from '@/pages-member/components/member-group-picker.vue'
 import MemberTagPicker from '@/pages-member/components/member-tag-picker.vue'
@@ -158,7 +144,6 @@ definePage({
 
 const toast = useToast()
 const formLoading = ref(false) // 表单提交状态
-const avatarUploading = ref(false) // 头像上传状态
 const birthdayVisible = ref(false) // 出生日期选择器状态
 const areaList = ref<Area[]>([]) // 地区树
 const formData = ref<MemberUser>({
@@ -199,25 +184,6 @@ async function getDetail() {
     birthday: data.birthday || '',
     tagIds: data.tagIds || [],
   }
-}
-
-/** 上传头像 */
-function handleChooseAvatar() {
-  uni.chooseImage({
-    count: 1,
-    success: async (res) => {
-      const filePath = res.tempFilePaths?.[0]
-      if (!filePath) {
-        return
-      }
-      avatarUploading.value = true
-      try {
-        formData.value.avatar = await uploadFile(filePath, 'avatar')
-      } finally {
-        avatarUploading.value = false
-      }
-    },
-  })
 }
 
 /** 提交表单 */

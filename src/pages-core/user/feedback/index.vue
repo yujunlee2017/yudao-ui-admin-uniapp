@@ -21,17 +21,9 @@
               :rows="5"
             />
           </wd-form-item>
-          <wd-cell title="反馈图片" title-width="180rpx" />
-          <!-- TODO @芋艿：图片上传的接入 -->
-          <view class="px-24rpx pb-24rpx">
-            <wd-upload
-              v-model:file-list="fileList"
-              :upload-method="customUpload"
-              accept="image"
-              multiple
-              :limit="9"
-            />
-          </view>
+          <wd-form-item title="反馈图片" title-width="180rpx">
+            <yd-upload-imgs v-model="images" directory="feedback" :limit="9" />
+          </wd-form-item>
         </wd-cell-group>
       </wd-form>
     </view>
@@ -52,10 +44,9 @@
 
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
-import type { UploadFile, UploadMethod } from '@wot-ui/ui/components/wd-upload/types'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { ref } from 'vue'
-import { getEnvBaseUrl, navigateBackPlus } from '@/utils/index'
+import { navigateBackPlus } from '@/utils/index'
 import { createFormSchema } from '@/utils/wot'
 
 definePage({
@@ -67,7 +58,7 @@ definePage({
 
 const toast = useToast()
 const formLoading = ref(false) // 表单提交状态
-const fileList = ref<UploadFile[]>([])
+const images = ref<string[]>([])
 const formData = ref({
   content: '',
 }) // 表单数据
@@ -84,33 +75,6 @@ function handleBack() {
   navigateBackPlus('/pages/user/index')
 }
 
-/** 自定义上传方法 */
-const customUpload: UploadMethod = (file, formData, options) => {
-  const uploadTask = uni.uploadFile({
-    url: `${getEnvBaseUrl()}/infra/file/upload`,
-    header: {
-      ...options.header,
-    },
-    name: options.name,
-    fileType: options.fileType,
-    formData,
-    filePath: file.url,
-    success(res) {
-      if (res.statusCode === options.statusCode) {
-        options.onSuccess(res, file, formData)
-      } else {
-        options.onError({ ...res, errMsg: res.errMsg || '' }, file, formData)
-      }
-    },
-    fail(err) {
-      options.onError(err, file, formData)
-    },
-  })
-  uploadTask.onProgressUpdate((res) => {
-    options.onProgress(res, file)
-  })
-}
-
 /** 提交表单 */
 async function handleSubmit() {
   const { valid } = await formRef.value.validate()
@@ -123,21 +87,7 @@ async function handleSubmit() {
     // 构建提交数据
     const submitData = {
       content: formData.value.content,
-      // 提取已上传成功的图片 URL
-      images: fileList.value
-        .filter(file => file.status === 'success')
-        .map((file) => {
-          // 尝试从响应中解析 URL
-          if (file.response) {
-            try {
-              const res = typeof file.response === 'string' ? JSON.parse(file.response) : file.response
-              return res.data || file.url
-            } catch {
-              return file.url
-            }
-          }
-          return file.url
-        }),
+      images: images.value,
     }
 
     // TODO @芋艿：替换为真实反馈 API 调用

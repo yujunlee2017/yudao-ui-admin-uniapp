@@ -19,7 +19,7 @@
             />
           </wd-form-item>
           <wd-form-item title="群头像" title-width="180rpx" prop="avatar">
-            <ImageUploadCell v-model="formData.avatar" directory="im/group" :round="false" />
+            <yd-upload-img v-model="formData.avatar" directory="im/group" />
           </wd-form-item>
           <wd-form-item title="群公告" title-width="180rpx" prop="notice">
             <wd-textarea
@@ -67,7 +67,6 @@ import { createGroup, getGroup, updateGroup } from '@/api/im/group'
 import { UserPicker } from '@/components/system-select'
 import { navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
-import ImageUploadCell from '../../components/image-upload-cell.vue'
 
 const props = defineProps<{
   id?: number | string

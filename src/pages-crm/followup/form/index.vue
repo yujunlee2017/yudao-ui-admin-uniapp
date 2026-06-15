@@ -24,32 +24,10 @@
           <wd-form-item title="下次联系" title-width="200rpx" prop="nextTime" is-link :value="formatDateTime(formData.nextTime) || ''" placeholder="请选择下次联系时间" @click="nextTimeVisible = true" />
           <wd-datetime-picker v-model="formData.nextTime" v-model:visible="nextTimeVisible" title="请选择下次联系时间" type="datetime" />
           <wd-form-item title="图片" title-width="200rpx">
-            <view class="w-full">
-              <view v-if="formData.picUrls?.length" class="mb-16rpx flex flex-wrap gap-12rpx">
-                <view v-for="(url, index) in formData.picUrls" :key="url" class="relative">
-                  <image class="h-120rpx w-120rpx rounded-8rpx bg-[#f5f5f5]" mode="aspectFill" :src="url" @click="handlePreviewImage(formData.picUrls!, url)" />
-                  <view class="absolute right-0 top-0 h-36rpx w-36rpx flex items-center justify-center rounded-full bg-[rgba(0,0,0,0.55)] text-24rpx text-white" @click.stop="formData.picUrls?.splice(index, 1)">
-                    ×
-                  </view>
-                </view>
-              </view>
-              <wd-button size="small" type="primary" variant="plain" :loading="uploading" @click="handleChooseImages">
-                上传图片
-              </wd-button>
-            </view>
+            <yd-upload-imgs v-model="formData.picUrls" directory="crm/followup" :limit="9" />
           </wd-form-item>
           <wd-form-item title="附件" title-width="200rpx">
-            <view class="w-full">
-              <view v-for="(url, index) in formData.fileUrls || []" :key="url" class="mb-12rpx flex items-center justify-between gap-16rpx rounded-8rpx bg-[#f7f8fa] px-16rpx py-12rpx text-26rpx">
-                <text class="min-w-0 flex-1 truncate text-[#333]">{{ getFileName(url) }}</text>
-                <wd-button size="small" type="danger" variant="plain" @click="formData.fileUrls?.splice(index, 1)">
-                  删除
-                </wd-button>
-              </view>
-              <wd-button size="small" type="primary" variant="plain" :loading="uploading" @click="handleChooseFiles">
-                上传附件
-              </wd-button>
-            </view>
+            <yd-upload-file v-model="formData.fileUrls" directory="crm/followup" :limit="9" />
           </wd-form-item>
           <template v-if="canSelectRelated">
             <wd-form-item title="关联联系人" title-width="200rpx" is-link :value="contactSelectedLabel" placeholder="请选择关联联系人" @click="contactPickerVisible = true" />
@@ -81,7 +59,6 @@ import { getBusinessPageByCustomer } from '@/api/crm/business'
 import { getContactPageByCustomer } from '@/api/crm/contact'
 import { createFollowUpRecord } from '@/api/crm/followup'
 import { BizTypeEnum } from '@/api/crm/permission'
-import { uploadFile } from '@/api/infra/file'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -102,7 +79,6 @@ const bizType = computed(() => Number(props.bizType))
 const formLoading = ref(false) // 表单提交状态
 const formRef = ref<FormInstance>() // 表单组件引用
 const nextTimeVisible = ref(false) // 时间选择器显示状态
-const uploading = ref(false) // 附件上传状态
 const contactPickerVisible = ref(false) // 关联联系人选择器
 const businessPickerVisible = ref(false) // 关联商机选择器
 const contactOptions = ref<Contact[]>([]) // 关联联系人选项
@@ -155,59 +131,6 @@ async function handleSubmit() {
   } finally {
     formLoading.value = false
   }
-}
-
-/** 上传图片 */
-function handleChooseImages() {
-  uni.chooseImage({
-    count: 6,
-    success: async (res) => {
-      const filePaths = Array.isArray(res.tempFilePaths) ? res.tempFilePaths : [res.tempFilePaths].filter(Boolean)
-      uploading.value = true
-      try {
-        const urls = await Promise.all(filePaths.map(filePath => uploadFile(filePath, 'crm/followup')))
-        formData.value.picUrls = [...(formData.value.picUrls || []), ...urls]
-      } finally {
-        uploading.value = false
-      }
-    },
-  })
-}
-
-/** 上传附件 */
-function handleChooseFiles() {
-  const chooseFile = (uni as any).chooseFile
-  if (!chooseFile) {
-    toast.show('当前端暂不支持附件选择')
-    return
-  }
-  chooseFile({
-    count: 6,
-    success: async (res: { tempFiles?: { path: string }[], tempFilePaths?: string[] }) => {
-      const filePaths = res.tempFiles?.map(file => file.path) || res.tempFilePaths || []
-      uploading.value = true
-      try {
-        const urls = await Promise.all(filePaths.map(filePath => uploadFile(filePath, 'crm/followup')))
-        formData.value.fileUrls = [...(formData.value.fileUrls || []), ...urls]
-      } finally {
-        uploading.value = false
-      }
-    },
-  })
-}
-
-/** 预览图片 */
-function handlePreviewImage(urls: string[], current: string) {
-  uni.previewImage({ urls, current })
-}
-
-/** 获取文件名 */
-function getFileName(url: string) {
-  if (!url) {
-    return ''
-  }
-  const path = url.split('?')[0]
-  return decodeURIComponent(path.substring(path.lastIndexOf('/') + 1))
 }
 
 /** 加载关联数据（仅客户支持关联联系人/商机） */

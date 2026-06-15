@@ -20,20 +20,20 @@ const UPLOAD_TYPE = {
 }
 
 /**
- * 读取文件二进制内容
- * @param uniFile 文件对象
+ * 读取文件二进制内容（按路径，兼容 微信/App 文件系统 与 H5 blob）
+ * @param filePath 文件路径 / blob URL
+ * @returns 二进制内容；H5 下额外返回探测到的真实 MIME
  */
-async function readFile(uniFile: { path: string, arrayBuffer?: () => Promise<ArrayBuffer> }): Promise<ArrayBuffer | string> {
-  // 微信小程序
+async function readFile(filePath: string): Promise<{ buffer: ArrayBuffer, mime?: string }> {
+  // 微信小程序 / App：通过文件系统从路径读取
   if (uni.getFileSystemManager) {
-    const fs = uni.getFileSystemManager()
-    return fs.readFileSync(uniFile.path) as ArrayBuffer
+    const buffer = uni.getFileSystemManager().readFileSync(filePath) as ArrayBuffer
+    return { buffer }
   }
-  // H5 等
-  if (uniFile.arrayBuffer) {
-    return uniFile.arrayBuffer()
-  }
-  throw new Error('不支持的文件读取方式')
+  // H5：从 blob / 临时 URL 拉取二进制，并顺带拿到真实 MIME
+  const response = await fetch(filePath)
+  const blob = await response.blob()
+  return { buffer: await blob.arrayBuffer(), mime: blob.type || undefined }
 }
 
 /**
@@ -59,21 +59,24 @@ function createFileRecord(presignedInfo: FileApi.FilePresignedUrlRespVO, file: {
  * 从文件路径上传文件（纯文件上传）
  * @param filePath 文件路径
  * @param directory 目录（可选）
+ * @param fileType 显式指定的 MIME 类型（可选）
+ * @param fileName 原始文件名（可选；H5 的 blob 路径不含文件名/扩展名时需传入，否则 S3 key 会丢扩展名）
  * @returns 文件访问 URL
  */
-export async function uploadFileFromPath(filePath: string, directory?: string, fileType?: string): Promise<string> {
-  const fileName = filePath.includes('/') ? filePath.substring(filePath.lastIndexOf('/') + 1) : filePath
+export async function uploadFileFromPath(filePath: string, directory?: string, fileType?: string, fileName?: string): Promise<string> {
+  // 优先用传入的原始文件名（H5 的 blob:xxx 路径推不出文件名/扩展名）
+  const name = fileName || (filePath.includes('/') ? filePath.substring(filePath.lastIndexOf('/') + 1) : filePath)
   const uploadType = import.meta.env.VITE_UPLOAD_TYPE || UPLOAD_TYPE.SERVER
-  // 根据文件后缀推断 MIME 类型
-  const mimeType = fileType || getMimeType(fileName)
 
-  // 情况一：前端直连上传
+  // 情况一：前端直连上传（仅 S3）
   if (uploadType === UPLOAD_TYPE.CLIENT) {
     // 1.1 获取文件预签名地址
-    const presignedInfo = await FileApi.getFilePresignedUrl(fileName, directory)
+    const presignedInfo = await FileApi.getFilePresignedUrl(name, directory)
 
-    // 1.2 获取二进制文件对象
-    const fileBuffer = await readFile({ path: filePath })
+    // 1.2 读取二进制内容（H5 可顺带拿到真实 MIME）
+    const { buffer, mime } = await readFile(filePath)
+    // Content-Type 优先级：显式传入 > H5 探测 > 文件后缀推断
+    const contentType = fileType || mime || getMimeType(name)
 
     // 返回上传的 Promise
     return new Promise((resolve, reject) => {
@@ -82,14 +85,20 @@ export async function uploadFileFromPath(filePath: string, directory?: string, f
         url: presignedInfo.uploadUrl,
         method: 'PUT',
         header: {
-          'Content-Type': mimeType,
+          'Content-Type': contentType,
         },
-        data: fileBuffer,
-        success: () => {
-          // 1.4. 记录文件信息到后端（异步）
-          createFileRecord(presignedInfo, { name: fileName, type: mimeType })
-          // 1.5 返回文件访问 URL
-          resolve(presignedInfo.url)
+        data: buffer,
+        success: (res) => {
+          // uni.request 对 HTTP 4xx/5xx 也会进 success，需显式判断状态码，否则会误判上传成功
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            // 1.4. 记录文件信息到后端（异步）
+            createFileRecord(presignedInfo, { name, type: contentType })
+            // 1.5 返回文件访问 URL
+            resolve(presignedInfo.url)
+          } else {
+            console.error('上传到S3失败:', res.statusCode, presignedInfo)
+            reject(new Error(`上传失败（HTTP ${res.statusCode}）`))
+          }
         },
         fail: (err) => {
           console.error('上传到S3失败:', err, presignedInfo)

@@ -46,7 +46,7 @@
             />
           </wd-form-item>
           <wd-form-item title="封面图" title-width="180rpx" prop="coverUrl">
-            <ImageUploadCell v-model="formData.coverUrl" directory="im/channel-material" :round="false" />
+            <yd-upload-img v-model="formData.coverUrl" directory="im/channel-material" />
           </wd-form-item>
           <wd-form-item title="摘要" title-width="180rpx" prop="summary">
             <wd-textarea
@@ -106,7 +106,6 @@ import { getIntDictOptions } from '@/hooks/useDict'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
-import ImageUploadCell from '../../../components/image-upload-cell.vue'
 
 const props = defineProps<{
   id?: number | string

@@ -12,7 +12,7 @@
       <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
           <wd-form-item title="封面" title-width="180rpx" prop="icon">
-            <ImageUploadCell v-model="formData.icon" directory="im/face-pack" />
+            <yd-upload-img v-model="formData.icon" directory="im/face-pack" />
           </wd-form-item>
           <wd-form-item title="名称" title-width="180rpx" prop="name">
             <wd-input
@@ -68,7 +68,6 @@ import { getIntDictOptions } from '@/hooks/useDict'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
-import ImageUploadCell from '../../../components/image-upload-cell.vue'
 
 const props = defineProps<{
   id?: number | string

@@ -27,7 +27,7 @@
             />
           </wd-form-item>
           <wd-form-item title="频道头像" title-width="180rpx" prop="avatar">
-            <ImageUploadCell v-model="formData.avatar" directory="im/channel" />
+            <yd-upload-img v-model="formData.avatar" directory="im/channel" />
           </wd-form-item>
           <wd-form-item title="排序" title-width="180rpx" prop="sort" center>
             <wd-input-number v-model="formData.sort" :min="0" />
@@ -75,7 +75,6 @@ import { getIntDictOptions } from '@/hooks/useDict'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
-import ImageUploadCell from '../../../components/image-upload-cell.vue'
 
 const props = defineProps<{
   id?: number | string

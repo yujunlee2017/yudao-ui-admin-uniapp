@@ -1,6 +1,7 @@
 import { http } from '@/http/http'
 import { useTokenStore } from '@/store/token'
 import { useUserStore } from '@/store/user'
+import { getEnvBaseUrl } from '@/utils'
 
 /** 文件信息 */
 export interface FileVO {
@@ -59,13 +60,12 @@ export function deleteFile(id: number) {
  * @param directory 目录（可选）
  * @returns 文件访问 URL
  */
-export function uploadFile(filePath: string, directory?: string): Promise<string> {
-  const tokenStore = useTokenStore()
+export async function uploadFile(filePath: string, directory?: string): Promise<string> {
   const userStore = useUserStore()
-  const token = tokenStore.updateNowTime().validToken
+  const token = await useTokenStore().tryGetValidToken()
   return new Promise((resolve, reject) => {
     uni.uploadFile({
-      url: `${import.meta.env.VITE_SERVER_BASEURL}/infra/file/upload`,
+      url: `${getEnvBaseUrl()}/infra/file/upload`,
       filePath,
       name: 'file',
       header: {

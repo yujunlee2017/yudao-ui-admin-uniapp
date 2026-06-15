@@ -32,6 +32,9 @@
               placeholder="请输入应用名"
             />
           </wd-form-item>
+          <wd-form-item title="应用图标" title-width="220rpx" prop="logo">
+            <yd-upload-img v-model="formData.logo" directory="oauth2" />
+          </wd-form-item>
           <wd-form-item title="应用描述" title-width="220rpx" prop="description">
             <wd-textarea
               v-model="formData.description"
@@ -131,6 +134,7 @@ const formSchema = createFormSchema({
   clientId: [{ required: true, message: '客户端编号不能为空' }],
   secret: [{ required: true, message: '客户端密钥不能为空' }],
   name: [{ required: true, message: '应用名不能为空' }],
+  logo: [{ required: true, message: '应用图标不能为空' }],
   accessTokenValiditySeconds: [{ required: true, message: '访问令牌有效期不能为空' }],
   refreshTokenValiditySeconds: [{ required: true, message: '刷新令牌有效期不能为空' }],
 })

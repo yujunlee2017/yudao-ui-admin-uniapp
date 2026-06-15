@@ -13,6 +13,10 @@
         <wd-cell title="客户端编号" :value="formData?.clientId" />
         <wd-cell title="客户端密钥" :value="formData?.secret" />
         <wd-cell title="应用名" :value="formData?.name" />
+        <wd-cell title="应用图标" center>
+          <wd-img v-if="formData?.logo" :src="formData.logo" :width="48" :height="48" mode="aspectFill" />
+          <text v-else>-</text>
+        </wd-cell>
         <wd-cell title="应用描述" :value="formData?.description ?? '-'" />
         <wd-cell title="状态">
           <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="formData?.status" />

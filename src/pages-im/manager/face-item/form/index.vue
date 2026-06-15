@@ -27,10 +27,9 @@
             @confirm="({ value }) => formData.packId = Number(value[0])"
           />
           <wd-form-item title="表情图" title-width="180rpx" prop="url">
-            <ImageUploadCell
+            <yd-upload-img
               v-model="formData.url"
               directory="im/face-item"
-              :round="false"
               @uploaded="handleImageUploaded"
             />
           </wd-form-item>
@@ -95,7 +94,6 @@ import { getIntDictOptions } from '@/hooks/useDict'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
-import ImageUploadCell from '../../../components/image-upload-cell.vue'
 
 const props = defineProps<{
   id?: number | string

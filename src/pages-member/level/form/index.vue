@@ -24,35 +24,10 @@
             <wd-input v-model.number="formData.discountPercent" type="number" clearable placeholder="请输入享受折扣" />
           </wd-form-item>
           <wd-form-item title="等级图标" title-width="200rpx" prop="icon">
-            <view class="flex items-center gap-16rpx">
-              <wd-img
-                v-if="formData.icon"
-                :src="formData.icon"
-                :width="48"
-                :height="48"
-                mode="aspectFill"
-                round
-              />
-              <text v-else class="text-26rpx text-[#999]">未上传</text>
-              <wd-button size="small" type="primary" variant="plain" :loading="uploading.icon" @click="handleChooseImage('icon')">
-                上传
-              </wd-button>
-            </view>
+            <yd-upload-img v-model="formData.icon" directory="member-level" />
           </wd-form-item>
           <wd-form-item title="背景图" title-width="200rpx" prop="backgroundUrl">
-            <view class="flex items-center gap-16rpx">
-              <wd-img
-                v-if="formData.backgroundUrl"
-                :src="formData.backgroundUrl"
-                :width="64"
-                :height="40"
-                mode="aspectFill"
-              />
-              <text v-else class="text-26rpx text-[#999]">未上传</text>
-              <wd-button size="small" type="primary" variant="plain" :loading="uploading.backgroundUrl" @click="handleChooseImage('backgroundUrl')">
-                上传
-              </wd-button>
-            </view>
+            <yd-upload-img v-model="formData.backgroundUrl" directory="member-level" />
           </wd-form-item>
           <wd-form-item title="状态" title-width="200rpx" prop="status" center>
             <wd-radio-group v-model="formData.status" type="button">
@@ -84,13 +59,10 @@ import type { MemberLevel } from '@/api/member/level'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createMemberLevel, getMemberLevel, updateMemberLevel } from '@/api/member/level'
-import { uploadFile } from '@/api/infra/file'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
-
-type ImageField = 'backgroundUrl' | 'icon'
 
 const props = defineProps<{
   id?: number | any
@@ -106,10 +78,6 @@ definePage({
 const toast = useToast()
 const getTitle = computed(() => props.id ? '编辑会员等级' : '新增会员等级')
 const formLoading = ref(false) // 表单提交状态
-const uploading = ref<Record<ImageField, boolean>>({
-  icon: false,
-  backgroundUrl: false,
-}) // 图片上传状态
 const formData = ref<MemberLevel>({
   id: undefined,
   name: '',
@@ -140,25 +108,6 @@ async function getDetail() {
     return
   }
   formData.value = await getMemberLevel(Number(props.id))
-}
-
-/** 选择并上传图片 */
-function handleChooseImage(field: ImageField) {
-  uni.chooseImage({
-    count: 1,
-    success: async (res) => {
-      const filePath = res.tempFilePaths?.[0]
-      if (!filePath) {
-        return
-      }
-      uploading.value[field] = true
-      try {
-        formData.value[field] = await uploadFile(filePath, 'member-level')
-      } finally {
-        uploading.value[field] = false
-      }
-    },
-  })
 }
 
 /** 提交表单 */

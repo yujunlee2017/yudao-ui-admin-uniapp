@@ -57,7 +57,7 @@
                 <wd-datetime-picker
                   v-model="formData[field.prop]"
                   v-model:visible="dateVisible[field.prop]"
-                  :title="'请选择' + field.label"
+                  :title="`请选择${field.label}`"
                   type="datetime"
                 />
               </template>
@@ -78,14 +78,14 @@
               <wd-form-item v-else-if="field.type === 'textarea'" :title="field.label" title-width="200rpx" :prop="field.prop">
                 <wd-textarea
                   v-model="formData[field.prop]"
-                  :placeholder="'请输入' + field.label"
+                  :placeholder="`请输入${field.label}`"
                   :maxlength="500"
                   show-word-limit
                   clearable
                 />
               </wd-form-item>
               <wd-form-item v-else-if="field.type === 'file'" :title="field.label" title-width="200rpx" :prop="field.prop">
-                <FileUpload v-model="formData[field.prop]" />
+                <yd-upload-file v-model="formData[field.prop]" :limit="1" directory="erp" />
               </wd-form-item>
               <wd-form-item v-else-if="field.type === 'items'" :title="field.label" title-width="200rpx">
                 <view class="w-full">
@@ -122,13 +122,13 @@
                           />
                         </template>
                         <wd-form-item v-else-if="itemField.type === 'textarea'" :title="itemField.label" title-width="180rpx">
-                          <wd-textarea v-model="item[itemField.prop]" :placeholder="'请输入' + itemField.label" clearable />
+                          <wd-textarea v-model="item[itemField.prop]" :placeholder="`请输入${itemField.label}`" clearable />
                         </wd-form-item>
                         <wd-form-item v-else :title="itemField.label" title-width="180rpx">
                           <wd-input
                             v-model="item[itemField.prop]"
                             :type="itemField.type === 'number' || itemField.type === 'money' ? 'number' : 'text'"
-                            :placeholder="'请输入' + itemField.label"
+                            :placeholder="`请输入${itemField.label}`"
                             clearable
                             @blur="refreshFormAmount"
                           />
@@ -145,7 +145,7 @@
                 <wd-input
                   v-model="formData[field.prop]"
                   :type="field.type === 'number' || field.type === 'money' ? 'number' : 'text'"
-                  :placeholder="'请输入' + field.label"
+                  :placeholder="`请输入${field.label}`"
                   clearable
                 />
               </wd-form-item>
@@ -198,7 +198,6 @@ import { getWotPickerFormValue } from '@/utils/wot'
 import { erpOptionLoaders, getErpItemFields, getErpModule } from '@/pages-erp/config'
 import { createErpFormData, createErpFormSchema, formatErpValue, getCurrentRouteQuery, getFormFields, isDateField, normalizeOptions, refreshErpItemsAmount } from '@/pages-erp/utils'
 import BizSelector from '../components/biz-selector.vue'
-import FileUpload from '../components/file-upload.vue'
 
 const props = defineProps<{
   module?: string
@@ -217,7 +216,7 @@ const routeQuery = ref<Record<string, any>>({}) // 路由参数
 const moduleKey = computed(() => String(routeQuery.value.module || props.module || ''))
 const formId = computed(() => routeQuery.value.id || props.id)
 const moduleConfig = computed(() => getErpModule(moduleKey.value))
-const getTitle = computed(() => formId.value ? '编辑' + (moduleConfig.value?.title || 'ERP') : '新增' + (moduleConfig.value?.title || 'ERP'))
+const getTitle = computed(() => formId.value ? `编辑${moduleConfig.value?.title || 'ERP'}` : `新增${moduleConfig.value?.title || 'ERP'}`)
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<Record<string, any>>({}) // 表单数据
 const formRef = ref<FormInstance>() // 表单组件引用
@@ -237,7 +236,7 @@ const ERP_BIZ_TYPE = {
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-erp/crud/index?module=' + moduleKey.value)
+  navigateBackPlus(`/pages-erp/crud/index?module=${moduleKey.value}`)
 }
 
 /** 判断只读字段 */
@@ -297,7 +296,7 @@ function getItemPickerValue(field: ErpField, item: Record<string, any>) {
 
 /** 获取明细选择器状态键 */
 function getItemPickerKey(index: number, field: ErpField) {
-  return index + ':' + field.prop
+  return `${index}:${field.prop}`
 }
 
 /** 同步产品信息 */
@@ -594,7 +593,7 @@ async function handleSubmit() {
       await moduleConfig.value.operations.create?.(data)
       toast.success('新增成功')
     }
-    uni.$emit('erp:reload:' + moduleKey.value)
+    uni.$emit(`erp:reload:${moduleKey.value}`)
     setTimeout(() => handleBack(), 500)
   } finally {
     formLoading.value = false
