@@ -83,7 +83,7 @@ const formSchema = createFormSchema({
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-im/friend/index?tab=friend')
+  navigateBackPlus('/pages-im/home/friend/index?tab=friend')
 }
 
 /** 提交表单 */

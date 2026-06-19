@@ -118,7 +118,7 @@ const groupRequests = ref<ImGroupRequestRespVO[]>([]) // 加群申请
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-im/index/index')
+  navigateBackPlus('/pages-im/home/index/index')
 }
 
 /** 好友申请是否可处理 */

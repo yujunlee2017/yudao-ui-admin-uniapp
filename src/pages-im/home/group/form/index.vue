@@ -99,7 +99,7 @@ const getTitle = computed(() => props.id ? '编辑群资料' : '创建群聊')
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-im/friend/index?tab=group')
+  navigateBackPlus('/pages-im/home/friend/index?tab=group')
 }
 
 /** 加载详情 */

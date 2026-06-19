@@ -187,7 +187,7 @@ const moreActions = computed(() => {
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-im/friend/index?tab=group')
+  navigateBackPlus('/pages-im/home/friend/index?tab=group')
 }
 
 /** 获取成员显示名 */
@@ -210,7 +210,7 @@ function handleChat() {
     return
   }
   uni.navigateTo({
-    url: `/pages-im/chat/index?type=${ImConversationType.GROUP}&targetId=${formData.value.id}&title=${encodeURIComponent(formData.value.name)}`,
+    url: `/pages-im/home/chat/index?type=${ImConversationType.GROUP}&targetId=${formData.value.id}&title=${encodeURIComponent(formData.value.name)}`,
   })
 }
 
@@ -220,7 +220,7 @@ async function handleMoreAction({ item }: { item: { value: string } }) {
     uni.setClipboardData({ data: String(formData.value?.id || '') })
   } else if (item.value === 'edit') {
     if (formData.value?.id) {
-      uni.navigateTo({ url: `/pages-im/group/form/index?id=${formData.value.id}` })
+      uni.navigateTo({ url: `/pages-im/home/group/form/index?id=${formData.value.id}` })
     }
   } else if (item.value === 'muteAll') {
     await handleMuteAll()

@@ -156,7 +156,7 @@ const filteredGroups = computed(() => {
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-im/index/index')
+  navigateBackPlus('/pages-im/home/index/index')
 }
 
 /** 切换联系人类型 */
@@ -167,7 +167,7 @@ function handleTabChange() {
 /** 新增联系人 */
 function handleCreate() {
   uni.navigateTo({
-    url: activeTab.value === 0 ? '/pages-im/friend/apply/index' : '/pages-im/group/form/index',
+    url: activeTab.value === 0 ? '/pages-im/home/friend/apply/index' : '/pages-im/home/group/form/index',
   })
 }
 
@@ -179,21 +179,21 @@ function getFriendName(item: ImFriendRespVO) {
 /** 打开好友聊天 */
 function handleFriendChat(item: ImFriendRespVO) {
   uni.navigateTo({
-    url: `/pages-im/chat/index?type=${ImConversationType.PRIVATE}&targetId=${item.friendUserId}&title=${encodeURIComponent(getFriendName(item))}`,
+    url: `/pages-im/home/chat/index?type=${ImConversationType.PRIVATE}&targetId=${item.friendUserId}&title=${encodeURIComponent(getFriendName(item))}`,
   })
 }
 
 /** 打开群聊 */
 function handleGroupChat(item: ImGroupRespVO) {
   uni.navigateTo({
-    url: `/pages-im/chat/index?type=${ImConversationType.GROUP}&targetId=${item.id}&title=${encodeURIComponent(item.name)}`,
+    url: `/pages-im/home/chat/index?type=${ImConversationType.GROUP}&targetId=${item.id}&title=${encodeURIComponent(item.name)}`,
   })
 }
 
 /** 查看群详情 */
 function handleGroupDetail(item: ImGroupRespVO) {
   uni.navigateTo({
-    url: `/pages-im/group/detail/index?id=${item.id}`,
+    url: `/pages-im/home/group/detail/index?id=${item.id}`,
   })
 }
 
