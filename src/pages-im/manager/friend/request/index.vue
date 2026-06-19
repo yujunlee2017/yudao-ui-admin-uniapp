@@ -2,7 +2,7 @@
   <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
-      title="好友关系"
+      title="好友申请"
       left-arrow placeholder safe-area-inset-top fixed
       @click-left="handleBack"
     />
@@ -10,7 +10,7 @@
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
-    <!-- 好友关系列表 -->
+    <!-- 好友申请列表 -->
     <z-paging
       ref="pagingRef"
       v-model="list"
@@ -20,7 +20,7 @@
       :refresher-enabled="true"
       :inside-more="true"
       :loading-more-default-as-loading="true"
-      empty-view-text="暂无好友关系数据"
+      empty-view-text="暂无好友申请数据"
       @query="queryList"
     >
       <view class="p-24rpx">
@@ -31,29 +31,23 @@
         >
           <view class="flex items-center justify-between">
             <view class="line-clamp-1 flex-1 text-30rpx text-[#333] font-semibold">
-              {{ item.userNickname || `用户 ${item.userId}` }}
+              {{ item.fromNickname || `用户 ${item.fromUserId}` }}
               <text class="mx-8rpx text-[#bbb]">→</text>
-              {{ item.friendNickname || `用户 ${item.friendUserId}` }}
+              {{ item.toNickname || `用户 ${item.toUserId}` }}
             </view>
-            <dict-tag :type="DICT_TYPE.IM_FRIEND_STATUS" :value="item.status" />
+            <dict-tag :type="DICT_TYPE.IM_FRIEND_REQUEST_HANDLE_RESULT" :value="item.handleResult" />
           </view>
-          <view class="mt-10rpx text-26rpx text-[#999]">
-            备注：{{ item.displayName || '-' }}
-            <text v-if="item.addSource != null" class="ml-16rpx">来源：{{ getDictLabel(DICT_TYPE.IM_FRIEND_ADD_SOURCE, item.addSource) }}</text>
+          <view v-if="item.applyContent" class="mt-10rpx line-clamp-2 text-26rpx text-[#666]">
+            申请理由：{{ item.applyContent }}
           </view>
-          <view v-if="item.silent || item.pinned || item.blocked" class="mt-12rpx flex flex-wrap gap-12rpx">
-            <text v-if="item.silent" class="rounded-6rpx bg-[#f0f2f5] px-12rpx py-4rpx text-22rpx text-[#666]">免打扰</text>
-            <text v-if="item.pinned" class="rounded-6rpx bg-[#e6f4ff] px-12rpx py-4rpx text-22rpx text-[#1677ff]">置顶</text>
-            <text v-if="item.blocked" class="rounded-6rpx bg-[#fff1f0] px-12rpx py-4rpx text-22rpx text-[#f5222d]">已拉黑</text>
+          <view class="mt-8rpx text-24rpx text-[#999]">
+            <text v-if="item.addSource != null">来源：{{ getDictLabel(DICT_TYPE.IM_FRIEND_ADD_SOURCE, item.addSource) }}</text>
+            <text v-if="item.displayName" class="ml-16rpx">备注：{{ item.displayName }}</text>
           </view>
-          <view class="mt-16rpx flex items-center justify-between">
-            <text class="text-24rpx text-[#999]">{{ formatDateTime(item.addTime) || '-' }}</text>
-            <wd-button
-              v-if="hasAccessByCodes(['im:manager:message:query'])"
-              size="small" variant="plain" @click="handleViewChat(item)"
-            >
-              查看对话
-            </wd-button>
+          <view v-if="item.handleContent" class="mt-8rpx text-24rpx text-[#999]">处理理由：{{ item.handleContent }}</view>
+          <view class="mt-12rpx flex items-center justify-between text-24rpx text-[#999]">
+            <text>申请 {{ formatDateTime(item.createTime) }}</text>
+            <text v-if="item.handleTime">处理 {{ formatDateTime(item.handleTime) }}</text>
           </view>
         </view>
       </view>
@@ -62,11 +56,10 @@
 </template>
 
 <script lang="ts" setup>
-import type { ImManagerFriendVO } from '@/api/im/manager/friend'
+import type { ImManagerFriendRequestVO } from '@/api/im/manager/friend/request'
 import { ref } from 'vue'
-import { getManagerFriendPage } from '@/api/im/manager/friend'
+import { getManagerFriendRequestPage } from '@/api/im/manager/friend/request'
 import { getDictLabel } from '@/hooks/useDict'
-import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
@@ -79,8 +72,7 @@ definePage({
   },
 })
 
-const { hasAccessByCodes } = useAccess()
-const list = ref<ImManagerFriendVO[]>([]) // 列表数据
+const list = ref<ImManagerFriendRequestVO[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({}) // 查询参数
 
@@ -89,10 +81,10 @@ function handleBack() {
   navigateBackPlus()
 }
 
-/** 查询好友关系列表 */
+/** 查询好友申请列表 */
 async function queryList(pageNo: number, pageSize: number) {
   try {
-    const data = await getManagerFriendPage({
+    const data = await getManagerFriendRequestPage({
       ...queryParams.value,
       pageNo,
       pageSize,
@@ -117,12 +109,5 @@ function handleReset() {
 /** 重新加载 */
 function reload() {
   pagingRef.value?.reload()
-}
-
-/** 查看对话 */
-function handleViewChat(item: ImManagerFriendVO) {
-  uni.navigateTo({
-    url: `/pages-im/manager/message/private/index?senderId=${item.userId}&receiverId=${item.friendUserId}`,
-  })
 }
 </script>

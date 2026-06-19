@@ -13,12 +13,14 @@
     @close="visible = false"
   >
     <view class="yd-search-form-container">
+      <!-- TODO @AI：userselect 组件 -->
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           用户编号
         </view>
         <wd-input v-model="formData.userId" type="number" placeholder="请输入用户编号" clearable />
       </view>
+      <!-- TODO @AI：userselect 组件 -->
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           好友编号
@@ -42,6 +44,7 @@
           </wd-radio>
         </wd-radio-group>
       </view>
+      <!-- TODO @AI：免打扰筛选 -->
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           添加时间

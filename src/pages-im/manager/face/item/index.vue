@@ -2,7 +2,7 @@
   <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
-      title="频道"
+      title="表情列表"
       left-arrow placeholder safe-area-inset-top fixed
       @click-left="handleBack"
     />
@@ -10,7 +10,7 @@
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
-    <!-- 频道列表 -->
+    <!-- 表情列表 -->
     <z-paging
       ref="pagingRef"
       v-model="list"
@@ -20,7 +20,7 @@
       :refresher-enabled="true"
       :inside-more="true"
       :loading-more-default-as-loading="true"
-      empty-view-text="暂无频道数据"
+      empty-view-text="暂无表情数据"
       @query="queryList"
     >
       <view class="p-24rpx">
@@ -32,22 +32,17 @@
         >
           <view class="flex items-center gap-20rpx p-24rpx">
             <image
-              v-if="item.avatar"
-              :src="item.avatar"
-              class="h-88rpx w-88rpx rounded-12rpx bg-[#f0f2f5]"
-              mode="aspectFill"
+              v-if="item.url"
+              :src="item.url"
+              class="h-100rpx w-100rpx rounded-12rpx bg-[#f0f2f5]"
+              mode="aspectFit"
             />
-            <view v-else class="h-88rpx w-88rpx flex items-center justify-center rounded-12rpx bg-[#f0f2f5] text-24rpx text-[#bbb]">
-              无
-            </view>
             <view class="min-w-0 flex-1">
               <view class="flex items-center justify-between">
-                <text class="line-clamp-1 flex-1 text-32rpx text-[#333] font-semibold">{{ item.name || '-' }}</text>
+                <text class="line-clamp-1 flex-1 text-30rpx text-[#333] font-semibold">{{ item.name || '未命名' }}</text>
                 <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="item.status" />
               </view>
-              <view class="mt-10rpx text-26rpx text-[#999]">
-                编码：{{ item.code || '-' }} · 排序 {{ item.sort ?? 0 }}
-              </view>
+              <view class="mt-8rpx text-26rpx text-[#999]">{{ item.width }} × {{ item.height }} · 排序 {{ item.sort ?? 0 }}</view>
             </view>
           </view>
         </view>
@@ -56,7 +51,7 @@
 
     <!-- 新增按钮 -->
     <wd-fab
-      v-if="hasAccessByCodes(['im:manager:channel:create'])"
+      v-if="hasAccessByCodes(['im:manager:face-pack-item:create'])"
       position="right-bottom"
       type="primary"
       :expandable="false"
@@ -66,14 +61,18 @@
 </template>
 
 <script lang="ts" setup>
-import type { ImManagerChannelVO } from '@/api/im/manager/channel'
+import type { ImManagerFacePackItemVO } from '@/api/im/manager/face/item'
 import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
-import { getManagerChannelPage } from '@/api/im/manager/channel'
+import { getManagerFacePackItemPage } from '@/api/im/manager/face/item'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import SearchForm from './components/search-form.vue'
+
+const props = defineProps<{
+  packId?: number | string
+}>()
 
 definePage({
   style: {
@@ -83,7 +82,7 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
-const list = ref<ImManagerChannelVO[]>([]) // 列表数据
+const list = ref<ImManagerFacePackItemVO[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({}) // 查询参数
 
@@ -92,11 +91,12 @@ function handleBack() {
   navigateBackPlus()
 }
 
-/** 查询频道列表 */
+/** 查询表情列表 */
 async function queryList(pageNo: number, pageSize: number) {
   try {
-    const data = await getManagerChannelPage({
+    const data = await getManagerFacePackItemPage({
       ...queryParams.value,
+      packId: props.packId,
       pageNo,
       pageSize,
     })
@@ -122,27 +122,27 @@ function reload() {
   pagingRef.value?.reload()
 }
 
-/** 新增频道 */
+/** 新增表情 */
 function handleAdd() {
   uni.navigateTo({
-    url: '/pages-im/manager/channel/form/index',
+    url: `/pages-im/manager/face/item/form/index?packId=${props.packId || ''}`,
   })
 }
 
 /** 查看详情 */
-function handleDetail(item: ImManagerChannelVO) {
+function handleDetail(item: ImManagerFacePackItemVO) {
   uni.navigateTo({
-    url: `/pages-im/manager/channel/detail/index?id=${item.id}`,
+    url: `/pages-im/manager/face/item/detail/index?id=${item.id}`,
   })
 }
 
 /** 初始化 */
 onMounted(() => {
-  uni.$on('im:manager:channel:reload', reload)
+  uni.$on('im:manager:face-pack-item:reload', reload)
 })
 
 /** 卸载 */
 onUnload(() => {
-  uni.$off('im:manager:channel:reload', reload)
+  uni.$off('im:manager:face-pack-item:reload', reload)
 })
 </script>

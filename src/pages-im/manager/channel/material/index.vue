@@ -2,7 +2,7 @@
   <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
-      title="频道"
+      title="频道素材"
       left-arrow placeholder safe-area-inset-top fixed
       @click-left="handleBack"
     />
@@ -10,7 +10,7 @@
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
-    <!-- 频道列表 -->
+    <!-- 素材列表 -->
     <z-paging
       ref="pagingRef"
       v-model="list"
@@ -20,7 +20,7 @@
       :refresher-enabled="true"
       :inside-more="true"
       :loading-more-default-as-loading="true"
-      empty-view-text="暂无频道数据"
+      empty-view-text="暂无素材数据"
       @query="queryList"
     >
       <view class="p-24rpx">
@@ -30,24 +30,23 @@
           class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm"
           @click="handleDetail(item)"
         >
-          <view class="flex items-center gap-20rpx p-24rpx">
+          <view class="flex gap-20rpx p-24rpx">
             <image
-              v-if="item.avatar"
-              :src="item.avatar"
-              class="h-88rpx w-88rpx rounded-12rpx bg-[#f0f2f5]"
+              v-if="item.coverUrl"
+              :src="item.coverUrl"
+              class="h-120rpx w-120rpx rounded-12rpx bg-[#f0f2f5]"
               mode="aspectFill"
             />
-            <view v-else class="h-88rpx w-88rpx flex items-center justify-center rounded-12rpx bg-[#f0f2f5] text-24rpx text-[#bbb]">
-              无
+            <view v-else class="h-120rpx w-120rpx flex items-center justify-center rounded-12rpx bg-[#f0f2f5] text-24rpx text-[#bbb]">
+              无封面
             </view>
             <view class="min-w-0 flex-1">
               <view class="flex items-center justify-between">
-                <text class="line-clamp-1 flex-1 text-32rpx text-[#333] font-semibold">{{ item.name || '-' }}</text>
-                <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="item.status" />
+                <text class="line-clamp-1 flex-1 text-30rpx text-[#333] font-semibold">{{ item.title || '-' }}</text>
+                <dict-tag :type="DICT_TYPE.IM_CHANNEL_MATERIAL_TYPE" :value="item.type" />
               </view>
-              <view class="mt-10rpx text-26rpx text-[#999]">
-                编码：{{ item.code || '-' }} · 排序 {{ item.sort ?? 0 }}
-              </view>
+              <view class="mt-10rpx text-26rpx text-[#999]">频道：{{ item.channelName || '-' }}</view>
+              <view v-if="item.summary" class="mt-6rpx line-clamp-2 text-26rpx text-[#999]">{{ item.summary }}</view>
             </view>
           </view>
         </view>
@@ -56,7 +55,7 @@
 
     <!-- 新增按钮 -->
     <wd-fab
-      v-if="hasAccessByCodes(['im:manager:channel:create'])"
+      v-if="hasAccessByCodes(['im:manager:channel-material:create'])"
       position="right-bottom"
       type="primary"
       :expandable="false"
@@ -66,10 +65,10 @@
 </template>
 
 <script lang="ts" setup>
-import type { ImManagerChannelVO } from '@/api/im/manager/channel'
+import type { ImManagerChannelMaterialVO } from '@/api/im/manager/channel/material'
 import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
-import { getManagerChannelPage } from '@/api/im/manager/channel'
+import { getManagerChannelMaterialPage } from '@/api/im/manager/channel/material'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -83,7 +82,7 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
-const list = ref<ImManagerChannelVO[]>([]) // 列表数据
+const list = ref<ImManagerChannelMaterialVO[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({}) // 查询参数
 
@@ -92,10 +91,10 @@ function handleBack() {
   navigateBackPlus()
 }
 
-/** 查询频道列表 */
+/** 查询素材列表 */
 async function queryList(pageNo: number, pageSize: number) {
   try {
-    const data = await getManagerChannelPage({
+    const data = await getManagerChannelMaterialPage({
       ...queryParams.value,
       pageNo,
       pageSize,
@@ -122,27 +121,27 @@ function reload() {
   pagingRef.value?.reload()
 }
 
-/** 新增频道 */
+/** 新增素材 */
 function handleAdd() {
   uni.navigateTo({
-    url: '/pages-im/manager/channel/form/index',
+    url: '/pages-im/manager/channel/material/form/index',
   })
 }
 
 /** 查看详情 */
-function handleDetail(item: ImManagerChannelVO) {
+function handleDetail(item: ImManagerChannelMaterialVO) {
   uni.navigateTo({
-    url: `/pages-im/manager/channel/detail/index?id=${item.id}`,
+    url: `/pages-im/manager/channel/material/detail/index?id=${item.id}`,
   })
 }
 
 /** 初始化 */
 onMounted(() => {
-  uni.$on('im:manager:channel:reload', reload)
+  uni.$on('im:manager:channel-material:reload', reload)
 })
 
 /** 卸载 */
 onUnload(() => {
-  uni.$off('im:manager:channel:reload', reload)
+  uni.$off('im:manager:channel-material:reload', reload)
 })
 </script>

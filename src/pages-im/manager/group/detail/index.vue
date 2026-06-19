@@ -150,7 +150,7 @@ async function getDetail() {
 /** 查看对话 */
 function handleViewChat() {
   uni.navigateTo({
-    url: `/pages-im/manager/group-message/index?groupId=${props.id}`,
+    url: `/pages-im/manager/message/group/index?groupId=${props.id}`,
   })
 }
 

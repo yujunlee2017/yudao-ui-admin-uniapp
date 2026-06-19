@@ -1,4 +1,3 @@
-<!-- TODO @AI：group 是不是放在一个目录下管理； -->
 <template>
   <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
