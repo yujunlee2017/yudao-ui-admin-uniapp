@@ -5,11 +5,17 @@
       :title="pageTitle"
       left-arrow placeholder safe-area-inset-top fixed
       @click-left="handleBack"
-    />
+    >
+      <template #right>
+        <view class="pr-8rpx" @click="openSetting">
+          <wd-icon name="more" size="44rpx" color="#333" />
+        </view>
+      </template>
+    </wd-navbar>
 
     <!-- 消息列表 -->
     <scroll-view
-      class="min-h-0 flex-1 bg-[#f5f7fa]"
+      class="min-h-0 flex-1 bg-[#ededed]"
       scroll-y
       :scroll-into-view="scrollIntoView"
       scroll-with-animation
@@ -165,6 +171,15 @@ const pageTitle = computed(() => props.title ? decodeURIComponent(props.title) :
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-im/home/friend/index')
+}
+
+/** 打开会话设置：群聊 → 群设置，私聊 → 好友资料 */
+function openSetting() {
+  if (conversationType.value === ImConversationType.GROUP) {
+    uni.navigateTo({ url: `/pages-im/home/group/detail/index?id=${targetId.value}` })
+  } else {
+    uni.navigateTo({ url: `/pages-im/home/friend/detail/index?friendUserId=${targetId.value}` })
+  }
 }
 
 /** 是否自己发送 */

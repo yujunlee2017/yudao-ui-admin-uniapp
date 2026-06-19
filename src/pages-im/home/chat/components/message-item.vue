@@ -10,7 +10,7 @@
     </view>
     <!-- 普通消息 -->
     <view v-else class="flex items-start gap-16rpx" :class="isSelf ? 'flex-row-reverse' : ''">
-      <ImAvatar :src="senderAvatar" :name="senderName" size="72rpx" />
+      <ImAvatar :src="senderAvatar" :name="senderName" size="80rpx" :round="false" />
       <view class="flex max-w-[560rpx] flex-col" :class="isSelf ? 'items-end' : 'items-start'">
         <!-- 群聊对方昵称 -->
         <view v-if="showSenderName" class="mb-8rpx text-22rpx text-[#999]">
@@ -187,12 +187,11 @@ const statusText = computed(() => {
 <style lang="scss" scoped>
 .im-bubble {
   position: relative;
-  border-radius: 12rpx;
-  padding: 18rpx 22rpx;
-  font-size: 28rpx;
-  line-height: 42rpx;
+  border-radius: 8rpx;
+  padding: 18rpx 24rpx;
+  font-size: 30rpx;
+  line-height: 44rpx;
   word-break: break-all;
-  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.04);
 }
 
 // 自己：微信绿 + 右侧小三角
@@ -202,10 +201,10 @@ const statusText = computed(() => {
 
   &::after {
     position: absolute;
-    top: 22rpx;
-    right: -10rpx;
+    top: 20rpx;
+    right: -8rpx;
     content: '';
-    border: 10rpx solid transparent;
+    border: 9rpx solid transparent;
     border-left-color: #95ec69;
   }
 }
@@ -217,10 +216,10 @@ const statusText = computed(() => {
 
   &::after {
     position: absolute;
-    top: 22rpx;
-    left: -10rpx;
+    top: 20rpx;
+    left: -8rpx;
     content: '';
-    border: 10rpx solid transparent;
+    border: 9rpx solid transparent;
     border-right-color: #fff;
   }
 }

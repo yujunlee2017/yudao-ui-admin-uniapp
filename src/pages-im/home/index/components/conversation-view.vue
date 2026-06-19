@@ -1,17 +1,23 @@
 <template>
-  <scroll-view
-    class="h-full bg-white"
-    scroll-y
-    refresher-enabled
-    :refresher-triggered="refreshing"
-    @refresherrefresh="onRefresh"
-  >
-    <view v-if="!loading && conversations.length === 0" class="py-160rpx">
-      <wd-empty icon="message" tip="暂无会话" />
+  <view class="h-full flex flex-col bg-white">
+    <!-- 搜索 -->
+    <view class="px-24rpx pb-8rpx pt-12rpx">
+      <wd-search v-model="keyword" placeholder="搜索" hide-cancel />
     </view>
 
-    <view
-      v-for="item in conversations"
+    <scroll-view
+      class="min-h-0 flex-1"
+      scroll-y
+      refresher-enabled
+      :refresher-triggered="refreshing"
+      @refresherrefresh="onRefresh"
+    >
+      <view v-if="!loading && filteredConversations.length === 0" class="py-160rpx">
+        <wd-empty icon="message" :tip="keyword ? '无匹配会话' : '暂无会话'" />
+      </view>
+
+      <view
+        v-for="item in filteredConversations"
       :key="item.clientConversationId"
       class="flex items-center gap-20rpx px-24rpx active:bg-[#f5f5f5]"
       :class="item.top ? 'bg-[#f7f8fa]' : ''"
@@ -19,7 +25,7 @@
       @longpress="handleLongPress(item)"
     >
       <view class="relative py-20rpx">
-        <ImAvatar :src="item.avatar" :name="item.name" :round="item.type === ImConversationType.PRIVATE" size="92rpx" />
+        <ImAvatar :src="item.avatar" :name="item.name" :round="false" size="92rpx" />
         <view v-if="item.unreadCount > 0" class="unread-badge">
           {{ item.unreadCount > 99 ? '99+' : item.unreadCount }}
         </view>
@@ -34,13 +40,14 @@
         </view>
       </view>
     </view>
-  </scroll-view>
+    </scroll-view>
+  </view>
 </template>
 
 <script lang="ts" setup>
 import type { ConversationDO } from '@/pages-im/home/db'
 import { onShow } from '@dcloudio/uni-app'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { ImConversationType } from '@/utils/constants'
 import { useImConversations } from '../../composables/useImConversations'
 import ImAvatar from '../../components/im-avatar.vue'
@@ -51,6 +58,16 @@ const props = defineProps<{
 
 const { conversations, loading, load, setConversationTop, setConversationSilent, removeConversation } = useImConversations()
 const refreshing = ref(false) // 下拉刷新状态
+const keyword = ref('') // 搜索关键词
+
+/** 按名称过滤会话 */
+const filteredConversations = computed(() => {
+  const kw = keyword.value.trim().toLowerCase()
+  if (!kw) {
+    return conversations.value
+  }
+  return conversations.value.filter(item => (item.name || '').toLowerCase().includes(kw))
+})
 
 /** 打开会话 */
 function openChat(item: ConversationDO) {

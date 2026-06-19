@@ -15,6 +15,14 @@
           <view class="flex-1 border-b border-b-[#f2f3f5] py-10rpx text-30rpx text-[#222]">新的朋友</view>
         </view>
 
+        <!-- 群聊入口（非搜索态） -->
+        <view v-if="!keyword" class="flex items-center gap-20rpx px-24rpx py-20rpx active:bg-[#f5f5f5]" @click="goGroupList">
+          <view class="h-84rpx w-84rpx flex items-center justify-center rounded-12rpx bg-[#07c160]">
+            <wd-icon name="user-group" size="44rpx" color="#fff" />
+          </view>
+          <view class="flex-1 border-b border-b-[#f2f3f5] py-10rpx text-30rpx text-[#222]">群聊</view>
+        </view>
+
         <!-- 分组好友列表 -->
         <template v-for="group in displayGroups" :key="group.letter || 'all'">
           <view v-if="group.letter" :id="`fl-${group.letter}`" class="bg-[#f7f8fa] px-24rpx py-8rpx text-24rpx text-[#999]">
@@ -24,10 +32,10 @@
             v-for="item in group.friends"
             :key="item.friendUserId"
             class="flex items-center gap-20rpx px-24rpx active:bg-[#f5f5f5]"
-            @click="openChat(item)"
+            @click="openProfile(item)"
           >
             <view class="py-16rpx">
-              <ImAvatar :src="item.avatar" :name="getFriendName(item)" size="84rpx" />
+              <ImAvatar :src="item.avatar" :name="getFriendName(item)" size="84rpx" :round="false" />
             </view>
             <view class="min-w-0 flex-1 border-b border-b-[#f2f3f5] py-16rpx">
               <view class="flex items-center gap-10rpx">
@@ -63,7 +71,6 @@
 import type { ImFriendRespVO } from '@/api/im/friend'
 import { computed, nextTick, ref, watch } from 'vue'
 import { getMyFriendList } from '@/api/im/friend'
-import { ImConversationType } from '@/utils/constants'
 import ImAvatar from '../../components/im-avatar.vue'
 
 const props = defineProps<{
@@ -140,10 +147,15 @@ function goRequests() {
   uni.navigateTo({ url: '/pages-im/home/request/index?tab=friend' })
 }
 
-/** 打开好友聊天 */
-function openChat(item: ImFriendRespVO) {
+/** 群聊列表 */
+function goGroupList() {
+  uni.navigateTo({ url: '/pages-im/home/group/list/index' })
+}
+
+/** 打开好友资料页 */
+function openProfile(item: ImFriendRespVO) {
   uni.navigateTo({
-    url: `/pages-im/home/chat/index?type=${ImConversationType.PRIVATE}&targetId=${item.friendUserId}&title=${encodeURIComponent(getFriendName(item))}`,
+    url: `/pages-im/home/friend/detail/index?friendUserId=${item.friendUserId}`,
   })
 }
 

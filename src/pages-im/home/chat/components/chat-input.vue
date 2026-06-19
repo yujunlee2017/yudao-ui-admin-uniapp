@@ -118,7 +118,11 @@ const fileSending = ref(false) // 文件发送中
 const videoSending = ref(false) // 视频发送中
 const voiceSending = ref(false) // 语音发送中
 const voiceRecording = ref(false) // 语音录制中
-const recorderManager = uni.getRecorderManager() // 录音管理器
+// 录音管理器（仅小程序 / App 支持；H5 不支持，降级为 null）
+let recorderManager: UniApp.RecorderManager | null = null
+// #ifndef H5
+recorderManager = uni.getRecorderManager()
+// #endif
 
 const isGroup = computed(() => props.conversationType === ImConversationType.GROUP) // 是否群聊
 
@@ -286,6 +290,10 @@ function handleVoiceRecord() {
   if (voiceSending.value) {
     return
   }
+  if (!recorderManager) {
+    toast.show('当前端暂不支持录音')
+    return
+  }
   if (voiceRecording.value) {
     recorderManager.stop()
     return
@@ -308,6 +316,9 @@ function getLocalImageInfo(src: string) {
 
 /** 录音监听 */
 onMounted(() => {
+  if (!recorderManager) {
+    return
+  }
   recorderManager.onStop(async (res) => {
     voiceRecording.value = false
     if (!res.tempFilePath) {
@@ -332,7 +343,7 @@ onMounted(() => {
 
 /** 卸载时停止录音 */
 onUnmounted(() => {
-  if (voiceRecording.value) {
+  if (recorderManager && voiceRecording.value) {
     recorderManager.stop()
   }
 })

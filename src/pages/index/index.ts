@@ -174,7 +174,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'imStatistics',
         name: '数据统计',
         icon: 'dashboard',
-        url: '/pages-im/manager/index/index',
+        url: '/pages-statistics/im/index',
         iconColor: '#722ed1',
       },
       {

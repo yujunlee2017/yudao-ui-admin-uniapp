@@ -13,11 +13,10 @@
       </template>
     </wd-navbar>
 
-    <!-- 内容区：三个视图常驻，按当前 tab 切换显示 -->
+    <!-- 内容区：消息 / 通讯录 两个视图常驻 -->
     <view class="min-h-0 flex-1">
       <ConversationView v-show="activeTab === 'message'" :active="activeTab === 'message'" />
-      <FriendView v-show="activeTab === 'friend'" :active="activeTab === 'friend'" />
-      <GroupView v-show="activeTab === 'group'" :active="activeTab === 'group'" />
+      <FriendView v-show="activeTab === 'contact'" :active="activeTab === 'contact'" />
     </view>
 
     <!-- 底部 tab 栏 -->
@@ -48,9 +47,8 @@ import { useImConversations } from '../composables/useImConversations'
 import { connectImWebSocket } from '../composables/useImWebSocket'
 import ConversationView from './components/conversation-view.vue'
 import FriendView from './components/friend-view.vue'
-import GroupView from './components/group-view.vue'
 
-type TabKey = 'message' | 'friend' | 'group'
+type TabKey = 'message' | 'contact'
 
 definePage({
   style: {
@@ -62,8 +60,7 @@ definePage({
 const activeColor = '#1677ff' // 选中色
 const tabs: { key: TabKey, title: string, icon: string }[] = [
   { key: 'message', title: '消息', icon: 'message' },
-  { key: 'friend', title: '好友', icon: 'user' },
-  { key: 'group', title: '群聊', icon: 'user-group' },
+  { key: 'contact', title: '通讯录', icon: 'user' },
 ] // 底部 tab 配置
 const activeTab = ref<TabKey>('message') // 当前 tab
 

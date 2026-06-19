@@ -1,99 +1,96 @@
 <template>
-  <view class="yd-page-container">
+  <view class="yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
-      title="群详情"
+      :title="`聊天信息(${members.length})`"
       left-arrow placeholder safe-area-inset-top fixed
       @click-left="handleBack"
     />
 
-    <!-- 群资料 -->
-    <view class="p-24rpx">
-      <view class="rounded-12rpx bg-white p-24rpx shadow-sm">
-        <view class="flex items-center gap-20rpx">
-          <ImAvatar :src="formData?.avatar" :name="formData?.name" :round="false" size="100rpx" />
-          <view class="min-w-0 flex-1">
-            <view class="truncate text-36rpx text-[#333] font-semibold">{{ formData?.name || '-' }}</view>
-            <view class="mt-8rpx text-24rpx text-[#999]">群号：{{ formData?.id }}</view>
+    <scroll-view class="min-h-0 flex-1 bg-[#ededed]" scroll-y>
+      <!-- 群成员九宫格 -->
+      <view class="bg-white px-24rpx pb-12rpx pt-24rpx">
+        <view class="grid grid-cols-5 gap-y-24rpx">
+          <view
+            v-for="item in displayMembers"
+            :key="item.userId"
+            class="flex flex-col items-center gap-8rpx"
+            @click="onMemberTap(item)"
+          >
+            <ImAvatar :src="item.avatar" :name="getMemberName(item)" :round="false" size="96rpx" />
+            <text class="w-96rpx truncate text-center text-22rpx text-[#666]">{{ getMemberName(item) }}</text>
           </view>
-          <wd-tag v-if="formData?.banned" type="danger" plain>已封禁</wd-tag>
-          <wd-tag v-else-if="formData?.mutedAll" type="warning" plain>全员禁言</wd-tag>
-        </view>
-        <view class="mt-24rpx rounded-8rpx bg-[#f7f8fa] p-20rpx text-26rpx text-[#666]">
-          {{ formData?.notice || '暂无群公告' }}
-        </view>
-        <view class="mt-24rpx grid grid-cols-2 gap-16rpx">
-          <wd-button type="primary" block @click="handleChat">发消息</wd-button>
-          <wd-button block variant="plain" @click="moreActionVisible = true">更多</wd-button>
-        </view>
-      </view>
-
-      <!-- 群设置 -->
-      <view class="mt-24rpx rounded-12rpx bg-white shadow-sm">
-        <wd-cell-group border>
-          <wd-cell title="群主编号" :value="formData?.ownerUserId" />
-          <wd-cell title="进群审批" :value="formData?.joinApproval ? '开启' : '关闭'" />
-          <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime)" />
-        </wd-cell-group>
-      </view>
-
-      <!-- 群成员 -->
-      <view class="mt-24rpx rounded-12rpx bg-white shadow-sm">
-        <view class="flex items-center justify-between px-24rpx py-20rpx">
-          <text class="text-30rpx text-[#333] font-semibold">群成员</text>
-          <view class="flex items-center gap-16rpx">
-            <text class="text-24rpx text-[#999]">{{ members.length }} 人</text>
-            <wd-button
-              v-if="canManageGroup"
-              size="small"
-              type="primary"
-              variant="plain"
-              @click="inviteVisible = true"
-            >
-              邀请
-            </wd-button>
+          <!-- 邀请成员 -->
+          <view class="flex flex-col items-center gap-8rpx" @click="inviteVisible = true">
+            <view class="h-96rpx w-96rpx flex items-center justify-center rounded-12rpx border border-[#ddd] border-dashed">
+              <wd-icon name="plus" size="48rpx" color="#bbb" />
+            </view>
           </view>
         </view>
         <view
-          v-for="item in members"
-          :key="item.userId"
-          class="flex items-center gap-20rpx border-t border-t-[#f2f3f5] px-24rpx py-20rpx"
+          v-if="members.length > MEMBER_LIMIT"
+          class="mt-16rpx py-8rpx text-center text-26rpx text-[#999]"
+          @click="showAllMembers = !showAllMembers"
         >
-          <ImAvatar :src="item.avatar" :name="getMemberName(item)" />
-          <view class="min-w-0 flex-1">
-            <view class="truncate text-30rpx text-[#333] font-medium">{{ getMemberName(item) }}</view>
-            <view class="mt-4rpx flex items-center gap-8rpx text-24rpx text-[#999]">
-              <dict-tag :type="DICT_TYPE.IM_GROUP_MEMBER_ROLE" :value="item.role" />
-              <text v-if="item.muteEndTime">禁言至 {{ formatDateTime(item.muteEndTime) }}</text>
-            </view>
-          </view>
-          <wd-button
-            v-if="canManageMember(item)"
-            size="small"
-            variant="plain"
-            @click="handleMemberMore(item)"
-          >
-            管理
-          </wd-button>
+          {{ showAllMembers ? '收起' : `查看全部 ${members.length} 名成员` }}
+          <wd-icon :name="showAllMembers ? 'arrow-up' : 'arrow-down'" size="24rpx" />
         </view>
-        <wd-empty v-if="!loading && members.length === 0" icon="content" tip="暂无成员" />
       </view>
-    </view>
 
-    <!-- 更多操作菜单 -->
-    <wd-action-sheet v-model="moreActionVisible" :actions="moreActions" @select="handleMoreAction" />
+      <!-- 群信息 -->
+      <view class="mt-20rpx">
+        <wd-cell-group border>
+          <wd-cell title="群聊名称" :value="formData?.name || '-'" :is-link="canManageGroup" center @click="editGroupInfo" />
+          <wd-cell title="群公告" :value="formData?.notice || '未设置'" :is-link="canManageGroup" center @click="editGroupInfo" />
+          <wd-cell title="我在本群的昵称" :value="myGroupNick || '未设置'" is-link center @click="editMyNick" />
+        </wd-cell-group>
+      </view>
+
+      <!-- 群管理（群主 / 管理员） -->
+      <view v-if="canManageGroup" class="mt-20rpx">
+        <wd-cell-group border>
+          <wd-cell title="全员禁言" center>
+            <wd-switch v-model="mutedAll" size="40rpx" @change="onMuteAllChange" />
+          </wd-cell>
+          <wd-cell v-if="isOwner" title="进群需审批" center>
+            <wd-switch v-model="joinApproval" size="40rpx" @change="onJoinApprovalChange" />
+          </wd-cell>
+          <wd-cell v-if="joinApproval" title="进群申请" is-link center @click="goGroupRequests" />
+        </wd-cell-group>
+      </view>
+
+      <!-- 群主操作 -->
+      <view v-if="isOwner" class="mt-20rpx">
+        <wd-cell-group border>
+          <wd-cell title="群管理员设置" is-link center @click="openAdminTip" />
+          <wd-cell title="转让群主" is-link center @click="openTransferTip" />
+        </wd-cell-group>
+      </view>
+
+      <!-- 个人设置 -->
+      <view class="mt-20rpx">
+        <wd-cell-group border>
+          <wd-cell title="消息免打扰" center>
+            <wd-switch v-model="mySilent" size="40rpx" @change="onSilentChange" />
+          </wd-cell>
+        </wd-cell-group>
+      </view>
+
+      <!-- 退出 / 解散 -->
+      <view class="mt-20rpx bg-white">
+        <view class="py-30rpx text-center text-32rpx text-[#fa5151]" @click="isOwner ? handleDissolve() : handleQuit()">
+          {{ isOwner ? '解散群聊' : '退出群聊' }}
+        </view>
+      </view>
+      <view class="h-40rpx" />
+    </scroll-view>
 
     <!-- 邀请成员 -->
     <wd-popup v-model="inviteVisible" position="bottom" custom-style="border-radius: 24rpx 24rpx 0 0;">
       <view class="p-24rpx pb-[calc(24rpx+env(safe-area-inset-bottom))]">
         <view class="mb-24rpx text-32rpx text-[#333] font-semibold">邀请成员</view>
         <wd-cell-group border>
-          <UserPicker
-            v-model="inviteUserIds"
-            label="成员"
-            type="checkbox"
-            placeholder="请选择用户"
-          />
+          <UserPicker v-model="inviteUserIds" label="成员" type="checkbox" placeholder="请选择用户" />
         </wd-cell-group>
         <view class="mt-24rpx grid grid-cols-2 gap-16rpx">
           <wd-button block variant="plain" @click="inviteVisible = false">取消</wd-button>
@@ -109,7 +106,8 @@ import type { ImGroupRespVO } from '@/api/im/group'
 import type { ImGroupMemberRespVO } from '@/api/im/group/member'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { computed, ref } from 'vue'
 import {
   addGroupAdmin,
   cancelMuteMember,
@@ -119,19 +117,22 @@ import {
   muteMember,
   removeGroupAdmin,
   transferGroupOwner,
+  updateGroup,
 } from '@/api/im/group'
 import {
   getGroupMemberList,
   inviteGroupMember,
   quitGroup,
   removeGroupMember,
+  updateGroupMember,
 } from '@/api/im/group/member'
 import { UserPicker } from '@/components/system-select'
 import { useUserStore } from '@/store/user'
 import { navigateBackPlus } from '@/utils'
-import { DICT_TYPE, ImConversationType, ImGroupMemberRole } from '@/utils/constants'
-import { formatDateTime } from '@/utils/date'
+import { ImGroupMemberRole } from '@/utils/constants'
 import ImAvatar from '../../components/im-avatar.vue'
+
+const MEMBER_LIMIT = 10 // 折叠时展示的成员数
 
 const props = defineProps<{
   id?: number | string
@@ -150,44 +151,34 @@ const toast = useToast()
 const loading = ref(false) // 详情加载状态
 const formData = ref<ImGroupRespVO>() // 群详情
 const members = ref<ImGroupMemberRespVO[]>([]) // 群成员
-const moreActionVisible = ref(false) // 更多操作菜单
 const inviteVisible = ref(false) // 邀请成员弹窗
 const inviting = ref(false) // 邀请提交状态
 const inviteUserIds = ref<number[]>([]) // 邀请用户编号
+const showAllMembers = ref(false) // 是否展开全部成员
+const mutedAll = ref(false) // 全员禁言
+const joinApproval = ref(false) // 进群审批
+const mySilent = ref(false) // 我的群免打扰
 
 /** 当前用户群成员 */
-const currentMember = computed(() => {
-  const currentUserId = userStore.userInfo.userId
-  return members.value.find(item => item.userId === currentUserId)
-})
+const currentMember = computed(() => members.value.find(item => item.userId === userStore.userInfo.userId))
 
-/** 是否可管理群 */
-const canManageGroup = computed(() => {
-  return currentMember.value?.role === ImGroupMemberRole.OWNER || currentMember.value?.role === ImGroupMemberRole.ADMIN
-})
+/** 是否可管理群（群主 / 管理员） */
+const canManageGroup = computed(() =>
+  currentMember.value?.role === ImGroupMemberRole.OWNER || currentMember.value?.role === ImGroupMemberRole.ADMIN,
+)
 
 /** 是否群主 */
 const isOwner = computed(() => currentMember.value?.role === ImGroupMemberRole.OWNER)
 
-/** 更多操作 */
-const moreActions = computed(() => {
-  const actions: Array<{ name: string, value: string }> = [
-    { name: '复制群号', value: 'copy' },
-    { name: '退出群聊', value: 'quit' },
-  ]
-  if (canManageGroup.value) {
-    actions.unshift({ name: '编辑群资料', value: 'edit' })
-    actions.unshift({ name: formData.value?.mutedAll ? '取消全员禁言' : '全员禁言', value: 'muteAll' })
-  }
-  if (currentMember.value?.role === ImGroupMemberRole.OWNER) {
-    actions.push({ name: '解散群聊', value: 'dissolve' })
-  }
-  return actions
-})
+/** 我在本群的昵称 */
+const myGroupNick = computed(() => currentMember.value?.displayUserName || '')
+
+/** 折叠展示的成员 */
+const displayMembers = computed(() => (showAllMembers.value ? members.value : members.value.slice(0, MEMBER_LIMIT)))
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-im/home/friend/index?tab=group')
+  navigateBackPlus('/pages-im/home/index/index')
 }
 
 /** 获取成员显示名 */
@@ -197,38 +188,61 @@ function getMemberName(item: ImGroupMemberRespVO) {
 
 /** 是否可管理成员 */
 function canManageMember(item: ImGroupMemberRespVO) {
-  const currentUserId = userStore.userInfo.userId
-  if (!canManageGroup.value || item.userId === currentUserId || item.role === ImGroupMemberRole.OWNER) {
+  if (!canManageGroup.value || item.userId === userStore.userInfo.userId || item.role === ImGroupMemberRole.OWNER) {
     return false
   }
   return isOwner.value || item.role === ImGroupMemberRole.NORMAL
 }
 
-/** 发消息 */
-function handleChat() {
+/** 点击成员：可管理则弹管理菜单 */
+function onMemberTap(item: ImGroupMemberRespVO) {
+  if (canManageMember(item)) {
+    handleMemberMore(item)
+  }
+}
+
+/** 编辑群资料（群名 / 公告，跳编辑页） */
+function editGroupInfo() {
+  if (!canManageGroup.value || !formData.value?.id) {
+    return
+  }
+  uni.navigateTo({ url: `/pages-im/home/group/form/index?id=${formData.value.id}` })
+}
+
+/** 编辑我在本群的昵称 */
+function editMyNick() {
   if (!formData.value?.id) {
     return
   }
-  uni.navigateTo({
-    url: `/pages-im/home/chat/index?type=${ImConversationType.GROUP}&targetId=${formData.value.id}&title=${encodeURIComponent(formData.value.name)}`,
+  uni.showModal({
+    title: '我在本群的昵称',
+    editable: true,
+    content: myGroupNick.value,
+    placeholderText: '请输入昵称',
+    success: async ({ confirm, content }) => {
+      if (!confirm) {
+        return
+      }
+      await updateGroupMember({ groupId: formData.value!.id, displayUserName: content || '' })
+      await getDetail()
+      toast.success('已保存')
+    },
   })
 }
 
-/** 更多操作 */
-async function handleMoreAction({ item }: { item: { value: string } }) {
-  if (item.value === 'copy') {
-    uni.setClipboardData({ data: String(formData.value?.id || '') })
-  } else if (item.value === 'edit') {
-    if (formData.value?.id) {
-      uni.navigateTo({ url: `/pages-im/home/group/form/index?id=${formData.value.id}` })
-    }
-  } else if (item.value === 'muteAll') {
-    await handleMuteAll()
-  } else if (item.value === 'quit') {
-    await handleQuit()
-  } else if (item.value === 'dissolve') {
-    await handleDissolve()
-  }
+/** 进群申请 */
+function goGroupRequests() {
+  uni.navigateTo({ url: '/pages-im/home/request/index?tab=group' })
+}
+
+/** 群管理员设置提示（点成员管理设置） */
+function openAdminTip() {
+  toast.show('点击下方成员头像可设/撤管理员')
+}
+
+/** 转让群主提示 */
+function openTransferTip() {
+  toast.show('点击下方成员头像可转让群主')
 }
 
 /** 邀请成员 */
@@ -239,10 +253,7 @@ async function handleInviteMembers() {
   }
   inviting.value = true
   try {
-    await inviteGroupMember({
-      groupId: formData.value.id,
-      memberUserIds: inviteUserIds.value,
-    })
+    await inviteGroupMember({ groupId: formData.value.id, memberUserIds: inviteUserIds.value })
     toast.success('邀请成功')
     inviteUserIds.value = []
     inviteVisible.value = false
@@ -252,18 +263,16 @@ async function handleInviteMembers() {
   }
 }
 
-/** 成员管理操作 */
+/** 成员管理操作菜单 */
 function handleMemberMore(item: ImGroupMemberRespVO) {
   if (!formData.value?.id) {
     return
   }
   const actions: Array<{ name: string, value: string, mutedSeconds?: number }> = []
   if (isOwner.value) {
-    if (item.role === ImGroupMemberRole.ADMIN) {
-      actions.push({ name: '撤销管理员', value: 'removeAdmin' })
-    } else {
-      actions.push({ name: '设为管理员', value: 'addAdmin' })
-    }
+    actions.push(item.role === ImGroupMemberRole.ADMIN
+      ? { name: '撤销管理员', value: 'removeAdmin' }
+      : { name: '设为管理员', value: 'addAdmin' })
     actions.push({ name: '转让群主', value: 'transferOwner' })
   }
   if (item.muteEndTime) {
@@ -275,18 +284,12 @@ function handleMemberMore(item: ImGroupMemberRespVO) {
   actions.push({ name: '移出群聊', value: 'remove' })
   uni.showActionSheet({
     itemList: actions.map(action => action.name),
-    success: ({ tapIndex }) => {
-      const action = actions[tapIndex]
-      handleMemberAction(item, action)
-    },
+    success: ({ tapIndex }) => handleMemberAction(item, actions[tapIndex]),
   })
 }
 
 /** 执行成员管理 */
-async function handleMemberAction(
-  member: ImGroupMemberRespVO,
-  action: { value: string, mutedSeconds?: number },
-) {
+async function handleMemberAction(member: ImGroupMemberRespVO, action: { value: string, mutedSeconds?: number }) {
   if (!formData.value?.id) {
     return
   }
@@ -299,7 +302,7 @@ async function handleMemberAction(
     toast.success('已撤销管理员')
   } else if (action.value === 'transferOwner') {
     try {
-      await dialog.confirm({ title: '提示', msg: `确定将群主转让给“${getMemberName(member)}”吗？` })
+      await dialog.confirm({ title: '提示', msg: `确定将群主转让给"${getMemberName(member)}"吗？` })
     } catch {
       return
     }
@@ -313,7 +316,7 @@ async function handleMemberAction(
     toast.success('已取消禁言')
   } else if (action.value === 'remove') {
     try {
-      await dialog.confirm({ title: '提示', msg: `确定将“${getMemberName(member)}”移出群聊吗？` })
+      await dialog.confirm({ title: '提示', msg: `确定将"${getMemberName(member)}"移出群聊吗？` })
     } catch {
       return
     }
@@ -324,13 +327,30 @@ async function handleMemberAction(
 }
 
 /** 全员禁言切换 */
-async function handleMuteAll() {
-  if (!formData.value?.id) {
-    return
+async function onMuteAllChange() {
+  try {
+    await muteAll({ id: formData.value!.id, mutedAll: mutedAll.value })
+  } catch {
+    mutedAll.value = !mutedAll.value
   }
-  await muteAll({ id: formData.value.id, mutedAll: !formData.value.mutedAll })
-  toast.success('更新成功')
-  await getDetail()
+}
+
+/** 进群审批切换 */
+async function onJoinApprovalChange() {
+  try {
+    await updateGroup({ id: formData.value!.id, joinApproval: joinApproval.value })
+  } catch {
+    joinApproval.value = !joinApproval.value
+  }
+}
+
+/** 群免打扰切换 */
+async function onSilentChange() {
+  try {
+    await updateGroupMember({ groupId: formData.value!.id, silent: mySilent.value })
+  } catch {
+    mySilent.value = !mySilent.value
+  }
 }
 
 /** 退出群聊 */
@@ -339,7 +359,7 @@ async function handleQuit() {
     return
   }
   try {
-    await dialog.confirm({ title: '提示', msg: `确定退出“${formData.value.name}”吗？` })
+    await dialog.confirm({ title: '提示', msg: `确定退出"${formData.value.name}"吗？` })
   } catch {
     return
   }
@@ -354,7 +374,7 @@ async function handleDissolve() {
     return
   }
   try {
-    await dialog.confirm({ title: '提示', msg: `确定解散“${formData.value.name}”吗？` })
+    await dialog.confirm({ title: '提示', msg: `确定解散"${formData.value.name}"吗？` })
   } catch {
     return
   }
@@ -370,19 +390,18 @@ async function getDetail() {
   }
   loading.value = true
   try {
-    const [group, memberList] = await Promise.all([
-      getGroup(props.id),
-      getGroupMemberList(props.id),
-    ])
+    const [group, memberList] = await Promise.all([getGroup(props.id), getGroupMemberList(props.id)])
     formData.value = group
     members.value = memberList
+    mutedAll.value = !!group.mutedAll
+    joinApproval.value = !!group.joinApproval
+    mySilent.value = !!currentMember.value?.silent
   } finally {
     loading.value = false
   }
 }
 
-/** 初始化 */
-onMounted(() => {
+onShow(() => {
   getDetail()
 })
 </script>

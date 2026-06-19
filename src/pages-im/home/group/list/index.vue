@@ -1,19 +1,14 @@
 <template>
-  <view class="h-full flex flex-col bg-white">
+  <view class="yd-page-container-paging">
+    <!-- 顶部导航栏 -->
+    <wd-navbar title="群聊" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
+
     <!-- 搜索 -->
-    <view class="px-24rpx pb-8rpx pt-12rpx">
+    <view class="bg-white px-24rpx pb-8rpx pt-12rpx">
       <wd-search v-model="keyword" placeholder="搜索群聊" hide-cancel />
     </view>
 
-    <scroll-view class="min-h-0 flex-1" scroll-y>
-      <!-- 加群申请入口 -->
-      <view class="flex items-center gap-20rpx px-24rpx py-20rpx active:bg-[#f5f5f5]" @click="goRequests">
-        <view class="h-84rpx w-84rpx flex items-center justify-center rounded-12rpx bg-[#13c2c2]">
-          <wd-icon name="notification" size="44rpx" color="#fff" />
-        </view>
-        <view class="flex-1 border-b border-b-[#f2f3f5] py-10rpx text-30rpx text-[#222]">加群申请</view>
-      </view>
-
+    <scroll-view class="min-h-0 flex-1 bg-white" scroll-y>
       <!-- 群聊列表 -->
       <view
         v-for="item in filteredGroups"
@@ -41,20 +36,25 @@
 
 <script lang="ts" setup>
 import type { ImGroupRespVO } from '@/api/im/group'
-import { computed, ref, watch } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { computed, ref } from 'vue'
 import { getMyGroupList } from '@/api/im/group'
+import { navigateBackPlus } from '@/utils'
 import { ImConversationType } from '@/utils/constants'
 import ImAvatar from '../../components/im-avatar.vue'
 
-const props = defineProps<{
-  active?: boolean
-}>()
+definePage({
+  style: {
+    navigationBarTitleText: '',
+    navigationStyle: 'custom',
+  },
+})
 
 const keyword = ref('') // 搜索关键词
 const loading = ref(false) // 加载状态
 const groupList = ref<ImGroupRespVO[]>([]) // 群聊列表
 
-/** 群聊过滤列表 */
+/** 群聊过滤列表（排除已退群） */
 const filteredGroups = computed(() => {
   const word = keyword.value.trim().toLowerCase()
   return groupList.value
@@ -67,9 +67,9 @@ const filteredGroups = computed(() => {
     })
 })
 
-/** 加群申请 */
-function goRequests() {
-  uni.navigateTo({ url: '/pages-im/home/request/index?tab=group' })
+/** 返回 */
+function handleBack() {
+  navigateBackPlus('/pages-im/home/index/index')
 }
 
 /** 打开群聊 */
@@ -89,10 +89,7 @@ async function load() {
   }
 }
 
-/** 激活时加载 */
-watch(() => props.active, (val) => {
-  if (val) {
-    load()
-  }
-}, { immediate: true })
+onShow(() => {
+  load()
+})
 </script>
