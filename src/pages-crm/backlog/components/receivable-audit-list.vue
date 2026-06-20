@@ -49,7 +49,7 @@ import { AUDIT_STATUS, buildDefaultFilters } from './common'
 
 const filters = [
   { prop: 'auditStatus', label: '回款状态', options: AUDIT_STATUS },
-]
+] // TODO @AI；要不要 inline 到 filterValues 里？
 const list = ref<Record<string, any>[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const filterValues = ref<Record<string, any>>(buildDefaultFilters(filters)) // 筛选值

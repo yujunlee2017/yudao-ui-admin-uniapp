@@ -118,6 +118,7 @@ const formSchema = createFormSchema({
   customerId: [{ required: true, message: '客户名称不能为空' }],
   ownerUserId: [{ required: true, message: '负责人不能为空' }],
   statusTypeId: [{ required: true, message: '商机状态组不能为空' }],
+  // TODO @AI：全局有效的数字范围校验规则？简化这个逻辑；
   discountPercent: [{ validator: value => value == null || value === '' || (Number(value) >= 0 && Number(value) <= 100) || '整单折扣需在 0-100 之间' }],
 })
 

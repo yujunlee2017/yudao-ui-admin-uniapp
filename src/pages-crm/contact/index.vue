@@ -76,6 +76,7 @@ definePage({
   },
 })
 
+// TODO @AI：感觉是比较公用的。有可能复用 common.ts 那么。
 const sceneTabs = [
   { label: '我负责的', value: 1 },
   { label: '我参与的', value: 2 },

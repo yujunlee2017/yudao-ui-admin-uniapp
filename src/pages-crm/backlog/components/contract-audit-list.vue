@@ -43,11 +43,11 @@ import { DICT_TYPE } from '@/utils/constants'
 import BacklogFilter from './backlog-filter.vue'
 import { AUDIT_STATUS, buildDefaultFilters } from './common'
 
-const filters = [
-  { prop: 'auditStatus', label: '合同状态', options: AUDIT_STATUS },
-]
 const list = ref<Record<string, any>[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
+const filters = [
+  { prop: 'auditStatus', label: '合同状态', options: AUDIT_STATUS },
+] // TODO @AI；要不要 inline 到 filterValues 里？
 const filterValues = ref<Record<string, any>>(buildDefaultFilters(filters)) // 筛选值
 
 /** 查询列表 */

@@ -11,6 +11,7 @@ export interface BacklogFilter {
 }
 
 /** 归属范围 */
+// TODO @AI：1、2、3，有没全局的 sceneenum 字段？
 export const SCENE_TYPES: BacklogFilterOption[] = [
   { label: '我负责的', value: 1 },
   { label: '我参与的', value: 2 },
@@ -30,6 +31,7 @@ export const FOLLOWUP_STATUS: BacklogFilterOption[] = [
   { label: '已跟进', value: true },
 ]
 
+// TODO @AI：有没全局的 enum 可以复用。
 /** 审批状态 */
 export const AUDIT_STATUS: BacklogFilterOption[] = [
   { label: '待审批', value: 10 },

@@ -75,6 +75,7 @@ definePage({
   },
 })
 
+// TODO @AI：这里有 linter 报错；Missing await for an async function call
 const sceneTabs = [
   { label: '我负责的', value: 1 },
   { label: '我参与的', value: 2 },

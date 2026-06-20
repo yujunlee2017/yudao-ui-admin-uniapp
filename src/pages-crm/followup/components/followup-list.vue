@@ -99,6 +99,7 @@ const loading = ref(false) // 列表加载状态
 const list = ref<FollowUpRecord[]>([]) // 跟进记录
 const deletingId = ref<number>() // 删除状态
 
+// TODO @AI：是不是需要 z-page 下？不然跟进记录，没有翻页呀；
 /** 加载跟进记录 */
 async function getList() {
   if (!props.bizId || !props.bizType) {

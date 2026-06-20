@@ -50,7 +50,7 @@ import { buildDefaultFilters, CONTACT_STATUS, SCENE_TYPES } from './common'
 const filters = [
   { prop: 'contactStatus', label: '状态', options: CONTACT_STATUS },
   { prop: 'sceneType', label: '归属', options: SCENE_TYPES },
-]
+] // TODO @AI；要不要 inline 到 filterValues 里？
 const list = ref<Record<string, any>[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const filterValues = ref<Record<string, any>>(buildDefaultFilters(filters)) // 筛选值

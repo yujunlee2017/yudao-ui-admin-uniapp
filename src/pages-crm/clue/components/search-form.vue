@@ -82,6 +82,7 @@ import { getWotPickerDisplay } from '@/utils/wot'
 
 const emit = defineEmits<{ search: [data: Record<string, any>], reset: [] }>()
 
+// TODO @AI：类似这种，是不是可以封装一个组件？需要讨论下；貌似全局有很多类似 wd-picker + 展示的场景？另外，form 里面是不是也有 select 需要做封装？两者可以统一么？？？
 const dictFilters = [
   { prop: 'source', label: '客户来源', dictType: DICT_TYPE.CRM_CUSTOMER_SOURCE },
   { prop: 'industryId', label: '客户行业', dictType: DICT_TYPE.CRM_CUSTOMER_INDUSTRY },

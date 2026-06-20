@@ -41,6 +41,7 @@ const loading = ref(false) // 日志加载状态
 const list = ref<OperateLog[]>([]) // 操作日志
 
 /** 加载操作日志 */
+// TODO @AI：要不要分页？目前只加载前 20 条，后续如果有需求再加分页吧
 async function getList() {
   if (!props.bizId || !props.bizType) {
     return

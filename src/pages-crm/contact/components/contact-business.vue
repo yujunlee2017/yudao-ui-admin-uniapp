@@ -100,6 +100,7 @@ async function handleAdd(option?: PickerOption) {
   }
   await createContactBusinessList({ contactId: props.contactId, businessIds: [businessId] })
   toast.success('关联成功')
+  // TODO @AI：这里有 linter 报错；Missing await for an async function call
   loadList()
 }
 
@@ -115,6 +116,7 @@ async function handleRemove(business: Record<string, any>) {
   }
   await deleteContactBusinessList({ contactId: props.contactId, businessIds: [Number(business.id)] })
   toast.success('解除成功')
+  // TODO @AI：这里有 linter 报错；Missing await for an async function call
   loadList()
 }
 
