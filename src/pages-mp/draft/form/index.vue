@@ -53,8 +53,9 @@
           <wd-form-item title="作者" title-width="220rpx" prop="author">
             <wd-input v-model="formData.author" clearable placeholder="请输入作者" />
           </wd-form-item>
+          <wd-cell title="封面图片" is-link value="选择封面" @click="materialPickerVisible = true" />
           <wd-form-item title="封面 MediaID" title-width="220rpx" prop="thumbMediaId">
-            <wd-input v-model="formData.thumbMediaId" clearable placeholder="请输入封面 MediaID" />
+            <wd-input v-model="formData.thumbMediaId" clearable placeholder="请选择图片素材或输入封面 MediaID" />
           </wd-form-item>
           <wd-form-item title="封面 URL" title-width="220rpx" prop="thumbUrl">
             <wd-input v-model="formData.thumbUrl" clearable placeholder="请输入封面 URL" />
@@ -66,11 +67,19 @@
             <wd-input v-model="formData.contentSourceUrl" clearable placeholder="请输入原文地址" />
           </wd-form-item>
           <wd-form-item title="正文" title-width="220rpx" prop="content">
-            <wd-textarea v-model="formData.content" clearable placeholder="请输入正文 HTML 或文本" :maxlength="10000" />
+            <wd-textarea v-model="formData.content" clearable placeholder="请输入正文 HTML 或文本（正文配图请在 PC 端插入）" :maxlength="20000" />
           </wd-form-item>
         </wd-cell-group>
       </wd-form>
     </view>
+
+    <!-- 封面素材选择 -->
+    <MaterialPicker
+      v-model:visible="materialPickerVisible"
+      :account-id="accountId"
+      type="image"
+      @select="handleCoverSelect"
+    />
 
     <!-- 底部保存按钮 -->
     <view class="yd-detail-footer">
@@ -90,6 +99,7 @@ import { computed, ref } from 'vue'
 import { createDraft, createEmptyNewsItem, updateDraft } from '@/api/mp/draft'
 import { navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
+import MaterialPicker from '../../components/material-picker.vue'
 import { getMpRouteNumber, getMpRouteString, useMpRouteParams } from '../../utils/route'
 
 const props = defineProps<{
@@ -119,10 +129,17 @@ const formSchema = createFormSchema({
   content: [{ required: true, message: '正文不能为空' }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用
+const materialPickerVisible = ref(false) // 封面素材选择弹窗
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mp/draft/index')
+}
+
+/** 选择封面图片 */
+function handleCoverSelect(item: any) {
+  formData.value.thumbMediaId = item.mediaId || ''
+  formData.value.thumbUrl = item.url || ''
 }
 
 /** 加载编辑数据 */
@@ -131,8 +148,13 @@ function getDetail() {
     return
   }
   const draft = uni.getStorageSync('mp:draft:edit')
+  // 校验缓存与当前 mediaId 一致，避免编辑到上一条残留草稿
+  if (!draft || draft.mediaId !== mediaId.value) {
+    return
+  }
   const articles = draft?.content?.newsItem || []
   setArticles(articles.length > 0 ? articles : [createEmptyNewsItem()])
+  uni.removeStorageSync('mp:draft:edit')
 }
 
 /** 设置图文列表 */

@@ -85,6 +85,7 @@
 <script lang="ts" setup>
 import type { MpUser } from '@/api/mp/user'
 import type { Tag } from '@/api/mp/tag'
+import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
@@ -120,7 +121,7 @@ function handleBack() {
 
 /** 获取标签名称 */
 function getTagName(tagId: number) {
-  const tag = tagList.value.find(item => item.tagId === tagId || item.id === tagId)
+  const tag = tagList.value.find(item => item.tagId === tagId)
   return tag?.name || tagId
 }
 
@@ -207,6 +208,11 @@ async function handleSync() {
 /** 初始化 */
 onMounted(() => {
   loadTagList()
+  uni.$on('mp:user:reload', reload)
+})
+
+onUnload(() => {
+  uni.$off('mp:user:reload', reload)
 })
 </script>
 

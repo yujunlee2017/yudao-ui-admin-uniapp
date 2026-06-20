@@ -5,6 +5,7 @@ export interface ProductCategory {
   id?: number
   name: string
   parentId?: number
+  createTime?: Date | string
   children?: ProductCategory[]
 }
 

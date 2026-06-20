@@ -36,6 +36,43 @@
         </view>
         <wd-input v-model="formData.openid" placeholder="请输入用户标识" clearable />
       </view>
+      <!-- 创建时间 -->
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
+          创建时间
+        </view>
+        <view class="yd-search-form-date-range-container">
+          <view class="flex-1" @click="visibleCreateTime[0] = true">
+            <view class="yd-search-form-date-range-picker">
+              {{ formatDate(formData.createTime?.[0]) || '开始日期' }}
+            </view>
+          </view>
+          -
+          <view class="flex-1" @click="visibleCreateTime[1] = true">
+            <view class="yd-search-form-date-range-picker">
+              {{ formatDate(formData.createTime?.[1]) || '结束日期' }}
+            </view>
+          </view>
+        </view>
+        <wd-datetime-picker-view v-if="visibleCreateTime[0]" v-model="tempCreateTime[0]" type="date" />
+        <view v-if="visibleCreateTime[0]" class="yd-search-form-date-range-actions">
+          <wd-button size="small" variant="plain" @click="visibleCreateTime[0] = false">
+            取消
+          </wd-button>
+          <wd-button size="small" type="primary" @click="handleCreateTime0Confirm">
+            确定
+          </wd-button>
+        </view>
+        <wd-datetime-picker-view v-if="visibleCreateTime[1]" v-model="tempCreateTime[1]" type="date" />
+        <view v-if="visibleCreateTime[1]" class="yd-search-form-date-range-actions">
+          <wd-button size="small" variant="plain" @click="visibleCreateTime[1] = false">
+            取消
+          </wd-button>
+          <wd-button size="small" type="primary" @click="handleCreateTime1Confirm">
+            确定
+          </wd-button>
+        </view>
+      </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -53,6 +90,7 @@ import { computed, reactive, ref } from 'vue'
 import { getDictLabel, getStrDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
+import { formatDate, formatDateRange } from '@/utils/date'
 
 const emit = defineEmits<{
   search: [data: Record<string, any>]
@@ -63,6 +101,7 @@ const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
   type: '',
   openid: undefined as string | undefined,
+  createTime: [undefined, undefined] as [number | undefined, number | undefined],
 }) // 搜索表单数据
 
 const placeholder = computed(() => {
@@ -73,8 +112,26 @@ const placeholder = computed(() => {
   if (formData.openid) {
     conditions.push(`标识:${formData.openid}`)
   }
+  if (formData.createTime?.[0] && formData.createTime?.[1]) {
+    conditions.push(`时间:${formatDate(formData.createTime[0])}~${formatDate(formData.createTime[1])}`)
+  }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索消息'
 })
+
+const visibleCreateTime = ref<[boolean, boolean]>([false, false]) // 创建时间选择器状态
+const tempCreateTime = ref<[number, number]>([Date.now(), Date.now()]) // 创建时间临时值
+
+/** 确认创建时间开始日期 */
+function handleCreateTime0Confirm() {
+  formData.createTime = [tempCreateTime.value[0], formData.createTime?.[1]]
+  visibleCreateTime.value[0] = false
+}
+
+/** 确认创建时间结束日期 */
+function handleCreateTime1Confirm() {
+  formData.createTime = [formData.createTime?.[0], tempCreateTime.value[1]]
+  visibleCreateTime.value[1] = false
+}
 
 /** 搜索按钮操作 */
 function handleSearch() {
@@ -82,6 +139,7 @@ function handleSearch() {
   emit('search', {
     type: formData.type || undefined,
     openid: formData.openid || undefined,
+    createTime: formatDateRange(formData.createTime),
   })
 }
 
@@ -89,6 +147,7 @@ function handleSearch() {
 function handleReset() {
   formData.type = ''
   formData.openid = undefined
+  formData.createTime = [undefined, undefined]
   visible.value = false
   emit('reset')
 }

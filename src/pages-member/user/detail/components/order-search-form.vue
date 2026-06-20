@@ -35,6 +35,34 @@
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
+          支付方式
+        </view>
+        <view class="yd-search-form-date-range-picker" @click="pickerVisible.payChannelCode = true">
+          {{ getWotPickerDisplay(payChannelCodeOptions, formData.payChannelCode, { placeholder: '请选择支付方式' }) }}
+        </view>
+        <wd-picker
+          v-model:visible="pickerVisible.payChannelCode"
+          :model-value="[formData.payChannelCode]"
+          :columns="payChannelCodeOptions"
+          @confirm="({ value }) => formData.payChannelCode = value[0]"
+        />
+      </view>
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
+          订单来源
+        </view>
+        <view class="yd-search-form-date-range-picker" @click="pickerVisible.terminal = true">
+          {{ getWotPickerDisplay(terminalOptions, formData.terminal, { placeholder: '请选择订单来源' }) }}
+        </view>
+        <wd-picker
+          v-model:visible="pickerVisible.terminal"
+          :model-value="[formData.terminal]"
+          :columns="terminalOptions"
+          @confirm="({ value }) => formData.terminal = value[0]"
+        />
+      </view>
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
           订单类型
         </view>
         <view class="yd-search-form-date-range-picker" @click="pickerVisible.type = true">
@@ -76,7 +104,7 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
-import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
+import { getDictLabel, getIntDictOptions, getStrDictOptions } from '@/hooks/useDict'
 import DateRangeField from '@/pages-member/components/date-range-field.vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -102,11 +130,21 @@ const deliveryTypeOptions = computed(() => [
   { label: '全部', value: -1 },
   ...getIntDictOptions(DICT_TYPE.TRADE_DELIVERY_TYPE),
 ])
+const payChannelCodeOptions = computed(() => [
+  { label: '全部', value: '' },
+  ...getStrDictOptions(DICT_TYPE.PAY_CHANNEL_CODE),
+])
+const terminalOptions = computed(() => [
+  { label: '全部', value: -1 },
+  ...getIntDictOptions(DICT_TYPE.TERMINAL),
+])
 const formData = reactive({
   no: undefined as string | undefined,
   status: -1,
   type: -1,
   deliveryType: -1,
+  payChannelCode: '' as string,
+  terminal: -1,
   createTime: [undefined, undefined] as [number | undefined, number | undefined],
 }) // 搜索表单数据
 
@@ -125,6 +163,12 @@ const placeholder = computed(() => {
   if (formData.deliveryType !== -1) {
     conditions.push(`配送:${getDictLabel(DICT_TYPE.TRADE_DELIVERY_TYPE, formData.deliveryType)}`)
   }
+  if (formData.payChannelCode) {
+    conditions.push(`支付:${getDictLabel(DICT_TYPE.PAY_CHANNEL_CODE, formData.payChannelCode)}`)
+  }
+  if (formData.terminal !== -1) {
+    conditions.push(`来源:${getDictLabel(DICT_TYPE.TERMINAL, formData.terminal)}`)
+  }
   if (formData.createTime[0] && formData.createTime[1]) {
     conditions.push(`下单:${formatDate(formData.createTime[0])}~${formatDate(formData.createTime[1])}`)
   }
@@ -139,6 +183,8 @@ function handleSearch() {
     status: formData.status === -1 ? undefined : formData.status,
     type: formData.type === -1 ? undefined : formData.type,
     deliveryType: formData.deliveryType === -1 ? undefined : formData.deliveryType,
+    payChannelCode: formData.payChannelCode || undefined,
+    terminal: formData.terminal === -1 ? undefined : formData.terminal,
     createTime: formatDateRange(formData.createTime),
   })
 }
@@ -149,6 +195,8 @@ function handleReset() {
   formData.status = -1
   formData.type = -1
   formData.deliveryType = -1
+  formData.payChannelCode = ''
+  formData.terminal = -1
   formData.createTime = [undefined, undefined]
   visible.value = false
   emit('reset')

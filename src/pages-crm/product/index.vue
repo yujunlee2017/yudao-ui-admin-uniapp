@@ -60,6 +60,7 @@ import { getProductPage } from '@/api/crm/product'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
+import { formatMoney } from '@/utils/format'
 import SearchForm from './components/search-form.vue'
 
 definePage({
@@ -77,12 +78,6 @@ const queryParams = ref<Record<string, any>>({}) // 查询参数
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus()
-}
-
-/** 格式化金额 */
-function formatMoney(value: number) {
-  const amount = Number(value)
-  return Number.isNaN(amount) ? String(value) : amount.toFixed(2)
 }
 
 /** 查询产品列表 */

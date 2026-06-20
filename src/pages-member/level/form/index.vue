@@ -81,18 +81,27 @@ const formLoading = ref(false) // 表单提交状态
 const formData = ref<MemberLevel>({
   id: undefined,
   name: '',
-  level: 0,
-  experience: 0,
-  discountPercent: 100,
+  level: undefined,
+  experience: undefined,
+  discountPercent: undefined,
   icon: '',
   backgroundUrl: '',
   status: CommonStatusEnum.ENABLE,
 }) // 表单数据
 const formSchema = createFormSchema({
   name: [{ required: true, message: '等级名称不能为空' }],
-  level: [{ required: true, message: '等级不能为空' }],
-  experience: [{ required: true, message: '升级经验不能为空' }],
-  discountPercent: [{ required: true, message: '享受折扣不能为空' }],
+  level: [
+    { required: true, message: '等级不能为空' },
+    { validator: value => (Number.isInteger(Number(value)) && Number(value) > 0) || '等级必须是大于 0 的整数' },
+  ],
+  experience: [
+    { required: true, message: '升级经验不能为空' },
+    { validator: value => (Number.isInteger(Number(value)) && Number(value) > 0) || '升级经验必须是大于 0 的整数' },
+  ],
+  discountPercent: [
+    { required: true, message: '享受折扣不能为空' },
+    { validator: value => (Number.isInteger(Number(value)) && Number(value) >= 0 && Number(value) <= 100) || '享受折扣为 0-100 的整数' },
+  ],
   status: [{ required: true, message: '状态不能为空' }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用

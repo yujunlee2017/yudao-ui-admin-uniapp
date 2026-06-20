@@ -93,7 +93,7 @@ const selectedTagLabel = computed(() => {
     return ''
   }
   return tagIds
-    .map(id => tagList.value.find(tag => (tag.tagId || tag.id) === id)?.name)
+    .map(id => tagList.value.find(tag => tag.tagId === id)?.name)
     .filter(Boolean)
     .join('、')
 })
@@ -139,8 +139,14 @@ async function handleSubmit() {
   }
   formLoading.value = true
   try {
-    await updateUser({ ...formData.value, id: id.value })
+    await updateUser({
+      id: id.value,
+      nickname: formData.value.nickname,
+      remark: formData.value.remark,
+      tagIds: formData.value.tagIds,
+    })
     toast.success('修改成功')
+    uni.$emit('mp:user:reload')
     setTimeout(() => {
       handleBack()
     }, 500)

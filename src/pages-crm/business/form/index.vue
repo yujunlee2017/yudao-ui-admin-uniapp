@@ -118,6 +118,7 @@ const formSchema = createFormSchema({
   customerId: [{ required: true, message: '客户名称不能为空' }],
   ownerUserId: [{ required: true, message: '负责人不能为空' }],
   statusTypeId: [{ required: true, message: '商机状态组不能为空' }],
+  discountPercent: [{ validator: value => value == null || value === '' || (Number(value) >= 0 && Number(value) <= 100) || '整单折扣需在 0-100 之间' }],
 })
 
 /** 商机状态组变化时清空商机阶段 */

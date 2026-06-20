@@ -54,6 +54,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { getBusinessPageByContact } from '@/api/crm/business'
 import { createContactBusinessList, deleteContactBusinessList } from '@/api/crm/contact'
 import { useAccess } from '@/hooks/useAccess'
+import { formatMoney } from '@/utils/format'
 import CrmPicker from '@/pages-crm/components/crm-picker.vue'
 
 interface PickerOption {
@@ -115,12 +116,6 @@ async function handleRemove(business: Record<string, any>) {
   await deleteContactBusinessList({ contactId: props.contactId, businessIds: [Number(business.id)] })
   toast.success('解除成功')
   loadList()
-}
-
-/** 格式化金额 */
-function formatMoney(value: any) {
-  const amount = Number(value)
-  return Number.isNaN(amount) ? '-' : amount.toFixed(2)
 }
 
 watch(() => props.contactId, loadList)

@@ -148,6 +148,8 @@
         </template>
         <template v-if="sendForm.type === 'music'">
           <view class="h-12rpx" />
+          <wd-input v-model="sendForm.thumbMediaId" clearable placeholder="缩略图 MediaID（选图片素材回填）" />
+          <view class="h-12rpx" />
           <wd-input v-model="sendForm.musicUrl" clearable placeholder="请输入音乐链接" />
           <view class="h-12rpx" />
           <wd-input v-model="sendForm.hqMusicUrl" clearable placeholder="请输入高质量音乐链接" />
@@ -225,6 +227,7 @@ const sendForm = reactive({
   title: '',
   description: '',
   articlesText: '',
+  thumbMediaId: '',
   musicUrl: '',
   hqMusicUrl: '',
 }) // 发送表单
@@ -238,7 +241,7 @@ const sendTypeOptions = [
 ]
 
 const sendTypeLabel = computed(() => sendTypeOptions.find(item => item.value === sendForm.type)?.label || '')
-const canPickMaterial = computed(() => ['image', 'voice', 'video', 'news'].includes(sendForm.type))
+const canPickMaterial = computed(() => ['image', 'voice', 'video', 'news', 'music'].includes(sendForm.type))
 const materialPickerType = computed(() => {
   if (sendForm.type === 'news') {
     return 'news'
@@ -327,6 +330,8 @@ function loadMore() {
 /** 消息类型选择 */
 function handleSendTypeConfirm({ value }: { value: string[] }) {
   sendForm.type = value[0]
+  // 切换消息类型时清空旧字段，避免跨类型残留
+  clearSendForm()
 }
 
 /** 选择素材 */
@@ -335,6 +340,11 @@ function handleMaterialSelect(item: any) {
     const articles = item.content?.newsItem || item.articles || []
     sendForm.articlesText = JSON.stringify(articles)
     sendForm.title = articles[0]?.title || ''
+    return
+  }
+  // 音乐：选图片素材作为缩略图
+  if (sendForm.type === 'music') {
+    sendForm.thumbMediaId = item.mediaId || ''
     return
   }
   sendForm.mediaId = item.mediaId || ''
@@ -351,6 +361,7 @@ function clearSendForm() {
   sendForm.title = ''
   sendForm.description = ''
   sendForm.articlesText = ''
+  sendForm.thumbMediaId = ''
   sendForm.musicUrl = ''
   sendForm.hqMusicUrl = ''
 }
@@ -369,6 +380,14 @@ async function handleSend() {
     toast.show('请选择或输入素材 MediaID')
     return
   }
+  if (sendForm.type === 'video' && (!sendForm.title || !sendForm.description)) {
+    toast.show('请填写视频标题与描述')
+    return
+  }
+  if (sendForm.type === 'music' && (!sendForm.thumbMediaId || !sendForm.musicUrl || !sendForm.hqMusicUrl)) {
+    toast.show('请填写音乐缩略图、音乐链接与高质量链接')
+    return
+  }
 
   const data: any = {
     userId: userId.value,
@@ -379,6 +398,7 @@ async function handleSend() {
     url: sendForm.url,
     title: sendForm.title,
     description: sendForm.description,
+    thumbMediaId: sendForm.thumbMediaId,
     musicUrl: sendForm.musicUrl,
     hqMusicUrl: sendForm.hqMusicUrl,
   }

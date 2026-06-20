@@ -86,7 +86,10 @@ const formSchema = createFormSchema({
   no: [{ required: true, message: '产品编码不能为空' }],
   ownerUserId: [{ required: true, message: '负责人不能为空' }],
   categoryId: [{ required: true, message: '产品分类不能为空' }],
-  price: [{ required: true, message: '价格不能为空' }],
+  price: [
+    { required: true, message: '价格不能为空' },
+    { validator: value => value == null || value === '' || Number(value) >= 0 || '价格不能小于 0' },
+  ],
   status: [{ required: true, message: '上架状态不能为空' }],
 })
 

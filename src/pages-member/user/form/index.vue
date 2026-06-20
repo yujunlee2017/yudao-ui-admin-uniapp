@@ -22,6 +22,7 @@
             <wd-input
               v-model="formData.email"
               clearable
+              :maxlength="50"
               placeholder="请输入邮箱"
             />
           </wd-form-item>

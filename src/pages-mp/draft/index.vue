@@ -75,9 +75,10 @@
 
 <script lang="ts" setup>
 import type { Draft } from '@/api/mp/draft'
+import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { deleteDraft, getDraftPage } from '@/api/mp/draft'
 import { submitFreePublish } from '@/api/mp/freePublish'
 import { useAccess } from '@/hooks/useAccess'
@@ -192,6 +193,14 @@ async function handleDelete(item: Draft) {
   toast.success('删除成功')
   reload()
 }
+
+onMounted(() => {
+  uni.$on('mp:draft:reload', reload)
+})
+
+onUnload(() => {
+  uni.$off('mp:draft:reload', reload)
+})
 </script>
 
 <style lang="scss" scoped>

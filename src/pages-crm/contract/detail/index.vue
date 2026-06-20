@@ -160,6 +160,7 @@ import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
+import { formatMoney } from '@/utils/format'
 import CrmFollowupRecords from '@/pages-crm/followup/components/followup-list.vue'
 import CrmOperateLogs from '@/pages-crm/operate-log/components/operate-log-list.vue'
 import CrmPermissionTeam from '@/pages-crm/permission/components/permission-list.vue'
@@ -245,12 +246,6 @@ const hasFooter = computed(() => {
       return false
   }
 })
-
-/** 格式化金额 */
-function formatMoney(value: any) {
-  const amount = Number(value)
-  return Number.isNaN(amount) ? '-' : amount.toFixed(2)
-}
 
 /** 返回上一页 */
 function handleBack() {

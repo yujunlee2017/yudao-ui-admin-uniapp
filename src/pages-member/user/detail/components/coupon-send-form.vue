@@ -17,6 +17,7 @@
               {{ item.name || `优惠券 ${item.id}` }}
             </view>
             <wd-button
+              v-if="hasAccessByCodes(['promotion:coupon:send'])"
               size="small"
               type="primary"
               :loading="sendingId === item.id"
@@ -52,6 +53,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, ref, watch } from 'vue'
 import { sendPromotionCoupon } from '@/api/mall/promotion/coupon/coupon'
 import { getPromotionCouponTemplatePage } from '@/api/mall/promotion/coupon/coupon-template'
+import { useAccess } from '@/hooks/useAccess'
 
 const props = defineProps<{
   modelValue: boolean
@@ -65,6 +67,7 @@ const emit = defineEmits<{
 }>()
 
 const toast = useToast()
+const { hasAccessByCodes } = useAccess()
 const visible = computed({
   get: () => props.modelValue,
   set: val => emit('update:modelValue', val),

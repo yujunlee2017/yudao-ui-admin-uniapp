@@ -234,6 +234,20 @@ const sections = [
     chart: { type: 'pie', categoryProp: 'followUpType', valueProp: 'followUpRecordCount' },
   },
   {
+    title: '客户转化率',
+    columns: [
+      { prop: 'time', label: '时间' },
+      { prop: 'customerCreateCount', label: '新增客户' },
+      { prop: 'customerDealCount', label: '成交客户' },
+      { prop: 'conversionRate', label: '转化率', type: 'percent' },
+    ],
+    load: async (params: Record<string, any>) => (await getCustomerSummaryByDate(params)).map((item: any) => ({
+      ...item,
+      conversionRate: item.customerCreateCount ? Number(((item.customerDealCount / item.customerCreateCount) * 100).toFixed(2)) : 0,
+    })), // 转化率 = 成交客户 / 新增客户 × 100，对齐 PC CustomerConversionStat
+    chart: { type: 'line', categoryProp: 'time', series: [{ name: '转化率(%)', prop: 'conversionRate' }] },
+  },
+  {
     title: '合同摘要',
     columns: [
       { prop: 'customerName', label: '客户' },

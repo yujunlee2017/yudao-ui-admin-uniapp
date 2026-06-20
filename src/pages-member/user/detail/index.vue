@@ -32,7 +32,8 @@
             {{ formData?.mobile || '未绑定手机号' }}
           </view>
         </view>
-        <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="formData?.status" />
+        <dict-tag v-if="formData?.status != null" :type="DICT_TYPE.COMMON_STATUS" :value="formData?.status" />
+        <text v-else class="text-26rpx text-[#999]">-</text>
       </view>
       <view class="grid grid-cols-3 gap-12rpx rounded-8rpx bg-[#f7f8fa] p-16rpx text-center">
         <view>
@@ -91,7 +92,8 @@
       <wd-cell title="真实姓名" :value="formData?.name || '-'" />
       <wd-cell title="邮箱" :value="formData?.email || '-'" />
       <wd-cell title="性别">
-        <dict-tag :type="DICT_TYPE.SYSTEM_USER_SEX" :value="formData?.sex" />
+        <dict-tag v-if="formData?.sex != null" :type="DICT_TYPE.SYSTEM_USER_SEX" :value="formData?.sex" />
+        <text v-else>-</text>
       </wd-cell>
       <wd-cell title="所在地" :value="formData?.areaName || '-'" />
       <wd-cell title="会员等级" :value="formData?.levelName || '-'" />
@@ -121,16 +123,16 @@
     </view>
 
     <!-- 明细列表 -->
-    <PointList v-show="tabIndex === 0" :user-id="props.id" />
-    <SignList v-show="tabIndex === 1" :user-id="props.id" />
-    <ExperienceList v-show="tabIndex === 2" :user-id="props.id" />
-    <BalanceList v-show="tabIndex === 3" :wallet-id="walletData?.id" />
-    <AddressList v-show="tabIndex === 4" :user-id="props.id" />
-    <OrderList v-show="tabIndex === 5" :user-id="props.id" />
-    <AfterSaleList v-show="tabIndex === 6" :user-id="props.id" />
-    <FavoriteList v-show="tabIndex === 7" :user-id="props.id" />
-    <CouponList v-show="tabIndex === 8" :user-id="props.id" />
-    <BrokerageList v-show="tabIndex === 9" :bind-user-id="props.id" />
+    <PointList v-if="loadedTabs.has(0)" v-show="tabIndex === 0" :user-id="props.id" />
+    <SignList v-if="loadedTabs.has(1)" v-show="tabIndex === 1" :user-id="props.id" />
+    <ExperienceList v-if="loadedTabs.has(2)" v-show="tabIndex === 2" :user-id="props.id" />
+    <BalanceList v-if="loadedTabs.has(3)" v-show="tabIndex === 3" :wallet-id="walletData?.id" />
+    <AddressList v-if="loadedTabs.has(4)" v-show="tabIndex === 4" :user-id="props.id" />
+    <OrderList v-if="loadedTabs.has(5)" v-show="tabIndex === 5" :user-id="props.id" />
+    <AfterSaleList v-if="loadedTabs.has(6)" v-show="tabIndex === 6" :user-id="props.id" />
+    <FavoriteList v-if="loadedTabs.has(7)" v-show="tabIndex === 7" :user-id="props.id" />
+    <CouponList v-if="loadedTabs.has(8)" v-show="tabIndex === 8" :user-id="props.id" />
+    <BrokerageList v-if="loadedTabs.has(9)" v-show="tabIndex === 9" :bind-user-id="props.id" />
 
     <!-- 底部操作按钮 -->
     <view class="yd-detail-footer">
@@ -168,7 +170,7 @@ import type { MemberUser } from '@/api/member/user'
 import type { PayWallet } from '@/api/pay/wallet/balance'
 import { onUnload } from '@dcloudio/uni-app'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { getMemberUser } from '@/api/member/user'
 import { getPayWallet } from '@/api/pay/wallet/balance'
 import { useAccess } from '@/hooks/useAccess'
@@ -206,6 +208,7 @@ const toast = useToast()
 const formData = ref<MemberUser>() // 详情数据
 const walletData = ref<PayWallet>() // 钱包数据
 const tabIndex = ref(0) // 当前明细 Tab
+const loadedTabs = ref(new Set<number>([0])) // 已加载过的 Tab；懒加载，避免打开详情即并发全部列表请求
 const moreActionVisible = ref(false) // 更多操作菜单
 const levelFormVisible = ref(false) // 修改等级弹窗
 const pointFormVisible = ref(false) // 修改积分弹窗
@@ -228,6 +231,9 @@ const moreActions = computed(() => {
   return actions
 })
 const hasMoreActions = computed(() => moreActions.value.length > 0)
+
+// 切换 Tab 时记录已加载的 Tab，实现懒加载
+watch(tabIndex, value => loadedTabs.value.add(value))
 
 /** 金额分转元展示 */
 function formatAmount(value?: number | string) {

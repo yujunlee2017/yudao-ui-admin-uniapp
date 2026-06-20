@@ -29,6 +29,7 @@ export interface Contact {
   parentId?: number
   parentName?: string
   remark?: string
+  businessId?: number
   creator?: string
   creatorName?: string
   createTime?: Date | string

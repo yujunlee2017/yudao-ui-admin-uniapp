@@ -18,8 +18,3 @@ export interface MemberExperienceRecord {
 export function getMemberExperienceRecordPage(params: PageParam) {
   return http.get<PageResult<MemberExperienceRecord>>('/member/experience-record/page', params)
 }
-
-/** 获取会员经验记录详情 */
-export function getMemberExperienceRecord(id: number) {
-  return http.get<MemberExperienceRecord>(`/member/experience-record/get?id=${id}`)
-}

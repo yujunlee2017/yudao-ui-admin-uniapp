@@ -88,6 +88,7 @@ import UserPicker from '@/components/system-select/user-picker.vue'
 import { useUserStore } from '@/store/user'
 import { currRoute, navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
+import { formatMoney } from '@/utils/format'
 import { createFormSchema } from '@/utils/wot'
 import CrmPicker from '@/pages-crm/components/crm-picker.vue'
 import CrmProductLines from '@/pages-crm/components/crm-product-lines.vue'
@@ -131,6 +132,7 @@ const formSchema = createFormSchema({
   customerId: [{ required: true, message: '客户名称不能为空' }],
   ownerUserId: [{ required: true, message: '负责人不能为空' }],
   orderDate: [{ required: true, message: '下单日期不能为空' }],
+  discountPercent: [{ validator: value => value == null || value === '' || (Number(value) >= 0 && Number(value) <= 100) || '整单折扣需在 0-100 之间' }],
 })
 
 /** 返回上一页 */
@@ -160,12 +162,6 @@ async function handleBusinessConfirm(option?: { raw?: Record<string, any> }) {
 function handleProductTotalsChange(totalProductPrice: number, totalPrice: number) {
   formData.value.totalProductPrice = totalProductPrice
   formData.value.totalPrice = totalPrice
-}
-
-/** 格式化金额 */
-function formatMoney(value: any) {
-  const amount = Number(value)
-  return Number.isNaN(amount) ? '-' : amount.toFixed(2)
 }
 
 /** 应用页面预填参数 */

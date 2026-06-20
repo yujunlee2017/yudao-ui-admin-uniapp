@@ -26,7 +26,7 @@
           </wd-radio-group>
         </wd-form-item>
         <wd-form-item title="变动积分" title-width="190rpx" prop="changePoint">
-          <wd-input-number v-model="formData.changePoint" :min="0" />
+          <wd-input-number v-model="formData.changePoint" :min="0" :precision="0" />
         </wd-form-item>
         <wd-form-item title="变动后积分" title-width="190rpx">
           <text>{{ pointResult }}</text>

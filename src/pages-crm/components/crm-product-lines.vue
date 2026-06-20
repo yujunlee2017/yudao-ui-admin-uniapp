@@ -67,6 +67,7 @@
 import { computed, watch } from 'vue'
 import { getDictLabel } from '@/hooks/useDict'
 import { DICT_TYPE } from '@/utils/constants'
+import { formatMoney } from '@/utils/format'
 import CrmPicker from './crm-picker.vue'
 
 interface ProductLine {
@@ -178,11 +179,5 @@ function handleProductConfirm(row: ProductLine, option?: PickerOption) {
   row.productUnit = product.unit
   row.productPrice = Number(product.price || 0)
   row[props.priceProp] = Number(product.price || 0)
-}
-
-/** 格式化金额 */
-function formatMoney(value: any) {
-  const amount = Number(value)
-  return Number.isNaN(amount) ? '-' : amount.toFixed(2)
 }
 </script>

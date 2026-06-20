@@ -71,10 +71,10 @@
               </view>
               <view>
                 <view class="text-30rpx text-[#333] font-semibold">
-                  {{ formatDateTime(item.createTime) ? '已创建' : '-' }}
+                  {{ formatDate(item.createTime) || '-' }}
                 </view>
                 <view class="mt-4rpx text-22rpx text-[#999]">
-                  状态
+                  创建时间
                 </view>
               </view>
             </view>
@@ -101,7 +101,7 @@ import { getMemberLevelList } from '@/api/member/level'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
-import { formatDateTime } from '@/utils/date'
+import { formatDate } from '@/utils/date'
 import SearchForm from './components/search-form.vue'
 
 definePage({

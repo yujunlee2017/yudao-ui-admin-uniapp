@@ -153,6 +153,7 @@ import CrmPermissionTeam from '@/pages-crm/permission/components/permission-list
 import CrmTransferForm from '@/pages-crm/permission/components/transfer-form.vue'
 import { navigateBackPlus } from '@/utils'
 import { formatDate, formatDateTime } from '@/utils/date'
+import { formatMoney } from '@/utils/format'
 
 const props = defineProps<{ id?: number | any }>()
 definePage({
@@ -225,12 +226,6 @@ const hasFooter = computed(() => {
       return false
   }
 })
-
-/** 格式化金额 */
-function formatMoney(value: any) {
-  const amount = Number(value)
-  return Number.isNaN(amount) ? '-' : amount.toFixed(2)
-}
 
 /** 返回上一页 */
 function handleBack() {

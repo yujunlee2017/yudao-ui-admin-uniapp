@@ -7,6 +7,8 @@ export interface CustomerLimitConfig {
   type?: number
   userIds?: number[] | string
   deptIds?: number[] | string
+  users?: { id?: number, nickname?: string }[]
+  depts?: { id?: number, name?: string }[]
   maxCount?: number
   dealCountEnabled?: boolean
 }
