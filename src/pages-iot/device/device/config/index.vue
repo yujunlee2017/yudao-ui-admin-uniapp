@@ -62,7 +62,7 @@ const configText = ref('{}') // 配置 JSON 文本
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-iot/device/device/detail/index?id=' + props.deviceId)
+  navigateBackPlus(`/pages-iot/device/device/detail/index?id=${props.deviceId}`)
 }
 
 /** 解析配置 JSON */

@@ -26,6 +26,7 @@ let socketTask: UniApp.SocketTask | null = null
 let connected = false
 let manualClosed = false
 let reconnectAttempts = 0
+let resyncOnReopen = false // 断线重连成功后需补拉一次，补齐断线期间漏收的消息
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -126,6 +127,14 @@ export function connectImWebSocket() {
     connected = true
     reconnectAttempts = 0
     startHeartbeat()
+    // 断线重连成功后补拉一次离线消息（对齐 PC：连接就绪即同步），补齐断线期间漏收的消息
+    if (resyncOnReopen) {
+      resyncOnReopen = false
+      const { isLoaded, load } = useImConversations()
+      if (isLoaded()) {
+        load()
+      }
+    }
   })
   socketTask.onMessage((res) => {
     handleFrame(res.data as string)
@@ -134,6 +143,7 @@ export function connectImWebSocket() {
     connected = false
     socketTask = null
     stopHeartbeat()
+    resyncOnReopen = true
     scheduleReconnect()
   })
   socketTask.onError(() => {

@@ -36,7 +36,7 @@ export const IotDeviceMessageMethodEnum = {
   SUB_DEVICE_REGISTER: { method: 'thing.auth.register.sub', name: '子设备动态注册', upstream: true },
   PROPERTY_POST: { method: 'thing.property.post', name: '属性上报', upstream: true },
   PROPERTY_SET: { method: 'thing.property.set', name: '属性设置', upstream: false },
-  PROPERTY_PACK_POST: { method: 'thing.event.property.pack.post', name: '批量上报', upstream: true },
+  PROPERTY_PACK_POST: { method: 'thing.event.property.pack.post', name: '批量上报（属性 + 事件 + 子设备）', upstream: true },
   EVENT_POST: { method: 'thing.event.post', name: '事件上报', upstream: true },
   SERVICE_INVOKE: { method: 'thing.service.invoke', name: '服务调用', upstream: false },
   CONFIG_PUSH: { method: 'thing.config.push', name: '配置推送', upstream: false },
@@ -117,6 +117,68 @@ export const IotRuleSceneActionTypeEnum = {
   ALERT_RECOVER: 101,
 } as const
 
+/** 场景联动触发器类型选项 */
+export const triggerTypeOptions = [ // 触发器类型选项
+  { value: IotRuleSceneTriggerTypeEnum.DEVICE_STATE_UPDATE, label: '设备状态变更' },
+  { value: IotRuleSceneTriggerTypeEnum.DEVICE_PROPERTY_POST, label: '设备属性上报' },
+  { value: IotRuleSceneTriggerTypeEnum.DEVICE_EVENT_POST, label: '设备事件上报' },
+  { value: IotRuleSceneTriggerTypeEnum.DEVICE_SERVICE_INVOKE, label: '设备服务调用' },
+  { value: IotRuleSceneTriggerTypeEnum.TIMER, label: '定时触发' },
+]
+
+/** 场景联动执行器类型选项 */
+export const actionTypeOptions = [ // 执行器类型选项
+  { value: IotRuleSceneActionTypeEnum.DEVICE_PROPERTY_SET, label: '设备属性设置' },
+  { value: IotRuleSceneActionTypeEnum.DEVICE_SERVICE_INVOKE, label: '设备服务调用' },
+  { value: IotRuleSceneActionTypeEnum.ALERT_TRIGGER, label: '触发告警' },
+  { value: IotRuleSceneActionTypeEnum.ALERT_RECOVER, label: '恢复告警' },
+]
+
+/** 判断是否为设备类触发器 */
+export function isDeviceTrigger(type?: number) {
+  return [
+    IotRuleSceneTriggerTypeEnum.DEVICE_STATE_UPDATE,
+    IotRuleSceneTriggerTypeEnum.DEVICE_PROPERTY_POST,
+    IotRuleSceneTriggerTypeEnum.DEVICE_EVENT_POST,
+    IotRuleSceneTriggerTypeEnum.DEVICE_SERVICE_INVOKE,
+  ].includes(type as any)
+}
+
+/** 获取触发器类型标签 */
+export function getTriggerTypeLabel(type?: number) {
+  return triggerTypeOptions.find(item => item.value === type)?.label || '未知类型'
+}
+
+/** 获取执行器类型标签 */
+export function getActionTypeLabel(type?: number) {
+  return actionTypeOptions.find(item => item.value === type)?.label || '未知类型'
+}
+
+/** 场景联动触发条件操作符枚举 */
+export const IotRuleSceneTriggerConditionParameterOperatorEnum = {
+  EQUALS: { name: '等于', value: '=' },
+  NOT_EQUALS: { name: '不等于', value: '!=' },
+  GREATER_THAN: { name: '大于', value: '>' },
+  GREATER_THAN_OR_EQUALS: { name: '大于等于', value: '>=' },
+  LESS_THAN: { name: '小于', value: '<' },
+  LESS_THAN_OR_EQUALS: { name: '小于等于', value: '<=' },
+  IN: { name: '在...之中', value: 'in' },
+  NOT_IN: { name: '不在...之中', value: 'not in' },
+  BETWEEN: { name: '在...之间', value: 'between' },
+  NOT_BETWEEN: { name: '不在...之间', value: 'not between' },
+  LIKE: { name: '字符串匹配', value: 'like' },
+  NOT_NULL: { name: '非空', value: 'not null' },
+} as const
+
+/** 操作符选项（场景联动比较条件） */
+export const operatorOptions = Object.values(IotRuleSceneTriggerConditionParameterOperatorEnum).map(item => ({ label: item.name, value: item.value })) // 操作符选项
+
+/** 设备在线状态选项（设备状态变更触发器的比较值） */
+export const deviceStatusOptions = [ // 设备在线状态
+  { label: '在线', value: '1' },
+  { label: '离线', value: '2' },
+]
+
 /** 获取数据类型选项 */
 export function getDataTypeOptions() {
   return [
@@ -181,4 +243,38 @@ export function getModbusFunctionCodeLabel(code?: number) {
     return '-'
   }
   return ModbusFunctionCodeOptions.find(item => item.value === code)?.label || String(code)
+}
+
+/** Modbus 原始数据类型选项 */ // 值与 PC views/iot/utils/constants.ts 1:1
+export const ModbusRawDataTypeOptions = [
+  { value: 'INT16', label: 'INT16', description: '有符号16位整数', registerCount: 1 },
+  { value: 'UINT16', label: 'UINT16', description: '无符号16位整数', registerCount: 1 },
+  { value: 'INT32', label: 'INT32', description: '有符号32位整数', registerCount: 2 },
+  { value: 'UINT32', label: 'UINT32', description: '无符号32位整数', registerCount: 2 },
+  { value: 'FLOAT', label: 'FLOAT', description: '32位浮点数', registerCount: 2 },
+  { value: 'DOUBLE', label: 'DOUBLE', description: '64位浮点数', registerCount: 4 },
+  { value: 'BOOLEAN', label: 'BOOLEAN', description: '布尔值', registerCount: 1 },
+  { value: 'STRING', label: 'STRING', description: '字符串', registerCount: 0 },
+]
+
+/** Modbus 字节序选项 - 16位 */ // 值与 PC views/iot/utils/constants.ts 1:1
+export const ModbusByteOrder16Options = [
+  { value: 'AB', label: 'AB', description: '大端序' },
+  { value: 'BA', label: 'BA', description: '小端序' },
+]
+
+/** Modbus 字节序选项 - 32位 */ // 值与 PC views/iot/utils/constants.ts 1:1
+export const ModbusByteOrder32Options = [
+  { value: 'ABCD', label: 'ABCD', description: '大端序' },
+  { value: 'CDAB', label: 'CDAB', description: '大端字交换' },
+  { value: 'DCBA', label: 'DCBA', description: '小端序' },
+  { value: 'BADC', label: 'BADC', description: '小端字交换' },
+]
+
+/** 根据数据类型获取字节序选项 */ // 32 位与 64 位复用 32 位字节序，与 PC 一致
+export function getByteOrderOptions(rawDataType?: string) {
+  if (rawDataType && ['INT32', 'UINT32', 'FLOAT', 'DOUBLE'].includes(rawDataType)) {
+    return ModbusByteOrder32Options
+  }
+  return ModbusByteOrder16Options
 }

@@ -18,11 +18,11 @@
           </wd-form-item>
           <EntityPicker v-model="formData.categoryId" label="产品分类" prop="categoryId" :columns="categoryOptions" placeholder="请选择产品分类" label-width="220rpx" />
           <wd-form-item title="设备类型" title-width="220rpx" center prop="deviceType">
-            <wd-radio-group v-model="formData.deviceType" type="button">
+            <wd-radio-group v-model="formData.deviceType" type="button" :disabled="!!props.id">
               <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.IOT_PRODUCT_DEVICE_TYPE)" :key="dict.value" :value="dict.value">{{ dict.label }}</wd-radio>
             </wd-radio-group>
           </wd-form-item>
-          <wd-form-item title="联网方式" title-width="220rpx" center prop="netType">
+          <wd-form-item v-if="showNetType" title="联网方式" title-width="220rpx" center prop="netType">
             <wd-radio-group v-model="formData.netType" type="button">
               <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.IOT_NET_TYPE)" :key="dict.value" :value="dict.value">{{ dict.label }}</wd-radio>
             </wd-radio-group>
@@ -35,11 +35,6 @@
           <wd-form-item title="序列化类型" title-width="220rpx" center prop="serializeType">
             <wd-radio-group v-model="formData.serializeType" type="button">
               <wd-radio v-for="dict in getStrDictOptions(DICT_TYPE.IOT_SERIALIZE_TYPE)" :key="dict.value" :value="dict.value">{{ dict.label }}</wd-radio>
-            </wd-radio-group>
-          </wd-form-item>
-          <wd-form-item title="产品状态" title-width="220rpx" center prop="status">
-            <wd-radio-group v-model="formData.status" type="button">
-              <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.IOT_PRODUCT_STATUS)" :key="dict.value" :value="dict.value">{{ dict.label }}</wd-radio>
             </wd-radio-group>
           </wd-form-item>
           <wd-form-item title="动态注册" title-width="220rpx" center prop="registerEnabled">
@@ -108,11 +103,12 @@ const formSchema = createFormSchema({
   name: [{ required: true, message: '产品名称不能为空' }],
   categoryId: [{ required: true, message: '产品分类不能为空' }],
   deviceType: [{ required: true, message: '设备类型不能为空' }],
-  netType: [{ required: true, message: '联网方式不能为空' }],
+  netType: [{ required: model => [DeviceTypeEnum.DEVICE, DeviceTypeEnum.GATEWAY].includes(model?.deviceType), message: '联网方式不能为空' }],
   protocolType: [{ required: true, message: '协议类型不能为空' }],
   serializeType: [{ required: true, message: '序列化类型不能为空' }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用
+const showNetType = computed(() => [DeviceTypeEnum.DEVICE, DeviceTypeEnum.GATEWAY].includes(formData.value.deviceType as number)) // 仅直连/网关需要联网方式
 
 /** 返回上一页 */
 function handleBack() { navigateBackPlus('/pages-iot/product/product/index') }
@@ -137,11 +133,13 @@ async function handleSubmit() {
   if (!valid) return
   formLoading.value = true
   try {
+    const data = { ...formData.value }
+    if (!showNetType.value) data.netType = undefined // 网关子设备不需要联网方式
     if (props.id) {
-      await updateProduct(formData.value)
+      await updateProduct(data)
       toast.success('修改成功')
     } else {
-      await createProduct(formData.value)
+      await createProduct(data)
       toast.success('新增成功')
     }
     uni.$emit('iot:product:reload')

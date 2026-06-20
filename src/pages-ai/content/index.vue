@@ -128,12 +128,16 @@
               </template>
             </view>
             <view class="mt-20rpx flex items-center justify-between">
-              <view v-if="activeTab === 'image' || activeTab === 'music'" class="flex items-center gap-12rpx text-24rpx text-[#666]">
+              <view v-if="canUpdate && (activeTab === 'image' || activeTab === 'music')" class="flex items-center gap-12rpx text-24rpx text-[#666]">
                 <text>公开</text>
-                <wd-switch v-model="item.publicStatus" @change="handlePublicChange(item)" />
+                <wd-switch
+                  v-model="item.publicStatus"
+                  :disabled="activeTab === 'image' && item.status !== AiImageStatusEnum.SUCCESS"
+                  @change="handlePublicChange(item)"
+                />
               </view>
               <view v-else />
-              <wd-button size="small" type="danger" variant="plain" @click="handleDelete(item)">
+              <wd-button v-if="canDelete" size="small" type="danger" variant="plain" @click="handleDelete(item)">
                 删除
               </wd-button>
             </view>
@@ -179,9 +183,11 @@ import { deleteImage, getImagePage, updateImage } from '@/api/ai/image'
 import { deleteMindMap, getMindMapPage } from '@/api/ai/mindmap'
 import { deleteMusic, getMusicPage, updateMusic } from '@/api/ai/music'
 import { deleteWrite, getWritePage } from '@/api/ai/write'
+import { useAccess } from '@/hooks/useAccess'
 import { getTopPopupModalStyle, getTopPopupStyle, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
+import { AiImageStatusEnum } from '@/pages-ai/utils/constants'
 
 type ContentTab = 'image' | 'music' | 'write' | 'mindmap' | 'conversation' | 'message'
 
@@ -192,11 +198,32 @@ definePage({
   },
 })
 
+const { hasAccessByCodes } = useAccess()
 const toast = useToast()
 const dialog = useDialog()
 const tabs: ContentTab[] = ['image', 'music', 'write', 'mindmap', 'conversation', 'message']
 const tabIndex = ref(0)
 const activeTab = computed(() => tabs[tabIndex.value])
+const canDelete = computed(() => { // 当前 tab 的删除权限
+  const codes: Record<ContentTab, string> = {
+    image: 'ai:image:delete',
+    music: 'ai:music:delete',
+    write: 'ai:write:delete',
+    mindmap: 'ai:mind-map:delete',
+    conversation: 'ai:chat-conversation:delete',
+    message: 'ai:chat-message:delete',
+  }
+  return hasAccessByCodes([codes[activeTab.value]])
+})
+const canUpdate = computed(() => { // 当前 tab 的改公开权限
+  if (activeTab.value === 'image') {
+    return hasAccessByCodes(['ai:image:update'])
+  }
+  if (activeTab.value === 'music') {
+    return hasAccessByCodes(['ai:music:update'])
+  }
+  return false
+})
 const list = ref<any[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({}) // 查询参数
@@ -266,12 +293,16 @@ function handleReset() {
 
 /** 切换公开状态 */
 async function handlePublicChange(item: Record<string, any>) {
-  if (activeTab.value === 'image') {
-    await updateImage({ id: item.id, publicStatus: item.publicStatus })
-  } else if (activeTab.value === 'music') {
-    await updateMusic({ id: item.id, publicStatus: item.publicStatus })
+  try {
+    if (activeTab.value === 'image') {
+      await updateImage({ id: item.id, publicStatus: item.publicStatus })
+    } else if (activeTab.value === 'music') {
+      await updateMusic({ id: item.id, publicStatus: item.publicStatus })
+    }
+    toast.success('更新成功')
+  } catch {
+    item.publicStatus = !item.publicStatus // 更新失败回滚开关
   }
-  toast.success('更新成功')
 }
 
 /** 删除记录 */

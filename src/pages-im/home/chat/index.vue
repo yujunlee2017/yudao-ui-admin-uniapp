@@ -189,7 +189,7 @@ const readDetailVisible = ref(false) // 群已读弹窗
 const readMembers = ref<ImGroupMemberRespVO[]>([]) // 已读成员
 const unreadMembers = ref<ImGroupMemberRespVO[]>([]) // 未读成员
 const replyTarget = ref<ImQuoteMessage>() // 回复目标
-const { markConversationRead, setActiveConversation } = useImConversations()
+const { markConversationRead, setActiveConversation, buildIncomingMessage, applyIncomingMessage } = useImConversations()
 const chatVisible = ref(false) // 当前聊天页是否可见
 
 /** 当前会话类型 */
@@ -558,6 +558,11 @@ async function sendRawMessage(type: number, payload: Record<string, any>, option
         content,
       })
   messageList.value.push(message)
+  // 自己发的消息 WebSocket 不会回推，手动同步到会话列表（更新摘要 + 落库 + 重排）
+  const incoming = buildIncomingMessage(conversationType.value, message)
+  if (incoming) {
+    applyIncomingMessage(incoming)
+  }
   if (quote && replyTarget.value === quote) {
     clearReplyTarget()
   }

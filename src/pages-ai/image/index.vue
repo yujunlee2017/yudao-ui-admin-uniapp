@@ -568,7 +568,6 @@ function buildDrawRequest() {
     return {
       prompt: formData.prompt,
       modelId: model.id,
-      base64Array: formData.referImageUrl ? [formData.referImageUrl] : [],
       width: imageSize.width,
       height: imageSize.height,
       version: formData.version,

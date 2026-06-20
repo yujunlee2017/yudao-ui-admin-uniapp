@@ -89,7 +89,7 @@ const placeholder = computed(() => {
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-iot/device/device/detail/index?id=' + props.deviceId)
+  navigateBackPlus(`/pages-iot/device/device/detail/index?id=${props.deviceId}`)
 }
 
 /** 查询设备消息 */

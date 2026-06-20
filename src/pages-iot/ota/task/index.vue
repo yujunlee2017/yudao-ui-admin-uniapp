@@ -127,7 +127,7 @@ function handleAdd() {
 
 /** 查看详情 */
 function handleDetail(item: OtaTask) {
-  uni.navigateTo({ url: '/pages-iot/ota/task/detail/index?id=' + item.id })
+  uni.navigateTo({ url: `/pages-iot/ota/task/detail/index?id=${item.id}` })
 }
 
 /** 初始化 */

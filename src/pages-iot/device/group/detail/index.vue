@@ -62,7 +62,7 @@ async function getDetail() {
 
 /** 编辑设备分组 */
 function handleEdit() {
-  uni.navigateTo({ url: '/pages-iot/device/group/form/index?id=' + props.id })
+  uni.navigateTo({ url: `/pages-iot/device/group/form/index?id=${props.id}` })
 }
 
 /** 删除设备分组 */

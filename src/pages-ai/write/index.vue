@@ -41,7 +41,7 @@
                     clearable
                   />
                 </wd-form-item>
-                <wd-form-item v-if="formData.type === AiWriteTypeEnum.REPLY" title="原文" title-width="160rpx">
+                <wd-form-item v-if="formData.type === AiWriteTypeEnum.REPLY" title="原文" title-width="160rpx" prop="originalContent">
                   <wd-textarea
                     v-model="formData.originalContent"
                     placeholder="请输入需要回复的原文"
@@ -219,6 +219,7 @@ const languageOptions = computed(() => getIntDictOptions(DICT_TYPE.AI_WRITE_LANG
 const formSchema = createFormSchema({
   type: [{ required: true, message: '请选择写作类型' }],
   prompt: [{ required: true, message: '请输入写作要求' }],
+  originalContent: [{ required: () => formData.type === AiWriteTypeEnum.REPLY, message: '请输入需要回复的原文' }],
 })
 
 /** 返回上一页 */

@@ -104,7 +104,7 @@ const bindingId = ref<number>() // 绑定中的设备编号
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-iot/device/device/detail/index?id=' + props.gatewayId)
+  navigateBackPlus(`/pages-iot/device/device/detail/index?id=${props.gatewayId}`)
 }
 
 /** 查询子设备列表 */
@@ -126,7 +126,7 @@ function handleDetail(item: Device) {
   if (!item.id) {
     return
   }
-  uni.navigateTo({ url: '/pages-iot/device/device/detail/index?id=' + item.id })
+  uni.navigateTo({ url: `/pages-iot/device/device/detail/index?id=${item.id}` })
 }
 
 /** 打开绑定弹窗 */

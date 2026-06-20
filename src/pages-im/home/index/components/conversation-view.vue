@@ -46,7 +46,6 @@
 
 <script lang="ts" setup>
 import type { ConversationDO } from '@/pages-im/home/db'
-import { onShow } from '@dcloudio/uni-app'
 import { computed, ref, watch } from 'vue'
 import { ImConversationType } from '@/utils/constants'
 import { useImConversations } from '../../composables/useImConversations'
@@ -56,7 +55,7 @@ const props = defineProps<{
   active?: boolean
 }>()
 
-const { conversations, loading, load, setConversationTop, setConversationSilent, removeConversation } = useImConversations()
+const { conversations, loading, load, isLoaded, setConversationTop, setConversationSilent, removeConversation } = useImConversations()
 const refreshing = ref(false) // 下拉刷新状态
 const keyword = ref('') // 搜索关键词
 
@@ -142,19 +141,12 @@ function formatConversationTime(ms?: number): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
-/** 激活时加载 */
+/** 首次激活时加载一次；之后靠 WebSocket 增量自更新（applyIncomingMessage），从聊天页返回不再全量重拉 */
 watch(() => props.active, (val) => {
-  if (val) {
+  if (val && !isLoaded()) {
     load()
   }
 }, { immediate: true })
-
-/** 页面再次显示时（如从聊天页返回）刷新当前会话 */
-onShow(() => {
-  if (props.active) {
-    load()
-  }
-})
 </script>
 
 <style lang="scss" scoped>

@@ -95,7 +95,7 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="formData" class="yd-detail-footer">
+    <view v-if="formData && sheetActions.length" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <wd-button class="flex-1" type="primary" @click="actionSheetVisible = true">
           售后处理
@@ -145,13 +145,17 @@ import {
   refundTradeAfterSale,
   refuseTradeAfterSale,
 } from '@/api/mall/trade/after-sale'
+import { getDictLabel } from '@/hooks/useDict'
+import { useAccess } from '@/hooks/useAccess'
+import { formatMallMoney } from '@/pages-mall/utils'
 import { currRoute, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import { getDictLabel } from '@/hooks/useDict'
-import { formatMallMoney, getMallResourceListUrl, getMallResourceReloadEvent } from '@/pages-mall/resource/utils'
 
 type ActionKey = 'agree' | 'disagree' | 'receive' | 'refuse' | 'refund'
+
+// 售后状态：10 申请中、20 卖家拒绝、30 待买家退货/卖家待收货、40 待退款、50 已完成
+const AFTER_SALE_STATUS = { APPLY: 10, WAIT_RECEIVE: 30, WAIT_REFUND: 40 }
 
 definePage({
   style: {
@@ -160,6 +164,7 @@ definePage({
   },
 })
 
+const { hasAccessByCodes } = useAccess()
 const toast = useToast()
 const dialog = useDialog()
 const detailId = ref<number>() // 售后编号
@@ -168,17 +173,27 @@ const actionSheetVisible = ref(false) // 操作菜单
 const rejectVisible = ref(false) // 拒绝弹窗
 const rejectReason = ref('') // 拒绝原因
 const submitting = ref(false) // 提交状态
-const sheetActions = computed(() => [
-  { name: '同意售后', value: 'agree' },
-  { name: '拒绝售后', value: 'disagree', color: '#fa4350' },
-  { name: '确认收货', value: 'receive' },
-  { name: '拒绝收货', value: 'refuse', color: '#fa4350' },
-  { name: '确认退款', value: 'refund' },
-])
+// 按售后状态 + 权限网关：申请中可同意/拒绝，待收货可确认/拒绝收货，待退款可退款
+const sheetActions = computed(() => {
+  const status = formData.value?.status
+  const items: { name: string, value: ActionKey, color?: string }[] = []
+  if (status === AFTER_SALE_STATUS.APPLY && hasAccessByCodes(['trade:after-sale:audit'])) {
+    items.push({ name: '同意售后', value: 'agree' })
+    items.push({ name: '拒绝售后', value: 'disagree', color: '#fa4350' })
+  }
+  if (status === AFTER_SALE_STATUS.WAIT_RECEIVE && hasAccessByCodes(['trade:after-sale:receive'])) {
+    items.push({ name: '确认收货', value: 'receive' })
+    items.push({ name: '拒绝收货', value: 'refuse', color: '#fa4350' })
+  }
+  if (status === AFTER_SALE_STATUS.WAIT_REFUND && hasAccessByCodes(['trade:after-sale:refund'])) {
+    items.push({ name: '确认退款', value: 'refund' })
+  }
+  return items
+})
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus(getMallResourceListUrl('tradeAfterSale'))
+  navigateBackPlus('/pages-mall/trade/after-sale/index')
 }
 
 /** 加载详情 */
@@ -227,7 +242,7 @@ async function runAction(key: ActionKey) {
       await refundTradeAfterSale(detailId.value)
     }
     toast.success('操作成功')
-    uni.$emit(getMallResourceReloadEvent('tradeAfterSale'))
+    uni.$emit('mall:trade-after-sale:reload')
     await loadDetail()
   } finally {
     submitting.value = false
@@ -246,7 +261,7 @@ async function handleReject() {
     toast.success('操作成功')
     rejectVisible.value = false
     rejectReason.value = ''
-    uni.$emit(getMallResourceReloadEvent('tradeAfterSale'))
+    uni.$emit('mall:trade-after-sale:reload')
     await loadDetail()
   } finally {
     submitting.value = false

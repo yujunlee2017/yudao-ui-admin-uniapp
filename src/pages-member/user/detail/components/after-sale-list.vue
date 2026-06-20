@@ -119,7 +119,7 @@ function handleDetail(item: TradeAfterSale) {
     return
   }
   uni.navigateTo({
-    url: `/pages-mall/resource/detail/index?resource=tradeAfterSale&id=${item.id}`,
+    url: `/pages-mall/trade/after-sale/detail/index?id=${item.id}`,
   })
 }
 

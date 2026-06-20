@@ -36,18 +36,34 @@
       <view class="min-w-0 flex flex-1 flex-col bg-[#f7f8fa]">
         <scroll-view class="min-h-0 flex-1 p-24rpx" scroll-y>
           <view
-            v-for="item in messages"
+            v-for="item in parsedMessages"
             :key="item.id"
             class="mb-20rpx"
           >
-            <view class="mb-8rpx text-22rpx text-[#999]">
-              {{ item.senderType === 2 ? '客服' : '用户' }} · {{ item.createTime || '-' }}
+            <!-- 系统消息：居中展示 -->
+            <view v-if="item.kind === 'system'" class="text-center text-22rpx text-[#999]">
+              {{ item.text }}
             </view>
-            <view class="inline-block max-w-full rounded-12rpx bg-white p-20rpx text-26rpx text-[#333] shadow-sm">
-              {{ item.content || '-' }}
-            </view>
+            <!-- 用户/客服消息 -->
+            <template v-else>
+              <view class="mb-8rpx text-22rpx text-[#999]">
+                {{ item.senderLabel }} · {{ item.createTime || '-' }}
+              </view>
+              <image
+                v-if="item.kind === 'image'"
+                :src="item.picUrl"
+                class="max-w-320rpx rounded-12rpx bg-[#eee]"
+                mode="widthFix"
+              />
+              <view
+                v-else
+                class="inline-block max-w-full rounded-12rpx bg-white p-20rpx text-26rpx text-[#333] shadow-sm"
+              >
+                {{ item.text }}
+              </view>
+            </template>
           </view>
-          <view v-if="currentConversation && messages.length === 0" class="pt-80rpx text-center text-26rpx text-[#999]">
+          <view v-if="currentConversation && parsedMessages.length === 0" class="pt-80rpx text-center text-26rpx text-[#999]">
             暂无消息
           </view>
           <view v-if="!currentConversation" class="pt-80rpx text-center text-26rpx text-[#999]">
@@ -68,8 +84,9 @@
 <script lang="ts" setup>
 import type { PromotionKefuConversation } from '@/api/mall/promotion/kefu/conversation'
 import type { PromotionKefuMessage } from '@/api/mall/promotion/kefu/message'
+import { onUnload } from '@dcloudio/uni-app'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import {
   getPromotionKefuConversationList,
 } from '@/api/mall/promotion/kefu/conversation'
@@ -79,6 +96,12 @@ import {
   updatePromotionKefuMessageReadStatus,
 } from '@/api/mall/promotion/kefu/message'
 import { navigateBackPlus } from '@/utils'
+import { connectKefuWebSocket, disconnectKefuWebSocket } from './composables/useKefuWebSocket'
+
+// 客服消息内容类型：1 文本、2 图片、10 系统（其余按结构化消息兜底）
+const CONTENT_TYPE = { TEXT: 1, IMAGE: 2, SYSTEM: 10 }
+// 发送者类型：1 会员、2 管理员（客服）
+const SENDER_ADMIN = 2
 
 definePage({
   style: {
@@ -93,6 +116,39 @@ const currentConversation = ref<PromotionKefuConversation>() // 当前会话
 const messages = ref<PromotionKefuMessage[]>([]) // 消息列表
 const messageContent = ref('') // 消息内容
 const sending = ref(false) // 发送状态
+
+/** 解析消息内容，按类型区分文本/图片/系统消息 */
+const parsedMessages = computed(() => {
+  return messages.value.map((item) => {
+    const payload = parseContent(item.content)
+    const isImage = item.contentType === CONTENT_TYPE.IMAGE || !!payload.picUrl
+    const isSystem = item.contentType === CONTENT_TYPE.SYSTEM
+    return {
+      id: item.id,
+      createTime: item.createTime,
+      senderLabel: item.senderType === SENDER_ADMIN ? '客服' : '用户',
+      kind: isSystem ? 'system' : (isImage ? 'image' : 'text'),
+      text: payload.text || (typeof item.content === 'string' ? item.content : ''),
+      picUrl: payload.picUrl,
+    }
+  })
+})
+
+/** 解析消息 content（PC 端文本/图片均为 JSON 结构） */
+function parseContent(content: any): { text?: string, picUrl?: string } {
+  if (typeof content !== 'string') {
+    return content || {}
+  }
+  const text = content.trim()
+  if (!text.startsWith('{')) {
+    return { text }
+  }
+  try {
+    return JSON.parse(text)
+  } catch {
+    return { text }
+  }
+}
 
 /** 返回上一页 */
 function handleBack() {
@@ -125,7 +181,7 @@ async function loadMessages() {
   })
 }
 
-/** 发送消息 */
+/** 发送消息：文本消息按 PC 端结构封装为 { text } */
 async function handleSend() {
   if (!currentConversation.value?.id || !messageContent.value.trim()) {
     return
@@ -136,11 +192,10 @@ async function handleSend() {
       conversationId: currentConversation.value.id,
       receiverId: currentConversation.value.userId,
       receiverType: 1,
-      contentType: 1,
-      content: messageContent.value.trim(),
+      contentType: CONTENT_TYPE.TEXT,
+      content: JSON.stringify({ text: messageContent.value.trim() }),
     })
     messageContent.value = ''
-    toast.success('发送成功')
     await loadMessages()
     await loadConversations()
   } finally {
@@ -148,8 +203,37 @@ async function handleSend() {
   }
 }
 
-/** 初始化 */
+/** 收到新消息：属于当前会话则追加并标记已读，同时刷新会话列表 */
+function handleWsMessage(message: PromotionKefuMessage) {
+  if (message?.conversationId && currentConversation.value?.id === message.conversationId) {
+    if (!messages.value.some(item => item.id === message.id)) {
+      messages.value.push(message)
+    }
+    updatePromotionKefuMessageReadStatus(Number(message.conversationId))
+  }
+  loadConversations()
+}
+
+/** 收到已读回执：刷新会话列表 */
+function handleWsRead() {
+  loadConversations()
+}
+
+/** 初始化：加载会话 + 建立 WebSocket 实时链路 */
 onMounted(() => {
   loadConversations()
+  connectKefuWebSocket()
+  uni.$on('mall:kefu:message', handleWsMessage)
+  uni.$on('mall:kefu:read', handleWsRead)
 })
+
+/** 卸载：断开 WebSocket 与事件监听 */
+function cleanup() {
+  uni.$off('mall:kefu:message', handleWsMessage)
+  uni.$off('mall:kefu:read', handleWsRead)
+  disconnectKefuWebSocket()
+}
+
+onUnmounted(cleanup)
+onUnload(cleanup)
 </script>

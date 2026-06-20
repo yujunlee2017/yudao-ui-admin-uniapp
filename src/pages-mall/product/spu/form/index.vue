@@ -106,15 +106,17 @@
                   </wd-radio>
                 </wd-radio-group>
               </wd-form-item>
-              <wd-form-item title="SKU JSON" title-width="200rpx" prop="skusText">
-                <view class="w-full">
-                  <wd-textarea v-model="formData.skusText" clearable :maxlength="8000" placeholder="请输入 SKU JSON，价格单位为元" />
-                  <wd-button class="mt-12rpx" size="small" variant="plain" @click="handleFillDefaultSku">
-                    生成默认 SKU
-                  </wd-button>
-                </view>
-              </wd-form-item>
             </wd-cell-group>
+            <view class="px-24rpx py-20rpx">
+              <view class="mb-16rpx text-28rpx text-[#333] font-medium">
+                SKU 规格与价格
+              </view>
+              <SkuEditor
+                v-model="skus"
+                :spec-type="formData.specType"
+                :sub-commission-type="formData.subCommissionType"
+              />
+            </view>
           </view>
 
           <view class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
@@ -199,14 +201,14 @@ import { getProductCategoryList } from '@/api/mall/product/category'
 import { getSimpleDeliveryExpressTemplateList } from '@/api/mall/trade/delivery/express-template'
 import { currRoute, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
-import { formatMallMoney, getMallResourceListUrl, getMallResourceReloadEvent, parseMallArray, parseMallJson } from '@/pages-mall/resource/utils'
+import SkuEditor from '@/pages-mall/product/spu/components/sku-editor.vue'
+import { parseMallArray } from '@/pages-mall/utils'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { createFormSchema } from '@/utils/wot'
 
 interface SpuFormData extends ProductSpu {
   sliderPicUrlsText?: string
   deliveryTypesText?: string
-  skusText?: string
 }
 
 definePage({
@@ -239,13 +241,13 @@ const formData = ref<SpuFormData>({
   brandId: undefined,
   specType: false,
   subCommissionType: false,
-  skusText: '',
   description: '',
   sort: 0,
   giveIntegral: 0,
   virtualSalesCount: 0,
   status: 0,
 })
+const skus = ref<ProductSku[]>([]) // SKU 列表（金额单位元）
 const formSchema = createFormSchema({
   name: [{ required: true, message: '商品名称不能为空' }],
   categoryId: [{ required: true, message: '商品分类不能为空' }],
@@ -254,7 +256,6 @@ const formSchema = createFormSchema({
   deliveryTypesText: [{ required: true, message: '配送方式不能为空' }],
   specType: [{ required: true, message: '多规格不能为空' }],
   subCommissionType: [{ required: true, message: '单独分佣不能为空' }],
-  skusText: [{ required: true, message: 'SKU JSON 不能为空' }],
   description: [{ required: true, message: '商品详情不能为空' }],
   sort: [{ required: true, message: '排序不能为空' }],
   status: [{ required: true, message: '商品状态不能为空' }],
@@ -262,7 +263,7 @@ const formSchema = createFormSchema({
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus(getMallResourceListUrl('productSpu'))
+  navigateBackPlus('/pages-mall/product/spu/index')
 }
 
 /** 获取选项文本 */
@@ -289,47 +290,33 @@ function yuanToCent(value: any) {
   return Math.round(Number(value) * 100)
 }
 
-/** 转换 SKU 到表单 JSON */
-function toSkuText(skus: ProductSku[] = []) {
-  const list = skus.map(item => ({
-    ...item,
-    price: centToYuan(item.price),
-    marketPrice: centToYuan(item.marketPrice),
-    costPrice: centToYuan(item.costPrice),
-    firstBrokeragePrice: centToYuan(item.firstBrokeragePrice),
-    secondBrokeragePrice: centToYuan(item.secondBrokeragePrice),
-  }))
-  return JSON.stringify(list, null, 2)
-}
-
-/** 转换 SKU 到提交数据 */
-function toSubmitSkus(value: any) {
-  const list = parseMallJson(value)
-  if (!Array.isArray(list)) {
-    return []
+/** SKU 分→元 */
+function toYuanSku(sku: ProductSku): ProductSku {
+  return {
+    ...sku,
+    price: centToYuan(sku.price),
+    marketPrice: centToYuan(sku.marketPrice),
+    costPrice: centToYuan(sku.costPrice),
+    firstBrokeragePrice: centToYuan(sku.firstBrokeragePrice),
+    secondBrokeragePrice: centToYuan(sku.secondBrokeragePrice),
   }
-  return list.map(item => ({
-    ...item,
-    price: yuanToCent(item.price),
-    marketPrice: yuanToCent(item.marketPrice),
-    costPrice: yuanToCent(item.costPrice),
-    firstBrokeragePrice: yuanToCent(item.firstBrokeragePrice),
-    secondBrokeragePrice: yuanToCent(item.secondBrokeragePrice),
-  }))
 }
 
-/** 生成默认 SKU */
-function handleFillDefaultSku() {
-  formData.value.skusText = JSON.stringify([{
-    name: formData.value.name || '默认规格',
-    price: 0.01,
-    marketPrice: 0.01,
-    costPrice: 0,
-    stock: 999,
-    weight: 0,
-    volume: 0,
-    properties: [],
-  }], null, 2)
+/** SKU 元→分 */
+function toCentSku(sku: ProductSku): ProductSku {
+  return {
+    ...sku,
+    price: yuanToCent(sku.price),
+    marketPrice: yuanToCent(sku.marketPrice),
+    costPrice: yuanToCent(sku.costPrice),
+    firstBrokeragePrice: yuanToCent(sku.firstBrokeragePrice),
+    secondBrokeragePrice: yuanToCent(sku.secondBrokeragePrice),
+  }
+}
+
+/** 默认单规格 SKU（元） */
+function createDefaultSku(): ProductSku {
+  return { price: 0, marketPrice: 0, costPrice: 0, stock: 0, properties: [] }
 }
 
 /** 加载选项 */
@@ -347,7 +334,7 @@ async function loadOptions() {
 /** 加载详情 */
 async function loadDetail() {
   if (!formId.value) {
-    handleFillDefaultSku()
+    skus.value = [createDefaultSku()]
     return
   }
   const data = await getProductSpu(formId.value)
@@ -355,8 +342,8 @@ async function loadDetail() {
     ...data,
     sliderPicUrlsText: (data.sliderPicUrls || []).join('\n'),
     deliveryTypesText: (data.deliveryTypes || []).join(','),
-    skusText: toSkuText(data.skus || []),
   }
+  skus.value = (data.skus || []).map(toYuanSku)
 }
 
 /** 构造提交数据 */
@@ -367,7 +354,7 @@ function buildSubmitData(): ProductSpu {
     id: formId.value,
     sliderPicUrls: parseMallArray(data.sliderPicUrlsText || ''),
     deliveryTypes: parseMallArray(data.deliveryTypesText || '', 'number') as number[],
-    skus: toSubmitSkus(data.skusText),
+    skus: skus.value.map(toCentSku),
   }
 }
 
@@ -379,7 +366,7 @@ async function handleSubmit() {
   }
   const data = buildSubmitData()
   if (!data.skus?.length) {
-    toast.warning('SKU JSON 至少需要一条数据')
+    toast.warning(formData.value.specType ? '请添加规格并生成 SKU' : '请完善 SKU 价格库存')
     return
   }
   formLoading.value = true
@@ -391,7 +378,7 @@ async function handleSubmit() {
       await createProductSpu(data)
       toast.success('新增成功')
     }
-    uni.$emit(getMallResourceReloadEvent('productSpu'))
+    uni.$emit('mall:product-spu:reload')
     setTimeout(() => handleBack(), 500)
   } finally {
     formLoading.value = false

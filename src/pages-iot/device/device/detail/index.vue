@@ -104,7 +104,7 @@ async function getDetail() {
 }
 
 /** 编辑设备 */
-function handleEdit() { uni.navigateTo({ url: '/pages-iot/device/device/form/index?id=' + props.id }) }
+function handleEdit() { uni.navigateTo({ url: `/pages-iot/device/device/form/index?id=${props.id}` }) }
 
 /** 查看认证信息 */
 async function handleAuthInfo() {
@@ -120,32 +120,32 @@ async function handleAuthInfo() {
 
 /** 查看物模型数据 */
 function handleThingModel() {
-  uni.navigateTo({ url: '/pages-iot/device/device/property/index?deviceId=' + props.id })
+  uni.navigateTo({ url: `/pages-iot/device/device/property/index?deviceId=${props.id}` })
 }
 
 /** 查看设备消息 */
 function handleMessage() {
-  uni.navigateTo({ url: '/pages-iot/device/device/message/index?deviceId=' + props.id })
+  uni.navigateTo({ url: `/pages-iot/device/device/message/index?deviceId=${props.id}` })
 }
 
 /** 模拟设备 */
 function handleSimulator() {
-  uni.navigateTo({ url: '/pages-iot/device/device/simulator/index?deviceId=' + props.id })
+  uni.navigateTo({ url: `/pages-iot/device/device/simulator/index?deviceId=${props.id}` })
 }
 
 /** 查看设备配置 */
 function handleConfig() {
-  uni.navigateTo({ url: '/pages-iot/device/device/config/index?deviceId=' + props.id })
+  uni.navigateTo({ url: `/pages-iot/device/device/config/index?deviceId=${props.id}` })
 }
 
 /** 查看子设备 */
 function handleSubDevice() {
-  uni.navigateTo({ url: '/pages-iot/device/device/sub-device/index?gatewayId=' + props.id })
+  uni.navigateTo({ url: `/pages-iot/device/device/sub-device/index?gatewayId=${props.id}` })
 }
 
 /** 查看 Modbus 配置 */
 function handleModbus() {
-  uni.navigateTo({ url: '/pages-iot/device/device/modbus/index?deviceId=' + props.id })
+  uni.navigateTo({ url: `/pages-iot/device/device/modbus/index?deviceId=${props.id}` })
 }
 
 /** 删除设备 */

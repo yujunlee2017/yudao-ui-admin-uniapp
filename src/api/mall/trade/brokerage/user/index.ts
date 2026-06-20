@@ -36,10 +36,10 @@ export function updateTradeBrokerageUser(data: Record<string, any>) {
 
 /** 清除推广员 */
 export function clearTradeBrokerageUserBind(id: number) {
-  return http.put<boolean>(`/trade/brokerage-user/clear-bind-user?id=${id}`)
+  return http.put<boolean>('/trade/brokerage-user/clear-bind-user', { id })
 }
 
 /** 修改推广资格 */
-export function updateTradeBrokerageUserEnabled(data: { id: number, brokerageEnabled: boolean }) {
-  return http.put<boolean>('/trade/brokerage-user/update-brokerage-enabled', data)
+export function updateTradeBrokerageUserEnabled(data: { id: number, enabled: boolean }) {
+  return http.put<boolean>('/trade/brokerage-user/update-brokerage-enable', data)
 }

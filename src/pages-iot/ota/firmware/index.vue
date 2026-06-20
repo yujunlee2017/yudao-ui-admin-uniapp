@@ -29,7 +29,7 @@ function reload() { pagingRef.value?.reload() }
 /** 新增固件 */
 function handleAdd() { uni.navigateTo({ url: '/pages-iot/ota/firmware/form/index' }) }
 /** 查看详情 */
-function handleDetail(item: OtaFirmware) { uni.navigateTo({ url: '/pages-iot/ota/firmware/detail/index?id=' + item.id }) }
+function handleDetail(item: OtaFirmware) { uni.navigateTo({ url: `/pages-iot/ota/firmware/detail/index?id=${item.id}` }) }
 /** 初始化 */
 onMounted(() => { uni.$on('iot:ota-firmware:reload', reload) })
 /** 卸载 */

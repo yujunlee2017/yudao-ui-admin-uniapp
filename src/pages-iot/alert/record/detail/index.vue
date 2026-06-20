@@ -9,8 +9,8 @@
         <wd-cell title="记录编号" :value="String(formData?.id || '-')" />
         <wd-cell title="告警名称" :value="formData?.configName || '-'" />
         <wd-cell title="告警级别"><dict-tag :type="DICT_TYPE.IOT_ALERT_LEVEL" :value="formData?.configLevel" /></wd-cell>
-        <wd-cell title="产品" :value="formData?.productName || String(formData?.productId || '-')" />
-        <wd-cell title="设备" :value="formData?.deviceName || String(formData?.deviceId || '-')" />
+        <wd-cell title="产品" :value="productName || (formData?.productId != null ? String(formData.productId) : '-')" />
+        <wd-cell title="设备" :value="deviceName || (formData?.deviceId != null ? String(formData.deviceId) : '-')" />
         <wd-cell title="是否处理"><dict-tag :type="DICT_TYPE.INFRA_BOOLEAN_STRING" :value="formData?.processStatus" /></wd-cell>
         <wd-cell title="处理结果" :value="formData?.processRemark || '-'" />
         <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime) || '-'" />
@@ -32,6 +32,8 @@ import { onShow } from '@dcloudio/uni-app'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, ref } from 'vue'
 import { getAlertRecord, processAlertRecord } from '@/api/iot/alert/record'
+import { getDevice } from '@/api/iot/device/device'
+import { getProduct } from '@/api/iot/product/product'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -45,13 +47,21 @@ const formData = ref<AlertRecord>() // 详情数据
 const processVisible = ref(false) // 处理弹窗
 const processing = ref(false) // 处理状态
 const processRemark = ref('') // 处理结果
+const productName = ref('') // 产品名称（本地解析）
+const deviceName = ref('') // 设备名称（本地解析）
 const deviceMessageJson = computed(() => JSON.stringify(formData.value?.deviceMessage || {}, null, 2))
 
 /** 返回上一页 */
 function handleBack() { navigateBackPlus('/pages-iot/alert/record/index') }
 
 /** 加载告警记录详情 */
-async function getDetail() { if (props.id) formData.value = await getAlertRecord(Number(props.id)) }
+async function getDetail() {
+  if (!props.id) return
+  formData.value = await getAlertRecord(Number(props.id))
+  // 记录仅返回产品/设备 ID，单独解析名称
+  if (formData.value.productId) productName.value = (await getProduct(formData.value.productId))?.name || ''
+  if (formData.value.deviceId) deviceName.value = (await getDevice(formData.value.deviceId))?.deviceName || ''
+}
 
 /** 处理告警 */
 async function handleProcess() {

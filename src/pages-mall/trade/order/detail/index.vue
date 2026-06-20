@@ -116,12 +116,12 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="formData" class="yd-detail-footer">
+    <view v-if="formData && (showRemarkButton || sheetActions.length)" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button class="flex-1" type="warning" @click="openAction('remark')">
+        <wd-button v-if="showRemarkButton" class="flex-1" type="warning" @click="openAction('remark')">
           备注
         </wd-button>
-        <wd-button class="flex-1" type="info" @click="actionSheetVisible = true">
+        <wd-button v-if="sheetActions.length" class="flex-1" type="info" @click="actionSheetVisible = true">
           更多
         </wd-button>
       </view>
@@ -208,12 +208,13 @@ import {
   updateTradeOrderPrice,
   updateTradeOrderRemark,
 } from '@/api/mall/trade/order'
+import { getDictLabel } from '@/hooks/useDict'
+import { useAccess } from '@/hooks/useAccess'
+import { formatMallMoney } from '@/pages-mall/utils'
 import { currRoute, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import { getDictLabel } from '@/hooks/useDict'
 import { createFormSchema } from '@/utils/wot'
-import { formatMallMoney, getMallResourceListUrl, getMallResourceReloadEvent } from '@/pages-mall/resource/utils'
 
 interface ActionField {
   prop: string
@@ -231,8 +232,14 @@ interface DetailAction {
   fields?: ActionField[]
   defaults?: () => Record<string, any>
   confirm?: string
+  visible?: () => boolean
   handler: (data?: Record<string, any>) => Promise<unknown>
 }
+
+// 订单状态：0 待付款、10 待发货、20 待收货、30 已完成、40 已取消
+const ORDER_STATUS = { UNPAID: 0, UNDELIVERED: 10 }
+// 配送方式：1 快递、2 自提
+const DELIVERY_TYPE = { EXPRESS: 1, PICK_UP: 2 }
 
 definePage({
   style: {
@@ -241,6 +248,7 @@ definePage({
   },
 })
 
+const { hasAccessByCodes } = useAccess()
 const toast = useToast()
 const dialog = useDialog()
 const formData = ref<TradeOrder>() // 订单详情
@@ -252,55 +260,73 @@ const actionSubmitting = ref(false) // 动作提交状态
 const currentAction = ref<DetailAction>() // 当前动作
 const actionFormData = ref<Record<string, any>>({}) // 动作表单数据
 const actionFormRef = ref<FormInstance>() // 动作表单引用
-const actions = computed<DetailAction[]>(() => [
-  {
-    key: 'delivery',
-    label: '订单发货',
-    fields: [
-      { prop: 'logisticsId', label: '快递公司编号', type: 'number' },
-      { prop: 'logisticsNo', label: '快递单号', type: 'text', required: true },
-    ],
-    defaults: () => ({ logisticsId: formData.value?.logisticsId, logisticsNo: formData.value?.logisticsNo || '' }),
-    handler: data => deliveryTradeOrder({ id: detailId.value, logisticsId: data?.logisticsId ?? null, logisticsNo: String(data?.logisticsNo || '') }),
-  },
-  {
-    key: 'remark',
-    label: '修改备注',
-    fields: [{ prop: 'remark', label: '商家备注', type: 'textarea', required: true }],
-    defaults: () => ({ remark: formData.value?.remark || '' }),
-    handler: data => updateTradeOrderRemark({ id: detailId.value, remark: data?.remark }),
-  },
-  {
-    key: 'price',
-    label: '订单改价',
-    fields: [{ prop: 'adjustPrice', label: '订单调价', type: 'money', required: true, min: -999999, placeholder: '正数加价，负数减价' }],
-    defaults: () => ({ adjustPrice: Number(formData.value?.adjustPrice || 0) / 100 }),
-    handler: data => updateTradeOrderPrice({ id: detailId.value, adjustPrice: Math.round(Number(data?.adjustPrice || 0) * 100) }),
-  },
-  {
-    key: 'address',
-    label: '修改地址',
-    fields: [
-      { prop: 'receiverName', label: '收件人', type: 'text', required: true },
-      { prop: 'receiverMobile', label: '手机号', type: 'text', required: true },
-      { prop: 'receiverAreaId', label: '地区编号', type: 'number', required: true },
-      { prop: 'receiverDetailAddress', label: '详细地址', type: 'textarea', required: true },
-    ],
-    defaults: () => ({
-      receiverName: formData.value?.receiverName || '',
-      receiverMobile: formData.value?.receiverMobile || '',
-      receiverAreaId: formData.value?.receiverAreaId,
-      receiverDetailAddress: formData.value?.receiverDetailAddress || '',
-    }),
-    handler: data => updateTradeOrderAddress({ id: detailId.value, ...data }),
-  },
-  {
-    key: 'pick-up',
-    label: '订单核销',
-    confirm: '确定要核销该订单吗？',
-    handler: () => pickUpTradeOrder(Number(detailId.value)),
-  },
-])
+const actions = computed<DetailAction[]>(() => {
+  const status = formData.value?.status
+  const deliveryType = formData.value?.deliveryType
+  const canUpdate = hasAccessByCodes(['trade:order:update'])
+  const canPickUp = hasAccessByCodes(['trade:order:pick-up'])
+  const result: DetailAction[] = [
+    {
+      key: 'delivery',
+      label: '订单发货',
+      // 仅「待发货 + 快递」可发货
+      visible: () => canUpdate && status === ORDER_STATUS.UNDELIVERED && deliveryType === DELIVERY_TYPE.EXPRESS,
+      fields: [
+        { prop: 'logisticsId', label: '快递公司编号', type: 'number' },
+        { prop: 'logisticsNo', label: '快递单号', type: 'text', required: true },
+      ],
+      defaults: () => ({ logisticsId: formData.value?.logisticsId, logisticsNo: formData.value?.logisticsNo || '' }),
+      handler: data => deliveryTradeOrder({ id: detailId.value, logisticsId: data?.logisticsId ?? null, logisticsNo: String(data?.logisticsNo || '') }),
+    },
+    {
+      key: 'remark',
+      label: '修改备注',
+      // 备注任意状态可改
+      visible: () => canUpdate,
+      fields: [{ prop: 'remark', label: '商家备注', type: 'textarea', required: true }],
+      defaults: () => ({ remark: formData.value?.remark || '' }),
+      handler: data => updateTradeOrderRemark({ id: detailId.value, remark: data?.remark }),
+    },
+    {
+      key: 'price',
+      label: '订单改价',
+      // 仅「待付款」可改价
+      visible: () => canUpdate && status === ORDER_STATUS.UNPAID,
+      fields: [{ prop: 'adjustPrice', label: '订单调价', type: 'money', required: true, min: -999999, placeholder: '正数加价，负数减价' }],
+      defaults: () => ({ adjustPrice: Number(formData.value?.adjustPrice || 0) / 100 }),
+      handler: data => updateTradeOrderPrice({ id: detailId.value, adjustPrice: Math.round(Number(data?.adjustPrice || 0) * 100) }),
+    },
+    {
+      key: 'address',
+      label: '修改地址',
+      // 仅「待发货 + 快递」可改地址
+      visible: () => canUpdate && status === ORDER_STATUS.UNDELIVERED && deliveryType === DELIVERY_TYPE.EXPRESS,
+      fields: [
+        { prop: 'receiverName', label: '收件人', type: 'text', required: true },
+        { prop: 'receiverMobile', label: '手机号', type: 'text', required: true },
+        { prop: 'receiverAreaId', label: '地区编号', type: 'number', required: true },
+        { prop: 'receiverDetailAddress', label: '详细地址', type: 'textarea', required: true },
+      ],
+      defaults: () => ({
+        receiverName: formData.value?.receiverName || '',
+        receiverMobile: formData.value?.receiverMobile || '',
+        receiverAreaId: formData.value?.receiverAreaId,
+        receiverDetailAddress: formData.value?.receiverDetailAddress || '',
+      }),
+      handler: data => updateTradeOrderAddress({ id: detailId.value, ...data }),
+    },
+    {
+      key: 'pick-up',
+      label: '订单核销',
+      // 仅「待发货 + 自提」可核销
+      visible: () => canPickUp && status === ORDER_STATUS.UNDELIVERED && deliveryType === DELIVERY_TYPE.PICK_UP,
+      confirm: '确定要核销该订单吗？',
+      handler: () => pickUpTradeOrder(Number(detailId.value)),
+    },
+  ]
+  return result.filter(item => item.visible?.() ?? true)
+})
+const showRemarkButton = computed(() => actions.value.some(item => item.key === 'remark')) // 备注按钮可见
 const sheetActions = computed(() => actions.value
   .filter(item => item.key !== 'remark')
   .map(item => ({ name: item.label, value: item.key })))
@@ -317,7 +343,7 @@ const actionFormSchema = createFormSchema(() => {
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus(getMallResourceListUrl('tradeOrder'))
+  navigateBackPlus('/pages-mall/trade/order/index')
 }
 
 /** 加载详情 */
@@ -383,7 +409,7 @@ async function runAction(action: DetailAction, data?: Record<string, any>) {
   try {
     await action.handler(data)
     toast.success('操作成功')
-    uni.$emit(getMallResourceReloadEvent('tradeOrder'))
+    uni.$emit('mall:trade-order:reload')
     await loadDetail()
   } finally {
     actionSubmitting.value = false

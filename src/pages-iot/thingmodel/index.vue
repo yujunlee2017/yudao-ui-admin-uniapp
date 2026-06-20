@@ -1,7 +1,7 @@
 <template>
   <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
-    <wd-navbar title="产品物模型" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
+    <wd-navbar title="产品物模型" left-arrow placeholder safe-area-inset-top fixed :right-text="showTsl ? 'TSL' : ''" @click-left="handleBack" @click-right="handleTsl" />
 
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
@@ -20,6 +20,15 @@
 
     <!-- 新增按钮 -->
     <wd-fab v-if="canCreate && hasAccessByCodes(['iot:thing-model:create'])" position="right-bottom" type="primary" :expandable="false" @click="handleAdd" />
+
+    <!-- 物模型 TSL 弹窗 -->
+    <wd-popup v-model="tslVisible" position="bottom" custom-style="border-radius: 24rpx 24rpx 0 0;">
+      <view class="max-h-[80vh] p-24rpx">
+        <view class="mb-24rpx text-center text-32rpx text-[#333] font-semibold">物模型 TSL</view>
+        <scroll-view scroll-y class="max-h-[60vh]"><text class="break-all text-24rpx text-[#666]">{{ tslJson }}</text></scroll-view>
+        <wd-button class="mt-24rpx" block @click="tslVisible = false">关闭</wd-button>
+      </view>
+    </wd-popup>
   </view>
 </template>
 
@@ -27,7 +36,7 @@
 import type { ThingModelData } from '@/api/iot/thingmodel'
 import { onUnload } from '@dcloudio/uni-app'
 import { computed, onMounted, ref } from 'vue'
-import { getThingModelPage } from '@/api/iot/thingmodel'
+import { getThingModelPage, getThingModelTSLByProductId } from '@/api/iot/thingmodel'
 import { useAccess } from '@/hooks/useAccess'
 import { getDataTypeOptionsLabel } from '@/pages-iot/utils/constants'
 import { navigateBackPlus } from '@/utils'
@@ -42,6 +51,9 @@ const list = ref<ThingModelData[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({ productId: props.productId ? Number(props.productId) : -1 }) // 查询参数
 const canCreate = computed(() => Number(queryParams.value.productId) > 0) // 是否允许新增功能
+const showTsl = computed(() => Number(queryParams.value.productId) > 0 && hasAccessByCodes(['iot:thing-model:query'])) // 是否展示 TSL 入口
+const tslVisible = ref(false) // TSL 弹窗显示状态
+const tslJson = ref('') // TSL JSON 文本
 
 /** 返回上一页 */
 function handleBack() { navigateBackPlus() }
@@ -59,10 +71,19 @@ function handleReset() { handleQuery() }
 function reload() { pagingRef.value?.reload() }
 
 /** 新增物模型 */
-function handleAdd() { uni.navigateTo({ url: '/pages-iot/thingmodel/form/index' + (queryParams.value.productId ? '?productId=' + queryParams.value.productId : '') }) }
+function handleAdd() { uni.navigateTo({ url: `/pages-iot/thingmodel/form/index${queryParams.value.productId ? `?productId=${queryParams.value.productId}` : ''}` }) }
 
 /** 查看详情 */
-function handleDetail(item: ThingModelData) { uni.navigateTo({ url: '/pages-iot/thingmodel/detail/index?id=' + item.id }) }
+function handleDetail(item: ThingModelData) { uni.navigateTo({ url: `/pages-iot/thingmodel/detail/index?id=${item.id}` }) }
+
+/** 查看物模型 TSL */
+async function handleTsl() {
+  const productId = Number(queryParams.value.productId)
+  if (!(productId > 0)) return
+  const tsl = await getThingModelTSLByProductId(productId)
+  tslJson.value = JSON.stringify(tsl, null, 2)
+  tslVisible.value = true
+}
 
 /** 初始化 */
 onMounted(() => { uni.$on('iot:thingmodel:reload', reload) })
