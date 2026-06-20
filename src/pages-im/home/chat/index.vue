@@ -40,10 +40,14 @@
           :group-members="groupMembers"
           :private-max-read-message-id="privateMaxReadMessageId"
           :show-time="shouldShowTime(index)"
+          :select-mode="selectMode"
+          :selected="selectedIds.includes(messageKey(item))"
           @longpress="handleMessageMore"
           @scroll-to-quote="scrollToQuote"
           @material-click="handleMaterialClick"
           @merge-click="handleMergeClick"
+          @toggle-select="toggleSelect"
+          @show-readers="handleShowReaders"
         />
         <view id="msg-bottom" />
       </view>
@@ -51,6 +55,7 @@
 
     <!-- 输入区 -->
     <ChatInput
+      v-if="!selectMode"
       :conversation-type="conversationType"
       :group-members="groupMembers"
       :self-user-id="userStore.userInfo.userId"
@@ -58,12 +63,31 @@
       @send="handleSend"
       @clear-reply="clearReplyTarget"
     />
+    <!-- 多选操作栏 -->
+    <view
+      v-else
+      class="flex shrink-0 items-center justify-around border-t border-t-[#eee] bg-white py-24rpx pb-[calc(24rpx+env(safe-area-inset-bottom))]"
+    >
+      <text class="text-28rpx text-[#666]" @click="exitSelectMode">取消</text>
+      <text class="text-28rpx" :class="selectedIds.length ? 'text-[#1677ff]' : 'text-[#ccc]'" @click="forwardSelected">
+        转发{{ selectedIds.length ? `(${selectedIds.length})` : '' }}
+      </text>
+      <text class="text-28rpx" :class="selectedIds.length ? 'text-[#fa5151]' : 'text-[#ccc]'" @click="deleteSelected">
+        删除
+      </text>
+    </view>
 
     <!-- 频道素材详情 -->
     <MaterialDetail v-model="materialVisible" :payload="materialPayload" />
 
     <!-- 合并转发详情 -->
     <MergeDetail v-model="mergeVisible" :payload="mergePayload" />
+
+    <!-- 转发选择 -->
+    <ForwardPicker v-model="forwardVisible" @confirm="handleForwardConfirm" />
+
+    <!-- 群已读情况 -->
+    <ReadDetail v-model="readDetailVisible" :read-members="readMembers" :unread-members="unreadMembers" />
   </view>
 </template>
 
@@ -71,6 +95,7 @@
 import type { ImGroupMemberRespVO } from '@/api/im/group/member'
 import type { ImGroupMessageRespVO } from '@/api/im/message/group'
 import type { ImPrivateMessageRespVO } from '@/api/im/message/private'
+import type { ConversationDO } from '@/pages-im/home/db'
 import type { ImMaterialMessage, ImMergeMessage, ImQuoteMessage } from '@/pages-im/utils/message'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onHide, onShow } from '@dcloudio/uni-app'
@@ -79,6 +104,7 @@ import { getClientConversationId } from '@/pages-im/home/db'
 import { getGroupMemberList } from '@/api/im/group/member'
 import {
   getGroupMessageList,
+  getGroupReadUsers,
   recallGroupMessage,
   readGroupMessages,
   sendGroupMessage,
@@ -101,15 +127,18 @@ import {
   type ImFileMessage,
   type ImTextMessage,
   parseMessage,
+  removeQuotePayload,
   serializeMessage,
   withQuotePayload,
 } from '@/pages-im/utils/message'
 import { useImConversations } from '../composables/useImConversations'
 import { connectImWebSocket } from '../composables/useImWebSocket'
 import ChatInput from './components/chat-input.vue'
+import ForwardPicker from './components/forward-picker.vue'
 import MaterialDetail from './components/material-detail.vue'
 import MergeDetail from './components/merge-detail.vue'
 import MessageItem from './components/message-item.vue'
+import ReadDetail from './components/read-detail.vue'
 
 type ChatMessage = ImPrivateMessageRespVO | ImGroupMessageRespVO
 
@@ -152,6 +181,13 @@ const materialVisible = ref(false) // 素材详情弹窗
 const materialPayload = ref<ImMaterialMessage>() // 素材消息内容
 const mergeVisible = ref(false) // 合并转发详情弹窗
 const mergePayload = ref<ImMergeMessage>() // 合并转发内容
+const selectMode = ref(false) // 消息多选模式
+const selectedIds = ref<string[]>([]) // 已选消息标识
+const forwardVisible = ref(false) // 转发选择弹窗
+const forwardMessages = ref<ChatMessage[]>([]) // 待转发消息
+const readDetailVisible = ref(false) // 群已读弹窗
+const readMembers = ref<ImGroupMemberRespVO[]>([]) // 已读成员
+const unreadMembers = ref<ImGroupMemberRespVO[]>([]) // 未读成员
 const replyTarget = ref<ImQuoteMessage>() // 回复目标
 const { markConversationRead, setActiveConversation } = useImConversations()
 const chatVisible = ref(false) // 当前聊天页是否可见
@@ -251,6 +287,106 @@ function handleMergeClick(payload: ImMergeMessage) {
   mergeVisible.value = true
 }
 
+/** 消息唯一标识 */
+function messageKey(item: ChatMessage) {
+  return String(item.id || item.clientMessageId)
+}
+
+/** 多选切换 */
+function toggleSelect(item: ChatMessage) {
+  const key = messageKey(item)
+  const index = selectedIds.value.indexOf(key)
+  if (index >= 0) {
+    selectedIds.value.splice(index, 1)
+  } else {
+    selectedIds.value.push(key)
+  }
+}
+
+/** 进入多选模式 */
+function enterSelectMode(item: ChatMessage) {
+  selectMode.value = true
+  selectedIds.value = [messageKey(item)]
+}
+
+/** 退出多选模式 */
+function exitSelectMode() {
+  selectMode.value = false
+  selectedIds.value = []
+}
+
+/** 当前选中的消息 */
+function getSelectedMessages() {
+  return messageList.value.filter(item => selectedIds.value.includes(messageKey(item)))
+}
+
+/** 打开转发选择 */
+function openForward(messages: ChatMessage[]) {
+  if (messages.length === 0) {
+    return
+  }
+  forwardMessages.value = [...messages]
+  forwardVisible.value = true
+}
+
+/** 转发选中消息 */
+function forwardSelected() {
+  openForward(getSelectedMessages())
+}
+
+/** 确认转发到目标会话 */
+async function handleForwardConfirm(targets: ConversationDO[]) {
+  for (const target of targets) {
+    for (const message of forwardMessages.value) {
+      const content = removeQuotePayload(message.content)
+      if (target.type === ImConversationType.GROUP) {
+        await sendGroupMessage({ clientMessageId: generateClientMessageId(), groupId: target.targetId, type: message.type, content })
+      } else {
+        await sendPrivateMessage({ clientMessageId: generateClientMessageId(), receiverId: target.targetId, type: message.type, content })
+      }
+    }
+  }
+  toast.success('转发成功')
+  exitSelectMode()
+}
+
+/** 删除选中消息（本地移除） */
+function confirmDelete(messages: ChatMessage[]) {
+  if (messages.length === 0) {
+    return
+  }
+  uni.showModal({
+    title: '提示',
+    content: `确定删除选中的 ${messages.length} 条消息吗？`,
+    success: ({ confirm }) => {
+      if (!confirm) {
+        return
+      }
+      const keys = new Set(messages.map(messageKey))
+      messageList.value = messageList.value.filter(item => !keys.has(messageKey(item)))
+      exitSelectMode()
+    },
+  })
+}
+
+/** 删除选中消息 */
+function deleteSelected() {
+  confirmDelete(getSelectedMessages())
+}
+
+/** 查看群消息已读成员 */
+async function handleShowReaders(message: ChatMessage) {
+  if (!message.id) {
+    return
+  }
+  const readIds = await getGroupReadUsers({ groupId: targetId.value, messageId: message.id })
+  const readSet = new Set(readIds)
+  const others = groupMembers.value.filter(item => item.userId !== userStore.userInfo.userId && !item.quitTime)
+  readMembers.value = others.filter(item => readSet.has(item.userId))
+  unreadMembers.value = others.filter(item => !readSet.has(item.userId))
+  readDetailVisible.value = true
+}
+
 /** 滚动到底部 */
 async function scrollToBottom() {
   await nextTick()
@@ -337,12 +473,17 @@ function handleMessageMore(item: ChatMessage) {
   if (item.type === ImMessageType.TEXT) {
     actions.push({ name: '复制', value: 'copy' })
   }
+  if (item.type !== ImMessageType.RECALL) {
+    actions.push({ name: '转发', value: 'forward' })
+  }
   if (canRecallMessage(item)) {
     actions.push({ name: '撤回', value: 'recall' })
   }
   if (item.type === ImMessageType.FILE) {
     actions.push({ name: '复制文件链接', value: 'copyFileUrl' })
   }
+  actions.push({ name: '多选', value: 'multiSelect' })
+  actions.push({ name: '删除', value: 'delete' })
   if (actions.length === 0) {
     return
   }
@@ -373,6 +514,12 @@ async function handleMessageAction(item: ChatMessage, action: string) {
     }
   } else if (action === 'recall') {
     await handleRecallMessage(item)
+  } else if (action === 'forward') {
+    openForward([item])
+  } else if (action === 'multiSelect') {
+    enterSelectMode(item)
+  } else if (action === 'delete') {
+    confirmDelete([item])
   }
 }
 

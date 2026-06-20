@@ -1,15 +1,28 @@
 <template>
-  <view class="mb-28rpx">
-    <!-- 时间分隔 -->
-    <view v-if="showTime" class="mb-12rpx text-center text-22rpx text-[#aaa]">
-      {{ formatDateTime(message.sendTime) }}
+  <view
+    class="mb-28rpx"
+    :class="selectMode ? 'flex items-start gap-12rpx px-8rpx' : ''"
+    @click="onRootClick"
+  >
+    <!-- 多选勾选框 -->
+    <view v-if="selectMode" class="shrink-0" :style="{ paddingTop: showTime ? '62rpx' : '6rpx' }">
+      <wd-icon
+        :name="selected ? 'check-circle-fill' : 'check-circle'"
+        size="44rpx"
+        :color="selected ? '#07c160' : '#ccc'"
+      />
     </view>
-    <!-- 系统提示（撤回 / 群通知 / 好友提示 / 通话）：居中灰条 -->
-    <view v-if="isSystemTip" class="py-6rpx text-center text-22rpx text-[#999]">
-      <text>{{ systemTipText }}</text>
-    </view>
-    <!-- 普通消息 -->
-    <view v-else class="flex items-start gap-16rpx" :class="isSelf ? 'flex-row-reverse' : ''">
+    <view :class="selectMode ? 'min-w-0 flex-1' : ''">
+      <!-- 时间分隔 -->
+      <view v-if="showTime" class="mb-12rpx text-center text-22rpx text-[#aaa]">
+        {{ formatDateTime(message.sendTime) }}
+      </view>
+      <!-- 系统提示（撤回 / 群通知 / 好友提示 / 通话）：居中灰条 -->
+      <view v-if="isSystemTip" class="py-6rpx text-center text-22rpx text-[#999]">
+        <text>{{ systemTipText }}</text>
+      </view>
+      <!-- 普通消息 -->
+      <view v-else class="flex items-start gap-16rpx" :class="isSelf ? 'flex-row-reverse' : ''">
       <ImAvatar :src="senderAvatar" :name="senderName" size="80rpx" :round="false" />
       <view class="flex max-w-[560rpx] flex-col" :class="isSelf ? 'items-end' : 'items-start'">
         <!-- 群聊对方昵称 -->
@@ -20,7 +33,7 @@
         <view
           class="im-bubble"
           :class="[isSelf ? 'im-bubble--self' : 'im-bubble--other', plain ? 'im-bubble--plain' : '']"
-          @longpress="emit('longpress', message)"
+          @longpress="onBubbleLongpress"
         >
           <MessageQuote
             v-if="quoteTitle"
@@ -40,9 +53,11 @@
           v-if="statusText"
           class="mt-8rpx text-22rpx text-[#bbb]"
           :class="isSelf ? 'text-right' : 'text-left'"
+          @click="onStatusClick"
         >
           {{ statusText }}
         </view>
+      </view>
       </view>
     </view>
   </view>
@@ -84,6 +99,8 @@ const props = defineProps<{
   groupMembers?: ImGroupMemberRespVO[] // 群成员（群聊用于解析昵称/头像）
   privateMaxReadMessageId?: number // 私聊对方已读位置
   showTime?: boolean // 是否展示时间分隔
+  selectMode?: boolean // 多选模式
+  selected?: boolean // 是否选中
 }>()
 
 const emit = defineEmits<{
@@ -91,7 +108,34 @@ const emit = defineEmits<{
   'scroll-to-quote': [content: string] // 点击引用滚动到原消息
   'material-click': [payload: any] // 点击频道素材
   'merge-click': [payload: any] // 点击合并转发
+  'toggle-select': [message: ChatMessage] // 多选切换
+  'show-readers': [message: ChatMessage] // 查看群已读成员
 }>()
+
+/** 点击发送状态：群聊自己消息查看已读成员 */
+function onStatusClick() {
+  if (props.selectMode) {
+    return
+  }
+  const message = props.message as ImGroupMessageRespVO
+  if (props.conversationType === ImConversationType.GROUP && message.senderId === props.selfUserId && message.readCount) {
+    emit('show-readers', props.message)
+  }
+}
+
+/** 根节点点击：多选模式下切换选中 */
+function onRootClick() {
+  if (props.selectMode) {
+    emit('toggle-select', props.message)
+  }
+}
+
+/** 气泡长按：非多选模式才弹操作菜单 */
+function onBubbleLongpress() {
+  if (!props.selectMode) {
+    emit('longpress', props.message)
+  }
+}
 
 const isGroup = computed(() => props.conversationType === ImConversationType.GROUP) // 是否群聊
 const isSelf = computed(() => props.message.senderId === props.selfUserId) // 是否自己发送
