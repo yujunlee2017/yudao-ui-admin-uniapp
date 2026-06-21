@@ -1,4 +1,3 @@
-<!-- TODO @AI：融合到 level 里？类似别的模块 -->
 <template>
   <wd-form-item
     v-if="label || prop"
@@ -20,7 +19,7 @@
     v-model="selectedId"
     v-model:visible="visible"
     :title="placeholder"
-    :columns="levelList"
+    :columns="groupList"
     value-key="id"
     label-key="name"
     type="radio"
@@ -30,9 +29,9 @@
 </template>
 
 <script lang="ts" setup>
-import type { MemberLevel } from '@/api/member/level'
+import type { MemberGroup } from '@/api/member/group'
 import { computed, onMounted, ref, watch } from 'vue'
-import { getSimpleMemberLevelList } from '@/api/member/level'
+import { getSimpleMemberGroupList } from '@/api/member/group'
 
 const props = withDefaults(defineProps<{
   label?: string
@@ -43,7 +42,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   label: '',
   labelWidth: '180rpx',
-  placeholder: '请选择用户等级',
+  placeholder: '请选择用户分组',
   prop: '',
 })
 
@@ -51,18 +50,18 @@ const emit = defineEmits<{
   'update:modelValue': [value: number | undefined]
 }>()
 
-const levelList = ref<MemberLevel[]>([])
+const groupList = ref<MemberGroup[]>([])
 const selectedId = ref<number | string>('')
 const visible = ref(false) // 选择弹窗显示状态
 
-const selectedLabel = computed(() => getLevelName(Number(selectedId.value)))
+const selectedLabel = computed(() => getGroupName(Number(selectedId.value)))
 
-/** 获取等级名称 */
-function getLevelName(id?: number) {
+/** 获取分组名称 */
+function getGroupName(id?: number) {
   if (!id) {
     return ''
   }
-  return levelList.value.find(item => item.id === id)?.name || ''
+  return groupList.value.find(item => item.id === id)?.name || ''
 }
 
 /** 选择确认 */
@@ -80,10 +79,10 @@ watch(
 
 /** 初始化 */
 onMounted(async () => {
-  levelList.value = await getSimpleMemberLevelList()
+  groupList.value = await getSimpleMemberGroupList()
 })
 
 defineExpose({
-  getLevelName,
+  getGroupName,
 })
 </script>

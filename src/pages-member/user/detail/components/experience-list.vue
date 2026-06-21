@@ -12,7 +12,7 @@
             <view class="min-w-0 flex-1 truncate text-30rpx text-[#333] font-semibold">
               {{ item.title || '成长值变动' }}
             </view>
-            <wd-tag :type="(item.experience || 0) >= 0 ? 'success' : 'danger'" variant="plain">
+            <wd-tag :type="(item.experience || 0) > 0 ? 'success' : 'danger'" variant="plain">
               {{ (item.experience || 0) > 0 ? `+${item.experience}` : item.experience }}
             </wd-tag>
           </view>

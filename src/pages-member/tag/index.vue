@@ -55,7 +55,8 @@
 
 <script lang="ts" setup>
 import type { MemberTag } from '@/api/member/tag'
-import { ref } from 'vue'
+import { onUnload } from '@dcloudio/uni-app'
+import { onMounted, ref } from 'vue'
 import { getMemberTagPage } from '@/api/member/tag'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
@@ -122,7 +123,14 @@ function handleDetail(item: MemberTag) {
     url: `/pages-member/tag/detail/index?id=${item.id}`,
   })
 }
-</script>
 
-<style lang="scss" scoped>
-</style>
+/** 初始化 */
+onMounted(() => {
+  uni.$on('member:tag:reload', reload)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('member:tag:reload', reload)
+})
+</script>

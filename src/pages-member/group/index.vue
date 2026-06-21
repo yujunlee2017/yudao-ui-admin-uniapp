@@ -62,7 +62,8 @@
 
 <script lang="ts" setup>
 import type { MemberGroup } from '@/api/member/group'
-import { ref } from 'vue'
+import { onUnload } from '@dcloudio/uni-app'
+import { onMounted, ref } from 'vue'
 import { getMemberGroupPage } from '@/api/member/group'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
@@ -130,7 +131,14 @@ function handleDetail(item: MemberGroup) {
     url: `/pages-member/group/detail/index?id=${item.id}`,
   })
 }
-</script>
 
-<style lang="scss" scoped>
-</style>
+/** 初始化 */
+onMounted(() => {
+  uni.$on('member:group:reload', reload)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('member:group:reload', reload)
+})
+</script>

@@ -133,6 +133,7 @@ async function handleDelete() {
   try {
     await deleteMemberLevel(Number(props.id))
     toast.success('删除成功')
+    uni.$emit('member:level:reload')
     setTimeout(() => {
       handleBack()
     }, 500)
@@ -146,6 +147,3 @@ onMounted(() => {
   getDetail()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

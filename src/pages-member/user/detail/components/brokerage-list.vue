@@ -1,80 +1,61 @@
 <template>
-  <scroll-view scroll-y class="min-h-520rpx">
-    <view class="p-24rpx">
-      <!-- TODO @AI：改成类似 components 其他的 search-form，顶部点出来！（风格一致！） -->
-      <view class="mb-20rpx rounded-12rpx bg-white p-16rpx">
-        <wd-radio-group v-model="level" type="button" @change="handleLevelChange">
-          <wd-radio value="">
-            全部
-          </wd-radio>
-          <wd-radio value="1">
-            一级
-          </wd-radio>
-          <wd-radio value="2">
-            二级
-          </wd-radio>
-        </wd-radio-group>
-        <DateRangeField v-model="bindUserTime" label="绑定时间" />
-        <view class="mt-16rpx flex gap-16rpx">
-          <wd-button class="flex-1" size="small" variant="plain" @click="handleResetTime">
-            重置
-          </wd-button>
-          <wd-button class="flex-1" size="small" type="primary" @click="handleQuery">
-            搜索
-          </wd-button>
-        </view>
-      </view>
-      <view
-        v-for="item in list"
-        :key="item.id"
-        class="mb-20rpx rounded-12rpx bg-white p-24rpx shadow-sm"
-      >
-        <view class="flex items-center gap-16rpx">
-          <wd-img
-            v-if="item.avatar"
-            :src="item.avatar"
-            :width="44"
-            :height="44"
-            mode="aspectFill"
-            round
-          />
-          <view
-            v-else
-            class="h-88rpx w-88rpx shrink-0 flex items-center justify-center rounded-full bg-[#1890ff] text-34rpx text-white"
-          >
-            {{ (item.nickname || '推').charAt(0) }}
-          </view>
-          <view class="min-w-0 flex-1">
-            <view class="mb-8rpx flex items-center justify-between gap-16rpx">
-              <view class="min-w-0 flex-1 truncate text-30rpx text-[#333] font-semibold">
-                {{ item.nickname || `用户 ${item.id}` }}
+  <view>
+    <!-- 搜索组件 -->
+    <BrokerageSearchForm @search="handleQuery" @reset="handleReset" />
+    <scroll-view scroll-y class="min-h-520rpx">
+      <view class="p-24rpx">
+        <view
+          v-for="item in list"
+          :key="item.id"
+          class="mb-20rpx rounded-12rpx bg-white p-24rpx shadow-sm"
+        >
+          <view class="flex items-center gap-16rpx">
+            <wd-img
+              v-if="item.avatar"
+              :src="item.avatar"
+              :width="44"
+              :height="44"
+              mode="aspectFill"
+              round
+            />
+            <view
+              v-else
+              class="h-88rpx w-88rpx shrink-0 flex items-center justify-center rounded-full bg-[#1890ff] text-34rpx text-white"
+            >
+              {{ (item.nickname || '推').charAt(0) }}
+            </view>
+            <view class="min-w-0 flex-1">
+              <view class="mb-8rpx flex items-center justify-between gap-16rpx">
+                <view class="min-w-0 flex-1 truncate text-30rpx text-[#333] font-semibold">
+                  {{ item.nickname || `用户 ${item.id}` }}
+                </view>
+                <wd-tag type="primary" variant="plain">
+                  {{ item.bindUserId === Number(props.bindUserId) ? '一级' : '二级' }}
+                </wd-tag>
               </view>
-              <wd-tag type="primary" variant="plain">
-                {{ item.bindUserId === Number(props.bindUserId) ? '一级' : '二级' }}
-              </wd-tag>
-            </view>
-            <view class="text-24rpx text-[#999]">
-              绑定时间：{{ formatDateTime(item.bindUserTime) || '-' }}
+              <view class="text-24rpx text-[#999]">
+                绑定时间：{{ formatDateTime(item.bindUserTime) || '-' }}
+              </view>
             </view>
           </view>
         </view>
+        <wd-empty v-if="!loading && list.length === 0" icon="content" tip="暂无推广用户" />
+        <view v-if="hasMore" class="pb-24rpx">
+          <wd-button block plain :loading="loading" @click="loadMore">
+            加载更多
+          </wd-button>
+        </view>
       </view>
-      <wd-empty v-if="!loading && list.length === 0" icon="content" tip="暂无推广用户" />
-      <view v-if="hasMore" class="pb-24rpx">
-        <wd-button block plain :loading="loading" @click="loadMore">
-          加载更多
-        </wd-button>
-      </view>
-    </view>
-  </scroll-view>
+    </scroll-view>
+  </view>
 </template>
 
 <script lang="ts" setup>
 import type { TradeBrokerageUser } from '@/api/mall/trade/brokerage/user'
 import { computed, onMounted, ref, watch } from 'vue'
 import { getTradeBrokerageUserPage } from '@/api/mall/trade/brokerage/user'
-import DateRangeField from '@/pages-member/components/date-range-field.vue'
-import { formatDateRange, formatDateTime } from '@/utils/date'
+import { formatDateTime } from '@/utils/date'
+import BrokerageSearchForm from './brokerage-search-form.vue'
 
 const props = defineProps<{
   bindUserId?: number | any
@@ -85,8 +66,7 @@ const loading = ref(false) // 加载状态
 const total = ref(0) // 总条数
 const pageNo = ref(1) // 当前页码
 const pageSize = 10 // 每页条数
-const level = ref('') // 推广层级
-const bindUserTime = ref<[number | undefined, number | undefined]>([undefined, undefined]) // 绑定时间
+const queryParams = ref<Record<string, any>>({}) // 搜索条件
 const hasMore = computed(() => list.value.length < total.value)
 
 /** 查询推广用户 */
@@ -100,9 +80,8 @@ async function getList(reset = true) {
   try {
     const currentPageNo = reset ? 1 : pageNo.value + 1
     const data = await getTradeBrokerageUserPage({
+      ...queryParams.value,
       bindUserId: Number(props.bindUserId),
-      level: level.value,
-      bindUserTime: formatDateRange(bindUserTime.value),
       pageNo: currentPageNo,
       pageSize,
     })
@@ -119,20 +98,15 @@ function loadMore() {
   getList(false)
 }
 
-/** 切换推广层级 */
-function handleLevelChange() {
-  getList()
-}
-
 /** 搜索按钮操作 */
-function handleQuery() {
+function handleQuery(data?: Record<string, any>) {
+  queryParams.value = { ...data }
   getList()
 }
 
-/** 重置绑定时间 */
-function handleResetTime() {
-  bindUserTime.value = [undefined, undefined]
-  getList()
+/** 重置按钮操作 */
+function handleReset() {
+  handleQuery()
 }
 
 watch(

@@ -47,19 +47,19 @@
         <view class="yd-search-form-label">
           用户标签
         </view>
-        <MemberTagPicker ref="tagPickerRef" v-model="formData.tagIds" />
+        <TagPicker ref="tagPickerRef" v-model="formData.tagIds" />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           用户等级
         </view>
-        <MemberLevelPicker ref="levelPickerRef" v-model="formData.levelId" />
+        <LevelPicker ref="levelPickerRef" v-model="formData.levelId" />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           用户分组
         </view>
-        <MemberGroupPicker ref="groupPickerRef" v-model="formData.groupId" />
+        <GroupPicker ref="groupPickerRef" v-model="formData.groupId" />
       </view>
       <DateRangeField v-model="formData.createTime" label="注册时间" />
       <DateRangeField v-model="formData.loginDate" label="登录时间" />
@@ -80,9 +80,9 @@ import { computed, reactive, ref } from 'vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { formatDate, formatDateRange } from '@/utils/date'
 import DateRangeField from '@/pages-member/components/date-range-field.vue'
-import MemberGroupPicker from '@/pages-member/components/member-group-picker.vue'
-import MemberLevelPicker from '@/pages-member/components/member-level-picker.vue'
-import MemberTagPicker from '@/pages-member/components/member-tag-picker.vue'
+import GroupPicker from '@/pages-member/group/components/group-picker.vue'
+import LevelPicker from '@/pages-member/level/components/level-picker.vue'
+import TagPicker from '@/pages-member/tag/components/tag-picker.vue'
 
 const emit = defineEmits<{
   search: [data: Record<string, any>]
@@ -90,9 +90,9 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const tagPickerRef = ref<InstanceType<typeof MemberTagPicker>>()
-const levelPickerRef = ref<InstanceType<typeof MemberLevelPicker>>()
-const groupPickerRef = ref<InstanceType<typeof MemberGroupPicker>>()
+const tagPickerRef = ref<InstanceType<typeof TagPicker>>()
+const levelPickerRef = ref<InstanceType<typeof LevelPicker>>()
+const groupPickerRef = ref<InstanceType<typeof GroupPicker>>()
 const formData = reactive({
   nickname: undefined as string | undefined,
   mobile: undefined as string | undefined,

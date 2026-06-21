@@ -113,7 +113,7 @@ async function handleSubmit() {
       await createMemberGroup(formData.value)
       toast.success('新增成功')
     }
-    // TODO @AI：是不是缺了 reload？看看 member 其他是不是存在类似问题
+    uni.$emit('member:group:reload')
     setTimeout(() => {
       handleBack()
     }, 500)
@@ -127,6 +127,3 @@ onMounted(() => {
   getDetail()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

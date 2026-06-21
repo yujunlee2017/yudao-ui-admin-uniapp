@@ -103,6 +103,3 @@ function reload() {
   pagingRef.value?.reload()
 }
 </script>
-
-<style lang="scss" scoped>
-</style>
