@@ -1,5 +1,6 @@
 import type { FormSchema, FormSchemaIssue } from '@wot-ui/ui/components/wd-form/types'
 import { isEmail, isMobile } from '@/utils/validator'
+import { isEmptyValue } from '@/utils/is'
 
 // ==================== 表单校验 ====================
 
@@ -105,11 +106,6 @@ export function createFormIssue(path: string, message: string): FormSchemaIssue 
 
 function getValueByPath(model: Record<string, any>, path: string) {
   return path.split('.').reduce((value, key) => value?.[key], model)
-}
-
-/** 判断表单值是否为空，用于 Wot FormSchema 校验 */
-export function isEmptyValue(value: unknown) {
-  return value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)
 }
 
 function normalizeFormRules(rules?: WotFormRule | readonly WotFormRule[]): readonly WotFormRule[] {

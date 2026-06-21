@@ -258,6 +258,7 @@ import { ref } from 'vue'
 import UserPicker from '@/components/system-select/user-picker.vue'
 import { BpmCandidateStrategyEnum, BpmNodeTypeEnum, BpmTaskStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
+import { isEmptyValue } from '@/utils/is'
 
 const props = withDefaults(
   defineProps<{
@@ -386,11 +387,12 @@ function shouldShowTaskStatusIcon(status: number) {
 function shouldShowCustomUserSelect(activity: ApprovalNodeInfo) {
   // 已有任务时不再显示候选人选择
   return (
-    (!activity.tasks || activity.tasks.length === 0)
+    isEmptyValue(activity.tasks)
     && ((BpmCandidateStrategyEnum.START_USER_SELECT === activity.candidateStrategy
-      && (!activity.candidateUsers || activity.candidateUsers.length === 0))
+      && isEmptyValue(activity.candidateUsers))
     || (props.enableApproveUserSelect
-      && BpmCandidateStrategyEnum.APPROVE_USER_SELECT === activity.candidateStrategy))
+      && BpmCandidateStrategyEnum.APPROVE_USER_SELECT === activity.candidateStrategy
+      && isEmptyValue(activity.candidateUsers)))
   )
 }
 
