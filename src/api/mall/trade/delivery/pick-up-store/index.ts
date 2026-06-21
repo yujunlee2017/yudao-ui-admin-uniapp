@@ -8,6 +8,7 @@ export interface DeliveryPickUpStore {
   introduction?: string
   phone?: string
   areaId?: number
+  areaName?: string
   detailAddress?: string
   logo?: string
   openingTime?: string

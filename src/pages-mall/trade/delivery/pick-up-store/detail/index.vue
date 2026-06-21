@@ -20,7 +20,7 @@
         />
         <text v-else>-</text>
       </wd-cell>
-      <wd-cell title="地区编号" :value="formData.areaId != null ? String(formData.areaId) : '-'" />
+      <wd-cell title="所在地区" :value="formData.areaName || '-'" />
       <wd-cell title="详细地址" :value="formData.detailAddress || '-'" />
       <wd-cell title="营业开始" :value="formData.openingTime || '-'" />
       <wd-cell title="营业结束" :value="formData.closingTime || '-'" />

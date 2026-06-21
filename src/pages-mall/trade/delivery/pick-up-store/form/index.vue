@@ -20,9 +20,7 @@
           <wd-form-item title="门店 Logo" title-width="200rpx" prop="logo">
             <yd-upload-img v-model="formData.logo" directory="mall/pick-up-store" />
           </wd-form-item>
-          <wd-form-item title="地区编号" title-width="200rpx" prop="areaId" center>
-            <wd-input-number v-model="formData.areaId" :min="0" />
-          </wd-form-item>
+          <yd-tree-select v-model="formData.areaId" label="所在地区" prop="areaId" label-width="200rpx" :data="areaTree" placeholder="请选择所在地区" />
           <wd-form-item title="详细地址" title-width="200rpx" prop="detailAddress">
             <wd-textarea v-model="formData.detailAddress" clearable :maxlength="200" placeholder="请输入详细地址" />
           </wd-form-item>
@@ -83,6 +81,7 @@ import {
   getDeliveryPickUpStore,
   updateDeliveryPickUpStore,
 } from '@/api/mall/trade/delivery/pick-up-store'
+import { getAreaTree } from '@/api/system/area'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
@@ -107,6 +106,7 @@ definePage({
 const toast = useToast()
 const getTitle = computed(() => props.id ? '编辑自提门店' : '新增自提门店')
 const formLoading = ref(false) // 表单提交状态
+const areaTree = ref<any[]>([]) // 地区树数据
 const formData = ref<PickUpStoreFormData>({
   id: undefined,
   name: '',
@@ -125,7 +125,7 @@ const formData = ref<PickUpStoreFormData>({
 const formSchema = createFormSchema({
   name: [{ required: true, message: '门店名称不能为空' }],
   phone: [{ required: true, message: '联系电话不能为空' }],
-  areaId: [{ required: true, message: '地区编号不能为空' }],
+  areaId: [{ required: true, message: '所在地区不能为空' }],
   detailAddress: [{ required: true, message: '详细地址不能为空' }],
   openingTime: [{ required: true, message: '营业开始时间不能为空' }],
   closingTime: [{ required: true, message: '营业结束时间不能为空' }],
@@ -184,7 +184,12 @@ async function handleSubmit() {
 }
 
 /** 初始化 */
-onMounted(() => {
-  getDetail()
+onMounted(async () => {
+  await Promise.all([
+    getDetail(),
+    getAreaTree().then((list) => {
+      areaTree.value = list
+    }),
+  ])
 })
 </script>
