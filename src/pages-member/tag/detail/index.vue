@@ -105,6 +105,7 @@ async function handleDelete() {
   try {
     await deleteMemberTag(Number(props.id))
     toast.success('删除成功')
+    uni.$emit('member:tag:reload')
     setTimeout(() => {
       handleBack()
     }, 500)
@@ -118,6 +119,3 @@ onMounted(() => {
   getDetail()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

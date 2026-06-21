@@ -10,7 +10,7 @@
           <view class="min-w-0 flex-1 truncate text-30rpx text-[#333] font-semibold">
             {{ item.title || '余额变动' }}
           </view>
-          <wd-tag :type="(item.price || 0) >= 0 ? 'success' : 'danger'" variant="plain">
+          <wd-tag :type="(item.price || 0) > 0 ? 'success' : 'danger'" variant="plain">
             {{ formatSignedAmount(item.price) }}
           </wd-tag>
         </view>

@@ -12,13 +12,13 @@
       <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
           <wd-form-item title="签到天数" title-width="190rpx" prop="day">
-            <wd-input-number v-model="formData.day" :min="1" :max="7" />
+            <wd-input-number v-model="formData.day" :min="1" :max="7" :precision="0" />
           </wd-form-item>
           <wd-form-item title="奖励积分" title-width="190rpx" prop="point">
-            <wd-input-number v-model="formData.point" :min="0" />
+            <wd-input-number v-model="formData.point" :min="0" :precision="0" />
           </wd-form-item>
           <wd-form-item title="奖励经验" title-width="190rpx" prop="experience">
-            <wd-input-number v-model="formData.experience" :min="0" />
+            <wd-input-number v-model="formData.experience" :min="0" :precision="0" />
           </wd-form-item>
           <wd-form-item title="开启状态" title-width="190rpx" prop="status" center>
             <wd-radio-group v-model="formData.status" type="button">
@@ -123,6 +123,7 @@ async function handleSubmit() {
       await createMemberSignInConfig(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('member:signin-config:reload')
     setTimeout(() => {
       handleBack()
     }, 500)
@@ -136,6 +137,3 @@ onMounted(() => {
   getDetail()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

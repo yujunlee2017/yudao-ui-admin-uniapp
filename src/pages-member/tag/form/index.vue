@@ -88,6 +88,7 @@ async function handleSubmit() {
       await createMemberTag(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('member:tag:reload')
     setTimeout(() => {
       handleBack()
     }, 500)
@@ -101,6 +102,3 @@ onMounted(() => {
   getDetail()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

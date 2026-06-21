@@ -14,9 +14,8 @@
           <wd-form-item title="积分抵扣" title-width="220rpx" prop="pointTradeDeductEnable" center>
             <wd-switch v-model="formData.pointTradeDeductEnable" />
           </wd-form-item>
-          <!-- TODO @AI：莫斯不能点加号 -->
           <wd-form-item title="抵扣金额" title-width="220rpx" prop="pointTradeDeductUnitPrice">
-            <wd-input-number v-model="deductUnitPriceYuan" :min="0" :step="0.01" />
+            <wd-input-number v-model="deductUnitPriceYuan" :min="0" :step="0.01" :precision="2" input-type="number" />
           </wd-form-item>
           <wd-form-item title="抵扣上限" title-width="220rpx" prop="pointTradeDeductMaxPrice">
             <wd-input-number v-model="formData.pointTradeDeductMaxPrice" :min="0" />
@@ -120,6 +119,3 @@ onMounted(() => {
   getDetail()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

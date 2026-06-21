@@ -11,12 +11,12 @@
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
     <!-- 批量操作 -->
-    <!-- TODO @AI：没有选中【批量发卷】时，不要出现“批量发送优惠劵” -->
     <view v-if="hasCouponSendAccess" class="bg-white px-24rpx py-16rpx">
       <view class="flex items-center justify-between gap-16rpx">
-        <text class="text-26rpx text-[#666]">
-          {{ selectMode ? `已选 ${selectedIds.length} 人` : '批量发送优惠券' }}
+        <text v-if="selectMode" class="text-26rpx text-[#666]">
+          已选 {{ selectedIds.length }} 人
         </text>
+        <view v-else></view>
         <wd-button size="small" type="primary" plain @click="handleToggleSelectMode">
           {{ selectMode ? '退出选择' : '批量发券' }}
         </wd-button>
@@ -279,6 +279,3 @@ onUnload(() => {
   uni.$off('member:user:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

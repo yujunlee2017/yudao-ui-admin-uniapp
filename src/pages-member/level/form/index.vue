@@ -15,13 +15,13 @@
             <wd-input v-model="formData.name" clearable placeholder="请输入等级名称" />
           </wd-form-item>
           <wd-form-item title="等级" title-width="200rpx" prop="level">
-            <wd-input v-model.number="formData.level" type="number" clearable placeholder="请输入等级" />
+            <wd-input-number v-model="formData.level" :min="1" :precision="0" allow-null />
           </wd-form-item>
           <wd-form-item title="升级经验" title-width="200rpx" prop="experience">
-            <wd-input v-model.number="formData.experience" type="number" clearable placeholder="请输入升级经验" />
+            <wd-input-number v-model="formData.experience" :min="1" :precision="0" allow-null />
           </wd-form-item>
           <wd-form-item title="享受折扣" title-width="200rpx" prop="discountPercent">
-            <wd-input v-model.number="formData.discountPercent" type="number" clearable placeholder="请输入享受折扣" />
+            <wd-input-number v-model="formData.discountPercent" :min="0" :max="100" :precision="0" allow-null />
           </wd-form-item>
           <wd-form-item title="等级图标" title-width="200rpx" prop="icon">
             <yd-upload-img v-model="formData.icon" directory="member-level" />
@@ -135,7 +135,7 @@ async function handleSubmit() {
       await createMemberLevel(formData.value)
       toast.success('新增成功')
     }
-    // TODO @AI：缺 reload？
+    uni.$emit('member:level:reload')
     setTimeout(() => {
       handleBack()
     }, 500)
@@ -149,6 +149,3 @@ onMounted(() => {
   getDetail()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

@@ -309,6 +309,3 @@ onUnload(() => {
   uni.$off('member:user:reload', getDetail)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

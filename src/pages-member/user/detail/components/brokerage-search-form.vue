@@ -13,19 +13,21 @@
     @close="visible = false"
   >
     <view class="yd-search-form-container">
-      <view v-if="!hideUser" class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          签到用户
-        </view>
-        <wd-input v-model="formData.nickname" placeholder="请输入签到用户" clearable />
-      </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
-          签到天数
+          推广层级
         </view>
-        <wd-input v-model.number="formData.day" type="number" placeholder="请输入签到天数" clearable />
+        <view class="yd-search-form-date-range-picker" @click="pickerVisible.level = true">
+          {{ getWotPickerDisplay(levelOptions, formData.level, { placeholder: '请选择推广层级' }) }}
+        </view>
+        <wd-picker
+          v-model:visible="pickerVisible.level"
+          :model-value="[formData.level]"
+          :columns="levelOptions"
+          @confirm="({ value }) => formData.level = value[0]"
+        />
       </view>
-      <DateRangeField v-model="formData.createTime" label="签到时间" />
+      <DateRangeField v-model="formData.bindUserTime" label="绑定时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -43,10 +45,7 @@ import { computed, reactive, ref } from 'vue'
 import DateRangeField from '@/pages-member/components/date-range-field.vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { formatDate, formatDateRange } from '@/utils/date'
-
-defineProps<{
-  hideUser?: boolean // 嵌入会员详情时隐藏「签到用户」筛选：用户已固定，再按昵称过滤会很奇怪
-}>()
+import { getWotPickerDisplay } from '@/utils/wot'
 
 const emit = defineEmits<{
   search: [data: Record<string, any>]
@@ -54,41 +53,42 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
+const pickerVisible = ref<Record<string, boolean>>({})
+const levelOptions = [ // 推广层级选项
+  { label: '全部', value: '' },
+  { label: '一级', value: '1' },
+  { label: '二级', value: '2' },
+]
 const formData = reactive({
-  nickname: undefined as string | undefined,
-  day: undefined as number | undefined,
-  createTime: [undefined, undefined] as [number | undefined, number | undefined],
+  level: '',
+  bindUserTime: [undefined, undefined] as [number | undefined, number | undefined],
 }) // 搜索表单数据
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
   const conditions: string[] = []
-  if (formData.nickname) {
-    conditions.push(`用户:${formData.nickname}`)
+  if (formData.level) {
+    conditions.push(`层级:${formData.level === '1' ? '一级' : '二级'}`)
   }
-  if (formData.day !== undefined && formData.day !== null) {
-    conditions.push(`天数:${formData.day}`)
+  if (formData.bindUserTime[0] && formData.bindUserTime[1]) {
+    conditions.push(`绑定:${formatDate(formData.bindUserTime[0])}~${formatDate(formData.bindUserTime[1])}`)
   }
-  if (formData.createTime[0] && formData.createTime[1]) {
-    conditions.push(`签到:${formatDate(formData.createTime[0])}~${formatDate(formData.createTime[1])}`)
-  }
-  return conditions.length > 0 ? conditions.join(' | ') : '搜索签到记录'
+  return conditions.length > 0 ? conditions.join(' | ') : '搜索推广用户'
 })
 
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
   emit('search', {
-    ...formData,
-    createTime: formatDateRange(formData.createTime),
+    level: formData.level || undefined,
+    bindUserTime: formatDateRange(formData.bindUserTime),
   })
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  formData.nickname = undefined
-  formData.day = undefined
-  formData.createTime = [undefined, undefined]
+  formData.level = ''
+  formData.bindUserTime = [undefined, undefined]
   visible.value = false
   emit('reset')
 }
