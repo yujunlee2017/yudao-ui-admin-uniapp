@@ -32,18 +32,22 @@
       <wd-cell title="产品单位" title-width="220rpx" :value="getDictLabel(DICT_TYPE.CRM_PRODUCT_UNIT, row.productUnit) || '-'" />
       <wd-cell title="产品单价" title-width="220rpx" :value="formatMoney(row.productPrice)" />
       <wd-form-item :title="priceLabel" title-width="220rpx">
-        <wd-input
-          v-model.number="row[priceProp]"
-          type="number"
-          clearable
+        <wd-input-number
+          v-model="row[priceProp]"
+          :min="0.001"
+          :precision="2"
+          input-type="number"
+          allow-null
           :placeholder="`请输入${priceLabel}`"
         />
       </wd-form-item>
       <wd-form-item title="数量" title-width="220rpx">
-        <wd-input
-          v-model.number="row.count"
-          type="number"
-          clearable
+        <wd-input-number
+          v-model="row.count"
+          :min="0.001"
+          :precision="3"
+          input-type="number"
+          allow-null
           placeholder="请输入数量"
         />
       </wd-form-item>

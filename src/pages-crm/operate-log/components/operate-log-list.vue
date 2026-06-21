@@ -26,8 +26,9 @@
               {{ formatDateTime(item.createTime) || '-' }}
             </text>
           </view>
-          <view class="text-26rpx text-[#666]">
-            操作人：{{ item.userName || '-' }}
+          <view class="flex items-center text-26rpx text-[#666]">
+            <text>操作人：{{ item.userName || '-' }}</text>
+            <dict-tag v-if="item.userType != null" :type="DICT_TYPE.USER_TYPE" :value="item.userType" class="ml-8rpx" />
           </view>
         </view>
       </view>
@@ -39,6 +40,7 @@
 import type { OperateLog } from '@/api/crm/operateLog'
 import { ref, watch } from 'vue'
 import { getOperateLogPage } from '@/api/crm/operateLog'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{

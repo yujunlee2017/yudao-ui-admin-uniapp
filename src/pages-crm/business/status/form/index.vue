@@ -60,10 +60,13 @@
             clearable
             placeholder="请输入阶段名称"
           />
-          <wd-input
-            v-model.number="status.percent"
-            type="number"
-            clearable
+          <wd-input-number
+            v-model="status.percent"
+            :min="0"
+            :max="100"
+            :precision="2"
+            input-type="number"
+            allow-null
             placeholder="请输入赢单率（0-100）"
           />
         </view>
@@ -174,11 +177,10 @@ function validateStatuses() {
     return false
   }
   const invalid = statuses.some((item) => {
-    const percent = Number(item.percent)
-    return !item.name || Number.isNaN(percent) || percent < 0 || percent > 100
+    return !item.name || Number.isNaN(Number(item.percent))
   })
   if (invalid) {
-    toast.show('请完整填写阶段名称和 0-100 的赢单率')
+    toast.show('请完整填写阶段名称和赢单率')
     return false
   }
   return true

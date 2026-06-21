@@ -44,7 +44,7 @@
           <wd-form-item title="预计成交日期" title-width="200rpx" prop="dealTime" is-link placeholder="请选择预计成交日期" :value="formatDate(formData.dealTime)" @click="pickerVisible.dealTime = true" />
           <wd-datetime-picker v-model="formData.dealTime" v-model:visible="pickerVisible.dealTime" title="请选择预计成交日期" type="date" />
           <wd-form-item title="整单折扣(%)" title-width="200rpx" prop="discountPercent">
-            <wd-input v-model.number="formData.discountPercent" type="number" placeholder="请输入整单折扣(%)" clearable />
+            <wd-input-number v-model="formData.discountPercent" :min="0" :max="100" :precision="2" input-type="number" placeholder="请输入整单折扣(%)" />
           </wd-form-item>
           <wd-form-item title="备注" title-width="200rpx" prop="remark">
             <wd-textarea v-model="formData.remark" placeholder="请输入备注" :maxlength="200" show-word-limit clearable />
@@ -121,7 +121,6 @@ const formSchema = createFormSchema({
   customerId: [{ required: true, message: '客户名称不能为空' }],
   ownerUserId: [{ required: true, message: '负责人不能为空' }],
   statusTypeId: [{ required: true, message: '商机状态组不能为空' }],
-  discountPercent: [{ min: 0, max: 100, message: '整单折扣需在 0-100 之间' }],
 })
 
 /** 商机状态组变化时清空商机阶段 */

@@ -41,7 +41,7 @@
           />
           <yd-form-picker v-model="formData.returnType" label="回款方式" prop="returnType" :dict-type="DICT_TYPE.CRM_RECEIVABLE_RETURN_TYPE" placeholder="请选择回款方式" />
           <wd-form-item title="回款金额" title-width="200rpx" prop="price">
-            <wd-input v-model.number="formData.price" type="number" placeholder="请输入回款金额" clearable />
+            <wd-input-number v-model="formData.price" :min="0.01" :precision="2" input-type="number" allow-null placeholder="请输入回款金额" />
           </wd-form-item>
           <wd-form-item title="回款日期" title-width="200rpx" prop="returnTime" is-link placeholder="请选择回款日期" :value="formatDate(formData.returnTime)" @click="pickerVisible.returnTime = true" />
           <wd-datetime-picker v-model="formData.returnTime" v-model:visible="pickerVisible.returnTime" title="请选择回款日期" type="date" />

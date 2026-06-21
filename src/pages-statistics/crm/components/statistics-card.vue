@@ -64,9 +64,8 @@
 </template>
 
 <script lang="ts" setup>
-// TODO @芋艿：这里后续要考虑下，要不要作为公用部分？还是这么做就是合理的？？？
 import type { StatisticsSection } from './statistics'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import YdChart from '../../components/yd-chart/yd-chart.vue'
 import {
   buildChartOption,
@@ -87,6 +86,9 @@ const props = withDefaults(defineProps<{
 })
 
 const expanded = ref(false) // 展开状态
+watch(() => props.section.title, () => {
+  expanded.value = false // 切换统计分类时重置展开状态，避免跨 tab 继承
+})
 const chartOption = computed(() => buildChartOption(props.section, props.rows, { rank: props.rank })) // 图表配置
 const visibleRows = computed(() => { // 当前可见数据
   if (expanded.value) {

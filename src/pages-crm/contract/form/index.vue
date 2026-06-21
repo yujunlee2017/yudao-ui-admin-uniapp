@@ -49,7 +49,7 @@
             placeholder="请选择客户签约人"
           />
           <wd-form-item title="整单折扣(%)" title-width="200rpx" prop="discountPercent">
-            <wd-input v-model.number="formData.discountPercent" type="number" placeholder="请输入整单折扣(%)" clearable />
+            <wd-input-number v-model="formData.discountPercent" :min="0" :max="100" :precision="2" input-type="number" placeholder="请输入整单折扣(%)" />
           </wd-form-item>
           <wd-form-item title="折扣后金额" title-width="200rpx" prop="totalPrice" :value="formatMoney(formData.totalPrice)" />
           <wd-form-item title="备注" title-width="200rpx" prop="remark">
@@ -132,7 +132,6 @@ const formSchema = createFormSchema({
   customerId: [{ required: true, message: '客户名称不能为空' }],
   ownerUserId: [{ required: true, message: '负责人不能为空' }],
   orderDate: [{ required: true, message: '下单日期不能为空' }],
-  discountPercent: [{ min: 0, max: 100, message: '整单折扣需在 0-100 之间' }],
 })
 
 /** 返回上一页 */

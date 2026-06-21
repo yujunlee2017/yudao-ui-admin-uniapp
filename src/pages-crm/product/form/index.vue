@@ -21,7 +21,7 @@
           <CrmPicker v-model="formData.categoryId" source="productCategory" label="产品分类" prop="categoryId" placeholder="请选择产品分类" />
           <yd-form-picker v-model="formData.unit" label="产品单位" prop="unit" :dict-type="DICT_TYPE.CRM_PRODUCT_UNIT" placeholder="请选择产品单位" />
           <wd-form-item title="价格" title-width="200rpx" prop="price">
-            <wd-input v-model.number="formData.price" type="number" placeholder="请输入价格" clearable />
+            <wd-input-number v-model="formData.price" :min="0" :precision="2" input-type="number" allow-null placeholder="请输入价格" />
           </wd-form-item>
           <yd-form-picker v-model="formData.status" label="上架状态" prop="status" :dict-type="DICT_TYPE.CRM_PRODUCT_STATUS" placeholder="请选择上架状态" />
           <wd-form-item title="产品描述" title-width="200rpx" prop="description">
@@ -82,10 +82,7 @@ const formSchema = createFormSchema({
   no: [{ required: true, message: '产品编码不能为空' }],
   ownerUserId: [{ required: true, message: '负责人不能为空' }],
   categoryId: [{ required: true, message: '产品分类不能为空' }],
-  price: [
-    { required: true, message: '价格不能为空' },
-    { min: 0, message: '价格不能小于 0' },
-  ],
+  price: [{ required: true, message: '价格不能为空' }],
   status: [{ required: true, message: '上架状态不能为空' }],
 })
 

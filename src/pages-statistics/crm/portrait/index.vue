@@ -7,6 +7,13 @@
       @click-left="handleBack"
     />
 
+    <!-- 统计分类（固定 tab，避免一页过长） -->
+    <view class="bg-white">
+      <wd-tabs v-model="tabIndex" slidable="always" @change="handleTabChange">
+        <wd-tab v-for="section in sections" :key="section.title" :title="section.title" />
+      </wd-tabs>
+    </view>
+
     <!-- 统计概览 -->
     <scroll-view scroll-y class="min-h-0 flex-1">
       <view class="p-24rpx">
@@ -42,18 +49,13 @@
           <view class="text-26rpx text-[#999]">
             {{ periodText }}
           </view>
-          <wd-button size="small" type="primary" variant="plain" :loading="loading" @click="loadData">
+          <wd-button size="small" type="primary" variant="plain" :loading="!!loadingMap[activeSection.title]" @click="loadData">
             刷新
           </wd-button>
         </view>
 
-        <!-- 统计列表 -->
-        <StatisticsCard
-          v-for="section in sections"
-          :key="section.title"
-          :section="section"
-          :rows="sectionData[section.title] || []"
-        />
+        <!-- 统计列表（当前分类） -->
+        <StatisticsCard :section="activeSection" :rows="sectionData[activeSection.title] || []" />
       </view>
     </scroll-view>
   </view>
@@ -99,9 +101,10 @@ const filters = reactive({
   deptId: getDefaultDeptId(userStore.userInfo),
   userId: undefined as number | undefined,
 }) // 筛选条件
-const loading = ref(false) // 统计加载状态
+const loadingMap = ref<Record<string, boolean>>({}) // 各分类加载状态（每个 tab 自己的 loading）
 const deptTree = ref<Dept[]>([]) // 部门树形结构
-const sectionData = ref<Record<string, any[]>>({}) // 统计数据
+const sectionData = ref<Record<string, any[]>>({}) // 各分类数据缓存（每个 tab 自己的 rows）
+const tabIndex = ref(0) // 当前分类下标
 const startVisible = ref(false) // 开始日期选择器显隐
 const endVisible = ref(false) // 结束日期选择器显隐
 const userPickerRef = ref<InstanceType<typeof UserPicker>>() // 员工选择器引用
@@ -141,29 +144,37 @@ const sections = [
     chart: { type: 'pie', categoryProp: 'industryId', valueProp: 'customerCount' },
   },
 ] as StatisticsSection[] // 统计分组配置
+const activeSection = computed(() => sections[tabIndex.value] || sections[0]) // 当前分类
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus()
 }
 
-/** 加载统计数据 */
-async function loadData() {
-  loading.value = true
-  const nextData: Record<string, any[]> = {}
+/** 加载当前分类数据：写入各自缓存槽，捕获 section 防止快速切 tab 时旧响应覆盖 */
+async function loadActive() {
+  const section = activeSection.value
+  loadingMap.value[section.title] = true
   try {
-    await Promise.all(
-      sections.map(async (section) => {
-        try {
-          nextData[section.title] = withPortions(normalizeRows(await section.load?.(queryParams.value)))
-        } catch {
-          nextData[section.title] = []
-        }
-      }),
-    )
-    sectionData.value = nextData
+    sectionData.value[section.title] = withPortions(normalizeRows(await section.load?.(queryParams.value)))
+  } catch {
+    sectionData.value[section.title] = []
   } finally {
-    loading.value = false
+    loadingMap.value[section.title] = false
+  }
+}
+
+/** 筛选 / 刷新：清空各分类缓存并重新加载当前分类 */
+function loadData() {
+  sectionData.value = {}
+  loadActive()
+}
+
+/** 切换分类：已加载过则直接用缓存，未加载才请求 */
+function handleTabChange({ index }: { index: number }) {
+  tabIndex.value = index
+  if (sectionData.value[activeSection.value.title] === undefined) {
+    loadActive()
   }
 }
 
