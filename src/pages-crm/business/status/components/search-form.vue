@@ -26,14 +26,14 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 
 const emit = defineEmits<{ search: [data: Record<string, any>], reset: [] }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive<Record<string, any>>({ name: undefined }) // 搜索表单数据
-const placeholder = ref('搜索商机状态组') // 搜索框占位
+const placeholder = computed(() => formData.name ? `状态组名:${formData.name}` : '搜索商机状态组') // 搜索框占位：回显已选条件
 
 /** 搜索按钮操作 */
 function handleSearch() {

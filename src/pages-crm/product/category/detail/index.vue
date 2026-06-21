@@ -17,7 +17,7 @@
     <!-- 基本信息 -->
     <wd-cell-group v-if="activeTab === 'basic'" border>
       <wd-cell title="分类名称" :value="formData.name || '-'" />
-      <wd-cell title="父级编号" :value="formatParentId" />
+      <wd-cell title="父级分类" :value="formatParentId" />
       <wd-cell title="创建时间" :value="formatDateTime(formData.createTime) || '-'" />
     </wd-cell-group>
 
@@ -63,6 +63,7 @@ const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
 const formData = ref<Record<string, any>>({}) // 详情数据
+const parentName = ref('') // 父级分类名称
 const tabIndex = ref(0) // 当前详情分类下标
 const deleting = ref(false) // 删除状态
 const categoryId = computed(() => Number(props.id))
@@ -73,8 +74,8 @@ const formatParentId = computed(() => {
   if (formData.value.parentId === 0) {
     return '顶级分类'
   }
-  return formData.value.parentId != null ? String(formData.value.parentId) : '-'
-}) // 父级编号展示
+  return parentName.value || '-'
+}) // 父级分类展示（顶级显示「顶级分类」，否则展示父级名称）
 const hasFooter = computed(() => {
   if (activeTab.value === 'basic') {
     return canUpdate.value || canDelete.value
@@ -95,6 +96,14 @@ async function getDetail() {
   try {
     toast.loading('加载中...')
     formData.value = await getProductCategory(categoryId.value)
+    // 加载父级分类名称用于展示（顶级分类 parentId 为 0）
+    const parentId = formData.value.parentId
+    if (parentId && parentId !== 0) {
+      const parent = await getProductCategory(parentId).catch(() => undefined)
+      parentName.value = parent?.name || ''
+    } else {
+      parentName.value = ''
+    }
   } finally {
     toast.close()
   }

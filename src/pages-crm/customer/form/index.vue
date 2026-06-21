@@ -33,7 +33,7 @@
           </wd-form-item>
           <yd-form-picker v-model="formData.industryId" label="客户行业" prop="industryId" :dict-type="DICT_TYPE.CRM_CUSTOMER_INDUSTRY" placeholder="请选择客户行业" />
           <yd-form-picker v-model="formData.level" label="客户级别" prop="level" :dict-type="DICT_TYPE.CRM_CUSTOMER_LEVEL" placeholder="请选择客户级别" />
-          <YdTreeSelect v-model="formData.areaId" :data="areaTree" label="地区" prop="areaId" label-width="200rpx" placeholder="请选择地区" />
+          <yd-tree-select v-model="formData.areaId" :data="areaTree" label="地区" prop="areaId" label-width="200rpx" placeholder="请选择地区" />
           <wd-form-item title="详细地址" title-width="200rpx" prop="detailAddress">
             <wd-input v-model="formData.detailAddress" placeholder="请输入详细地址" clearable />
           </wd-form-item>
@@ -63,7 +63,6 @@ import { computed, onMounted, ref } from 'vue'
 import { createCustomer, getCustomer, updateCustomer } from '@/api/crm/customer'
 import { getAreaTree } from '@/api/system/area'
 import UserPicker from '@/components/system-select/user-picker.vue'
-import YdTreeSelect from '@/components/yudao-ui/yd-tree-select/yd-tree-select.vue'
 import { useUserStore } from '@/store/user'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'

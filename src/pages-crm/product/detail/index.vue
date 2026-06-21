@@ -23,7 +23,7 @@
         <dict-tag v-if="formData.unit != null && formData.unit !== ''" :type="DICT_TYPE.CRM_PRODUCT_UNIT" :value="formData.unit" />
         <text v-else>-</text>
       </wd-cell>
-      <wd-cell title="价格" :value="formData.price != null && formData.price !== '' ? Number(formData.price).toFixed(2) : '-'" />
+      <wd-cell title="价格" :value="formatMoney(formData.price)" />
       <wd-cell title="上架状态">
         <dict-tag v-if="formData.status != null && formData.status !== ''" :type="DICT_TYPE.CRM_PRODUCT_STATUS" :value="formData.status" />
         <text v-else>-</text>
@@ -60,6 +60,7 @@ import { BizTypeEnum } from '@/api/crm/permission'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
+import { formatMoney } from '@/utils/format'
 import CrmOperateLogs from '@/pages-crm/operate-log/components/operate-log-list.vue'
 
 const props = defineProps<{ id?: number | any }>()

@@ -19,7 +19,7 @@
             label-width="220rpx"
             placeholder="请选择适用人群"
           />
-          <YdTreeSelect
+          <yd-tree-select
             v-model="formData.deptIds"
             :data="deptTree"
             multiple
@@ -80,7 +80,6 @@ import {
 } from '@/api/crm/customer/limitConfig'
 import { getSimpleDeptList } from '@/api/system/dept'
 import UserPicker from '@/components/system-select/user-picker.vue'
-import YdTreeSelect from '@/components/yudao-ui/yd-tree-select/yd-tree-select.vue'
 import { navigateBackPlus } from '@/utils'
 import { handleTree } from '@/utils/tree'
 import { createFormSchema } from '@/utils/wot'

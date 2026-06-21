@@ -206,6 +206,8 @@ async function handleSubmit() {
     toast.show(productError)
     return
   }
+  // 整单折扣可被清空（clearable），提交前兜底为 0，避免空值触发后端 @NotNull 校验
+  formData.value.discountPercent = Number(formData.value.discountPercent) || 0
   formLoading.value = true
   try {
     if (props.id) {

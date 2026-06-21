@@ -3,17 +3,22 @@
     <!-- 关联商机标题栏 -->
     <view class="flex items-center justify-between border-b border-[#f5f5f5] px-24rpx py-20rpx">
       <text class="text-30rpx text-[#333] font-semibold">关联商机</text>
-      <CrmPicker
-        v-if="canAdd"
-        source="business"
-        :params="{ customerId }"
-        use-default-slot
-        @confirm="handleAdd"
-      >
-        <wd-button size="small" type="primary">
-          关联
+      <view class="flex items-center gap-12rpx">
+        <wd-button v-if="canCreate" size="small" type="primary" plain @click="handleCreate">
+          新增商机
         </wd-button>
-      </CrmPicker>
+        <CrmPicker
+          v-if="canAdd"
+          source="business"
+          :params="{ customerId }"
+          use-default-slot
+          @confirm="handleAdd"
+        >
+          <wd-button size="small" type="primary">
+            关联
+          </wd-button>
+        </CrmPicker>
+      </view>
     </view>
 
     <!-- 关联商机列表 -->
@@ -50,8 +55,8 @@
 <script lang="ts" setup>
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref, watch } from 'vue'
-import { getBusinessPageByContact } from '@/api/crm/business'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { getBusinessListByContact } from '@/api/crm/business'
 import { createContactBusinessList, deleteContactBusinessList } from '@/api/crm/contact'
 import { useAccess } from '@/hooks/useAccess'
 import { formatMoney } from '@/utils/format'
@@ -66,14 +71,16 @@ interface PickerOption {
 const props = defineProps<{
   contactId: number
   customerId?: number
+  canWrite?: boolean
 }>()
 
 const { hasAccessByCodes } = useAccess()
 const toast = useToast()
 const dialog = useDialog()
 const list = ref<Record<string, any>[]>([]) // 关联商机列表
-const canAdd = computed(() => hasAccessByCodes(['crm:contact:create-business'])) // 关联权限
-const canRemove = computed(() => hasAccessByCodes(['crm:contact:delete-business'])) // 解除权限
+const canAdd = computed(() => hasAccessByCodes(['crm:contact:create-business']) && !!props.canWrite) // 关联权限（需对联系人有读写权限，与后端 CRM_CONTACT WRITE 对齐）
+const canRemove = computed(() => hasAccessByCodes(['crm:contact:delete-business']) && !!props.canWrite) // 解除权限（同上）
+const canCreate = computed(() => hasAccessByCodes(['crm:business:create']) && !!props.canWrite) // 新增商机权限（同上，否则提交后后端自动关联联系人会被 WRITE 网关拒绝）
 
 /** 加载关联商机 */
 async function loadList() {
@@ -81,8 +88,8 @@ async function loadList() {
     return
   }
   try {
-    const data = await getBusinessPageByContact({ pageNo: 1, pageSize: 100, contactId: props.contactId })
-    list.value = data.list || []
+    const data = await getBusinessListByContact(props.contactId)
+    list.value = data || []
   } catch {
     list.value = []
   }
@@ -118,10 +125,25 @@ async function handleRemove(business: Record<string, any>) {
   await loadList()
 }
 
+/** 新增商机并自动关联当前联系人（透传 contactId，提交后后端建立关联） */
+function handleCreate() {
+  const query = [`contactId=${props.contactId}`]
+  if (props.customerId) {
+    query.push(`customerId=${props.customerId}`)
+  }
+  uni.navigateTo({ url: `/pages-crm/business/form/index?${query.join('&')}` })
+}
+
 watch(() => props.contactId, loadList)
 
 /** 初始化 */
 onMounted(() => {
   loadList()
+  uni.$on('crm:business:reload', loadList)
+})
+
+/** 卸载（新增商机返回后刷新关联列表） */
+onUnmounted(() => {
+  uni.$off('crm:business:reload', loadList)
 })
 </script>

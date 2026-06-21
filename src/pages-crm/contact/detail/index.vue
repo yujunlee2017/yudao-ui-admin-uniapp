@@ -40,14 +40,16 @@
       <wd-cell title="最后跟进时间" :value="formatDateTime(formData.contactLastTime) || '-'" />
       <wd-cell title="最后跟进内容" :value="formData.contactLastContent || '-'" />
       <wd-cell title="备注" :value="formData.remark || '-'" />
+      <wd-cell title="创建人" :value="formData.creatorName || '-'" />
       <wd-cell title="创建时间" :value="formatDateTime(formData.createTime) || '-'" />
+      <wd-cell title="更新时间" :value="formatDateTime(formData.updateTime) || '-'" />
     </wd-cell-group>
 
     <!-- 跟进记录 -->
     <CrmFollowupRecords v-else-if="activeTab === 'followup' && contactId" ref="followupRef" class="min-h-0 flex-1" embedded :biz-id="contactId" :biz-type="bizType" />
 
     <!-- 关联商机 -->
-    <ContactBusiness v-else-if="activeTab === 'businesses' && contactId" :contact-id="contactId" :customer-id="formData.customerId" />
+    <ContactBusiness v-else-if="activeTab === 'businesses' && contactId" :contact-id="contactId" :customer-id="formData.customerId" :can-write="validateWrite" />
 
     <!-- 操作日志 -->
     <CrmOperateLogs v-else-if="activeTab === 'log' && contactId" class="min-h-0 flex-1" :biz-id="contactId" :biz-type="bizType" />

@@ -19,12 +19,12 @@
       <wd-cell title="回款编号" :value="formData.no || '-'" />
       <wd-cell title="客户名称" :value="formData.customerName || '-'" />
       <wd-cell title="合同编号" :value="formData.contract?.no || '-'" />
-      <wd-cell title="合同金额" :value="formData.contract?.totalPrice != null && formData.contract?.totalPrice !== '' ? Number(formData.contract.totalPrice).toFixed(2) : '-'" />
+      <wd-cell title="合同金额" :value="formatMoney(formData.contract?.totalPrice)" />
       <wd-cell title="回款方式">
         <dict-tag v-if="formData.returnType != null && formData.returnType !== ''" :type="DICT_TYPE.CRM_RECEIVABLE_RETURN_TYPE" :value="formData.returnType" />
         <text v-else>-</text>
       </wd-cell>
-      <wd-cell title="回款金额" :value="formData.price != null && formData.price !== '' ? Number(formData.price).toFixed(2) : '-'" />
+      <wd-cell title="回款金额" :value="formatMoney(formData.price)" />
       <wd-cell title="回款日期" :value="formatDate(formData.returnTime) || '-'" />
       <wd-cell title="负责人" :value="formData.ownerUserName || '-'" />
       <wd-cell title="审批状态">
@@ -93,6 +93,7 @@ import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
+import { formatMoney } from '@/utils/format'
 import CrmOperateLogs from '@/pages-crm/operate-log/components/operate-log-list.vue'
 import CrmPermissionTeam from '@/pages-crm/permission/components/permission-list.vue'
 

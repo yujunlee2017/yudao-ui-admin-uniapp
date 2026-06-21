@@ -18,7 +18,7 @@
               placeholder="请输入状态组名"
             />
           </wd-form-item>
-          <YdTreeSelect
+          <yd-tree-select
             v-model="formData.deptIds"
             :data="deptTree"
             multiple
@@ -111,7 +111,6 @@ import {
   updateBusinessStatus,
 } from '@/api/crm/business/status'
 import { getSimpleDeptList } from '@/api/system/dept'
-import YdTreeSelect from '@/components/yudao-ui/yd-tree-select/yd-tree-select.vue'
 import { navigateBackPlus } from '@/utils'
 import { handleTree } from '@/utils/tree'
 import { createFormSchema } from '@/utils/wot'

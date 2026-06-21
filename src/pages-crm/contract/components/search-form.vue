@@ -23,7 +23,7 @@
         <view class="yd-search-form-label">
           客户名称
         </view>
-        <CrmPicker v-model="formData.customerId" source="customer" placeholder="请选择客户名称" />
+        <CrmPicker v-model="formData.customerId" source="customer" placeholder="请选择客户名称" @confirm="handleCustomerConfirm" />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
@@ -58,7 +58,7 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { formatDate, formatDateRange } from '@/utils/date'
 import CrmPicker from '@/pages-crm/components/crm-picker.vue'
@@ -73,7 +73,28 @@ const formData = reactive<Record<string, any>>({
   customerId: undefined,
   orderDate: ['', ''],
 }) // 搜索表单数据
-const placeholder = ref('搜索合同') // 搜索框占位
+const customerLabel = ref('') // 已选客户名称（占位回显用）
+const placeholder = computed(() => {
+  const conditions: string[] = []
+  if (formData.no) {
+    conditions.push(`编号:${formData.no}`)
+  }
+  if (formData.name) {
+    conditions.push(`名称:${formData.name}`)
+  }
+  if (formData.customerId) {
+    conditions.push(`客户:${customerLabel.value || '已选'}`)
+  }
+  if (formData.orderDate[0] && formData.orderDate[1]) {
+    conditions.push(`下单:${formatDate(formData.orderDate[0])}~${formatDate(formData.orderDate[1])}`)
+  }
+  return conditions.length > 0 ? conditions.join(' | ') : '搜索合同'
+}) // 搜索框占位：回显已选条件
+
+/** 选中客户后记录名称用于回显 */
+function handleCustomerConfirm(option?: { name?: string }) {
+  customerLabel.value = option?.name || ''
+}
 
 /** 搜索按钮操作 */
 function handleSearch() {
@@ -92,6 +113,7 @@ function handleReset() {
   formData.name = undefined
   formData.customerId = undefined
   formData.orderDate = ['', '']
+  customerLabel.value = ''
   visible.value = false
   emit('reset')
 }

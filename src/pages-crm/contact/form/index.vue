@@ -38,8 +38,8 @@
             <wd-switch v-model="formData.master" />
           </wd-form-item>
           <yd-form-picker v-model="formData.sex" label="性别" prop="sex" :dict-type="DICT_TYPE.SYSTEM_USER_SEX" placeholder="请选择性别" />
-          <CrmPicker v-model="formData.parentId" source="contact" label="直属上级" prop="parentId" placeholder="请选择直属上级" />
-          <YdTreeSelect v-model="formData.areaId" :data="areaTree" label="地区" prop="areaId" label-width="200rpx" placeholder="请选择地区" />
+          <CrmPicker v-model="formData.parentId" source="contact" label="直属上级" prop="parentId" placeholder="请选择直属上级" :option-filter="parentFilter" />
+          <yd-tree-select v-model="formData.areaId" :data="areaTree" label="地区" prop="areaId" label-width="200rpx" placeholder="请选择地区" />
           <wd-form-item title="详细地址" title-width="200rpx" prop="detailAddress">
             <wd-input v-model="formData.detailAddress" placeholder="请输入详细地址" clearable />
           </wd-form-item>
@@ -69,7 +69,6 @@ import { computed, onMounted, ref } from 'vue'
 import { createContact, getContact, updateContact } from '@/api/crm/contact'
 import { getAreaTree } from '@/api/system/area'
 import UserPicker from '@/components/system-select/user-picker.vue'
-import YdTreeSelect from '@/components/yudao-ui/yd-tree-select/yd-tree-select.vue'
 import { useUserStore } from '@/store/user'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -149,6 +148,11 @@ async function getDetail() {
     return
   }
   formData.value = await getContact(Number(props.id))
+}
+
+/** 直属上级候选排除自身（编辑态不能把自己设为上级） */
+function parentFilter(raw: Record<string, any>) {
+  return Number(raw.id) !== Number(formData.value.id)
 }
 
 /** 提交表单 */

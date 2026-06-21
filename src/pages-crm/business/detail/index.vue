@@ -23,10 +23,10 @@
         <wd-cell title="商机状态组" :value="formData.statusTypeName || '-'" />
         <wd-cell title="商机阶段" :value="formData.statusName || '-'" />
         <wd-cell title="预计成交日期" :value="formatDate(formData.dealTime) || '-'" />
-        <wd-cell title="商机金额" :value="formData.totalPrice != null && formData.totalPrice !== '' ? formatMoney(formData.totalPrice) : '-'" />
-        <wd-cell title="整单折扣(%)" :value="formData.discountPercent || '-'" />
+        <wd-cell title="商机金额" :value="formatMoney(formData.totalPrice)" />
+        <wd-cell title="整单折扣(%)" :value="formData.discountPercent != null ? formData.discountPercent : '-'" />
+        <wd-cell title="下次联系时间" :value="formatDateTime(formData.contactNextTime) || '-'" />
         <wd-cell title="最后跟进时间" :value="formatDateTime(formData.contactLastTime) || '-'" />
-        <wd-cell title="最后跟进内容" :value="formData.contactLastContent || '-'" />
         <wd-cell title="备注" :value="formData.remark || '-'" />
         <wd-cell title="创建人" :value="formData.creatorName || '-'" />
         <wd-cell title="创建时间" :value="formatDateTime(formData.createTime) || '-'" />
@@ -48,6 +48,12 @@
           </view>
           <view class="mb-8rpx text-26rpx text-[#666]">
             <text class="mr-8rpx text-[#999]">产品编码：</text>{{ row.productNo || '-' }}
+          </view>
+          <view class="mb-8rpx text-26rpx text-[#666]">
+            <text class="mr-8rpx text-[#999]">产品单位：</text>{{ getDictLabel(DICT_TYPE.CRM_PRODUCT_UNIT, row.productUnit) || '-' }}
+          </view>
+          <view class="mb-8rpx text-26rpx text-[#666]">
+            <text class="mr-8rpx text-[#999]">产品价格：</text>{{ formatMoney(row.productPrice) }}
           </view>
           <view class="mb-8rpx text-26rpx text-[#666]">
             <text class="mr-8rpx text-[#999]">数量：</text>{{ row.count ?? '-' }}
@@ -145,6 +151,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { deleteBusiness, getBusiness } from '@/api/crm/business'
 import { BizTypeEnum } from '@/api/crm/permission'
+import { getDictLabel } from '@/hooks/useDict'
 import { useAccess } from '@/hooks/useAccess'
 import CrmBusinessStatusForm from '@/pages-crm/business/components/business-status-form.vue'
 import ContactList from '@/pages-crm/contact/components/contact-list.vue'
@@ -154,6 +161,7 @@ import CrmOperateLogs from '@/pages-crm/operate-log/components/operate-log-list.
 import CrmPermissionTeam from '@/pages-crm/permission/components/permission-list.vue'
 import CrmTransferForm from '@/pages-crm/permission/components/transfer-form.vue'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
 import { formatMoney } from '@/utils/format'
 

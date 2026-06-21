@@ -19,6 +19,7 @@
             source="customer"
             label="客户名称"
             prop="customerId"
+            :disabled="customerLocked"
             placeholder="请选择客户名称"
           />
           <UserPicker v-model="formData.ownerUserId" type="radio" label="负责人" prop="ownerUserId" :disabled="!!props.id" placeholder="请选择负责人" />
@@ -96,10 +97,12 @@ const toast = useToast()
 const userStore = useUserStore()
 const getTitle = computed(() => props.id ? '编辑商机' : '新增商机')
 const formLoading = ref(false) // 表单提交状态
+const customerLocked = ref(false) // 客户是否锁定（从客户/联系人详情带入时不可改，避免改客户产生跨客户关联）
 const formData = ref<Business & Record<string, any>>({
   id: undefined,
   name: '',
   customerId: undefined,
+  contactId: undefined,
   ownerUserId: undefined,
   statusTypeId: undefined,
   statusId: undefined,
@@ -139,6 +142,12 @@ function applyQueryDefaults() {
   const query = currRoute().query
   if (query.customerId) {
     formData.value.customerId = Number(query.customerId)
+    customerLocked.value = true // 带入客户后锁定，避免改客户
+  }
+  // 从联系人详情「新增商机」进入时透传 contactId，提交时后端自动关联联系人；同时锁定客户避免跨客户关联
+  if (query.contactId) {
+    formData.value.contactId = Number(query.contactId)
+    customerLocked.value = true
   }
 }
 

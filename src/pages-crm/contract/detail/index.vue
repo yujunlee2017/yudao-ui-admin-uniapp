@@ -31,11 +31,14 @@
           <dict-tag v-if="formData.auditStatus != null && formData.auditStatus !== ''" :type="DICT_TYPE.CRM_AUDIT_STATUS" :value="formData.auditStatus" />
           <text v-else>-</text>
         </wd-cell>
-        <wd-cell title="合同金额" :value="formData.totalPrice != null && formData.totalPrice !== '' ? formatMoney(formData.totalPrice) : '-'" />
-        <wd-cell title="整单折扣(%)" :value="formData.discountPercent || '-'" />
-        <wd-cell title="已回款金额" :value="formData.totalReceivablePrice != null && formData.totalReceivablePrice !== '' ? formatMoney(formData.totalReceivablePrice) : '-'" />
+        <wd-cell title="合同金额" :value="formatMoney(formData.totalPrice)" />
+        <wd-cell title="整单折扣(%)" :value="formData.discountPercent != null ? formData.discountPercent : '-'" />
+        <wd-cell title="已回款金额" :value="formatMoney(formData.totalReceivablePrice)" />
+        <wd-cell title="最后跟进时间" :value="formatDateTime(formData.contactLastTime) || '-'" />
         <wd-cell title="备注" :value="formData.remark || '-'" />
+        <wd-cell title="创建人" :value="formData.creatorName || '-'" />
         <wd-cell title="创建时间" :value="formatDateTime(formData.createTime) || '-'" />
+        <wd-cell title="更新时间" :value="formatDateTime(formData.updateTime) || '-'" />
       </wd-cell-group>
 
       <!-- 产品清单（只读） -->

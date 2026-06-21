@@ -80,6 +80,7 @@ import {
   getDefaultDeptId,
   getFirstDeptId,
   normalizeRows,
+  toNumber,
 } from '../components/statistics'
 import StatisticsCard from '../components/statistics-card.vue'
 
@@ -154,7 +155,7 @@ async function loadData() {
     await Promise.all(
       sections.map(async (section) => {
         try {
-          nextData[section.title] = normalizeRows(await section.load?.(queryParams.value))
+          nextData[section.title] = withPortions(normalizeRows(await section.load?.(queryParams.value)))
         } catch {
           nextData[section.title] = []
         }
@@ -177,9 +178,21 @@ function portraitColumns(prop: string, label: string, dictType?: string): Statis
   return [
     { prop, label, dictType },
     { prop: 'customerCount', label: '客户数' },
+    { prop: 'customerPortion', label: '客户占比', type: 'percent' },
     { prop: 'dealCount', label: '成交数' },
     { prop: 'dealPortion', label: '成交占比', type: 'percent' },
   ]
+}
+
+/** 计算占比列：客户占比 = 客户数/Σ客户数，成交占比 = 成交数/Σ成交数（后端不返回，与 PC calculateProportion 对齐前端计算） */
+function withPortions(rows: Record<string, any>[]) {
+  const totalCustomer = rows.reduce((sum, row) => sum + toNumber(row.customerCount), 0)
+  const totalDeal = rows.reduce((sum, row) => sum + toNumber(row.dealCount), 0)
+  return rows.map(row => ({
+    ...row,
+    customerPortion: totalCustomer ? Math.round((toNumber(row.customerCount) / totalCustomer) * 10000) / 100 : 0,
+    dealPortion: totalDeal ? Math.round((toNumber(row.dealCount) / totalDeal) * 10000) / 100 : 0,
+  }))
 }
 
 /** 初始化 */

@@ -194,10 +194,17 @@ const sections = [
       { prop: 'ownerUserName', label: '负责人' },
       { prop: 'customerCreateCount', label: '新增客户' },
       { prop: 'customerDealCount', label: '成交客户' },
+      { prop: 'customerDealRate', label: '客户成交率', type: 'percent' },
       { prop: 'contractPrice', label: '合同金额', type: 'money' },
       { prop: 'receivablePrice', label: '回款金额', type: 'money' },
+      { prop: 'receivableRate', label: '回款完成率', type: 'percent' },
     ],
-    load: getCustomerSummaryByUser,
+    load: async (params: Record<string, any>) => (await getCustomerSummaryByUser(params)).map((item: any) => ({
+      ...item,
+      // 客户成交率 = 成交客户 / 新增客户 × 100；回款完成率 = 回款金额 / 合同金额 × 100，对齐 PC CustomerSummary
+      customerDealRate: item.customerCreateCount ? Number(((item.customerDealCount / item.customerCreateCount) * 100).toFixed(2)) : 0,
+      receivableRate: item.contractPrice ? Number(((item.receivablePrice / item.contractPrice) * 100).toFixed(2)) : 0,
+    })),
     chart: {
       type: 'bar',
       categoryProp: 'ownerUserName',

@@ -41,7 +41,9 @@
       <wd-cell title="最后跟进时间" :value="formatDateTime(formData.contactLastTime) || '-'" />
       <wd-cell title="最后跟进内容" :value="formData.contactLastContent || '-'" />
       <wd-cell title="备注" :value="formData.remark || '-'" />
+      <wd-cell title="创建人" :value="formData.creatorName || '-'" />
       <wd-cell title="创建时间" :value="formatDateTime(formData.createTime) || '-'" />
+      <wd-cell title="更新时间" :value="formatDateTime(formData.updateTime) || '-'" />
       <wd-cell title="转化状态">
         <dict-tag v-if="formData.transformStatus != null && formData.transformStatus !== ''" :type="DICT_TYPE.INFRA_BOOLEAN_STRING" :value="formData.transformStatus" />
         <text v-else>-</text>

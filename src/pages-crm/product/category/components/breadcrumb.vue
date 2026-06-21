@@ -76,11 +76,5 @@ function back(): boolean {
   return true
 }
 
-/** 重置面包屑 */
-function reset() {
-  breadcrumbList.value = []
-  emit('update:modelValue', 0)
-}
-
-defineExpose({ enter, back, reset })
+defineExpose({ enter, back })
 </script>

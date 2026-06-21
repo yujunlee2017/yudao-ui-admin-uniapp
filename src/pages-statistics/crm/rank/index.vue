@@ -44,7 +44,7 @@
 
 <script lang="ts" setup>
 import type { Dept } from '@/api/system/dept'
-import type { StatisticsSection } from '../components/statistics'
+import type { StatisticsColumn, StatisticsSection } from '../components/statistics'
 import { computed, onMounted, reactive, ref } from 'vue'
 import {
   getContactsCountRank,
@@ -96,9 +96,14 @@ const rankColumns = [
   { prop: 'deptName', label: '部门' },
   { prop: 'count', label: '数值' },
 ]
+const rankMoneyColumns: StatisticsColumn[] = [
+  { prop: 'nickname', label: '员工' },
+  { prop: 'deptName', label: '部门' },
+  { prop: 'count', label: '金额(元)', type: 'money' },
+] // 金额类排行用金额格式化（保留两位小数，对齐 PC erpPriceTableColumnFormatter）
 const sections = [
-  { title: '合同金额排行', columns: rankColumns, load: getContractPriceRank, chart: rankChart(true) },
-  { title: '回款金额排行', columns: rankColumns, load: getReceivablePriceRank, chart: rankChart(true) },
+  { title: '合同金额排行', columns: rankMoneyColumns, load: getContractPriceRank, chart: rankChart(true) },
+  { title: '回款金额排行', columns: rankMoneyColumns, load: getReceivablePriceRank, chart: rankChart(true) },
   { title: '签约合同排行', columns: rankColumns, load: getContractCountRank, chart: rankChart() },
   { title: '产品销量排行', columns: rankColumns, load: getProductSalesRank, chart: rankChart() },
   { title: '新增客户排行', columns: rankColumns, load: getCustomerCountRank, chart: rankChart() },

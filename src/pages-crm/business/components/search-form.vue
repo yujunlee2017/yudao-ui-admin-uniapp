@@ -21,6 +21,7 @@
           v-model="formData.customerId"
           source="customer"
           placeholder="请选择客户名称"
+          @confirm="handleCustomerConfirm"
         />
       </view>
       <view class="yd-search-form-actions">
@@ -36,7 +37,7 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import CrmPicker from '@/pages-crm/components/crm-picker.vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 
@@ -47,7 +48,22 @@ const formData = reactive<Record<string, any>>({
   name: undefined,
   customerId: undefined,
 }) // 搜索表单数据
-const placeholder = ref('搜索商机') // 搜索框占位
+const customerLabel = ref('') // 已选客户名称（占位回显用）
+const placeholder = computed(() => {
+  const conditions: string[] = []
+  if (formData.name) {
+    conditions.push(`名称:${formData.name}`)
+  }
+  if (formData.customerId) {
+    conditions.push(`客户:${customerLabel.value || '已选'}`)
+  }
+  return conditions.length > 0 ? conditions.join(' | ') : '搜索商机'
+}) // 搜索框占位：回显已选条件
+
+/** 选中客户后记录名称用于回显 */
+function handleCustomerConfirm(option?: { name?: string }) {
+  customerLabel.value = option?.name || ''
+}
 
 /** 搜索按钮操作 */
 function handleSearch() {
@@ -62,6 +78,7 @@ function handleSearch() {
 function handleReset() {
   formData.name = undefined
   formData.customerId = undefined
+  customerLabel.value = ''
   visible.value = false
   emit('reset')
 }
