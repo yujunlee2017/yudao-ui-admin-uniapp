@@ -91,18 +91,18 @@
                 <wd-input-number v-model="formData.brokerageWithdrawFeePercent" :min="0" :max="100" />
               </wd-form-item>
               <wd-form-item title="提现方式" title-width="200rpx" prop="brokerageWithdrawTypes">
-                <wd-checkbox-group v-model="formData.brokerageWithdrawTypes" shape="button">
+                <wd-checkbox-group v-model="formData.brokerageWithdrawTypes" type="button">
                   <wd-checkbox
                     v-for="option in getIntDictOptions(DICT_TYPE.BROKERAGE_WITHDRAW_TYPE)"
                     :key="option.value"
-                    :model-value="option.value"
+                    :name="option.value"
                   >
                     {{ option.label }}
                   </wd-checkbox>
                 </wd-checkbox-group>
               </wd-form-item>
               <wd-form-item title="分销海报" title-width="200rpx">
-                <wd-textarea v-model="formData.brokeragePosterUrlsText" clearable placeholder="多个图片 URL 用英文逗号分隔（个人/商品/拼团）" />
+                <yd-upload-imgs v-model="formData.brokeragePosterUrls" :limit="9" />
               </wd-form-item>
             </wd-cell-group>
           </view>
@@ -145,7 +145,7 @@ interface TradeConfigForm {
   brokerageWithdrawMinPrice: number
   brokerageWithdrawFeePercent: number
   brokerageWithdrawTypes: number[]
-  brokeragePosterUrlsText: string
+  brokeragePosterUrls: string[]
 }
 
 definePage({
@@ -173,7 +173,7 @@ const formData = ref<TradeConfigForm>({
   brokerageWithdrawMinPrice: 0,
   brokerageWithdrawFeePercent: 0,
   brokerageWithdrawTypes: [],
-  brokeragePosterUrlsText: '',
+  brokeragePosterUrls: [],
 }) // 表单数据
 const formSchema = createFormSchema({
   deliveryExpressFreePrice: [{ required: true, message: '满额包邮不能为空' }],
@@ -218,7 +218,7 @@ async function loadConfig() {
     brokerageWithdrawMinPrice: fenToYuan(data.brokerageWithdrawMinPrice),
     brokerageWithdrawFeePercent: data.brokerageWithdrawFeePercent ?? 0,
     brokerageWithdrawTypes: data.brokerageWithdrawTypes || [],
-    brokeragePosterUrlsText: (data.brokeragePosterUrls || []).join(','),
+    brokeragePosterUrls: data.brokeragePosterUrls || [],
   }
 }
 
@@ -245,7 +245,7 @@ async function handleSubmit() {
       brokerageWithdrawMinPrice: yuanToFen(formData.value.brokerageWithdrawMinPrice),
       brokerageWithdrawFeePercent: formData.value.brokerageWithdrawFeePercent,
       brokerageWithdrawTypes: formData.value.brokerageWithdrawTypes,
-      brokeragePosterUrls: textToArray(formData.value.brokeragePosterUrlsText),
+      brokeragePosterUrls: formData.value.brokeragePosterUrls,
     })
     toast.success('保存成功')
   } finally {

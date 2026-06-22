@@ -33,16 +33,13 @@ export interface ProductSpu {
   id?: number
   name?: string
   categoryId?: number
-  categoryName?: string
   keyword?: string
-  unit?: number
   picUrl?: string
   sliderPicUrls?: string[]
   introduction?: string
   deliveryTypes?: number[]
   deliveryTemplateId?: number
   brandId?: number
-  brandName?: string
   specType?: boolean
   subCommissionType?: boolean
   skus?: ProductSku[]

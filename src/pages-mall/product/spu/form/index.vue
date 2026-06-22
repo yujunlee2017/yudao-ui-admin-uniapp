@@ -1,3 +1,5 @@
+<!-- TODO @AI：看看整体，能不能在优化下？！ -->
+<!-- TODO @AI：可以手动添加规格么？ -->
 <template>
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
@@ -31,18 +33,16 @@
               <wd-form-item
                 title="商品品牌"
                 title-width="200rpx"
+                prop="brandId"
                 is-link
                 :value="getOptionText(brandOptions, formData.brandId)"
                 placeholder="请选择商品品牌"
                 @click="pickerVisible.brand = true"
               />
-              <wd-form-item title="关键字" title-width="200rpx">
+              <wd-form-item title="关键字" title-width="200rpx" prop="keyword">
                 <wd-input v-model="formData.keyword" clearable placeholder="请输入关键字" />
               </wd-form-item>
-              <wd-form-item title="单位编号" title-width="200rpx">
-                <wd-input-number v-model="formData.unit" :min="0" />
-              </wd-form-item>
-              <wd-form-item title="商品简介" title-width="200rpx">
+              <wd-form-item title="商品简介" title-width="200rpx" prop="introduction">
                 <wd-textarea v-model="formData.introduction" clearable :maxlength="500" placeholder="请输入商品简介" />
               </wd-form-item>
             </wd-cell-group>
@@ -54,18 +54,10 @@
             </view>
             <wd-cell-group border>
               <wd-form-item title="商品封面" title-width="200rpx" prop="picUrl">
-                <view class="w-full">
-                  <image
-                    v-if="formData.picUrl"
-                    :src="formData.picUrl"
-                    class="mb-12rpx h-140rpx w-140rpx rounded-8rpx bg-[#f5f5f5]"
-                    mode="aspectFill"
-                  />
-                  <wd-input v-model="formData.picUrl" clearable placeholder="请输入商品封面 URL" />
-                </view>
+                <yd-upload-img v-model="formData.picUrl" directory="mall/spu" />
               </wd-form-item>
-              <wd-form-item title="轮播图" title-width="200rpx" prop="sliderPicUrlsText">
-                <wd-textarea v-model="formData.sliderPicUrlsText" clearable :maxlength="2000" placeholder="多个 URL 用逗号或换行分隔" />
+              <wd-form-item title="轮播图" title-width="200rpx" prop="sliderPicUrls">
+                <yd-upload-imgs v-model="formData.sliderPicUrls" directory="mall/spu" :limit="9" />
               </wd-form-item>
               <wd-form-item title="配送方式" title-width="200rpx" prop="deliveryTypesText">
                 <wd-textarea v-model="formData.deliveryTypesText" clearable :maxlength="100" placeholder="配送方式编号，多个用逗号分隔，例如 1,2" />
@@ -207,7 +199,6 @@ import { getIntDictOptions } from '@/hooks/useDict'
 import { createFormSchema } from '@/utils/wot'
 
 interface SpuFormData extends ProductSpu {
-  sliderPicUrlsText?: string
   deliveryTypesText?: string
 }
 
@@ -232,9 +223,8 @@ const formData = ref<SpuFormData>({
   name: '',
   categoryId: undefined,
   keyword: '',
-  unit: undefined,
   picUrl: '',
-  sliderPicUrlsText: '',
+  sliderPicUrls: [],
   introduction: '',
   deliveryTypesText: '1',
   deliveryTemplateId: undefined,
@@ -251,8 +241,11 @@ const skus = ref<ProductSku[]>([]) // SKU 列表（金额单位元）
 const formSchema = createFormSchema({
   name: [{ required: true, message: '商品名称不能为空' }],
   categoryId: [{ required: true, message: '商品分类不能为空' }],
+  brandId: [{ required: true, message: '商品品牌不能为空' }],
+  keyword: [{ required: true, message: '商品关键字不能为空' }],
+  introduction: [{ required: true, message: '商品简介不能为空' }],
   picUrl: [{ required: true, message: '商品封面不能为空' }],
-  sliderPicUrlsText: [{ required: true, message: '轮播图不能为空' }],
+  sliderPicUrls: [{ required: true, message: '轮播图不能为空' }],
   deliveryTypesText: [{ required: true, message: '配送方式不能为空' }],
   specType: [{ required: true, message: '多规格不能为空' }],
   subCommissionType: [{ required: true, message: '单独分佣不能为空' }],
@@ -306,6 +299,8 @@ function toYuanSku(sku: ProductSku): ProductSku {
 function toCentSku(sku: ProductSku): ProductSku {
   return {
     ...sku,
+    name: sku.name || formData.value.name, // SKU 名称取商品名称（对齐 PC，后端 @NotEmpty）
+    picUrl: sku.picUrl || formData.value.picUrl || '', // SKU 图片默认取商品封面（后端 @NotNull）
     price: yuanToCent(sku.price),
     marketPrice: yuanToCent(sku.marketPrice),
     costPrice: yuanToCent(sku.costPrice),
@@ -316,7 +311,7 @@ function toCentSku(sku: ProductSku): ProductSku {
 
 /** 默认单规格 SKU（元） */
 function createDefaultSku(): ProductSku {
-  return { price: 0, marketPrice: 0, costPrice: 0, stock: 0, properties: [] }
+  return { price: 0, marketPrice: 0, costPrice: 0, stock: 0, barCode: '', weight: 0, volume: 0, picUrl: '', properties: [] }
 }
 
 /** 加载选项 */
@@ -340,7 +335,7 @@ async function loadDetail() {
   const data = await getProductSpu(formId.value)
   formData.value = {
     ...data,
-    sliderPicUrlsText: (data.sliderPicUrls || []).join('\n'),
+    sliderPicUrls: data.sliderPicUrls || [],
     deliveryTypesText: (data.deliveryTypes || []).join(','),
   }
   skus.value = (data.skus || []).map(toYuanSku)
@@ -352,7 +347,7 @@ function buildSubmitData(): ProductSpu {
   return {
     ...data,
     id: formId.value,
-    sliderPicUrls: parseMallArray(data.sliderPicUrlsText || ''),
+    sliderPicUrls: data.sliderPicUrls || [],
     deliveryTypes: parseMallArray(data.deliveryTypesText || '', 'number') as number[],
     skus: skus.value.map(toCentSku),
   }

@@ -19,28 +19,29 @@
               <wd-form-item title="活动名称" title-width="200rpx" prop="name">
                 <wd-input v-model="formData.name" clearable placeholder="请输入活动名称" />
               </wd-form-item>
-              <wd-datetime-picker v-model="formData.startTime" type="datetime" label="开始时间" label-width="200rpx" prop="startTime" placeholder="请选择开始时间" />
-              <wd-datetime-picker v-model="formData.endTime" type="datetime" label="结束时间" label-width="200rpx" prop="endTime" placeholder="请选择结束时间" />
+              <wd-form-item title="开始时间" title-width="200rpx" prop="startTime" is-link placeholder="请选择开始时间" :value="formatDateTime(formData.startTime)" @click="pickerVisible.startTime = true" />
+              <wd-datetime-picker v-model="formData.startTime" v-model:visible="pickerVisible.startTime" title="请选择开始时间" type="datetime" />
+              <wd-form-item title="结束时间" title-width="200rpx" prop="endTime" is-link placeholder="请选择结束时间" :value="formatDateTime(formData.endTime)" @click="pickerVisible.endTime = true" />
+              <wd-datetime-picker v-model="formData.endTime" v-model:visible="pickerVisible.endTime" title="请选择结束时间" type="datetime" />
               <wd-form-item title="条件类型" title-width="200rpx" prop="conditionType" center>
                 <wd-radio-group v-model="formData.conditionType" type="button">
-                  <wd-radio :value="10">
-                    满金额
-                  </wd-radio>
-                  <wd-radio :value="20">
-                    满件数
+                  <wd-radio
+                    v-for="dict in getIntDictOptions(DICT_TYPE.PROMOTION_CONDITION_TYPE)"
+                    :key="dict.value"
+                    :value="dict.value"
+                  >
+                    {{ dict.label }}
                   </wd-radio>
                 </wd-radio-group>
               </wd-form-item>
               <wd-form-item title="商品范围" title-width="200rpx" prop="productScope" center>
                 <wd-radio-group v-model="formData.productScope" type="button">
-                  <wd-radio :value="1">
-                    全部
-                  </wd-radio>
-                  <wd-radio :value="2">
-                    指定商品
-                  </wd-radio>
-                  <wd-radio :value="3">
-                    指定分类
+                  <wd-radio
+                    v-for="dict in getIntDictOptions(DICT_TYPE.PROMOTION_PRODUCT_SCOPE)"
+                    :key="dict.value"
+                    :value="dict.value"
+                  >
+                    {{ dict.label }}
                   </wd-radio>
                 </wd-radio-group>
               </wd-form-item>
@@ -82,11 +83,70 @@
                 <text class="w-180rpx shrink-0 text-26rpx text-[#666]">是否包邮</text>
                 <wd-switch v-model="rule.freeDelivery" />
               </view>
+              <!-- 赠送优惠券 -->
+              <view class="py-6rpx">
+                <view class="mb-8rpx flex items-center justify-between">
+                  <text class="text-26rpx text-[#666]">赠送优惠券</text>
+                  <wd-button size="small" variant="plain" @click="openCouponPicker(index)">
+                    选择优惠券
+                  </wd-button>
+                </view>
+                <view v-if="rule.coupons.length" class="flex flex-col gap-8rpx">
+                  <view
+                    v-for="coupon in rule.coupons"
+                    :key="coupon.templateId"
+                    class="flex items-center gap-12rpx"
+                  >
+                    <text class="min-w-0 flex-1 truncate text-26rpx text-[#333]">{{ couponLabel(coupon.templateId) }}</text>
+                    <wd-input-number v-model="coupon.count" :min="1" />
+                    <text class="shrink-0 text-26rpx text-[#fa4350]" @click="removeCoupon(index, coupon.templateId)">移除</text>
+                  </view>
+                </view>
+                <text v-else class="text-24rpx text-[#999]">未选择优惠券</text>
+              </view>
             </view>
           </view>
         </view>
       </wd-form>
     </scroll-view>
+
+    <!-- 赠送优惠券选择弹窗 -->
+    <wd-popup
+      v-model="couponPickerVisible"
+      position="bottom"
+      closable
+      custom-style="border-radius: 24rpx 24rpx 0 0; height: 70vh;"
+      @close="couponPickerVisible = false"
+    >
+      <view class="h-70vh flex flex-col p-24rpx">
+        <view class="mb-16rpx text-32rpx text-[#333] font-semibold">
+          选择赠送优惠券
+        </view>
+        <scroll-view class="min-h-0 flex-1" scroll-y>
+          <wd-checkbox-group v-model="couponTempSelected">
+            <wd-checkbox
+              v-for="template in couponTemplates"
+              :key="template.id"
+              :model-value="template.id"
+              class="border-b border-[#f5f5f5] py-16rpx"
+            >
+              {{ template.name }}
+            </wd-checkbox>
+          </wd-checkbox-group>
+          <view v-if="!couponTemplates.length" class="py-48rpx text-center text-26rpx text-[#999]">
+            暂无优惠券模板
+          </view>
+        </scroll-view>
+        <view class="mt-16rpx flex gap-20rpx">
+          <wd-button class="flex-1" variant="plain" @click="couponPickerVisible = false">
+            取消
+          </wd-button>
+          <wd-button class="flex-1" type="primary" @click="confirmCouponPicker">
+            确定（{{ couponTempSelected.length }}）
+          </wd-button>
+        </view>
+      </view>
+    </wd-popup>
 
     <!-- 底部保存按钮 -->
     <view class="yd-detail-footer">
@@ -99,20 +159,28 @@
 
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
+import type { PromotionCouponTemplate } from '@/api/mall/promotion/coupon/coupon-template'
 import type { PromotionRewardActivity } from '@/api/mall/promotion/reward'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
+import { getPromotionCouponTemplatePage } from '@/api/mall/promotion/coupon/coupon-template'
 import {
   createPromotionRewardActivity,
   getPromotionRewardActivity,
   updatePromotionRewardActivity,
 } from '@/api/mall/promotion/reward'
+import { getIntDictOptions } from '@/hooks/useDict'
 import ScopePicker from '@/pages-mall/promotion/components/scope-picker.vue'
 import { fenToYuan, yuanToFen } from '@/pages-mall/utils'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
+import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 
-interface RewardRuleForm { limit: number, discountPrice: number, point: number, freeDelivery: boolean }
+/** 单条规则赠送的优惠券（模板编号 + 数量） */
+interface RewardRuleCoupon { templateId: number, count: number }
+/** 表单内的规则结构（金额为元） */
+interface RewardRuleForm { limit: number, discountPrice: number, point: number, freeDelivery: boolean, coupons: RewardRuleCoupon[] }
 
 const props = defineProps<{ id?: number | any }>()
 
@@ -127,8 +195,13 @@ const toast = useToast()
 const getTitle = computed(() => props.id ? '编辑满减送' : '新增满减送')
 const formLoading = ref(false) // 表单提交状态
 const formRef = ref<FormInstance>() // 表单组件引用
+const pickerVisible = ref<Record<string, boolean>>({}) // 日期选择器显示状态
 const scopeValues = ref<number[]>([]) // 指定商品/分类编号
-const rules = ref<RewardRuleForm[]>([{ limit: 0, discountPrice: 0, point: 0, freeDelivery: false }]) // 优惠规则（金额为元）
+const rules = ref<RewardRuleForm[]>([createRule()]) // 优惠规则（金额为元）
+const couponTemplates = ref<PromotionCouponTemplate[]>([]) // 优惠券模板列表（用于选择 + 名称回显）
+const couponPickerVisible = ref(false) // 优惠券选择弹窗显示状态
+const couponTempSelected = ref<number[]>([]) // 弹窗内临时选中的优惠券模板编号
+const couponEditingIndex = ref(-1) // 当前编辑赠券的规则下标
 const formData = ref<PromotionRewardActivity>({
   id: undefined,
   name: '',
@@ -144,9 +217,14 @@ const formSchema = createFormSchema({
   endTime: [{ required: true, message: '结束时间不能为空' }],
 })
 
+/** 创建一条空规则 */
+function createRule(): RewardRuleForm {
+  return { limit: 0, discountPrice: 0, point: 0, freeDelivery: false, coupons: [] }
+}
+
 /** 添加优惠规则 */
 function addRule() {
-  rules.value.push({ limit: 0, discountPrice: 0, point: 0, freeDelivery: false })
+  rules.value.push(createRule())
 }
 
 /** 删除优惠规则 */
@@ -154,9 +232,45 @@ function removeRule(index: number) {
   rules.value.splice(index, 1)
 }
 
+/** 优惠券模板名称 */
+function couponLabel(templateId: number) {
+  return couponTemplates.value.find(item => item.id === templateId)?.name || `模板 #${templateId}`
+}
+
+/** 打开赠券选择弹窗 */
+function openCouponPicker(index: number) {
+  couponEditingIndex.value = index
+  couponTempSelected.value = rules.value[index].coupons.map(item => item.templateId)
+  couponPickerVisible.value = true
+}
+
+/** 确认赠券选择：保留已有数量，新增默认 1 */
+function confirmCouponPicker() {
+  const rule = rules.value[couponEditingIndex.value]
+  if (rule) {
+    rule.coupons = couponTempSelected.value.map((templateId) => {
+      const exist = rule.coupons.find(item => item.templateId === templateId)
+      return { templateId, count: exist?.count ?? 1 }
+    })
+  }
+  couponPickerVisible.value = false
+}
+
+/** 移除单个赠券 */
+function removeCoupon(ruleIndex: number, templateId: number) {
+  const rule = rules.value[ruleIndex]
+  rule.coupons = rule.coupons.filter(item => item.templateId !== templateId)
+}
+
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mall/promotion/reward-activity/index')
+}
+
+/** 加载优惠券模板（用于赠券选择与名称回显） */
+async function loadCouponTemplates() {
+  const data = await getPromotionCouponTemplatePage({ pageNo: 1, pageSize: 100 })
+  couponTemplates.value = data.list || []
 }
 
 /** 加载详情 */
@@ -176,12 +290,16 @@ async function getDetail() {
   }
   scopeValues.value = data.productScopeValues || []
   if (data.rules?.length) {
-    // 满金额时 limit 为分，需转元；满件数时 limit 为整数
+    // 满金额时 limit 为分，需转元；满件数时 limit 为整数。赠券 Map 转为本地数组结构
     rules.value = data.rules.map(rule => ({
       limit: data.conditionType === 20 ? (rule.limit ?? 0) : fenToYuan(rule.limit),
       discountPrice: fenToYuan(rule.discountPrice),
       point: rule.point ?? 0,
       freeDelivery: !!rule.freeDelivery,
+      coupons: Object.entries(rule.giveCouponTemplateCounts || {}).map(([templateId, count]) => ({
+        templateId: Number(templateId),
+        count: Number(count) || 1,
+      })),
     }))
   }
 }
@@ -197,12 +315,20 @@ async function handleSubmit() {
     return
   }
   const isCount = formData.value.conditionType === 20
-  const submitRules = rules.value.map(rule => ({
-    limit: isCount ? Number(rule.limit) || 0 : yuanToFen(rule.limit),
-    discountPrice: yuanToFen(rule.discountPrice),
-    point: Number(rule.point) || 0,
-    freeDelivery: !!rule.freeDelivery,
-  }))
+  const submitRules = rules.value.map((rule) => {
+    // 赠券本地数组转回后端 Map<模板编号, 数量>
+    const giveCouponTemplateCounts: Record<string, number> = {}
+    rule.coupons.forEach((coupon) => {
+      giveCouponTemplateCounts[coupon.templateId] = Number(coupon.count) || 1
+    })
+    return {
+      limit: isCount ? Number(rule.limit) || 0 : yuanToFen(rule.limit),
+      discountPrice: yuanToFen(rule.discountPrice),
+      point: Number(rule.point) || 0,
+      freeDelivery: !!rule.freeDelivery,
+      giveCouponTemplateCounts,
+    }
+  })
   const productScopeValues = formData.value.productScope === 1 ? [] : scopeValues.value
   formLoading.value = true
   try {
@@ -226,7 +352,8 @@ async function handleSubmit() {
 }
 
 /** 初始化 */
-onMounted(() => {
-  getDetail()
+onMounted(async () => {
+  await loadCouponTemplates()
+  await getDetail()
 })
 </script>

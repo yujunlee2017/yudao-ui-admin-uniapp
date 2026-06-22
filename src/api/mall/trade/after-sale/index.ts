@@ -9,6 +9,15 @@ export interface TradeAfterSaleProductProperty {
   valueName?: string
 }
 
+/** 售后日志 */
+export interface TradeAfterSaleLog {
+  id?: number
+  userId?: number
+  userType?: number
+  content?: string
+  createTime?: string
+}
+
 /** 交易售后 */
 export interface TradeAfterSale {
   id?: number
@@ -41,6 +50,7 @@ export interface TradeAfterSale {
   receiveTime?: string
   receiveReason?: string
   createTime?: string
+  logs?: TradeAfterSaleLog[]
 }
 
 /** 获取交易售后分页列表 */
@@ -68,9 +78,9 @@ export function receiveTradeAfterSale(id: number) {
   return http.put<boolean>(`/trade/after-sale/receive?id=${id}`)
 }
 
-/** 拒绝收货 */
-export function refuseTradeAfterSale(id: number) {
-  return http.put<boolean>(`/trade/after-sale/refuse?id=${id}`)
+/** 拒绝收货（后端 refuseMemo 必填，经 query 透传） */
+export function refuseTradeAfterSale(id: number, refuseMemo: string) {
+  return http.put<boolean>(`/trade/after-sale/refuse?id=${id}&refuseMemo=${encodeURIComponent(refuseMemo)}`)
 }
 
 /** 确认退款 */

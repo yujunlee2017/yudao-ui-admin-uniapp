@@ -15,10 +15,10 @@
             title="所属属性"
             title-width="220rpx"
             prop="propertyId"
-            is-link
+            :is-link="!propertyLocked"
             :value="getOptionText(propertyOptions, formData.propertyId)"
             placeholder="请选择所属属性"
-            @click="pickerVisible = true"
+            @click="!propertyLocked && (pickerVisible = true)"
           />
           <wd-form-item title="属性值" title-width="220rpx" prop="name">
             <wd-input v-model="formData.name" clearable placeholder="请输入属性值" />
@@ -68,6 +68,7 @@ import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   id?: number | any
+  propertyId?: number | any
 }>()
 
 definePage({
@@ -82,9 +83,12 @@ const getTitle = computed(() => props.id ? '编辑属性值' : '新增属性值'
 const formLoading = ref(false) // 表单提交状态
 const pickerVisible = ref(false) // 所属属性选择器状态
 const propertyOptions = ref<{ label: string, value: number }[]>([]) // 属性选项
+// 从属性列表新增进入时，propertyId 经路由透传并锁定，不允许自由选择
+const lockedPropertyId = props.propertyId != null && props.propertyId !== '' ? Number(props.propertyId) : undefined
+const propertyLocked = computed(() => !props.id && lockedPropertyId != null)
 const formData = ref<ProductPropertyValue>({
   id: undefined,
-  propertyId: undefined,
+  propertyId: lockedPropertyId,
   name: '',
   remark: '',
 }) // 表单数据

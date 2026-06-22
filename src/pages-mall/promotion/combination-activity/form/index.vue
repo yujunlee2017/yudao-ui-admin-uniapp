@@ -19,8 +19,10 @@
               <wd-form-item title="活动名称" title-width="200rpx" prop="name">
                 <wd-input v-model="formData.name" clearable placeholder="请输入活动名称" />
               </wd-form-item>
-              <wd-datetime-picker v-model="formData.startTime" type="datetime" label="开始时间" label-width="200rpx" prop="startTime" placeholder="请选择开始时间" />
-              <wd-datetime-picker v-model="formData.endTime" type="datetime" label="结束时间" label-width="200rpx" prop="endTime" placeholder="请选择结束时间" />
+              <wd-form-item title="开始时间" title-width="200rpx" prop="startTime" is-link placeholder="请选择开始时间" :value="formatDateTime(formData.startTime)" @click="pickerVisible.startTime = true" />
+              <wd-datetime-picker v-model="formData.startTime" v-model:visible="pickerVisible.startTime" title="请选择开始时间" type="datetime" />
+              <wd-form-item title="结束时间" title-width="200rpx" prop="endTime" is-link placeholder="请选择结束时间" :value="formatDateTime(formData.endTime)" @click="pickerVisible.endTime = true" />
+              <wd-datetime-picker v-model="formData.endTime" v-model:visible="pickerVisible.endTime" title="请选择结束时间" type="datetime" />
               <wd-form-item title="成团人数" title-width="200rpx" prop="userSize" center>
                 <wd-input-number v-model="formData.userSize" :min="2" />
               </wd-form-item>
@@ -96,6 +98,7 @@ import {
 import SpuSkuEditor from '@/pages-mall/promotion/components/spu-sku-editor.vue'
 import { fenToYuan, yuanToFen } from '@/pages-mall/utils'
 import { navigateBackPlus } from '@/utils'
+import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{ id?: number | any }>()
@@ -112,6 +115,7 @@ const getTitle = computed(() => props.id ? '编辑拼团活动' : '新增拼团�
 const formLoading = ref(false) // 表单提交状态
 const formRef = ref<FormInstance>() // 表单组件引用
 const editorRef = ref<InstanceType<typeof SpuSkuEditor>>() // 商品编辑器引用
+const pickerVisible = ref<Record<string, boolean>>({}) // 日期选择器显示状态
 const spuId = ref<number>() // 选中的 SPU 编号
 const products = ref<SpuSkuRow[]>([]) // 每个 SKU 的拼团配置（金额为元）
 const formData = ref<PromotionCombinationActivity>({

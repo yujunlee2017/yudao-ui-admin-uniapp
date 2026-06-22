@@ -38,7 +38,7 @@
 
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">计费方式：</text>
-            <text>{{ item.chargeMode ?? '-' }}</text>
+            <text>{{ item.chargeMode != null ? getDictLabel(DICT_TYPE.EXPRESS_CHARGE_MODE, item.chargeMode) : '-' }}</text>
           </view>
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">排序：</text>
@@ -68,8 +68,10 @@ import type { DeliveryExpressTemplate } from '@/api/mall/trade/delivery/express-
 import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { getDeliveryExpressTemplatePage } from '@/api/mall/trade/delivery/express-template'
+import { getDictLabel } from '@/hooks/useDict'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import SearchForm from './components/search-form.vue'
 

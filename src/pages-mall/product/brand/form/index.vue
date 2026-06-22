@@ -15,6 +15,7 @@
             <wd-input v-model="formData.name" clearable placeholder="请输入品牌名称" />
           </wd-form-item>
           <wd-form-item title="品牌图片" title-width="220rpx" prop="picUrl">
+            <!-- TODO @AI：图片的上传组件；看看其他地方，是不是也要修复； -->
             <view class="w-full">
               <image
                 v-if="formData.picUrl"

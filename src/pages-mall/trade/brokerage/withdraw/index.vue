@@ -32,7 +32,7 @@
         >
           <view class="mb-16rpx flex items-start justify-between gap-16rpx">
             <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-              {{ item.userName || `提现 #${item.id}` }}
+              {{ item.userNickname || `提现 #${item.id}` }}
             </view>
             <dict-tag v-if="item.status != null" :type="DICT_TYPE.BROKERAGE_WITHDRAW_STATUS" :value="item.status" />
           </view>

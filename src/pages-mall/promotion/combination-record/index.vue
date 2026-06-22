@@ -41,7 +41,7 @@
                 <text class="min-w-0 flex-1 truncate text-30rpx text-[#333] font-semibold">
                   {{ item.spuName || `拼团 #${item.id}` }}
                 </text>
-                <text class="shrink-0 text-26rpx" :class="statusClass(item.status)">{{ statusText(item.status) }}</text>
+                <dict-tag v-if="item.status != null" class="shrink-0" :type="DICT_TYPE.PROMOTION_COMBINATION_RECORD_STATUS" :value="item.status" />
               </view>
               <view class="mt-6rpx text-26rpx text-[#999]">
                 团长：{{ item.nickname || '-' }}
@@ -68,6 +68,7 @@ import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { getPromotionCombinationRecordPage } from '@/api/mall/promotion/combination'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import SearchForm from './components/search-form.vue'
 
@@ -81,16 +82,6 @@ definePage({
 const list = ref<PromotionCombinationRecord[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({}) // 查询参数
-
-/** 拼团状态文案 */
-function statusText(status?: number) {
-  return ['进行中', '拼团成功', '拼团失败'][status ?? -1] || '-'
-}
-
-/** 拼团状态颜色 */
-function statusClass(status?: number) {
-  return ['text-[#fa8c16]', 'text-[#52c41a]', 'text-[#999]'][status ?? -1] || 'text-[#999]'
-}
 
 /** 返回上一页 */
 function handleBack() {

@@ -31,10 +31,10 @@
             <wd-input v-model="formData.closingTime" clearable placeholder="请输入营业结束时间" />
           </wd-form-item>
           <wd-form-item title="纬度" title-width="200rpx" prop="latitude" center>
-            <wd-input-number v-model="formData.latitude" :step="0.000001" />
+            <wd-input-number v-model="formData.latitude" :min="-90" :max="90" :step="0.000001" :precision="6" allow-null />
           </wd-form-item>
           <wd-form-item title="经度" title-width="200rpx" prop="longitude" center>
-            <wd-input-number v-model="formData.longitude" :step="0.000001" />
+            <wd-input-number v-model="formData.longitude" :min="-180" :max="180" :step="0.000001" :precision="6" allow-null />
           </wd-form-item>
           <wd-form-item title="核销员编号" title-width="200rpx" prop="verifyUserIds">
             <wd-input v-model="formData.verifyUserIds" clearable placeholder="多个核销员编号用逗号分隔" />
@@ -130,6 +130,8 @@ const formSchema = createFormSchema({
   openingTime: [{ required: true, message: '营业开始时间不能为空' }],
   closingTime: [{ required: true, message: '营业结束时间不能为空' }],
   status: [{ required: true, message: '开启状态不能为空' }],
+  latitude: [{ required: true, message: '纬度不能为空' }],
+  longitude: [{ required: true, message: '经度不能为空' }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用
 

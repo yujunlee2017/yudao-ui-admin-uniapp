@@ -1,3 +1,4 @@
+// TODO @AI：是不是应该弄到 /Users/yunai/Java/yudao-ui-admin-uniapp-next-v4/src/utils；对齐 vue3 的做法；
 /** 分转元（数值） */
 export function fenToYuan(value: any) {
   if (value === undefined || value === null || value === '') {
@@ -16,6 +17,7 @@ export function yuanToFen(value: any) {
   return Number.isNaN(amount) ? 0 : Math.round(amount * 100)
 }
 
+// TODO @AI：是不是一个通用的方法哈？
 /** 格式化金额展示（分 → ￥x.xx） */
 export function formatMallMoney(value: any) {
   if (value === undefined || value === null || value === '') {
@@ -28,6 +30,7 @@ export function formatMallMoney(value: any) {
   return `￥${(amount / 100).toFixed(2)}`
 }
 
+// TODO @AI：是不是没在用？？？
 /** 解析 JSON 输入：字符串则尝试 JSON.parse，失败返回原文 */
 export function parseMallJson(value: any) {
   if (typeof value !== 'string') {
@@ -44,6 +47,7 @@ export function parseMallJson(value: any) {
   }
 }
 
+// TODO @AI：是不是一个通用方法？
 /** 解析数组输入：逗号/换行分隔的字符串转数组 */
 export function parseMallArray(value: any, valueType: 'number' | 'string' = 'string') {
   if (Array.isArray(value)) {

@@ -8,9 +8,11 @@
     />
 
     <!-- 搜索组件 -->
+    <!--  -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
     <!-- 分页列表 -->
+    <!-- TODO @AI：是不是应该树形结构？ -->
     <z-paging
       ref="pagingRef"
       v-model="list"
@@ -48,9 +50,14 @@
                 <text class="mr-8rpx shrink-0 text-[#999]">上级分类：</text>
                 <text class="truncate">{{ getParentName(item.parentId) }}</text>
               </view>
-              <view class="flex items-center text-26rpx text-[#666]">
+              <view class="mb-8rpx flex items-center text-26rpx text-[#666]">
                 <text class="mr-8rpx shrink-0 text-[#999]">排序：</text>
                 <text>{{ item.sort ?? '-' }}</text>
+              </view>
+              <!-- TODO @AI：是不是看看别的样式？目前有哪些解决方案，我们可以讨论下； -->
+              <view class="flex items-center" @click.stop="handleViewSpu(item)">
+                <text class="text-26rpx text-[#1890ff]">查看商品</text>
+                <wd-icon name="arrow-right" size="12px" color="#1890ff" />
               </view>
             </view>
           </view>
@@ -148,6 +155,11 @@ function handleAdd() {
 /** 查看详情 */
 function handleDetail(item: ProductCategory) {
   uni.navigateTo({ url: `/pages-mall/product/category/detail/index?id=${item.id}` })
+}
+
+/** 查看该分类下的商品 */
+function handleViewSpu(item: ProductCategory) {
+  uni.navigateTo({ url: `/pages-mall/product/spu/index?categoryId=${item.id}` })
 }
 
 /** 初始化 */

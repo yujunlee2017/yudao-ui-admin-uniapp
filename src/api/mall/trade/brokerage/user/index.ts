@@ -12,6 +12,11 @@ export interface TradeBrokerageUser {
   frozenPrice?: number
   nickname?: string
   avatar?: string
+  brokerageUserCount?: number // 推广用户数量
+  brokerageOrderCount?: number // 推广订单数量
+  brokerageOrderPrice?: number // 推广订单金额（分）
+  withdrawPrice?: number // 已提现金额（分）
+  withdrawCount?: number // 已提现次数
 }
 
 /** 获取分销用户分页列表 */

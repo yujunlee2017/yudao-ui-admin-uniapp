@@ -59,7 +59,7 @@
           <view class="mb-16rpx text-30rpx text-[#333] font-semibold">
             申请信息
           </view>
-          <view class="space-y-10rpx text-26rpx">
+          <view class="text-26rpx space-y-10rpx">
             <view><text class="text-[#999]">申请原因：</text>{{ formData.applyReason || '-' }}</view>
             <view><text class="text-[#999]">补充描述：</text>{{ formData.applyDescription || '-' }}</view>
             <view v-if="formData.applyPicUrls?.length">
@@ -77,16 +77,42 @@
           </view>
         </view>
 
-        <view class="mb-160rpx rounded-12rpx bg-white p-24rpx shadow-sm">
+        <view class="mb-24rpx rounded-12rpx bg-white p-24rpx shadow-sm">
           <view class="mb-16rpx text-30rpx text-[#333] font-semibold">
             处理信息
           </view>
-          <view class="space-y-10rpx text-26rpx">
+          <view class="text-26rpx space-y-10rpx">
             <view><text class="text-[#999]">审核备注：</text>{{ formData.auditReason || '-' }}</view>
             <view><text class="text-[#999]">审核时间：</text>{{ formatDateTime(formData.auditTime) || '-' }}</view>
             <view><text class="text-[#999]">退货物流：</text>{{ formData.logisticsNo || '-' }}</view>
             <view><text class="text-[#999]">收货时间：</text>{{ formatDateTime(formData.receiveTime) || '-' }}</view>
             <view><text class="text-[#999]">退款时间：</text>{{ formatDateTime(formData.refundTime) || '-' }}</view>
+          </view>
+        </view>
+
+        <!-- 售后日志 -->
+        <view v-if="formData.logs?.length" class="mb-160rpx rounded-12rpx bg-white p-24rpx shadow-sm">
+          <view class="mb-16rpx text-30rpx text-[#333] font-semibold">
+            售后日志
+          </view>
+          <view class="yd-timeline">
+            <view
+              v-for="(log, index) in formData.logs"
+              :key="log.id ?? index"
+              class="yd-timeline-item"
+            >
+              <view class="yd-timeline-dot" :style="{ backgroundColor: getUserTypeColor(log.userType) }">
+                {{ getUserTypeText(log.userType) }}
+              </view>
+              <view class="yd-timeline-content">
+                <view class="text-26rpx text-[#333]">
+                  {{ log.content || '-' }}
+                </view>
+                <view class="mt-6rpx text-22rpx text-[#999]">
+                  {{ formatDateTime(log.createTime) || '-' }}
+                </view>
+              </view>
+            </view>
           </view>
         </view>
       </view>
@@ -116,9 +142,9 @@
     >
       <view class="p-24rpx">
         <view class="mb-24rpx text-32rpx text-[#333] font-semibold">
-          拒绝售后
+          {{ rejectAction === 'refuse' ? '拒绝收货' : '拒绝售后' }}
         </view>
-        <wd-textarea v-model="rejectReason" clearable :maxlength="500" placeholder="请输入拒绝原因" />
+        <wd-textarea v-model="rejectReason" clearable :maxlength="500" :placeholder="rejectAction === 'refuse' ? '请输入拒绝收货原因' : '请输入拒绝原因'" />
         <view class="mt-24rpx flex gap-20rpx">
           <wd-button class="flex-1" variant="plain" @click="rejectVisible = false">
             取消
@@ -145,7 +171,7 @@ import {
   refundTradeAfterSale,
   refuseTradeAfterSale,
 } from '@/api/mall/trade/after-sale'
-import { getDictLabel } from '@/hooks/useDict'
+import { getDictLabel, getDictObj } from '@/hooks/useDict'
 import { useAccess } from '@/hooks/useAccess'
 import { formatMallMoney } from '@/pages-mall/utils'
 import { currRoute, navigateBackPlus } from '@/utils'
@@ -172,14 +198,20 @@ const formData = ref<TradeAfterSale>() // 售后详情
 const actionSheetVisible = ref(false) // 操作菜单
 const rejectVisible = ref(false) // 拒绝弹窗
 const rejectReason = ref('') // 拒绝原因
+const rejectAction = ref<'disagree' | 'refuse'>('disagree') // 拒绝弹窗对应动作：拒绝售后 / 拒绝收货
 const submitting = ref(false) // 提交状态
 // 按售后状态 + 权限网关：申请中可同意/拒绝，待收货可确认/拒绝收货，待退款可退款
 const sheetActions = computed(() => {
   const status = formData.value?.status
   const items: { name: string, value: ActionKey, color?: string }[] = []
-  if (status === AFTER_SALE_STATUS.APPLY && hasAccessByCodes(['trade:after-sale:audit'])) {
-    items.push({ name: '同意售后', value: 'agree' })
-    items.push({ name: '拒绝售后', value: 'disagree', color: '#fa4350' })
+  if (status === AFTER_SALE_STATUS.APPLY) {
+    // 同意/拒绝售后为后端独立权限码（trade:after-sale:agree / :disagree，无 :audit）
+    if (hasAccessByCodes(['trade:after-sale:agree'])) {
+      items.push({ name: '同意售后', value: 'agree' })
+    }
+    if (hasAccessByCodes(['trade:after-sale:disagree'])) {
+      items.push({ name: '拒绝售后', value: 'disagree', color: '#fa4350' })
+    }
   }
   if (status === AFTER_SALE_STATUS.WAIT_RECEIVE && hasAccessByCodes(['trade:after-sale:receive'])) {
     items.push({ name: '确认收货', value: 'receive' })
@@ -196,6 +228,27 @@ function handleBack() {
   navigateBackPlus('/pages-mall/trade/after-sale/index')
 }
 
+/** 售后日志：按用户类型取节点颜色 */
+function getUserTypeColor(userType?: number) {
+  const dict = getDictObj(DICT_TYPE.USER_TYPE, userType ?? 0)
+  switch (dict?.colorType) {
+    case 'success':
+      return '#67C23A'
+    case 'info':
+      return '#909399'
+    case 'warning':
+      return '#E6A23C'
+    case 'danger':
+      return '#F56C6C'
+  }
+  return '#409EFF'
+}
+
+/** 售后日志：节点文案（用户类型首字，缺省为「系」） */
+function getUserTypeText(userType?: number) {
+  return getDictLabel(DICT_TYPE.USER_TYPE, userType ?? 0)?.[0] || '系'
+}
+
 /** 加载详情 */
 async function loadDetail() {
   if (!detailId.value) {
@@ -206,7 +259,9 @@ async function loadDetail() {
 
 /** 选择动作 */
 function handleSelectAction({ item }: { item: { value: ActionKey } }) {
-  if (item.value === 'disagree') {
+  // 拒绝售后 / 拒绝收货均需填写原因（后端 auditReason / refuseMemo 必填）
+  if (item.value === 'disagree' || item.value === 'refuse') {
+    rejectAction.value = item.value
     rejectVisible.value = true
     return
   }
@@ -218,15 +273,14 @@ async function runAction(key: ActionKey) {
   if (!detailId.value) {
     return
   }
-  const confirmTextMap: Record<ActionKey, string> = {
+  // 仅 agree/receive/refund 走确认弹窗；disagree/refuse 经原因弹窗 handleReject 处理
+  const confirmTextMap: Partial<Record<ActionKey, string>> = {
     agree: '确定同意该售后申请吗？',
-    disagree: '确定拒绝该售后申请吗？',
     receive: '确定已收到退货商品吗？',
-    refuse: '确定拒绝收货吗？',
     refund: '确定执行退款吗？',
   }
   try {
-    await dialog.confirm({ title: '提示', msg: confirmTextMap[key] })
+    await dialog.confirm({ title: '提示', msg: confirmTextMap[key] || '确定执行该操作吗？' })
   } catch {
     return
   }
@@ -236,8 +290,6 @@ async function runAction(key: ActionKey) {
       await agreeTradeAfterSale(detailId.value)
     } else if (key === 'receive') {
       await receiveTradeAfterSale(detailId.value)
-    } else if (key === 'refuse') {
-      await refuseTradeAfterSale(detailId.value)
     } else if (key === 'refund') {
       await refundTradeAfterSale(detailId.value)
     }
@@ -249,15 +301,22 @@ async function runAction(key: ActionKey) {
   }
 }
 
-/** 拒绝售后 */
+/** 拒绝售后 / 拒绝收货 */
 async function handleReject() {
+  if (!detailId.value) {
+    return
+  }
   if (!rejectReason.value.trim()) {
-    toast.warning('请输入拒绝原因')
+    toast.warning(rejectAction.value === 'refuse' ? '请输入拒绝收货原因' : '请输入拒绝原因')
     return
   }
   submitting.value = true
   try {
-    await disagreeTradeAfterSale({ id: detailId.value, auditReason: rejectReason.value })
+    if (rejectAction.value === 'refuse') {
+      await refuseTradeAfterSale(detailId.value, rejectReason.value)
+    } else {
+      await disagreeTradeAfterSale({ id: detailId.value, auditReason: rejectReason.value })
+    }
     toast.success('操作成功')
     rejectVisible.value = false
     rejectReason.value = ''
@@ -283,4 +342,53 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
+.yd-timeline {
+  position: relative;
+  padding-left: 8rpx;
+}
+
+.yd-timeline-item {
+  position: relative;
+  display: flex;
+  gap: 20rpx;
+  padding-bottom: 28rpx;
+
+  // 连接线：贯穿圆点中心，最后一项不画线
+  &::before {
+    content: '';
+    position: absolute;
+    top: 48rpx;
+    left: 23rpx;
+    bottom: 0;
+    width: 2rpx;
+    background-color: #ebebeb;
+  }
+
+  &:last-child {
+    padding-bottom: 0;
+
+    &::before {
+      display: none;
+    }
+  }
+}
+
+.yd-timeline-dot {
+  z-index: 1;
+  display: flex;
+  width: 48rpx;
+  height: 48rpx;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 24rpx;
+}
+
+.yd-timeline-content {
+  min-width: 0;
+  flex: 1;
+  padding-top: 4rpx;
+}
 </style>

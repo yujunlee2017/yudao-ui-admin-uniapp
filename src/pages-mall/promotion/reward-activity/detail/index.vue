@@ -31,9 +31,14 @@
             优惠规则
           </view>
           <view v-for="(rule, index) in formData.rules" :key="index" class="px-24rpx py-16rpx text-26rpx text-[#666]">
-            <text>满 {{ formatLimit(rule.limit) }}，减 {{ formatMallMoney(rule.discountPrice) }}</text>
-            <text v-if="rule.freeDelivery">，包邮</text>
-            <text v-if="rule.point">，送 {{ rule.point }} 积分</text>
+            <view>
+              <text>满 {{ formatLimit(rule.limit) }}，减 {{ formatMallMoney(rule.discountPrice) }}</text>
+              <text v-if="rule.freeDelivery">，包邮</text>
+              <text v-if="rule.point">，送 {{ rule.point }} 积分</text>
+            </view>
+            <view v-if="couponCounts(rule).length" class="mt-6rpx text-24rpx text-[#999]">
+              赠送优惠券：{{ couponCounts(rule).map(item => `${couponLabel(item.templateId)}×${item.count}`).join('、') }}
+            </view>
           </view>
         </view>
       </view>
@@ -57,11 +62,13 @@
 </template>
 
 <script lang="ts" setup>
-import type { PromotionRewardActivity } from '@/api/mall/promotion/reward'
+import type { PromotionCouponTemplate } from '@/api/mall/promotion/coupon/coupon-template'
+import type { PromotionRewardActivity, PromotionRewardRule } from '@/api/mall/promotion/reward'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
+import { getPromotionCouponTemplatePage } from '@/api/mall/promotion/coupon/coupon-template'
 import {
   closePromotionRewardActivity,
   deletePromotionRewardActivity,
@@ -86,6 +93,7 @@ const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
 const formData = ref<PromotionRewardActivity>({}) // 详情数据
+const couponTemplates = ref<PromotionCouponTemplate[]>([]) // 优惠券模板列表（用于赠券名称回显）
 const deleting = ref(false) // 删除状态
 const closing = ref(false) // 关闭状态
 const canUpdate = computed(() => hasAccessByCodes(['promotion:reward-activity:update']))
@@ -105,6 +113,19 @@ function formatLimit(limit?: number) {
     return '-'
   }
   return formData.value.conditionType === 20 ? `${limit} 件` : `${fenToYuan(limit).toFixed(2)} 元`
+}
+
+/** 规则赠送的优惠券（模板编号 + 数量）数组 */
+function couponCounts(rule: PromotionRewardRule) {
+  return Object.entries(rule.giveCouponTemplateCounts || {}).map(([templateId, count]) => ({
+    templateId: Number(templateId),
+    count: Number(count) || 0,
+  }))
+}
+
+/** 优惠券模板名称 */
+function couponLabel(templateId: number) {
+  return couponTemplates.value.find(item => item.id === templateId)?.name || `模板 #${templateId}`
 }
 
 /** 加载详情 */
@@ -161,9 +182,16 @@ async function handleDelete() {
   }
 }
 
+/** 加载优惠券模板（用于赠券名称回显） */
+async function loadCouponTemplates() {
+  const data = await getPromotionCouponTemplatePage({ pageNo: 1, pageSize: 100 })
+  couponTemplates.value = data.list || []
+}
+
 /** 初始化 */
-onMounted(() => {
-  getDetail()
+onMounted(async () => {
+  await loadCouponTemplates()
+  await getDetail()
   uni.$on('mall:promotion-reward-activity:reload', getDetail)
 })
 

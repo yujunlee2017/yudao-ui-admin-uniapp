@@ -34,7 +34,10 @@
             <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
               {{ item.name || `活动 #${item.id}` }}
             </view>
-            <text class="shrink-0 text-26rpx text-[#fa8c16]">{{ formatMallMoney(item.seckillPrice) }}</text>
+            <view class="flex shrink-0 items-center gap-12rpx">
+              <dict-tag v-if="item.status != null" :type="DICT_TYPE.COMMON_STATUS" :value="item.status" />
+              <text class="text-26rpx text-[#fa8c16]">{{ formatMallMoney(item.seckillPrice) }}</text>
+            </view>
           </view>
           <view class="flex items-center text-26rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">活动时间：</text>
@@ -63,6 +66,7 @@ import { getPromotionSeckillActivityPage } from '@/api/mall/promotion/seckill'
 import { useAccess } from '@/hooks/useAccess'
 import { formatMallMoney } from '@/pages-mall/utils'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import SearchForm from './components/search-form.vue'
 

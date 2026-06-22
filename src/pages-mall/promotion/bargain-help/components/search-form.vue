@@ -15,15 +15,9 @@
     <view class="yd-search-form-container">
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
-          砍价记录
+          砍价记录编号
         </view>
-        <wd-input v-model="formData.record" type="number" placeholder="请输入砍价记录编号" clearable />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          用户编号
-        </view>
-        <wd-input v-model="formData.userId" type="number" placeholder="请输入用户编号" clearable />
+        <wd-input v-model="formData.recordId" type="number" placeholder="请输入砍价记录编号" clearable />
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -48,35 +42,28 @@ const emit = defineEmits<{
 
 const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
-  record: undefined as string | undefined,
-  userId: undefined as string | undefined,
-}) // 搜索表单数据
+  recordId: undefined as string | undefined,
+}) // 搜索表单数据（后端 BargainHelpPageReqVO 仅支持 recordId）
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
-  const conditions: string[] = []
-  if (formData.record) {
-    conditions.push(`记录:${formData.record}`)
+  if (formData.recordId) {
+    return `记录:${formData.recordId}`
   }
-  if (formData.userId) {
-    conditions.push(`用户:${formData.userId}`)
-  }
-  return conditions.length > 0 ? conditions.join(' | ') : '搜索砍价助力'
+  return '搜索砍价助力'
 })
 
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
   emit('search', {
-    record: formData.record ? Number(formData.record) : undefined,
-    userId: formData.userId ? Number(formData.userId) : undefined,
+    recordId: formData.recordId ? Number(formData.recordId) : undefined,
   })
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  formData.record = undefined
-  formData.userId = undefined
+  formData.recordId = undefined
   visible.value = false
   emit('reset')
 }

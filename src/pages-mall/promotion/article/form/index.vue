@@ -84,7 +84,12 @@
             </wd-radio-group>
           </wd-form-item>
           <wd-form-item title="文章内容" title-width="200rpx" prop="content">
-            <wd-textarea v-model="formData.content" clearable :maxlength="20000" placeholder="请输入文章内容" />
+            <view class="w-full">
+              <wd-textarea v-model="formData.content" clearable :maxlength="20000" placeholder="请输入文章内容" />
+              <view class="mt-8rpx text-22rpx text-[#fa3534] leading-32rpx">
+                富文本内容建议前往 PC 端编辑（移动端为纯文本，保存会覆盖原有富文本）
+              </view>
+            </view>
           </wd-form-item>
         </wd-cell-group>
       </wd-form>

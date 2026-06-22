@@ -10,6 +10,7 @@
     <!-- 详情内容 -->
     <wd-cell-group border>
       <wd-cell title="用户编号" :value="formData.userId != null ? String(formData.userId) : '-'" />
+      <wd-cell title="用户昵称" :value="formData.userNickname || '-'" />
       <wd-cell title="提现金额" :value="formatMallMoney(formData.price)" />
       <wd-cell title="手续费" :value="formatMallMoney(formData.feePrice)" />
       <wd-cell title="到账金额" :value="formatMallMoney(formData.totalPrice)" />
@@ -23,23 +24,41 @@
         <dict-tag v-if="formData.bankName != null && formData.bankName !== ''" :type="DICT_TYPE.BROKERAGE_BANK_NAME" :value="formData.bankName" />
         <text v-else>-</text>
       </wd-cell>
+      <wd-cell title="开户地址" :value="formData.bankAddress || '-'" />
+      <wd-cell title="收款码">
+        <image
+          v-if="formData.qrCodeUrl"
+          :src="formData.qrCodeUrl"
+          class="h-120rpx w-120rpx rounded-8rpx bg-[#f5f5f5]"
+          mode="aspectFill"
+          @click="previewQrCode"
+        />
+        <text v-else>-</text>
+      </wd-cell>
       <wd-cell title="提现状态">
         <dict-tag v-if="formData.status != null" :type="DICT_TYPE.BROKERAGE_WITHDRAW_STATUS" :value="formData.status" />
         <text v-else>-</text>
       </wd-cell>
       <wd-cell title="审核备注" :value="formData.auditReason || '-'" />
+      <wd-cell title="审核时间" :value="formatDateTime(formData.auditTime) || '-'" />
       <wd-cell title="转账错误" :value="formData.transferErrorMsg || '-'" />
       <wd-cell title="创建时间" :value="formatDateTime(formData.createTime) || '-'" />
     </wd-cell-group>
 
     <!-- 底部操作按钮 -->
-    <view v-if="canAudit" class="yd-detail-footer">
+    <view v-if="canAudit || canRetry" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button class="flex-1" type="primary" :loading="submitting" @click="handleApprove">
-          通过申请
-        </wd-button>
-        <wd-button class="flex-1" type="danger" @click="rejectVisible = true">
-          驳回申请
+        <template v-if="canAudit">
+          <wd-button class="flex-1" type="primary" :loading="submitting" @click="handleApprove">
+            通过申请
+          </wd-button>
+          <wd-button class="flex-1" type="danger" @click="rejectVisible = true">
+            驳回申请
+          </wd-button>
+        </template>
+        <!-- 提现失败(21) 可重新转账：复用 /approve 重新发起 -->
+        <wd-button v-if="canRetry" class="flex-1" type="warning" :loading="submitting" @click="handleApprove">
+          重新转账
         </wd-button>
       </view>
     </view>
@@ -102,8 +121,11 @@ const formData = ref<TradeBrokerageWithdraw>({}) // 详情数据
 const submitting = ref(false) // 操作提交状态
 const rejectVisible = ref(false) // 驳回弹窗
 const auditReason = ref('') // 驳回原因
-// 仅「审核中(0)」状态可审核，且需要审核权限
-const canAudit = computed(() => formData.value.status === 0 && hasAccessByCodes(['trade:brokerage-withdraw:audit']))
+const hasAuditPermi = computed(() => hasAccessByCodes(['trade:brokerage-withdraw:audit']))
+// 仅「审核中(0)」状态可审核（通过/驳回）
+const canAudit = computed(() => formData.value.status === 0 && hasAuditPermi.value)
+// 「提现失败(21)」可重新转账
+const canRetry = computed(() => formData.value.status === 21 && hasAuditPermi.value)
 
 /** 返回上一页 */
 function handleBack() {
@@ -123,17 +145,25 @@ async function getDetail() {
   }
 }
 
-/** 通过申请 */
+/** 预览收款码 */
+function previewQrCode() {
+  if (formData.value.qrCodeUrl) {
+    uni.previewImage({ urls: [formData.value.qrCodeUrl] })
+  }
+}
+
+/** 通过申请 / 重新转账（均调用 /approve） */
 async function handleApprove() {
+  const isRetry = formData.value.status === 21
   try {
-    await dialog.confirm({ title: '提示', msg: '确定通过该提现申请吗？' })
+    await dialog.confirm({ title: '提示', msg: isRetry ? '确定要重新转账吗？' : '确定通过该提现申请吗？' })
   } catch {
     return
   }
   submitting.value = true
   try {
     await approveTradeBrokerageWithdraw(Number(props.id))
-    toast.success('审核通过')
+    toast.success(isRetry ? '已重新发起转账' : '审核通过')
     uni.$emit('mall:brokerage-withdraw:reload')
     await getDetail()
   } finally {
@@ -149,7 +179,7 @@ async function handleReject() {
   }
   submitting.value = true
   try {
-    await rejectTradeBrokerageWithdraw({ ...formData.value, auditReason: auditReason.value })
+    await rejectTradeBrokerageWithdraw({ id: Number(props.id), auditReason: auditReason.value })
     toast.success('驳回成功')
     rejectVisible.value = false
     uni.$emit('mall:brokerage-withdraw:reload')

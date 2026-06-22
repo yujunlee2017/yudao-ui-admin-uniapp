@@ -31,7 +31,7 @@
         >
           <view class="mb-12rpx flex items-center justify-between gap-16rpx">
             <text class="text-30rpx text-[#333] font-semibold">砍价记录 #{{ item.id }}</text>
-            <text class="text-26rpx" :class="statusClass(item.status)">{{ statusText(item.status) }}</text>
+            <dict-tag v-if="item.status != null" :type="DICT_TYPE.PROMOTION_BARGAIN_RECORD_STATUS" :value="item.status" />
           </view>
           <view class="mb-8rpx flex items-center justify-between text-26rpx text-[#666]">
             <text>用户：{{ item.userId ?? '-' }}</text>
@@ -57,6 +57,7 @@ import { onMounted, ref } from 'vue'
 import { getPromotionBargainRecordPage } from '@/api/mall/promotion/bargain'
 import { formatMallMoney } from '@/pages-mall/utils'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import SearchForm from './components/search-form.vue'
 
@@ -70,16 +71,6 @@ definePage({
 const list = ref<PromotionBargainRecord[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({}) // 查询参数
-
-/** 砍价状态文案 */
-function statusText(status?: number) {
-  return ['进行中', '砍价成功', '砍价失败'][status ?? -1] || '-'
-}
-
-/** 砍价状态颜色 */
-function statusClass(status?: number) {
-  return ['text-[#fa8c16]', 'text-[#52c41a]', 'text-[#999]'][status ?? -1] || 'text-[#999]'
-}
 
 /** 返回上一页 */
 function handleBack() {

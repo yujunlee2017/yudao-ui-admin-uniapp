@@ -27,20 +27,27 @@
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
-          是否显示
+          订单编号
         </view>
-        <wd-radio-group v-model="formData.visible" type="button">
+        <wd-input v-model="formData.orderId" type="number" placeholder="请输入订单编号" clearable />
+      </view>
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
+          回复状态
+        </view>
+        <wd-radio-group v-model="formData.replyStatus" type="button">
           <wd-radio :value="-1">
             全部
           </wd-radio>
           <wd-radio :value="1">
-            显示
+            已回复
           </wd-radio>
           <wd-radio :value="0">
-            隐藏
+            未回复
           </wd-radio>
         </wd-radio-group>
       </view>
+      <yd-search-date-range v-model="formData.createTime" label="创建时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -56,6 +63,7 @@
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import { formatDate, formatDateRange } from '@/utils/date'
 
 const emit = defineEmits<{
   search: [data: Record<string, any>]
@@ -66,7 +74,9 @@ const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
   userNickname: undefined as string | undefined,
   spuName: undefined as string | undefined,
-  visible: -1, // -1=全部 1=显示 0=隐藏
+  orderId: undefined as string | undefined,
+  replyStatus: -1, // -1=全部 1=已回复 0=未回复（后端 replyStatus，非 visible）
+  createTime: [undefined, undefined] as [number | undefined, number | undefined],
 }) // 搜索表单数据
 
 /** 搜索条件 placeholder 拼接 */
@@ -78,8 +88,14 @@ const placeholder = computed(() => {
   if (formData.spuName) {
     conditions.push(`商品:${formData.spuName}`)
   }
-  if (formData.visible !== -1) {
-    conditions.push(`显示:${formData.visible === 1 ? '显示' : '隐藏'}`)
+  if (formData.orderId) {
+    conditions.push(`订单:${formData.orderId}`)
+  }
+  if (formData.replyStatus !== -1) {
+    conditions.push(`回复:${formData.replyStatus === 1 ? '已回复' : '未回复'}`)
+  }
+  if (formData.createTime?.[0] && formData.createTime?.[1]) {
+    conditions.push(`时间:${formatDate(formData.createTime[0])}~${formatDate(formData.createTime[1])}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索评论'
 })
@@ -90,7 +106,9 @@ function handleSearch() {
   emit('search', {
     userNickname: formData.userNickname || undefined,
     spuName: formData.spuName || undefined,
-    visible: formData.visible === -1 ? undefined : formData.visible === 1,
+    orderId: formData.orderId || undefined,
+    replyStatus: formData.replyStatus === -1 ? undefined : formData.replyStatus === 1,
+    createTime: formatDateRange(formData.createTime),
   })
 }
 
@@ -98,7 +116,9 @@ function handleSearch() {
 function handleReset() {
   formData.userNickname = undefined
   formData.spuName = undefined
-  formData.visible = -1
+  formData.orderId = undefined
+  formData.replyStatus = -1
+  formData.createTime = [undefined, undefined]
   visible.value = false
   emit('reset')
 }

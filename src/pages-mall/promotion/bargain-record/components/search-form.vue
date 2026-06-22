@@ -15,15 +15,20 @@
     <view class="yd-search-form-container">
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
-          活动编号
+          记录状态
         </view>
-        <wd-input v-model="formData.activityId" type="number" placeholder="请输入活动编号" clearable />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          用户编号
-        </view>
-        <wd-input v-model="formData.userId" type="number" placeholder="请输入用户编号" clearable />
+        <wd-radio-group v-model="formData.status" type="button">
+          <wd-radio :value="-1">
+            全部
+          </wd-radio>
+          <wd-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.PROMOTION_BARGAIN_RECORD_STATUS)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -39,7 +44,9 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
+import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 
 const emit = defineEmits<{
   search: [data: Record<string, any>]
@@ -48,35 +55,28 @@ const emit = defineEmits<{
 
 const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
-  activityId: undefined as string | undefined,
-  userId: undefined as string | undefined,
+  status: -1, // 记录状态，-1=全部（后端 BargainRecordPageReqVO 仅支持 status/createTime）
 }) // 搜索表单数据
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
-  const conditions: string[] = []
-  if (formData.activityId) {
-    conditions.push(`活动:${formData.activityId}`)
+  if (formData.status !== -1) {
+    return `状态:${getDictLabel(DICT_TYPE.PROMOTION_BARGAIN_RECORD_STATUS, formData.status)}`
   }
-  if (formData.userId) {
-    conditions.push(`用户:${formData.userId}`)
-  }
-  return conditions.length > 0 ? conditions.join(' | ') : '搜索砍价记录'
+  return '搜索砍价记录'
 })
 
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
   emit('search', {
-    activityId: formData.activityId ? Number(formData.activityId) : undefined,
-    userId: formData.userId ? Number(formData.userId) : undefined,
+    status: formData.status === -1 ? undefined : formData.status,
   })
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  formData.activityId = undefined
-  formData.userId = undefined
+  formData.status = -1
   visible.value = false
   emit('reset')
 }

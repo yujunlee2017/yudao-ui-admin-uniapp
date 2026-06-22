@@ -38,6 +38,23 @@
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
+          订单类型
+        </view>
+        <wd-radio-group v-model="formData.type" type="button">
+          <wd-radio :value="-1">
+            全部
+          </wd-radio>
+          <wd-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.TRADE_ORDER_TYPE)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
+      </view>
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
           配送方式
         </view>
         <wd-radio-group v-model="formData.deliveryType" type="button">
@@ -82,6 +99,7 @@ const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
   no: undefined as string | undefined,
   status: -1,
+  type: -1,
   deliveryType: -1,
   createTime: [undefined, undefined] as [number | undefined, number | undefined],
 }) // 搜索表单数据
@@ -94,6 +112,9 @@ const placeholder = computed(() => {
   }
   if (formData.status !== -1) {
     conditions.push(`状态:${getDictLabel(DICT_TYPE.TRADE_ORDER_STATUS, formData.status)}`)
+  }
+  if (formData.type !== -1) {
+    conditions.push(`类型:${getDictLabel(DICT_TYPE.TRADE_ORDER_TYPE, formData.type)}`)
   }
   if (formData.deliveryType !== -1) {
     conditions.push(`配送:${getDictLabel(DICT_TYPE.TRADE_DELIVERY_TYPE, formData.deliveryType)}`)
@@ -110,6 +131,7 @@ function handleSearch() {
   emit('search', {
     no: formData.no || undefined,
     status: formData.status === -1 ? undefined : formData.status,
+    type: formData.type === -1 ? undefined : formData.type,
     deliveryType: formData.deliveryType === -1 ? undefined : formData.deliveryType,
     createTime: formatDateRange(formData.createTime),
   })
@@ -119,6 +141,7 @@ function handleSearch() {
 function handleReset() {
   formData.no = undefined
   formData.status = -1
+  formData.type = -1
   formData.deliveryType = -1
   formData.createTime = [undefined, undefined]
   visible.value = false

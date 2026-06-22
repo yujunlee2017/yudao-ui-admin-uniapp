@@ -42,7 +42,9 @@
             <view><text class="text-[#999]">积分抵扣：</text>{{ formatMallMoney(formData.pointPrice) }}</view>
             <view><text class="text-[#999]">VIP 优惠：</text>{{ formatMallMoney(formData.vipPrice) }}</view>
             <view><text class="text-[#999]">订单调价：</text>{{ formatMallMoney(formData.adjustPrice) }}</view>
-            <view class="text-[#fa4350] font-semibold"><text>实付：</text>{{ formatMallMoney(formData.payPrice) }}</view>
+            <view class="text-[#fa4350] font-semibold">
+              <text>实付：</text>{{ formatMallMoney(formData.payPrice) }}
+            </view>
           </view>
         </view>
 
@@ -50,13 +52,17 @@
           <view class="mb-16rpx text-30rpx text-[#333] font-semibold">
             收货与配送
           </view>
-          <view class="space-y-10rpx text-26rpx text-[#333]">
+          <view class="text-26rpx text-[#333] space-y-10rpx">
             <view><text class="text-[#999]">配送方式：</text>{{ getDictLabel(DICT_TYPE.TRADE_DELIVERY_TYPE, formData.deliveryType) || '-' }}</view>
             <view><text class="text-[#999]">收件人：</text>{{ formData.receiverName || '-' }}</view>
             <view><text class="text-[#999]">联系电话：</text>{{ formData.receiverMobile || '-' }}</view>
             <view><text class="text-[#999]">收货地址：</text>{{ formData.receiverAreaName || '' }} {{ formData.receiverDetailAddress || '' }}</view>
-            <view v-if="formData.pickUpVerifyCode"><text class="text-[#999]">核销码：</text>{{ formData.pickUpVerifyCode }}</view>
-            <view v-if="formData.logisticsNo"><text class="text-[#999]">物流单号：</text>{{ formData.logisticsNo }}</view>
+            <view v-if="formData.pickUpVerifyCode">
+              <text class="text-[#999]">核销码：</text>{{ formData.pickUpVerifyCode }}
+            </view>
+            <view v-if="formData.logisticsNo">
+              <text class="text-[#999]">物流单号：</text>{{ formData.logisticsNo }}
+            </view>
             <view v-if="expressTracks.length">
               <text class="text-[#999]">物流轨迹：</text>
               <view class="mt-8rpx rounded-8rpx bg-[#f8f8f8] p-16rpx">
@@ -103,7 +109,9 @@
           </view>
           <view class="mb-16rpx rounded-8rpx bg-[#f8f8f8] p-16rpx text-26rpx">
             <view><text class="text-[#999]">买家留言：</text>{{ formData.userRemark || '-' }}</view>
-            <view class="mt-8rpx"><text class="text-[#999]">商家备注：</text>{{ formData.remark || '-' }}</view>
+            <view class="mt-8rpx">
+              <text class="text-[#999]">商家备注：</text>{{ formData.remark || '-' }}
+            </view>
           </view>
           <view v-for="(log, index) in formData.logs || []" :key="index" class="mb-12rpx text-24rpx text-[#666] last:mb-0">
             <text class="text-[#999]">{{ formatDateTime(log.createTime) || '-' }}</text>
@@ -144,40 +152,51 @@
         </view>
         <wd-form ref="actionFormRef" :model="actionFormData" :schema="actionFormSchema">
           <wd-cell-group border>
-            <wd-form-item
-              v-for="field in currentFields"
-              :key="field.prop"
-              :title="field.label"
-              title-width="200rpx"
-              :prop="field.prop"
-            >
-              <wd-input
-                v-if="field.type === 'text'"
+            <template v-for="field in currentFields" :key="field.prop">
+              <!-- 地区选择：yd-tree-select 自带 wd-form-item，需独立渲染 -->
+              <yd-tree-select
+                v-if="field.type === 'area'"
                 v-model="actionFormData[field.prop]"
-                clearable
-                :placeholder="field.placeholder || `请输入${field.label}`"
+                :label="field.label"
+                :prop="field.prop"
+                label-width="200rpx"
+                :data="areaTree"
+                :placeholder="field.placeholder || `请选择${field.label}`"
               />
-              <wd-input-number
-                v-else-if="field.type === 'number'"
-                v-model="actionFormData[field.prop]"
-                :min="field.min ?? 0"
-                :max="field.max"
-              />
-              <wd-input-number
-                v-else-if="field.type === 'money'"
-                v-model="actionFormData[field.prop]"
-                :min="field.min ?? -999999"
-                :max="field.max"
-                :step="0.01"
-              />
-              <wd-textarea
+              <wd-form-item
                 v-else
-                v-model="actionFormData[field.prop]"
-                clearable
-                :maxlength="2000"
-                :placeholder="field.placeholder || `请输入${field.label}`"
-              />
-            </wd-form-item>
+                :title="field.label"
+                title-width="200rpx"
+                :prop="field.prop"
+              >
+                <wd-input
+                  v-if="field.type === 'text'"
+                  v-model="actionFormData[field.prop]"
+                  clearable
+                  :placeholder="field.placeholder || `请输入${field.label}`"
+                />
+                <wd-input-number
+                  v-else-if="field.type === 'number'"
+                  v-model="actionFormData[field.prop]"
+                  :min="field.min ?? 0"
+                  :max="field.max"
+                />
+                <wd-input-number
+                  v-else-if="field.type === 'money'"
+                  v-model="actionFormData[field.prop]"
+                  :min="field.min ?? -999999"
+                  :max="field.max"
+                  :step="0.01"
+                />
+                <wd-textarea
+                  v-else
+                  v-model="actionFormData[field.prop]"
+                  clearable
+                  :maxlength="2000"
+                  :placeholder="field.placeholder || `请输入${field.label}`"
+                />
+              </wd-form-item>
+            </template>
           </wd-cell-group>
         </wd-form>
         <view class="mt-24rpx flex gap-20rpx">
@@ -208,6 +227,7 @@ import {
   updateTradeOrderPrice,
   updateTradeOrderRemark,
 } from '@/api/mall/trade/order'
+import { getAreaTree } from '@/api/system/area'
 import { getDictLabel } from '@/hooks/useDict'
 import { useAccess } from '@/hooks/useAccess'
 import { formatMallMoney } from '@/pages-mall/utils'
@@ -219,7 +239,7 @@ import { createFormSchema } from '@/utils/wot'
 interface ActionField {
   prop: string
   label: string
-  type: 'money' | 'number' | 'text' | 'textarea'
+  type: 'area' | 'money' | 'number' | 'text' | 'textarea'
   required?: boolean
   min?: number
   max?: number
@@ -254,6 +274,7 @@ const dialog = useDialog()
 const formData = ref<TradeOrder>() // 订单详情
 const detailId = ref<number>() // 订单编号
 const expressTracks = ref<Record<string, any>[]>([]) // 物流轨迹
+const areaTree = ref<any[]>([]) // 地区树（修改地址用）
 const actionSheetVisible = ref(false) // 更多菜单
 const actionFormVisible = ref(false) // 动作表单
 const actionSubmitting = ref(false) // 动作提交状态
@@ -304,7 +325,7 @@ const actions = computed<DetailAction[]>(() => {
       fields: [
         { prop: 'receiverName', label: '收件人', type: 'text', required: true },
         { prop: 'receiverMobile', label: '手机号', type: 'text', required: true },
-        { prop: 'receiverAreaId', label: '地区编号', type: 'number', required: true },
+        { prop: 'receiverAreaId', label: '所在地区', type: 'area', required: true },
         { prop: 'receiverDetailAddress', label: '详细地址', type: 'textarea', required: true },
       ],
       defaults: () => ({
@@ -426,7 +447,12 @@ onMounted(async () => {
   // #ifndef H5
   detailId.value = Number(query.id || 0) || undefined
   // #endif
-  await loadDetail()
+  await Promise.all([
+    loadDetail(),
+    getAreaTree().then((list) => {
+      areaTree.value = list
+    }),
+  ])
 })
 </script>
 

@@ -35,8 +35,12 @@
               <view class="mb-8rpx text-28rpx text-[#333]">
                 SKU 编号：{{ product.skuId }}
               </view>
-              <view class="flex flex-wrap gap-24rpx text-26rpx text-[#666]">
-                <text>优惠类型：{{ getDiscountTypeLabel(product.discountType) }}</text>
+              <view class="flex flex-wrap items-center gap-24rpx text-26rpx text-[#666]">
+                <view class="flex items-center gap-8rpx">
+                  <text>优惠类型：</text>
+                  <dict-tag v-if="product.discountType != null" :type="DICT_TYPE.PROMOTION_DISCOUNT_TYPE" :value="product.discountType" />
+                  <text v-else>-</text>
+                </view>
                 <text v-if="product.discountType === 1">优惠金额：{{ formatMallMoney(product.discountPrice) }}</text>
                 <text v-if="product.discountType === 2">折扣：{{ product.discountPercent ?? '-' }}%</text>
               </view>
@@ -102,17 +106,6 @@ const canClose = computed(() => hasAccessByCodes(['promotion:discount-activity:c
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mall/promotion/discount-activity/index')
-}
-
-/** 优惠类型文案 */
-function getDiscountTypeLabel(type?: number) {
-  if (type === 1) {
-    return '满减'
-  }
-  if (type === 2) {
-    return '折扣'
-  }
-  return '-'
 }
 
 /** 加载详情 */

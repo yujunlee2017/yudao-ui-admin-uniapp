@@ -14,10 +14,10 @@
       <wd-cell title="排序" :value="formData.sort != null ? String(formData.sort) : '-'" />
       <!-- 移动端简化：区域计费以 JSON 文本展示，不复刻 PC 区域编辑器 -->
       <wd-cell title="计费区域">
-        <text class="break-all text-26rpx text-[#666] whitespace-pre-wrap">{{ stringifyJson(formData.templateCharge) }}</text>
+        <text class="whitespace-pre-wrap break-all text-26rpx text-[#666]">{{ stringifyJson(formData.charges) }}</text>
       </wd-cell>
       <wd-cell title="包邮区域">
-        <text class="break-all text-26rpx text-[#666] whitespace-pre-wrap">{{ stringifyJson(formData.templateFree) }}</text>
+        <text class="whitespace-pre-wrap break-all text-26rpx text-[#666]">{{ stringifyJson(formData.frees) }}</text>
       </wd-cell>
       <wd-cell title="创建时间" :value="formatDateTime(formData.createTime) || '-'" />
     </wd-cell-group>

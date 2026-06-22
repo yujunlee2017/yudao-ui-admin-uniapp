@@ -15,9 +15,20 @@
     <view class="yd-search-form-container">
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
-          商品编号
+          活动状态
         </view>
-        <wd-input v-model="formData.spuId" type="number" placeholder="请输入商品编号" clearable />
+        <wd-radio-group v-model="formData.status" type="button">
+          <wd-radio :value="-1">
+            全部
+          </wd-radio>
+          <wd-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -33,7 +44,9 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
+import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 
 const emit = defineEmits<{
   search: [data: Record<string, any>]
@@ -42,13 +55,13 @@ const emit = defineEmits<{
 
 const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
-  spuId: undefined as string | undefined,
+  status: -1, // 活动状态，-1=全部（后端 PointActivityPageReqVO 仅支持 status）
 }) // 搜索表单数据
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
-  if (formData.spuId) {
-    return `商品:${formData.spuId}`
+  if (formData.status !== -1) {
+    return `状态:${getDictLabel(DICT_TYPE.COMMON_STATUS, formData.status)}`
   }
   return '搜索积分商城活动'
 })
@@ -56,12 +69,14 @@ const placeholder = computed(() => {
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  emit('search', { spuId: formData.spuId ? Number(formData.spuId) : undefined })
+  emit('search', {
+    status: formData.status === -1 ? undefined : formData.status,
+  })
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  formData.spuId = undefined
+  formData.status = -1
   visible.value = false
   emit('reset')
 }

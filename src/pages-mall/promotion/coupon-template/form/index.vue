@@ -91,20 +91,10 @@
             </wd-radio-group>
           </wd-form-item>
           <template v-if="formData.validityType === 1">
-            <wd-datetime-picker
-              v-model="formData.validStartTime"
-              type="datetime"
-              label="固定开始"
-              label-width="200rpx"
-              placeholder="请选择固定开始时间"
-            />
-            <wd-datetime-picker
-              v-model="formData.validEndTime"
-              type="datetime"
-              label="固定结束"
-              label-width="200rpx"
-              placeholder="请选择固定结束时间"
-            />
+            <wd-form-item title="固定开始" title-width="200rpx" prop="validStartTime" is-link placeholder="请选择固定开始时间" :value="formatDateTime(formData.validStartTime)" @click="pickerVisible.validStartTime = true" />
+            <wd-datetime-picker v-model="formData.validStartTime" v-model:visible="pickerVisible.validStartTime" title="请选择固定开始时间" type="datetime" />
+            <wd-form-item title="固定结束" title-width="200rpx" prop="validEndTime" is-link placeholder="请选择固定结束时间" :value="formatDateTime(formData.validEndTime)" @click="pickerVisible.validEndTime = true" />
+            <wd-datetime-picker v-model="formData.validEndTime" v-model:visible="pickerVisible.validEndTime" title="请选择固定结束时间" type="datetime" />
           </template>
           <template v-else-if="formData.validityType === 2">
             <wd-form-item title="领取后生效(天)" title-width="200rpx" prop="fixedStartTerm" center>
@@ -154,6 +144,7 @@ import ScopePicker from '@/pages-mall/promotion/components/scope-picker.vue'
 import { fenToYuan, yuanToFen } from '@/pages-mall/utils'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
+import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{ id?: number | any }>()
@@ -169,6 +160,7 @@ const toast = useToast()
 const getTitle = computed(() => props.id ? '编辑优惠券模板' : '新增优惠券模板')
 const formLoading = ref(false) // 表单提交状态
 const formRef = ref<FormInstance>() // 表单组件引用
+const pickerVisible = ref<Record<string, boolean>>({}) // 日期选择器显示状态
 const formData = ref<PromotionCouponTemplate>({
   id: undefined,
   name: '',
@@ -222,6 +214,11 @@ async function getDetail() {
 async function handleSubmit() {
   const { valid } = await formRef.value.validate()
   if (!valid) {
+    return
+  }
+  // 固定日期有效期时，开始/结束时间必填（后端 @AssertTrue 校验）
+  if (formData.value.validityType === 1 && (!formData.value.validStartTime || !formData.value.validEndTime)) {
+    toast.warning('请选择固定有效期的开始与结束时间')
     return
   }
   formLoading.value = true

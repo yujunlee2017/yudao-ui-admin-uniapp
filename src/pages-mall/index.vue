@@ -1,3 +1,4 @@
+<!-- TODO @AI：是不是要做到 /Users/yunai/Java/yudao-ui-admin-uniapp-next-v4/src/pages-statistics 里；因为需要使用到 echart；ps：尽量按照 vue3 + ep 的功能来做； -->
 <template>
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->

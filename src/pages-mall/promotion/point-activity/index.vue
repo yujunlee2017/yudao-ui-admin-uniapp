@@ -38,8 +38,11 @@
               mode="aspectFill"
             />
             <view class="min-w-0 flex-1">
-              <view class="mb-12rpx truncate text-30rpx text-[#333] font-semibold">
-                {{ item.spuName || `商品 #${item.spuId}` }}
+              <view class="mb-12rpx flex items-center justify-between gap-16rpx">
+                <text class="min-w-0 flex-1 truncate text-30rpx text-[#333] font-semibold">
+                  {{ item.spuName || `商品 #${item.spuId}` }}
+                </text>
+                <dict-tag v-if="item.status != null" class="shrink-0" :type="DICT_TYPE.COMMON_STATUS" :value="item.status" />
               </view>
               <view class="flex items-center justify-between text-26rpx text-[#666]">
                 <text>积分：{{ item.point ?? '-' }}</text>
@@ -69,6 +72,7 @@ import { onMounted, ref } from 'vue'
 import { getPromotionPointActivityPage } from '@/api/mall/promotion/point'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import SearchForm from './components/search-form.vue'
 
 definePage({

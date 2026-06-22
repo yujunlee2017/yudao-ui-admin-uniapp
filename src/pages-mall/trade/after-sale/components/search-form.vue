@@ -42,6 +42,40 @@
           </wd-radio>
         </wd-radio-group>
       </view>
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
+          售后方式
+        </view>
+        <wd-radio-group v-model="formData.way" type="button">
+          <wd-radio :value="-1">
+            全部
+          </wd-radio>
+          <wd-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.TRADE_AFTER_SALE_WAY)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
+      </view>
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
+          售后类型
+        </view>
+        <wd-radio-group v-model="formData.type" type="button">
+          <wd-radio :value="-1">
+            全部
+          </wd-radio>
+          <wd-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.TRADE_AFTER_SALE_TYPE)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
+      </view>
       <yd-search-date-range v-model="formData.createTime" label="申请时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -72,6 +106,8 @@ const formData = reactive({
   no: undefined as string | undefined,
   orderNo: undefined as string | undefined,
   status: -1,
+  way: -1,
+  type: -1,
   createTime: [undefined, undefined] as [number | undefined, number | undefined],
 }) // 搜索表单数据
 
@@ -87,6 +123,12 @@ const placeholder = computed(() => {
   if (formData.status !== -1) {
     conditions.push(`状态:${getDictLabel(DICT_TYPE.TRADE_AFTER_SALE_STATUS, formData.status)}`)
   }
+  if (formData.way !== -1) {
+    conditions.push(`方式:${getDictLabel(DICT_TYPE.TRADE_AFTER_SALE_WAY, formData.way)}`)
+  }
+  if (formData.type !== -1) {
+    conditions.push(`类型:${getDictLabel(DICT_TYPE.TRADE_AFTER_SALE_TYPE, formData.type)}`)
+  }
   if (formData.createTime?.[0] && formData.createTime?.[1]) {
     conditions.push(`时间:${formatDate(formData.createTime[0])}~${formatDate(formData.createTime[1])}`)
   }
@@ -100,6 +142,8 @@ function handleSearch() {
     no: formData.no || undefined,
     orderNo: formData.orderNo || undefined,
     status: formData.status === -1 ? undefined : formData.status,
+    way: formData.way === -1 ? undefined : formData.way,
+    type: formData.type === -1 ? undefined : formData.type,
     createTime: formatDateRange(formData.createTime),
   })
 }
@@ -109,6 +153,8 @@ function handleReset() {
   formData.no = undefined
   formData.orderNo = undefined
   formData.status = -1
+  formData.way = -1
+  formData.type = -1
   formData.createTime = [undefined, undefined]
   visible.value = false
   emit('reset')

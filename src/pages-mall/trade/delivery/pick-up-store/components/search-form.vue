@@ -21,6 +21,12 @@
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
+          门店手机
+        </view>
+        <wd-input v-model="formData.phone" placeholder="请输入门店手机" clearable />
+      </view>
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
           开启状态
         </view>
         <wd-radio-group v-model="formData.status" type="button">
@@ -36,6 +42,7 @@
           </wd-radio>
         </wd-radio-group>
       </view>
+      <yd-search-date-range v-model="formData.createTime" label="创建时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -53,6 +60,7 @@ import { computed, reactive, ref } from 'vue'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
+import { formatDate, formatDateRange } from '@/utils/date'
 
 const emit = defineEmits<{
   search: [data: Record<string, any>]
@@ -62,7 +70,9 @@ const emit = defineEmits<{
 const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
   name: undefined as string | undefined,
+  phone: undefined as string | undefined,
   status: -1,
+  createTime: [undefined, undefined] as [number | undefined, number | undefined],
 }) // 搜索表单数据
 
 /** 搜索条件 placeholder 拼接 */
@@ -71,8 +81,14 @@ const placeholder = computed(() => {
   if (formData.name) {
     conditions.push(`名称:${formData.name}`)
   }
+  if (formData.phone) {
+    conditions.push(`手机:${formData.phone}`)
+  }
   if (formData.status !== -1) {
     conditions.push(`状态:${getDictLabel(DICT_TYPE.COMMON_STATUS, formData.status)}`)
+  }
+  if (formData.createTime?.[0] && formData.createTime?.[1]) {
+    conditions.push(`时间:${formatDate(formData.createTime[0])}~${formatDate(formData.createTime[1])}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索自提门店'
 })
@@ -82,14 +98,18 @@ function handleSearch() {
   visible.value = false
   emit('search', {
     name: formData.name || undefined,
+    phone: formData.phone || undefined,
     status: formData.status === -1 ? undefined : formData.status,
+    createTime: formatDateRange(formData.createTime),
   })
 }
 
 /** 重置按钮操作 */
 function handleReset() {
   formData.name = undefined
+  formData.phone = undefined
   formData.status = -1
+  formData.createTime = [undefined, undefined]
   visible.value = false
   emit('reset')
 }

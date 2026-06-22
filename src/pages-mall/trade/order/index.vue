@@ -42,6 +42,10 @@
           </view>
 
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+            <text class="mr-8rpx shrink-0 text-[#999]">订单类型：</text>
+            <text>{{ item.type != null ? getDictLabel(DICT_TYPE.TRADE_ORDER_TYPE, item.type) : '-' }}</text>
+          </view>
+          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">下单用户：</text>
             <text class="truncate">{{ item.user?.nickname || item.receiverName || '-' }}</text>
           </view>
@@ -60,6 +64,7 @@ import type { TradeOrder } from '@/api/mall/trade/order'
 import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { getTradeOrderPage } from '@/api/mall/trade/order'
+import { getDictLabel } from '@/hooks/useDict'
 import { formatMallMoney } from '@/pages-mall/utils'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'

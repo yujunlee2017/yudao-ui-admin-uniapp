@@ -61,6 +61,22 @@
         <text class="w-160rpx shrink-0 text-26rpx text-[#666]">库存</text>
         <wd-input-number v-model="sku.stock" :min="0" @change="emitChange" />
       </view>
+      <view class="flex items-center gap-12rpx py-6rpx">
+        <text class="w-160rpx shrink-0 text-26rpx text-[#666]">条码</text>
+        <wd-input v-model="sku.barCode" clearable placeholder="请输入条码" @change="emitChange" />
+      </view>
+      <view class="flex items-center gap-12rpx py-6rpx">
+        <text class="w-160rpx shrink-0 text-26rpx text-[#666]">重量(kg)</text>
+        <wd-input-number v-model="sku.weight" :min="0" :step="0.01" @change="emitChange" />
+      </view>
+      <view class="flex items-center gap-12rpx py-6rpx">
+        <text class="w-160rpx shrink-0 text-26rpx text-[#666]">体积(m³)</text>
+        <wd-input-number v-model="sku.volume" :min="0" :step="0.01" @change="emitChange" />
+      </view>
+      <view class="flex items-start gap-12rpx py-6rpx">
+        <text class="w-160rpx shrink-0 text-26rpx text-[#666]">图片</text>
+        <yd-upload-img v-model="sku.picUrl" directory="mall/spu" @update:model-value="emitChange" />
+      </view>
       <!-- 单独分佣时展示一二级佣金 -->
       <template v-if="subCommissionType">
         <view class="flex items-center gap-12rpx py-6rpx">
@@ -143,7 +159,7 @@ const canGenerate = computed(() => specs.value.length > 0 && specs.value.every(s
 
 /** 创建一条默认 SKU（元） */
 function createSku(properties: ProductSku['properties'] = []): ProductSku {
-  return { price: 0, marketPrice: 0, costPrice: 0, stock: 0, firstBrokeragePrice: 0, secondBrokeragePrice: 0, properties }
+  return { price: 0, marketPrice: 0, costPrice: 0, stock: 0, barCode: '', weight: 0, volume: 0, picUrl: '', firstBrokeragePrice: 0, secondBrokeragePrice: 0, properties }
 }
 
 /** SKU 规格组合文案 */

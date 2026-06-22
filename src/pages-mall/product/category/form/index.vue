@@ -23,6 +23,7 @@
           <wd-form-item title="分类名称" title-width="220rpx" prop="name">
             <wd-input v-model="formData.name" clearable placeholder="请输入分类名称" />
           </wd-form-item>
+          <!-- TODO @AI：是不是换成 upload -->
           <wd-form-item title="分类图片" title-width="220rpx" prop="picUrl">
             <view class="w-full">
               <image
@@ -100,6 +101,7 @@ const toast = useToast()
 const getTitle = computed(() => props.id ? '编辑分类' : '新增分类')
 const formLoading = ref(false) // 表单提交状态
 const pickerVisible = ref(false) // 上级分类选择器状态
+// TODO @AI：yd-form-picker 换个组件？？？
 const parentOptions = ref<{ label: string, value: number }[]>([]) // 上级分类选项
 const formData = ref<ProductCategory>({
   id: undefined,

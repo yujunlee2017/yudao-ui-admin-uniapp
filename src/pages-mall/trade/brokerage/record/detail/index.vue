@@ -10,12 +10,15 @@
     <!-- 详情内容 -->
     <wd-cell-group border>
       <wd-cell title="用户编号" :value="formData.userId != null ? String(formData.userId) : '-'" />
+      <wd-cell title="用户昵称" :value="formData.userNickname || '-'" />
       <wd-cell title="业务类型">
         <dict-tag v-if="formData.bizType != null" :type="DICT_TYPE.BROKERAGE_RECORD_BIZ_TYPE" :value="formData.bizType" />
         <text v-else>-</text>
       </wd-cell>
       <wd-cell title="业务编号" :value="formData.bizId != null ? String(formData.bizId) : '-'" />
       <wd-cell title="标题" :value="formData.title || '-'" />
+      <wd-cell title="说明" :value="formData.description || '-'" />
+      <wd-cell title="来源用户" :value="formData.sourceUserNickname || '-'" />
       <wd-cell title="佣金金额" :value="formatMallMoney(formData.price)" />
       <wd-cell title="当前佣金" :value="formatMallMoney(formData.totalPrice)" />
       <wd-cell title="状态">

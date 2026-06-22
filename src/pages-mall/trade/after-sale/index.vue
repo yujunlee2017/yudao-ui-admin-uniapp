@@ -42,6 +42,10 @@
           </view>
 
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+            <text class="mr-8rpx shrink-0 text-[#999]">售后方式：</text>
+            <text>{{ item.way != null ? getDictLabel(DICT_TYPE.TRADE_AFTER_SALE_WAY, item.way) : '-' }}</text>
+          </view>
+          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">售后商品：</text>
             <text class="truncate">{{ item.spuName || item.orderNo || '-' }}</text>
           </view>
@@ -60,6 +64,7 @@ import type { TradeAfterSale } from '@/api/mall/trade/after-sale'
 import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { getTradeAfterSalePage } from '@/api/mall/trade/after-sale'
+import { getDictLabel } from '@/hooks/useDict'
 import { formatMallMoney } from '@/pages-mall/utils'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'

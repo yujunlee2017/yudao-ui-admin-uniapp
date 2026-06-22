@@ -20,9 +20,15 @@
         />
         <text v-else>-</text>
       </wd-cell>
-      <wd-cell title="推广员编号" :value="formData.bindUserId != null ? String(formData.bindUserId) : '-'" />
+      <wd-cell title="上级推广员编号" :value="formData.bindUserId != null ? String(formData.bindUserId) : '-'" />
       <wd-cell title="绑定时间" :value="formatDateTime(formData.bindUserTime) || '-'" />
+      <wd-cell title="成为推广员时间" :value="formatDateTime(formData.brokerageTime) || '-'" />
       <wd-cell title="推广资格" :value="formData.brokerageEnabled ? '是' : '否'" />
+      <wd-cell title="推广人数" :value="formData.brokerageUserCount != null ? String(formData.brokerageUserCount) : '-'" />
+      <wd-cell title="推广订单数量" :value="formData.brokerageOrderCount != null ? String(formData.brokerageOrderCount) : '-'" />
+      <wd-cell title="推广订单金额" :value="formatMallMoney(formData.brokerageOrderPrice)" />
+      <wd-cell title="已提现金额" :value="formatMallMoney(formData.withdrawPrice)" />
+      <wd-cell title="已提现次数" :value="formData.withdrawCount != null ? String(formData.withdrawCount) : '-'" />
       <wd-cell title="可用佣金" :value="formatMallMoney(formData.price)" />
       <wd-cell title="冻结佣金" :value="formatMallMoney(formData.frozenPrice)" />
     </wd-cell-group>
@@ -30,13 +36,13 @@
     <!-- 底部操作按钮 -->
     <view v-if="canUpdate" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button class="flex-1" type="primary" @click="bindVisible = true">
+        <wd-button v-if="canUpdateBind" class="flex-1" type="primary" @click="bindVisible = true">
           修改推广员
         </wd-button>
-        <wd-button v-if="formData.bindUserId" class="flex-1" type="warning" :loading="submitting" @click="handleClearBind">
+        <wd-button v-if="formData.bindUserId && canClearBind" class="flex-1" type="warning" :loading="submitting" @click="handleClearBind">
           清除推广员
         </wd-button>
-        <wd-button class="flex-1" type="info" :loading="submitting" @click="handleToggleEnabled">
+        <wd-button v-if="canUpdateEnabled" class="flex-1" type="info" :loading="submitting" @click="handleToggleEnabled">
           {{ formData.brokerageEnabled ? '取消资格' : '开通资格' }}
         </wd-button>
       </view>
@@ -100,11 +106,11 @@ const formData = ref<TradeBrokerageUser>({}) // 详情数据
 const submitting = ref(false) // 操作提交状态
 const bindVisible = ref(false) // 修改推广员弹窗
 const bindUserId = ref<number | string>('') // 推广员编号输入
-const canUpdate = computed(() => hasAccessByCodes([
-  'trade:brokerage-user:update-bind-user',
-  'trade:brokerage-user:clear-bind-user',
-  'trade:brokerage-user:update-brokerage-enable',
-]))
+// 各操作按后端 @PreAuthorize 单独网关
+const canUpdateBind = computed(() => hasAccessByCodes(['trade:brokerage-user:update-bind-user']))
+const canClearBind = computed(() => hasAccessByCodes(['trade:brokerage-user:clear-bind-user']))
+const canUpdateEnabled = computed(() => hasAccessByCodes(['trade:brokerage-user:update-brokerage-enable']))
+const canUpdate = computed(() => canUpdateBind.value || canClearBind.value || canUpdateEnabled.value)
 
 /** 返回上一页 */
 function handleBack() {

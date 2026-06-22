@@ -15,8 +15,8 @@
         </view>
         <wd-cell-group border>
           <wd-cell title="商品名称" :value="formData.name || '-'" />
-          <wd-cell title="商品分类" :value="formData.categoryName || '-'" />
-          <wd-cell title="商品品牌" :value="formData.brandName || '-'" />
+          <wd-cell title="商品分类" :value="categoryName || '-'" />
+          <wd-cell title="商品品牌" :value="brandName || '-'" />
           <wd-cell title="关键字" :value="formData.keyword || '-'" />
           <wd-cell title="商品状态">
             <dict-tag v-if="formData.status != null" :type="DICT_TYPE.PRODUCT_SPU_STATUS" :value="formData.status" />
@@ -104,6 +104,8 @@ import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
+import { getSimpleProductBrandList } from '@/api/mall/product/brand'
+import { getProductCategoryList } from '@/api/mall/product/category'
 import { deleteProductSpu, getProductSpu } from '@/api/mall/product/spu'
 import { useAccess } from '@/hooks/useAccess'
 import { formatMallMoney } from '@/pages-mall/utils'
@@ -127,6 +129,11 @@ const formData = ref<ProductSpu>({}) // 详情数据
 const deleting = ref(false) // 删除状态
 const canUpdate = computed(() => hasAccessByCodes(['product:spu:update']))
 const canDelete = computed(() => hasAccessByCodes(['product:spu:delete']))
+// 后端 ProductSpuRespVO 只返回 categoryId/brandId，无名称字段，按 id 映射名称（对齐表单页）
+const categoryNameMap = ref<Record<number, string>>({}) // 分类 id→名称
+const brandNameMap = ref<Record<number, string>>({}) // 品牌 id→名称
+const categoryName = computed(() => formData.value.categoryId != null ? categoryNameMap.value[formData.value.categoryId] : '')
+const brandName = computed(() => formData.value.brandId != null ? brandNameMap.value[formData.value.brandId] : '')
 
 /** 轮播图列表 */
 const sliderPicUrls = computed(() => formData.value.sliderPicUrls || [])
@@ -134,6 +141,16 @@ const sliderPicUrls = computed(() => formData.value.sliderPicUrls || [])
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mall/product/spu/index')
+}
+
+/** 加载分类/品牌名称映射 */
+async function loadOptions() {
+  const [categories, brands] = await Promise.all([
+    getProductCategoryList({}),
+    getSimpleProductBrandList(),
+  ])
+  categoryNameMap.value = Object.fromEntries(categories.map(item => [Number(item.id), item.name || String(item.id)]))
+  brandNameMap.value = Object.fromEntries(brands.map(item => [Number(item.id), item.name || String(item.id)]))
 }
 
 /** 加载详情 */
@@ -177,6 +194,7 @@ async function handleDelete() {
 
 /** 初始化 */
 onMounted(() => {
+  loadOptions()
   getDetail()
   uni.$on('mall:product-spu:reload', getDetail)
   uni.$on('mall:productSpu:reload', getDetail)

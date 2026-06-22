@@ -31,11 +31,6 @@ export function getProductCommentPage(params: PageParam) {
   return http.get<PageResult<ProductComment>>('/product/comment/page', params)
 }
 
-/** 获取商品评论详情 */
-export function getProductComment(id: number) {
-  return http.get<ProductComment>(`/product/comment/get?id=${id}`)
-}
-
 /** 创建商品评论 */
 export function createProductComment(data: ProductComment) {
   return http.post<number>('/product/comment/create', data as Record<string, any>)

@@ -52,6 +52,15 @@
         </view>
       </view>
     </z-paging>
+
+    <!-- 新增虚拟评论按钮（后端 /create 使用 product:comment:update 权限） -->
+    <wd-fab
+      v-if="hasAccessByCodes(['product:comment:update'])"
+      position="right-bottom"
+      type="primary"
+      :expandable="false"
+      @click="handleAdd"
+    />
   </view>
 </template>
 
@@ -60,6 +69,7 @@ import type { ProductComment } from '@/api/mall/product/comment'
 import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { getProductCommentPage } from '@/api/mall/product/comment'
+import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import SearchForm from './components/search-form.vue'
 
@@ -70,6 +80,7 @@ definePage({
   },
 })
 
+const { hasAccessByCodes } = useAccess()
 const list = ref<ProductComment[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({}) // 查询参数
@@ -105,9 +116,26 @@ function reload() {
   pagingRef.value?.reload()
 }
 
-/** 查看详情 */
+/** 新增虚拟评论 */
+function handleAdd() {
+  uni.navigateTo({ url: '/pages-mall/product/comment/form/index' })
+}
+
+/** 查看详情（评论无 get 接口，字段经路由参数透传） */
 function handleDetail(item: ProductComment) {
-  uni.navigateTo({ url: `/pages-mall/product/comment/detail/index?id=${item.id}` })
+  const query = [
+    `id=${item.id}`,
+    `userNickname=${encodeURIComponent(item.userNickname || '')}`,
+    `spuName=${encodeURIComponent(item.spuName || '')}`,
+    `scores=${item.scores ?? ''}`,
+    `visible=${item.visible ?? ''}`,
+    `content=${encodeURIComponent(item.content || '')}`,
+    `replyStatus=${item.replyStatus ?? ''}`,
+    `replyContent=${encodeURIComponent(item.replyContent || '')}`,
+    `replyTime=${encodeURIComponent(item.replyTime || '')}`,
+    `createTime=${encodeURIComponent(item.createTime || '')}`,
+  ].join('&')
+  uni.navigateTo({ url: `/pages-mall/product/comment/detail/index?${query}` })
 }
 
 /** 初始化 */

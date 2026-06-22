@@ -42,12 +42,7 @@
                 <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
                   {{ item.name || '-' }}
                 </view>
-                <wd-tag v-if="item.used" type="primary">
-                  使用中
-                </wd-tag>
-                <wd-tag v-else type="info">
-                  未使用
-                </wd-tag>
+                <dict-tag :type="DICT_TYPE.INFRA_BOOLEAN_STRING" :value="!!item.used" />
               </view>
               <view class="truncate text-26rpx text-[#999]">
                 {{ item.remark || '暂无备注' }}
@@ -81,6 +76,7 @@ import { onMounted, ref } from 'vue'
 import { getPromotionDiyTemplatePage } from '@/api/mall/promotion/diy/template'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import SearchForm from './components/search-form.vue'
 

@@ -42,14 +42,27 @@
                 <text class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
                   {{ item.nickname || `用户 #${item.id}` }}
                 </text>
-                <wd-tag :type="item.brokerageEnabled ? 'success' : 'info'" plain>
-                  {{ item.brokerageEnabled ? '有资格' : '无资格' }}
-                </wd-tag>
+                <!-- 推广资格开关（有权限时可直接切换） -->
+                <view @click.stop>
+                  <wd-switch
+                    v-if="canUpdateEnabled"
+                    :model-value="!!item.brokerageEnabled"
+                    @change="handleEnabledChange(item)"
+                  />
+                  <wd-tag v-else :type="item.brokerageEnabled ? 'success' : 'info'" plain>
+                    {{ item.brokerageEnabled ? '有资格' : '无资格' }}
+                  </wd-tag>
+                </view>
               </view>
               <view class="mt-6rpx text-26rpx text-[#999]">
                 推广员：{{ item.bindUserId ?? '无' }}
               </view>
             </view>
+          </view>
+          <view class="mb-12rpx flex items-center justify-between text-26rpx text-[#666]">
+            <text>推广人数：{{ item.brokerageUserCount ?? 0 }}</text>
+            <text>推广订单：{{ item.brokerageOrderCount ?? 0 }}</text>
+            <text>已提现：{{ formatMallMoney(item.withdrawPrice) }}</text>
           </view>
           <view class="flex items-center justify-between text-26rpx text-[#666]">
             <text>可用佣金：{{ formatMallMoney(item.price) }}</text>
@@ -73,8 +86,10 @@
 <script lang="ts" setup>
 import type { TradeBrokerageUser } from '@/api/mall/trade/brokerage/user'
 import { onUnload } from '@dcloudio/uni-app'
-import { onMounted, ref } from 'vue'
-import { getTradeBrokerageUserPage } from '@/api/mall/trade/brokerage/user'
+import { useDialog } from '@wot-ui/ui/components/wd-dialog'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { computed, onMounted, ref } from 'vue'
+import { getTradeBrokerageUserPage, updateTradeBrokerageUserEnabled } from '@/api/mall/trade/brokerage/user'
 import { useAccess } from '@/hooks/useAccess'
 import { formatMallMoney } from '@/pages-mall/utils'
 import { navigateBackPlus } from '@/utils'
@@ -88,9 +103,13 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
+const dialog = useDialog()
+const toast = useToast()
 const list = ref<TradeBrokerageUser[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({}) // 查询参数
+// 推广资格开关：后端 /update-brokerage-enable 校验 trade:brokerage-user:update-brokerage-enable
+const canUpdateEnabled = computed(() => hasAccessByCodes(['trade:brokerage-user:update-brokerage-enable']))
 
 /** 返回上一页 */
 function handleBack() {
@@ -126,6 +145,21 @@ function reload() {
 /** 新增分销用户 */
 function handleAdd() {
   uni.navigateTo({ url: '/pages-mall/trade/brokerage/user/form/index' })
+}
+
+/** 切换推广资格 */
+async function handleEnabledChange(item: TradeBrokerageUser) {
+  const enabled = !item.brokerageEnabled
+  try {
+    await dialog.confirm({ title: '提示', msg: `确定要${enabled ? '开通' : '取消'}「${item.nickname || `用户 #${item.id}`}」的推广资格吗？` })
+  } catch {
+    return
+  }
+  try {
+    await updateTradeBrokerageUserEnabled({ id: Number(item.id), enabled })
+    item.brokerageEnabled = enabled
+    toast.success('修改成功')
+  } catch {}
 }
 
 /** 查看详情 */

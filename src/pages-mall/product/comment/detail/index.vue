@@ -8,6 +8,7 @@
     />
 
     <!-- 详情内容 -->
+    <!-- TODO @AI：评论图片之类的； -->
     <wd-cell-group border>
       <wd-cell title="用户昵称" :value="formData.userNickname || '-'" />
       <wd-cell title="商品名称" :value="formData.spuName || '-'" />
@@ -31,6 +32,7 @@
     </wd-cell-group>
 
     <!-- 底部操作按钮 -->
+    <!-- TODO @AI：是不是显示“绿色”，不显示“橙色” -->
     <view v-if="canUpdate" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <wd-button class="flex-1" type="primary" @click="handleOpenReply">
@@ -77,17 +79,28 @@
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { ProductComment } from '@/api/mall/product/comment'
-import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { getProductComment, replyProductComment, updateProductCommentVisible } from '@/api/mall/product/comment'
+import { replyProductComment, updateProductCommentVisible } from '@/api/mall/product/comment'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 
-const props = defineProps<{ id?: number | any }>()
+// 详情字段经列表页路由参数透传：后端 ProductCommentController 无 /get 接口（PC 的 /get 为死代码）
+const props = defineProps<{
+  id?: number | any
+  userNickname?: string
+  spuName?: string
+  scores?: number | any
+  visible?: boolean | string | any
+  content?: string
+  replyStatus?: boolean | string | any
+  replyContent?: string
+  replyTime?: string
+  createTime?: string
+}>()
 
 definePage({
   style: {
@@ -115,16 +128,32 @@ function handleBack() {
   navigateBackPlus('/pages-mall/product/comment/index')
 }
 
-/** 加载详情 */
-async function getDetail() {
-  if (!props.id) {
-    return
+/** 路由参数解码：文本字段 */
+function decodeText(value?: string) {
+  return value ? decodeURIComponent(value) : ''
+}
+
+/** 路由参数解码：布尔字段（query 传来为字符串） */
+function toBool(value: any) {
+  if (value === undefined || value === null || value === '') {
+    return undefined
   }
-  try {
-    toast.loading('加载中...')
-    formData.value = await getProductComment(Number(props.id))
-  } finally {
-    toast.close()
+  return value === true || value === 'true' || value === 1 || value === '1'
+}
+
+/** 加载详情（评论无 get 接口，字段经列表页路由参数透传） */
+function loadDetail() {
+  formData.value = {
+    id: props.id != null ? Number(props.id) : undefined,
+    userNickname: decodeText(props.userNickname),
+    spuName: decodeText(props.spuName),
+    scores: props.scores != null && props.scores !== '' ? Number(props.scores) : undefined,
+    visible: toBool(props.visible),
+    content: decodeText(props.content),
+    replyStatus: toBool(props.replyStatus),
+    replyContent: decodeText(props.replyContent),
+    replyTime: decodeText(props.replyTime),
+    createTime: decodeText(props.createTime),
   }
 }
 
@@ -153,8 +182,10 @@ async function handleSubmitReply() {
     await replyProductComment({ id: Number(props.id), replyContent: replyForm.value.replyContent })
     toast.success('回复成功')
     replyVisible.value = false
+    // 本地回填回复结果（无 get 接口可刷新），并通知列表刷新
+    formData.value.replyStatus = true
+    formData.value.replyContent = replyForm.value.replyContent
     uni.$emit('mall:product-comment:reload')
-    await getDetail()
   } finally {
     replying.value = false
   }
@@ -175,8 +206,8 @@ async function handleToggleVisible() {
   try {
     await updateProductCommentVisible({ id: Number(props.id), visible: nextVisible })
     toast.success('操作成功')
+    formData.value.visible = nextVisible
     uni.$emit('mall:product-comment:reload')
-    await getDetail()
   } finally {
     toggling.value = false
   }
@@ -184,12 +215,6 @@ async function handleToggleVisible() {
 
 /** 初始化 */
 onMounted(() => {
-  getDetail()
-  uni.$on('mall:product-comment:reload', getDetail)
-})
-
-/** 卸载 */
-onUnload(() => {
-  uni.$off('mall:product-comment:reload', getDetail)
+  loadDetail()
 })
 </script>

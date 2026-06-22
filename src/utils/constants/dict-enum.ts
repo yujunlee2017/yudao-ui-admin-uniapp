@@ -100,6 +100,7 @@ const MALL_DICT = {
   TRADE_ORDER_STATUS: 'trade_order_status', // 订单状态
   TRADE_ORDER_ITEM_AFTER_SALE_STATUS: 'trade_order_item_after_sale_status', // 订单项售后状态
   TRADE_DELIVERY_TYPE: 'trade_delivery_type', // 配送方式
+  EXPRESS_CHARGE_MODE: 'trade_delivery_express_charge_mode', // 快递的计费方式
   BROKERAGE_ENABLED_CONDITION: 'brokerage_enabled_condition', // 分佣模式
   BROKERAGE_BIND_MODE: 'brokerage_bind_mode', // 分销关系绑定模式
   BROKERAGE_BANK_NAME: 'brokerage_bank_name', // 佣金提现银行
@@ -112,6 +113,10 @@ const MALL_DICT = {
   PROMOTION_COUPON_TEMPLATE_VALIDITY_TYPE: 'promotion_coupon_template_validity_type', // 优惠券模板有效期类型
   PROMOTION_COUPON_STATUS: 'promotion_coupon_status', // 优惠券状态
   PROMOTION_COUPON_TAKE_TYPE: 'promotion_coupon_take_type', // 优惠券领取方式
+  PROMOTION_BARGAIN_RECORD_STATUS: 'promotion_bargain_record_status', // 砍价记录的状态
+  PROMOTION_COMBINATION_RECORD_STATUS: 'promotion_combination_record_status', // 拼团记录的状态
+  PROMOTION_CONDITION_TYPE: 'promotion_condition_type', // 营销的条件类型枚举
+  PROMOTION_PRODUCT_SCOPE: 'promotion_product_scope', // 营销的商品范围
 } as const
 
 /** ========== MP - 公众号模块 ========== */
