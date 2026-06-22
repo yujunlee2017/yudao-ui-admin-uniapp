@@ -21,6 +21,24 @@
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
+          用户编号
+        </view>
+        <wd-input v-model="formData.userId" type="number" placeholder="请输入用户编号" clearable />
+      </view>
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
+          用户昵称
+        </view>
+        <wd-input v-model="formData.userNickname" placeholder="请输入用户昵称" clearable />
+      </view>
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
+          用户手机
+        </view>
+        <wd-input v-model="formData.userMobile" placeholder="请输入用户手机" clearable />
+      </view>
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
           订单状态
         </view>
         <wd-radio-group v-model="formData.status" type="button">
@@ -36,6 +54,7 @@
           </wd-radio>
         </wd-radio-group>
       </view>
+      <yd-search-picker v-model="formData.pickUpStoreId" label="自提门店" :columns="storeOptions" all-option />
       <yd-search-date-range v-model="formData.createTime" label="下单时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -50,7 +69,8 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { getSimpleDeliveryPickUpStoreList } from '@/api/mall/trade/delivery/pick-up-store'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -62,9 +82,14 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
+const storeOptions = ref<{ label: string, value: number }[]>([]) // 自提门店选项
 const formData = reactive({
   no: undefined as string | undefined,
+  userId: undefined as string | undefined,
+  userNickname: undefined as string | undefined,
+  userMobile: undefined as string | undefined,
   status: -1,
+  pickUpStoreId: -1, // 单选自提门店，提交时转 pickUpStoreIds 数组
   createTime: [undefined, undefined] as [number | undefined, number | undefined],
 }) // 搜索表单数据
 
@@ -73,6 +98,12 @@ const placeholder = computed(() => {
   const conditions: string[] = []
   if (formData.no) {
     conditions.push(`订单号:${formData.no}`)
+  }
+  if (formData.userNickname) {
+    conditions.push(`昵称:${formData.userNickname}`)
+  }
+  if (formData.userMobile) {
+    conditions.push(`手机:${formData.userMobile}`)
   }
   if (formData.status !== -1) {
     conditions.push(`状态:${getDictLabel(DICT_TYPE.TRADE_ORDER_STATUS, formData.status)}`)
@@ -83,12 +114,24 @@ const placeholder = computed(() => {
   return conditions.length > 0 ? conditions.join(' | ') : '搜索核销订单'
 })
 
+/** 加载自提门店选项 */
+async function loadStoreOptions() {
+  const storeList = await getSimpleDeliveryPickUpStoreList()
+  storeOptions.value = storeList
+    .filter(item => item.id != null)
+    .map(item => ({ label: item.name || String(item.id), value: Number(item.id) }))
+}
+
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
   emit('search', {
     no: formData.no || undefined,
+    userId: formData.userId ? Number(formData.userId) : undefined,
+    userNickname: formData.userNickname || undefined,
+    userMobile: formData.userMobile || undefined,
     status: formData.status === -1 ? undefined : formData.status,
+    pickUpStoreIds: formData.pickUpStoreId === -1 ? undefined : [formData.pickUpStoreId],
     createTime: formatDateRange(formData.createTime),
   })
 }
@@ -96,9 +139,18 @@ function handleSearch() {
 /** 重置按钮操作 */
 function handleReset() {
   formData.no = undefined
+  formData.userId = undefined
+  formData.userNickname = undefined
+  formData.userMobile = undefined
   formData.status = -1
+  formData.pickUpStoreId = -1
   formData.createTime = [undefined, undefined]
   visible.value = false
   emit('reset')
 }
+
+/** 初始化 */
+onMounted(() => {
+  loadStoreOptions()
+})
 </script>

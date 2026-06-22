@@ -127,7 +127,7 @@
             <wd-checkbox
               v-for="template in couponTemplates"
               :key="template.id"
-              :model-value="template.id"
+              :name="template.id"
               class="border-b border-[#f5f5f5] py-16rpx"
             >
               {{ template.name }}
@@ -163,7 +163,7 @@ import type { PromotionCouponTemplate } from '@/api/mall/promotion/coupon/coupon
 import type { PromotionRewardActivity } from '@/api/mall/promotion/reward'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { getPromotionCouponTemplatePage } from '@/api/mall/promotion/coupon/coupon-template'
+import { getPromotionCouponTemplateList, getPromotionCouponTemplatePage } from '@/api/mall/promotion/coupon/coupon-template'
 import {
   createPromotionRewardActivity,
   getPromotionRewardActivity,
@@ -267,10 +267,22 @@ function handleBack() {
   navigateBackPlus('/pages-mall/promotion/reward-activity/index')
 }
 
-/** 加载优惠券模板（用于赠券选择与名称回显） */
+/** 加载优惠券模板（仅「后台指定发放」ADMIN=2 类型，作为赠券候选，对齐 PC） */
 async function loadCouponTemplates() {
-  const data = await getPromotionCouponTemplatePage({ pageNo: 1, pageSize: 100 })
+  const data = await getPromotionCouponTemplatePage({ pageNo: 1, pageSize: 100, canTakeTypes: [2] })
   couponTemplates.value = data.list || []
+}
+
+/** 补全已选赠券模板（编辑回显：已选模板可能不在候选首页，按 ids 拉取合并） */
+async function ensureSelectedCouponTemplates() {
+  const selectedIds = new Set<number>()
+  rules.value.forEach(rule => rule.coupons.forEach(coupon => selectedIds.add(coupon.templateId)))
+  const missing = Array.from(selectedIds).filter(id => !couponTemplates.value.some(item => item.id === id))
+  if (!missing.length) {
+    return
+  }
+  const extra = await getPromotionCouponTemplateList(missing)
+  couponTemplates.value = [...couponTemplates.value, ...(extra || [])]
 }
 
 /** 加载详情 */
@@ -355,5 +367,6 @@ async function handleSubmit() {
 onMounted(async () => {
   await loadCouponTemplates()
   await getDetail()
+  await ensureSelectedCouponTemplates()
 })
 </script>

@@ -30,6 +30,7 @@
           </wd-radio>
         </wd-radio-group>
       </view>
+      <yd-search-date-range v-model="formData.createTime" label="创建时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -47,6 +48,7 @@ import { computed, reactive, ref } from 'vue'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
+import { formatDate, formatDateRange } from '@/utils/date'
 
 const emit = defineEmits<{
   search: [data: Record<string, any>]
@@ -56,14 +58,19 @@ const emit = defineEmits<{
 const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
   status: -1, // 记录状态，-1=全部（后端 CombinationRecordReqPageVO 支持 status/headId/createTime）
+  createTime: [undefined, undefined] as [number | undefined, number | undefined], // 创建时间范围
 }) // 搜索表单数据
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
+  const conditions: string[] = []
   if (formData.status !== -1) {
-    return `状态:${getDictLabel(DICT_TYPE.PROMOTION_COMBINATION_RECORD_STATUS, formData.status)}`
+    conditions.push(`状态:${getDictLabel(DICT_TYPE.PROMOTION_COMBINATION_RECORD_STATUS, formData.status)}`)
   }
-  return '搜索拼团记录'
+  if (formData.createTime?.[0] && formData.createTime?.[1]) {
+    conditions.push(`时间:${formatDate(formData.createTime[0])}~${formatDate(formData.createTime[1])}`)
+  }
+  return conditions.length > 0 ? conditions.join(' | ') : '搜索拼团记录'
 })
 
 /** 搜索按钮操作 */
@@ -71,12 +78,14 @@ function handleSearch() {
   visible.value = false
   emit('search', {
     status: formData.status === -1 ? undefined : formData.status,
+    createTime: formatDateRange(formData.createTime),
   })
 }
 
 /** 重置按钮操作 */
 function handleReset() {
   formData.status = -1
+  formData.createTime = [undefined, undefined]
   visible.value = false
   emit('reset')
 }

@@ -24,7 +24,7 @@
       custom-style="border-radius: 24rpx 24rpx 0 0; height: 70vh;"
       @close="visible = false"
     >
-      <view class="flex h-70vh flex-col p-24rpx">
+      <view class="h-70vh flex flex-col p-24rpx">
         <view class="mb-16rpx text-32rpx text-[#333] font-semibold">
           选择{{ scopeLabel }}
         </view>
@@ -34,7 +34,7 @@
             <wd-checkbox
               v-for="item in filteredOptions"
               :key="item.value"
-              :model-value="item.value"
+              :name="item.value"
               class="border-b border-[#f5f5f5] py-16rpx"
             >
               {{ item.label }}
