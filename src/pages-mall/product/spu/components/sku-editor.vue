@@ -7,6 +7,7 @@
         :key="sIndex"
         class="mb-16rpx rounded-8rpx bg-[#f7f8fa] p-16rpx"
       >
+        <!-- TODO @AI：交互可以更像 pc 端么？默认把这些规格拿出来，可能太多了。可能还是希望添加后，可以下拉选择，然后也可以输入后点击选择；（如果点击选择不好做，看看弹出 select 选择，然后右上角有个新建）； -->
         <view class="mb-12rpx flex items-center justify-between">
           <text class="text-28rpx text-[#333] font-medium">{{ spec.propertyName }}</text>
           <text class="text-26rpx text-[#fa4350]" @click="handleRemoveSpec(sIndex)">删除</text>
@@ -24,6 +25,13 @@
           <view v-if="!spec.allValues.length" class="text-24rpx text-[#999]">
             该规格暂无属性值
           </view>
+        </view>
+        <!-- 手动新增属性值 -->
+        <view class="mt-12rpx flex items-center gap-12rpx">
+          <wd-input v-model="spec.newValueName" placeholder="新增属性值" clearable />
+          <wd-button size="small" variant="plain" :disabled="!spec.newValueName?.trim()" @click="handleCreateValue(spec)">
+            添加
+          </wd-button>
         </view>
       </view>
       <view class="mb-20rpx flex gap-16rpx">
@@ -105,6 +113,13 @@
         <view class="mb-24rpx text-32rpx text-[#333] font-semibold">
           选择规格
         </view>
+        <!-- 手动新建规格 -->
+        <view class="mb-16rpx flex items-center gap-12rpx">
+          <wd-input v-model="newPropertyName" placeholder="输入新规格名称（如 颜色）" clearable />
+          <wd-button size="small" type="primary" :disabled="!newPropertyName.trim()" @click="handleCreateProperty">
+            新建
+          </wd-button>
+        </view>
         <scroll-view class="max-h-50vh" scroll-y>
           <view
             v-for="property in availableProperties"
@@ -128,6 +143,8 @@ import type { ProductProperty } from '@/api/mall/product/property'
 import type { ProductSku } from '@/api/mall/product/spu'
 import { computed, onMounted, ref, watch } from 'vue'
 import {
+  createProductProperty,
+  createProductPropertyValue,
   getSimpleProductPropertyList,
   getSimpleProductPropertyValueList,
 } from '@/api/mall/product/property'
@@ -138,6 +155,7 @@ interface SpecItem {
   propertyName: string
   allValues: { id: number, name: string }[]
   selectedValueIds: number[]
+  newValueName?: string // 手动新增属性值输入
 }
 
 const props = defineProps<{
@@ -154,6 +172,7 @@ const rows = computed(() => props.modelValue || []) // SKU 列表（直接编辑
 const specs = ref<SpecItem[]>([]) // 规格定义
 const propertyList = ref<ProductProperty[]>([]) // 全部商品属性
 const specPickerVisible = ref(false) // 规格选择弹窗
+const newPropertyName = ref('') // 手动新建规格名称
 const availableProperties = computed(() => propertyList.value.filter(p => !specs.value.some(s => s.propertyId === p.id))) // 未选规格
 const canGenerate = computed(() => specs.value.length > 0 && specs.value.every(s => s.selectedValueIds.length > 0)) // 可生成
 
@@ -189,7 +208,33 @@ async function handleAddSpec(property: ProductProperty) {
     propertyName: property.name,
     allValues: values.filter(v => v.id != null).map(v => ({ id: v.id as number, name: v.name })),
     selectedValueIds: [],
+    newValueName: '',
   })
+}
+
+/** 手动新建规格（创建商品属性后加入规格列表） */
+async function handleCreateProperty() {
+  const name = newPropertyName.value.trim()
+  if (!name) {
+    return
+  }
+  const id = await createProductProperty({ name })
+  newPropertyName.value = ''
+  specPickerVisible.value = false
+  specs.value.push({ propertyId: Number(id), propertyName: name, allValues: [], selectedValueIds: [], newValueName: '' })
+  propertyList.value.push({ id: Number(id), name }) // 同步到属性列表，避免重复新建
+}
+
+/** 手动新建属性值（创建后加入该规格并默认选中） */
+async function handleCreateValue(spec: SpecItem) {
+  const name = (spec.newValueName || '').trim()
+  if (!name) {
+    return
+  }
+  const id = await createProductPropertyValue({ propertyId: spec.propertyId, name })
+  spec.allValues.push({ id: Number(id), name })
+  spec.selectedValueIds.push(Number(id))
+  spec.newValueName = ''
 }
 
 /** 删除规格 */
@@ -254,6 +299,7 @@ async function rebuildSpecsFromSkus() {
     propertyName: item.name,
     allValues: Array.from(item.values.entries()).map(([id, name]) => ({ id, name })),
     selectedValueIds: Array.from(item.values.keys()),
+    newValueName: '',
   }))
 }
 

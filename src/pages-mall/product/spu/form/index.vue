@@ -59,10 +59,19 @@
               <wd-form-item title="轮播图" title-width="200rpx" prop="sliderPicUrls">
                 <yd-upload-imgs v-model="formData.sliderPicUrls" directory="mall/spu" :limit="9" />
               </wd-form-item>
-              <wd-form-item title="配送方式" title-width="200rpx" prop="deliveryTypesText">
-                <wd-textarea v-model="formData.deliveryTypesText" clearable :maxlength="100" placeholder="配送方式编号，多个用逗号分隔，例如 1,2" />
+              <wd-form-item title="配送方式" title-width="200rpx" prop="deliveryTypes" center>
+                <wd-checkbox-group v-model="formData.deliveryTypes" type="button">
+                  <wd-checkbox
+                    v-for="dict in getIntDictOptions(DICT_TYPE.TRADE_DELIVERY_TYPE)"
+                    :key="dict.value"
+                    :name="dict.value"
+                  >
+                    {{ dict.label }}
+                  </wd-checkbox>
+                </wd-checkbox-group>
               </wd-form-item>
               <wd-form-item
+                v-if="formData.deliveryTypes?.includes(1)"
                 title="运费模板"
                 title-width="200rpx"
                 is-link
@@ -194,13 +203,8 @@ import { getSimpleDeliveryExpressTemplateList } from '@/api/mall/trade/delivery/
 import { currRoute, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import SkuEditor from '@/pages-mall/product/spu/components/sku-editor.vue'
-import { parseMallArray } from '@/pages-mall/utils'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { createFormSchema } from '@/utils/wot'
-
-interface SpuFormData extends ProductSpu {
-  deliveryTypesText?: string
-}
 
 definePage({
   style: {
@@ -219,14 +223,14 @@ const brandOptions = ref<{ label: string, value: number }[]>([]) // 品牌选项
 const templateOptions = ref<{ label: string, value: number }[]>([]) // 运费模板选项
 const statusOptions = getIntDictOptions(DICT_TYPE.PRODUCT_SPU_STATUS)
 const getTitle = computed(() => `${formId.value ? '编辑' : '新增'}商品`)
-const formData = ref<SpuFormData>({
+const formData = ref<ProductSpu>({
   name: '',
   categoryId: undefined,
   keyword: '',
   picUrl: '',
   sliderPicUrls: [],
   introduction: '',
-  deliveryTypesText: '1',
+  deliveryTypes: [1],
   deliveryTemplateId: undefined,
   brandId: undefined,
   specType: false,
@@ -246,7 +250,7 @@ const formSchema = createFormSchema({
   introduction: [{ required: true, message: '商品简介不能为空' }],
   picUrl: [{ required: true, message: '商品封面不能为空' }],
   sliderPicUrls: [{ required: true, message: '轮播图不能为空' }],
-  deliveryTypesText: [{ required: true, message: '配送方式不能为空' }],
+  deliveryTypes: [{ required: true, message: '配送方式不能为空' }],
   specType: [{ required: true, message: '多规格不能为空' }],
   subCommissionType: [{ required: true, message: '单独分佣不能为空' }],
   description: [{ required: true, message: '商品详情不能为空' }],
@@ -336,7 +340,7 @@ async function loadDetail() {
   formData.value = {
     ...data,
     sliderPicUrls: data.sliderPicUrls || [],
-    deliveryTypesText: (data.deliveryTypes || []).join(','),
+    deliveryTypes: data.deliveryTypes || [],
   }
   skus.value = (data.skus || []).map(toYuanSku)
 }
@@ -348,7 +352,7 @@ function buildSubmitData(): ProductSpu {
     ...data,
     id: formId.value,
     sliderPicUrls: data.sliderPicUrls || [],
-    deliveryTypes: parseMallArray(data.deliveryTypesText || '', 'number') as number[],
+    deliveryTypes: data.deliveryTypes || [],
     skus: skus.value.map(toCentSku),
   }
 }

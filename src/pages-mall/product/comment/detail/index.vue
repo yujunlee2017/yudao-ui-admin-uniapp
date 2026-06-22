@@ -8,11 +8,18 @@
     />
 
     <!-- 详情内容 -->
-    <!-- TODO @AI：评论图片之类的； -->
     <wd-cell-group border>
       <wd-cell title="用户昵称" :value="formData.userNickname || '-'" />
       <wd-cell title="商品名称" :value="formData.spuName || '-'" />
-      <wd-cell title="评分" :value="formData.scores != null ? String(formData.scores) : '-'" />
+      <wd-cell title="综合评分" :value="formData.scores != null ? String(formData.scores) : '-'" />
+      <wd-cell title="描述评分" :value="formData.descriptionScores != null ? String(formData.descriptionScores) : '-'" />
+      <wd-cell title="服务评分" :value="formData.benefitScores != null ? String(formData.benefitScores) : '-'" />
+      <wd-cell title="是否匿名">
+        <wd-tag v-if="formData.anonymous != null" :type="formData.anonymous ? 'warning' : 'info'" plain>
+          {{ formData.anonymous ? '匿名' : '实名' }}
+        </wd-tag>
+        <text v-else>-</text>
+      </wd-cell>
       <wd-cell title="是否显示">
         <wd-tag v-if="formData.visible != null" :type="formData.visible ? 'success' : 'info'" plain>
           {{ formData.visible ? '显示' : '隐藏' }}
@@ -20,6 +27,21 @@
         <text v-else>-</text>
       </wd-cell>
       <wd-cell title="评论内容" :value="formData.content || '-'" />
+      <wd-cell title="评论图片">
+        <view v-if="picUrls.length" class="w-full flex flex-wrap justify-end gap-12rpx">
+          <wd-img
+            v-for="pic in picUrls"
+            :key="pic"
+            :src="pic"
+            width="120rpx"
+            height="120rpx"
+            radius="8rpx"
+            mode="aspectFill"
+            enable-preview
+          />
+        </view>
+        <text v-else>-</text>
+      </wd-cell>
       <wd-cell title="是否回复">
         <wd-tag v-if="formData.replyStatus != null" :type="formData.replyStatus ? 'primary' : 'info'" plain>
           {{ formData.replyStatus ? '已回复' : '未回复' }}
@@ -32,13 +54,12 @@
     </wd-cell-group>
 
     <!-- 底部操作按钮 -->
-    <!-- TODO @AI：是不是显示“绿色”，不显示“橙色” -->
     <view v-if="canUpdate" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <wd-button class="flex-1" type="primary" @click="handleOpenReply">
           商家回复
         </wd-button>
-        <wd-button class="flex-1" type="warning" :loading="toggling" @click="handleToggleVisible">
+        <wd-button class="flex-1" :type="formData.visible ? 'warning' : 'success'" :loading="toggling" @click="handleToggleVisible">
           {{ formData.visible ? '隐藏' : '显示' }}
         </wd-button>
       </view>
@@ -79,28 +100,17 @@
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { ProductComment } from '@/api/mall/product/comment'
+import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { replyProductComment, updateProductCommentVisible } from '@/api/mall/product/comment'
+import { getProductComment, replyProductComment, updateProductCommentVisible } from '@/api/mall/product/comment'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 
-// 详情字段经列表页路由参数透传：后端 ProductCommentController 无 /get 接口（PC 的 /get 为死代码）
-const props = defineProps<{
-  id?: number | any
-  userNickname?: string
-  spuName?: string
-  scores?: number | any
-  visible?: boolean | string | any
-  content?: string
-  replyStatus?: boolean | string | any
-  replyContent?: string
-  replyTime?: string
-  createTime?: string
-}>()
+const props = defineProps<{ id?: number | any }>()
 
 definePage({
   style: {
@@ -113,6 +123,7 @@ const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
 const formData = ref<ProductComment>({}) // 详情数据
+const picUrls = computed(() => formData.value.picUrls || []) // 评论图片
 const toggling = ref(false) // 显示/隐藏切换状态
 const replying = ref(false) // 回复提交状态
 const replyVisible = ref(false) // 回复弹窗显示状态
@@ -128,32 +139,16 @@ function handleBack() {
   navigateBackPlus('/pages-mall/product/comment/index')
 }
 
-/** 路由参数解码：文本字段 */
-function decodeText(value?: string) {
-  return value ? decodeURIComponent(value) : ''
-}
-
-/** 路由参数解码：布尔字段（query 传来为字符串） */
-function toBool(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return undefined
+/** 加载详情 */
+async function getDetail() {
+  if (!props.id) {
+    return
   }
-  return value === true || value === 'true' || value === 1 || value === '1'
-}
-
-/** 加载详情（评论无 get 接口，字段经列表页路由参数透传） */
-function loadDetail() {
-  formData.value = {
-    id: props.id != null ? Number(props.id) : undefined,
-    userNickname: decodeText(props.userNickname),
-    spuName: decodeText(props.spuName),
-    scores: props.scores != null && props.scores !== '' ? Number(props.scores) : undefined,
-    visible: toBool(props.visible),
-    content: decodeText(props.content),
-    replyStatus: toBool(props.replyStatus),
-    replyContent: decodeText(props.replyContent),
-    replyTime: decodeText(props.replyTime),
-    createTime: decodeText(props.createTime),
+  try {
+    toast.loading('加载中...')
+    formData.value = await getProductComment(Number(props.id))
+  } finally {
+    toast.close()
   }
 }
 
@@ -182,10 +177,8 @@ async function handleSubmitReply() {
     await replyProductComment({ id: Number(props.id), replyContent: replyForm.value.replyContent })
     toast.success('回复成功')
     replyVisible.value = false
-    // 本地回填回复结果（无 get 接口可刷新），并通知列表刷新
-    formData.value.replyStatus = true
-    formData.value.replyContent = replyForm.value.replyContent
     uni.$emit('mall:product-comment:reload')
+    await getDetail()
   } finally {
     replying.value = false
   }
@@ -206,8 +199,8 @@ async function handleToggleVisible() {
   try {
     await updateProductCommentVisible({ id: Number(props.id), visible: nextVisible })
     toast.success('操作成功')
-    formData.value.visible = nextVisible
     uni.$emit('mall:product-comment:reload')
+    await getDetail()
   } finally {
     toggling.value = false
   }
@@ -215,6 +208,12 @@ async function handleToggleVisible() {
 
 /** 初始化 */
 onMounted(() => {
-  loadDetail()
+  getDetail()
+  uni.$on('mall:product-comment:reload', getDetail)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('mall:product-comment:reload', getDetail)
 })
 </script>

@@ -19,6 +19,8 @@
         </view>
         <wd-input v-model="formData.name" placeholder="请输入商品名称" clearable />
       </view>
+      <CategoryCascader v-model="formData.categoryId" />
+      <yd-search-date-range v-model="formData.createTime" label="创建时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -32,23 +34,40 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import { formatDate, formatDateRange } from '@/utils/date'
+import CategoryCascader from '@/pages-mall/product/category/components/category-cascader.vue'
+
+const props = defineProps<{ initialCategoryId?: number }>()
 
 const emit = defineEmits<{
   search: [data: Record<string, any>]
   reset: []
 }>()
 
-// 商品状态 tab（tabType）由列表页顶部 tabs 控制，搜索表单仅负责商品名称，避免 tabType 双重来源
+// TODO @AI：“商品状态 tab（tabType）由列表页顶部 tabs 控制，搜索表单负责名称/分类/创建时间，避免 tabType 双重来源”需要写这个注释么？
+// 商品状态 tab（tabType）由列表页顶部 tabs 控制，搜索表单负责名称/分类/创建时间，避免 tabType 双重来源
 const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
   name: undefined as string | undefined,
+  categoryId: undefined as number | undefined,
+  createTime: [undefined, undefined] as [number | undefined, number | undefined],
 }) // 搜索表单数据
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
-  return formData.name ? `商品:${formData.name}` : '搜索商品'
+  const conditions: string[] = []
+  if (formData.name) {
+    conditions.push(`商品:${formData.name}`)
+  }
+  if (formData.categoryId != null) {
+    conditions.push('已选分类')
+  }
+  if (formData.createTime?.[0] && formData.createTime?.[1]) {
+    conditions.push(`时间:${formatDate(formData.createTime[0])}~${formatDate(formData.createTime[1])}`)
+  }
+  return conditions.length > 0 ? conditions.join(' | ') : '搜索商品'
 })
 
 /** 搜索按钮操作 */
@@ -56,13 +75,22 @@ function handleSearch() {
   visible.value = false
   emit('search', {
     name: formData.name || undefined,
+    categoryId: formData.categoryId ?? undefined,
+    createTime: formatDateRange(formData.createTime),
   })
 }
 
 /** 重置按钮操作 */
 function handleReset() {
   formData.name = undefined
+  formData.categoryId = undefined
+  formData.createTime = [undefined, undefined]
   visible.value = false
   emit('reset')
 }
+
+/** 同步路由深链传入的初始分类（分类模块「查看商品」） */
+watch(() => props.initialCategoryId, (val) => {
+  formData.categoryId = val ?? undefined
+}, { immediate: true })
 </script>

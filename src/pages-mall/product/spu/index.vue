@@ -8,9 +8,11 @@
     />
 
     <!-- 搜索组件 -->
-    <SearchForm @search="handleQuery" @reset="handleReset" />
+    <SearchForm :initial-category-id="categoryId" @search="handleQuery" @reset="handleReset" />
 
+    <!-- TODO @AI：不用写 （tabType 唯一来源，对齐 PC 端 ProductSpuPageReqVO.tabType） 这种注释，看看别的地方，是不是也有 -->
     <!-- 商品状态 tab（tabType 唯一来源，对齐 PC 端 ProductSpuPageReqVO.tabType） -->
+    <!-- TODO @AI：tab 宽度不对，参考下别的 tabs； -->
     <view class="bg-white">
       <wd-tabs v-model="tabIndex" @change="handleTabChange">
         <wd-tab
@@ -42,12 +44,9 @@
           @click="handleDetail(item)"
         >
           <view class="flex items-start gap-20rpx">
-            <image
-              v-if="item.picUrl"
-              :src="item.picUrl"
-              class="h-140rpx w-140rpx shrink-0 rounded-8rpx bg-[#f5f5f5]"
-              mode="aspectFill"
-            />
+            <view v-if="item.picUrl" class="shrink-0">
+              <wd-img :src="item.picUrl" width="140rpx" height="140rpx" radius="8rpx" mode="aspectFill" />
+            </view>
             <view class="min-w-0 flex-1">
               <view class="mb-12rpx flex items-start justify-between gap-16rpx">
                 <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
@@ -66,6 +65,7 @@
           </view>
 
           <!-- 行内操作：回收站 tab 提供恢复，其它 tab 提供回收 -->
+          <!-- TODO @AI：放到详情里，有个操作按钮，会不会更好？？？ -->
           <view v-if="canUpdate" class="mt-16rpx flex justify-end gap-16rpx border-t border-[#f0f0f0] pt-16rpx" @click.stop>
             <template v-if="isRecycleTab">
               <wd-button size="small" type="primary" plain @click.stop="handleStatusChange(item, ProductSpuStatusEnum.DISABLE)">
@@ -113,16 +113,16 @@ definePage({
   },
 })
 
-// 商品状态 tab（对齐后端 ProductSpuPageReqVO 的 tabType 常量；count 由 get-count 返回，key 为 tabType）
 const SPU_TABS = [
   { label: '出售中', value: 0 },
   { label: '仓库中', value: 1 },
   { label: '已售罄', value: 2 },
   { label: '警戒库存', value: 3 },
   { label: '回收站', value: 4 },
-]
+] // 商品状态 tab（对齐后端 ProductSpuPageReqVO 的 tabType 常量；count 由 get-count 返回，key 为 tabType）
 
-// 商品上下架/回收状态（对齐 PC 端 ProductSpuStatusEnum）
+// TODO @AI：这个是不是全局枚举哈？！
+// 商品上下架/回收状态
 const ProductSpuStatusEnum = {
   RECYCLE: -1,
   DISABLE: 0,
@@ -137,10 +137,24 @@ const pagingRef = ref<any>() // 分页组件引用
 const tabIndex = ref(0) // 当前 tab 下标
 const tabCounts = ref<Record<number, number>>({}) // 各 tab 商品数量（key 为 tabType）
 const queryParams = ref<Record<string, any>>({}) // 查询参数（搜索表单部分：name；tabType/categoryId 单独维护）
-const categoryId = ref<number>() // 路由透传的分类筛选（分类模块「查看商品」深链）
+const categoryId = ref<number>() // 分类筛选（路由深链 + 搜索表单共用）
+// TODO @AI：是不是 props 读取参数？应该不会有多个参数的情况把？
+// 同步读取路由 categoryId（分类模块「查看商品」深链），保证 z-paging 首屏查询即带上分类（子组件 mount 早于父 onMounted）
+{
+  const routeQuery = currRoute().query
+  // #ifdef H5
+  const hashQuery = new URLSearchParams(window.location.hash.split('?')[1] || '')
+  categoryId.value = Number(hashQuery.get('categoryId') || routeQuery.categoryId || 0) || undefined
+  // #endif
+  // #ifndef H5
+  categoryId.value = Number(routeQuery.categoryId || 0) || undefined
+  // #endif
+}
+// TODO @AI：是不是直接 == 4 就好？没必要 RECYCLE_BIN_TAB？
 const RECYCLE_BIN_TAB = 4 // 回收站 tabType（对齐后端 ProductSpuPageReqVO.RECYCLE_BIN）
 const tabType = computed(() => SPU_TABS[tabIndex.value].value) // 当前 tabType
 const isRecycleTab = computed(() => tabType.value === RECYCLE_BIN_TAB) // 是否回收站 tab
+// TODO @AI：这个校验，是不是直接 html 那判断，没必要写个表达式？
 const canUpdate = computed(() => hasAccessByCodes(['product:spu:update']))
 
 /** 返回上一页 */
@@ -151,6 +165,7 @@ function handleBack() {
 /** 查询商品列表 */
 async function queryList(pageNo: number, pageSize: number) {
   try {
+    // TODO @AI：这里是不是要换行？
     const data = await getProductSpuPage({ ...queryParams.value, tabType: tabType.value, categoryId: categoryId.value, pageNo, pageSize })
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
@@ -160,6 +175,7 @@ async function queryList(pageNo: number, pageSize: number) {
 
 /** 加载各 tab 数量 */
 async function loadTabCounts() {
+  // TODO @AI：是不是不用 try catch
   try {
     const res = await getProductSpuTabsCount()
     const counts: Record<number, number> = {}
@@ -174,7 +190,10 @@ async function loadTabCounts() {
 
 /** 搜索按钮操作 */
 function handleQuery(data: Record<string, any> = {}) {
-  queryParams.value = { ...data }
+  // categoryId 单独维护（与路由深链共用），其余进 queryParams
+  const { categoryId: cid, ...rest } = data
+  categoryId.value = cid
+  queryParams.value = { ...rest }
   reload()
 }
 
@@ -203,6 +222,7 @@ async function handleStatusChange(item: ProductSpu, status: number) {
   } catch {
     return
   }
+  // TODO @AI：这里是不是不用 try catch？
   try {
     await updateProductSpuStatus({ id: item.id!, status })
     toast.success(`${text}成功`)
@@ -224,16 +244,8 @@ function handleDetail(item: ProductSpu) {
 
 /** 初始化 */
 onMounted(() => {
-  // 读取路由透传的 categoryId（分类模块「查看商品」深链）
-  const query = currRoute().query
-  // #ifdef H5
-  const hashQuery = new URLSearchParams(window.location.hash.split('?')[1] || '')
-  categoryId.value = Number(hashQuery.get('categoryId') || query.categoryId || 0) || undefined
-  // #endif
-  // #ifndef H5
-  categoryId.value = Number(query.categoryId || 0) || undefined
-  // #endif
   loadTabCounts()
+  // TODO @AI：是不是统一掉？没必要两个事件啊！
   // 详情删除发 kebab 事件；已有 SPU 表单页（不可改）创建/编辑后发 camelCase 事件，两者都监听
   uni.$on('mall:product-spu:reload', reload)
   uni.$on('mall:productSpu:reload', reload)

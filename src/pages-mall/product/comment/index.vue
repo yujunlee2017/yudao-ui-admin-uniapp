@@ -121,21 +121,9 @@ function handleAdd() {
   uni.navigateTo({ url: '/pages-mall/product/comment/form/index' })
 }
 
-/** 查看详情（评论无 get 接口，字段经路由参数透传） */
+/** 查看详情 */
 function handleDetail(item: ProductComment) {
-  const query = [
-    `id=${item.id}`,
-    `userNickname=${encodeURIComponent(item.userNickname || '')}`,
-    `spuName=${encodeURIComponent(item.spuName || '')}`,
-    `scores=${item.scores ?? ''}`,
-    `visible=${item.visible ?? ''}`,
-    `content=${encodeURIComponent(item.content || '')}`,
-    `replyStatus=${item.replyStatus ?? ''}`,
-    `replyContent=${encodeURIComponent(item.replyContent || '')}`,
-    `replyTime=${encodeURIComponent(item.replyTime || '')}`,
-    `createTime=${encodeURIComponent(item.createTime || '')}`,
-  ].join('&')
-  uni.navigateTo({ url: `/pages-mall/product/comment/detail/index?${query}` })
+  uni.navigateTo({ url: `/pages-mall/product/comment/detail/index?id=${item.id}` })
 }
 
 /** 初始化 */
