@@ -75,7 +75,7 @@ const formData = reactive({
   userNickname: undefined as string | undefined,
   spuName: undefined as string | undefined,
   orderId: undefined as string | undefined,
-  replyStatus: -1, // -1=全部 1=已回复 0=未回复（后端 replyStatus，非 visible）
+  replyStatus: -1, // -1=全部 1=已回复 0=未回复
   createTime: [undefined, undefined] as [number | undefined, number | undefined],
 }) // 搜索表单数据
 

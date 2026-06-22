@@ -69,7 +69,7 @@ const propertyName = computed(() => {
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-mall/product/property-value/index')
+  navigateBackPlus('/pages-mall/product/property/value/index')
 }
 
 /** 加载详情 */
@@ -99,7 +99,7 @@ async function getDetail() {
 
 /** 编辑 */
 function handleEdit() {
-  uni.navigateTo({ url: `/pages-mall/product/property-value/form/index?id=${props.id}` })
+  uni.navigateTo({ url: `/pages-mall/product/property/value/form/index?id=${props.id}` })
 }
 
 /** 删除 */

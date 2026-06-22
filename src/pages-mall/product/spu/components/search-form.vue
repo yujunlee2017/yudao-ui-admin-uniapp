@@ -46,8 +46,6 @@ const emit = defineEmits<{
   reset: []
 }>()
 
-// TODO @AI：“商品状态 tab（tabType）由列表页顶部 tabs 控制，搜索表单负责名称/分类/创建时间，避免 tabType 双重来源”需要写这个注释么？
-// 商品状态 tab（tabType）由列表页顶部 tabs 控制，搜索表单负责名称/分类/创建时间，避免 tabType 双重来源
 const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
   name: undefined as string | undefined,

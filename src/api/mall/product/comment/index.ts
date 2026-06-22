@@ -18,7 +18,7 @@ export interface ProductComment {
   descriptionScores?: number
   benefitScores?: number
   content?: string
-  picUrls?: string[] | string
+  picUrls?: string[]
   replyStatus?: boolean
   replyUserId?: number
   replyContent?: string

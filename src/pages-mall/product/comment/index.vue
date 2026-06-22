@@ -53,7 +53,7 @@
       </view>
     </z-paging>
 
-    <!-- 新增虚拟评论按钮（后端 /create 使用 product:comment:update 权限） -->
+    <!-- 新增虚拟评论按钮 -->
     <wd-fab
       v-if="hasAccessByCodes(['product:comment:update'])"
       position="right-bottom"

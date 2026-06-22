@@ -1,5 +1,3 @@
-<!-- TODO @AI：看看整体，能不能在优化下？！ -->
-<!-- TODO @AI：可以手动添加规格么？ -->
 <template>
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
@@ -9,14 +7,19 @@
       @click-left="handleBack"
     />
 
+    <!-- 分组 tab（对齐 PC：基础设置/价格库存/物流设置/商品详情/其它设置） -->
+    <view class="bg-white">
+      <wd-tabs v-model="activeTab" slidable="always">
+        <wd-tab v-for="(tab, index) in SPU_FORM_TABS" :key="index" :title="tab" />
+      </wd-tabs>
+    </view>
+
     <!-- 表单区域 -->
     <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
       <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <view class="p-24rpx">
-          <view class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
-            <view class="border-b border-[#f0f0f0] px-24rpx py-18rpx text-30rpx text-[#333] font-semibold">
-              基础信息
-            </view>
+          <!-- 基础设置 -->
+          <view v-show="activeTab === 0" class="mb-160rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
             <wd-cell-group border>
               <wd-form-item title="商品名称" title-width="200rpx" prop="name">
                 <wd-input v-model="formData.name" clearable placeholder="请输入商品名称" />
@@ -45,47 +48,17 @@
               <wd-form-item title="商品简介" title-width="200rpx" prop="introduction">
                 <wd-textarea v-model="formData.introduction" clearable :maxlength="500" placeholder="请输入商品简介" />
               </wd-form-item>
-            </wd-cell-group>
-          </view>
-
-          <view class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
-            <view class="border-b border-[#f0f0f0] px-24rpx py-18rpx text-30rpx text-[#333] font-semibold">
-              图片与配送
-            </view>
-            <wd-cell-group border>
               <wd-form-item title="商品封面" title-width="200rpx" prop="picUrl">
-                <yd-upload-img v-model="formData.picUrl" directory="mall/spu" />
+                <yd-upload-img v-model="formData.picUrl" />
               </wd-form-item>
               <wd-form-item title="轮播图" title-width="200rpx" prop="sliderPicUrls">
-                <yd-upload-imgs v-model="formData.sliderPicUrls" directory="mall/spu" :limit="9" />
+                <yd-upload-imgs v-model="formData.sliderPicUrls" :limit="9" />
               </wd-form-item>
-              <wd-form-item title="配送方式" title-width="200rpx" prop="deliveryTypes" center>
-                <wd-checkbox-group v-model="formData.deliveryTypes" type="button">
-                  <wd-checkbox
-                    v-for="dict in getIntDictOptions(DICT_TYPE.TRADE_DELIVERY_TYPE)"
-                    :key="dict.value"
-                    :name="dict.value"
-                  >
-                    {{ dict.label }}
-                  </wd-checkbox>
-                </wd-checkbox-group>
-              </wd-form-item>
-              <wd-form-item
-                v-if="formData.deliveryTypes?.includes(1)"
-                title="运费模板"
-                title-width="200rpx"
-                is-link
-                :value="getOptionText(templateOptions, formData.deliveryTemplateId)"
-                placeholder="请选择运费模板"
-                @click="pickerVisible.template = true"
-              />
             </wd-cell-group>
           </view>
 
-          <view class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
-            <view class="border-b border-[#f0f0f0] px-24rpx py-18rpx text-30rpx text-[#333] font-semibold">
-              SKU 与价格
-            </view>
+          <!-- 价格库存 -->
+          <view v-show="activeTab === 1" class="mb-160rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
             <wd-cell-group border>
               <wd-form-item title="多规格" title-width="200rpx" prop="specType" center>
                 <wd-radio-group v-model="formData.specType" type="button">
@@ -120,10 +93,43 @@
             </view>
           </view>
 
-          <view class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
-            <view class="border-b border-[#f0f0f0] px-24rpx py-18rpx text-30rpx text-[#333] font-semibold">
-              营销与状态
-            </view>
+          <!-- 物流设置 -->
+          <view v-show="activeTab === 2" class="mb-160rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
+            <wd-cell-group border>
+              <wd-form-item title="配送方式" title-width="200rpx" prop="deliveryTypes" center>
+                <wd-checkbox-group v-model="formData.deliveryTypes" type="button">
+                  <wd-checkbox
+                    v-for="dict in getIntDictOptions(DICT_TYPE.TRADE_DELIVERY_TYPE)"
+                    :key="dict.value"
+                    :name="dict.value"
+                  >
+                    {{ dict.label }}
+                  </wd-checkbox>
+                </wd-checkbox-group>
+              </wd-form-item>
+              <wd-form-item
+                v-if="formData.deliveryTypes?.includes(1)"
+                title="运费模板"
+                title-width="200rpx"
+                is-link
+                :value="getOptionText(templateOptions, formData.deliveryTemplateId)"
+                placeholder="请选择运费模板"
+                @click="pickerVisible.template = true"
+              />
+            </wd-cell-group>
+          </view>
+
+          <!-- 商品详情 -->
+          <view v-show="activeTab === 3" class="mb-160rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
+            <wd-cell-group border>
+              <wd-form-item title="详情内容" title-width="200rpx" prop="description">
+                <wd-textarea v-model="formData.description" clearable :maxlength="10000" placeholder="请输入商品详情 HTML 或文本" />
+              </wd-form-item>
+            </wd-cell-group>
+          </view>
+
+          <!-- 其它设置 -->
+          <view v-show="activeTab === 4" class="mb-160rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
             <wd-cell-group border>
               <wd-form-item title="排序" title-width="200rpx" prop="sort">
                 <wd-input-number v-model="formData.sort" :min="0" />
@@ -144,17 +150,6 @@
                     {{ item.label }}
                   </wd-radio>
                 </wd-radio-group>
-              </wd-form-item>
-            </wd-cell-group>
-          </view>
-
-          <view class="mb-160rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
-            <view class="border-b border-[#f0f0f0] px-24rpx py-18rpx text-30rpx text-[#333] font-semibold">
-              商品详情
-            </view>
-            <wd-cell-group border>
-              <wd-form-item title="详情内容" title-width="200rpx" prop="description">
-                <wd-textarea v-model="formData.description" clearable :maxlength="10000" placeholder="请输入商品详情 HTML 或文本" />
               </wd-form-item>
             </wd-cell-group>
           </view>
@@ -217,6 +212,8 @@ const toast = useToast()
 const formRef = ref<FormInstance>() // 表单组件引用
 const formLoading = ref(false) // 表单提交状态
 const formId = ref<number>() // 商品编号
+const activeTab = ref(0) // 当前分组 tab 下标
+const SPU_FORM_TABS = ['基础设置', '价格库存', '物流设置', '商品详情', '其它设置'] // 分组 tab
 const pickerVisible = ref({ category: false, brand: false, template: false }) // 选择器状态
 const categoryOptions = ref<{ label: string, value: number }[]>([]) // 分类选项
 const brandOptions = ref<{ label: string, value: number }[]>([]) // 品牌选项
@@ -257,6 +254,21 @@ const formSchema = createFormSchema({
   sort: [{ required: true, message: '排序不能为空' }],
   status: [{ required: true, message: '商品状态不能为空' }],
 })
+const PROP_TAB: Record<string, number> = {
+  name: 0,
+  categoryId: 0,
+  brandId: 0,
+  keyword: 0,
+  introduction: 0,
+  picUrl: 0,
+  sliderPicUrls: 0,
+  specType: 1,
+  subCommissionType: 1,
+  deliveryTypes: 2,
+  description: 3,
+  sort: 4,
+  status: 4,
+} // 字段 → 所属 tab 下标，校验失败时自动切到对应 tab
 
 /** 返回上一页 */
 function handleBack() {
@@ -303,8 +315,8 @@ function toYuanSku(sku: ProductSku): ProductSku {
 function toCentSku(sku: ProductSku): ProductSku {
   return {
     ...sku,
-    name: sku.name || formData.value.name, // SKU 名称取商品名称（对齐 PC，后端 @NotEmpty）
-    picUrl: sku.picUrl || formData.value.picUrl || '', // SKU 图片默认取商品封面（后端 @NotNull）
+    name: sku.name || formData.value.name, // SKU 名称取商品名称
+    picUrl: sku.picUrl || formData.value.picUrl || '', // SKU 图片默认取商品封面
     price: yuanToCent(sku.price),
     marketPrice: yuanToCent(sku.marketPrice),
     costPrice: yuanToCent(sku.costPrice),
@@ -361,10 +373,16 @@ function buildSubmitData(): ProductSpu {
 async function handleSubmit() {
   const result = await formRef.value?.validate()
   if (!result?.valid) {
+    // 校验失败时切到首个错误字段所在的 tab
+    const prop = result?.errors?.[0]?.prop
+    if (prop != null && PROP_TAB[prop] != null) {
+      activeTab.value = PROP_TAB[prop]
+    }
     return
   }
   const data = buildSubmitData()
   if (!data.skus?.length) {
+    activeTab.value = 1 // 价格库存
     toast.warning(formData.value.specType ? '请添加规格并生成 SKU' : '请完善 SKU 价格库存')
     return
   }

@@ -1,5 +1,5 @@
 <template>
-  <view class="yd-page-container yd-page-container-paging">
+  <view class="yd-page-container">
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="商品分类"
@@ -8,37 +8,24 @@
     />
 
     <!-- 搜索组件 -->
-    <!--  -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
-    <!-- 分页列表 -->
-    <!-- TODO @AI：是不是应该树形结构？ -->
-    <z-paging
-      ref="pagingRef"
-      v-model="list"
-      :fixed="false"
-      class="min-h-0 flex-1"
-      :default-page-size="10"
-      :refresher-enabled="true"
-      :inside-more="true"
-      :loading-more-default-as-loading="true"
-      empty-view-text="暂无分类数据"
-      @query="queryList"
-    >
+    <!-- 面包屑导航（按层级钻取） -->
+    <Breadcrumb ref="breadcrumbRef" v-model="currentParentId" root-name="全部分类" />
+
+    <!-- 当前层级分类列表 -->
+    <scroll-view scroll-y class="min-h-0 flex-1">
       <view class="p-24rpx">
         <view
-          v-for="item in list"
+          v-for="item in currentList"
           :key="item.id"
           class="mb-24rpx overflow-hidden rounded-12rpx bg-white p-24rpx shadow-sm"
           @click="handleDetail(item)"
         >
           <view class="flex items-start gap-20rpx">
-            <image
-              v-if="item.picUrl"
-              :src="item.picUrl"
-              class="h-112rpx w-112rpx shrink-0 rounded-8rpx bg-[#f5f5f5]"
-              mode="aspectFill"
-            />
+            <view v-if="item.picUrl" class="shrink-0">
+              <wd-img :src="item.picUrl" width="112rpx" height="112rpx" radius="8rpx" mode="aspectFill" />
+            </view>
             <view class="min-w-0 flex-1">
               <view class="mb-12rpx flex items-start justify-between gap-16rpx">
                 <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
@@ -46,24 +33,32 @@
                 </view>
                 <dict-tag v-if="item.status != null" :type="DICT_TYPE.COMMON_STATUS" :value="item.status" />
               </view>
-              <view class="mb-8rpx flex items-center text-26rpx text-[#666]">
-                <text class="mr-8rpx shrink-0 text-[#999]">上级分类：</text>
-                <text class="truncate">{{ getParentName(item.parentId) }}</text>
-              </view>
-              <view class="mb-8rpx flex items-center text-26rpx text-[#666]">
-                <text class="mr-8rpx shrink-0 text-[#999]">排序：</text>
-                <text>{{ item.sort ?? '-' }}</text>
-              </view>
-              <!-- TODO @AI：是不是看看别的样式？目前有哪些解决方案，我们可以讨论下； -->
-              <view class="flex items-center" @click.stop="handleViewSpu(item)">
-                <text class="text-26rpx text-[#1890ff]">查看商品</text>
-                <wd-icon name="arrow-right" size="12px" color="#1890ff" />
+              <view class="text-26rpx text-[#666]">
+                排序：{{ item.sort ?? '-' }}
               </view>
             </view>
           </view>
+
+          <!-- 子分类 / 查看商品 入口 -->
+          <view class="mt-16rpx flex items-center justify-end gap-32rpx border-t border-[#f0f0f0] pt-16rpx">
+            <view v-if="item.children?.length" class="flex items-center" @click.stop="handleEnterChildren(item)">
+              <text class="text-26rpx text-[#1890ff]">子分类 ({{ item.children.length }})</text>
+              <wd-icon name="arrow-right" size="12px" color="#1890ff" />
+            </view>
+            <!-- 只有叶子分类（无子分类）才有商品 -->
+            <view v-else class="flex items-center" @click.stop="handleViewSpu(item)">
+              <text class="text-26rpx text-[#1890ff]">查看商品</text>
+              <wd-icon name="arrow-right" size="12px" color="#1890ff" />
+            </view>
+          </view>
+        </view>
+
+        <!-- 空状态 -->
+        <view v-if="!loading && currentList.length === 0" class="py-100rpx text-center">
+          <wd-empty icon="content" tip="暂无分类数据" />
         </view>
       </view>
-    </z-paging>
+    </scroll-view>
 
     <!-- 新增按钮 -->
     <wd-fab
@@ -79,11 +74,19 @@
 <script lang="ts" setup>
 import type { ProductCategory } from '@/api/mall/product/category'
 import { onUnload } from '@dcloudio/uni-app'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { getProductCategoryList } from '@/api/mall/product/category'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
+import { findChildren, handleTree } from '@/utils/tree'
+import Breadcrumb from './components/breadcrumb.vue'
+import SearchForm from './components/search-form.vue'
+
+// 前端 handleTree 构造的分类树节点（children 为前端拼接，非后端字段）
+interface CategoryTreeNode extends ProductCategory {
+  children?: CategoryTreeNode[]
+}
 
 definePage({
   style: {
@@ -93,58 +96,49 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
-const list = ref<ProductCategory[]>([]) // 列表数据
-const pagingRef = ref<any>() // 分页组件引用
+const loading = ref(false) // 列表加载状态
+const list = ref<CategoryTreeNode[]>([]) // 完整分类列表（树形）
 const queryParams = ref<Record<string, any>>({}) // 查询参数
-const categoryNameMap = ref<Record<number, string>>({}) // 分类编号到名称映射，用于回显上级分类名
+const currentParentId = ref(0) // 当前层级父节点编号
+const breadcrumbRef = ref<InstanceType<typeof Breadcrumb>>()
+const currentList = computed(() => currentParentId.value === 0
+  ? list.value.filter(item => item.parentId === 0)
+  : findChildren(list.value, currentParentId.value)) // 当前层级分类
 
-/** 返回上一页 */
+/** 返回上一页或上一层级 */
 function handleBack() {
-  navigateBackPlus()
+  if (!breadcrumbRef.value?.back()) {
+    navigateBackPlus()
+  }
 }
 
-/** 获取上级分类名称 */
-function getParentName(parentId?: number) {
-  if (parentId == null || parentId === 0) {
-    return '顶级分类'
-  }
-  return categoryNameMap.value[parentId] || `分类 #${parentId}`
+/** 进入子分类层级 */
+function handleEnterChildren(item: ProductCategory) {
+  breadcrumbRef.value?.enter({ id: item.id!, name: item.name })
 }
 
 /** 查询分类列表 */
-async function queryList(pageNo: number, pageSize: number) {
+async function getList() {
+  loading.value = true
   try {
-    // 分类接口返回完整列表，前端做名称映射与本地分页
-    const all = await getProductCategoryList({ ...queryParams.value })
-    const map: Record<number, string> = {}
-    all.forEach((item) => {
-      if (item.id != null) {
-        map[item.id] = item.name
-      }
-    })
-    categoryNameMap.value = map
-    const sorted = [...all].sort((a, b) => (a.sort || 0) - (b.sort || 0))
-    const start = (pageNo - 1) * pageSize
-    pagingRef.value?.completeByTotal(sorted.slice(start, start + pageSize), sorted.length)
-  } catch {
-    pagingRef.value?.complete(false)
+    const data = await getProductCategoryList({ ...queryParams.value })
+    list.value = handleTree(data) as CategoryTreeNode[]
+  } finally {
+    loading.value = false
   }
 }
 
 /** 搜索按钮操作 */
 function handleQuery(data?: Record<string, any>) {
   queryParams.value = { ...data }
-  reload()
+  currentParentId.value = 0
+  breadcrumbRef.value?.reset()
+  getList()
 }
 
 /** 重置按钮操作 */
 function handleReset() {
   handleQuery()
-}
-
-/** 重新加载 */
-function reload() {
-  pagingRef.value?.reload()
 }
 
 /** 新增分类 */
@@ -164,11 +158,12 @@ function handleViewSpu(item: ProductCategory) {
 
 /** 初始化 */
 onMounted(() => {
-  uni.$on('mall:product-category:reload', reload)
+  getList()
+  uni.$on('mall:product-category:reload', getList)
 })
 
 /** 卸载 */
 onUnload(() => {
-  uni.$off('mall:product-category:reload', reload)
+  uni.$off('mall:product-category:reload', getList)
 })
 </script>

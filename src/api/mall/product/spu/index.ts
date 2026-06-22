@@ -89,8 +89,8 @@ export function updateProductSpuStatus(data: { id: number, status: number }) {
 }
 
 /** 获取商品状态数量 */
-export function getProductSpuTabsCount() {
-  return http.get<Record<string, number>>('/product/spu/get-count')
+export function getProductSpuTabsCount(params?: Record<string, any>) {
+  return http.get<Record<string, number>>('/product/spu/get-count', params)
 }
 
 /** 获取商品 SPU 精简列表 */

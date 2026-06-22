@@ -31,7 +31,7 @@
             @click="handleOpenSku"
           />
           <wd-form-item title="用户头像" title-width="220rpx" prop="userAvatar">
-            <yd-upload-img v-model="formData.userAvatar" directory="mall/comment" />
+            <yd-upload-img v-model="formData.userAvatar" />
           </wd-form-item>
           <wd-form-item title="用户名称" title-width="220rpx" prop="userNickname">
             <wd-input v-model="formData.userNickname" clearable placeholder="请输入用户名称" />
@@ -46,7 +46,7 @@
             <wd-rate v-model="formData.benefitScores" />
           </wd-form-item>
           <wd-form-item title="评论图片" title-width="220rpx" prop="picUrls">
-            <yd-upload-imgs v-model="formData.picUrls" :limit="9" directory="mall/comment" />
+            <yd-upload-imgs v-model="formData.picUrls" :limit="9" />
           </wd-form-item>
         </wd-cell-group>
       </wd-form>

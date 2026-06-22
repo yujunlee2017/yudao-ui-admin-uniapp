@@ -13,7 +13,7 @@
     @close="visible = false"
   >
     <view class="yd-search-form-container">
-      <view class="yd-search-form-item">
+      <view v-if="propertyId == null" class="yd-search-form-item">
         <view class="yd-search-form-label">
           所属属性
         </view>
@@ -47,6 +47,8 @@
     v-model:visible="propertyPickerVisible"
     :model-value="formData.propertyId"
     :columns="propertyOptions"
+    label-key="name"
+    value-key="id"
     @confirm="({ value }) => formData.propertyId = Number(value[0])"
   />
 </template>
@@ -56,6 +58,10 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { getSimpleProductPropertyList } from '@/api/mall/product/property'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 
+defineProps<{
+  propertyId?: number // 限定属性时隐藏所属属性筛选
+}>()
+
 const emit = defineEmits<{
   search: [data: Record<string, any>]
   reset: []
@@ -63,7 +69,7 @@ const emit = defineEmits<{
 
 const visible = ref(false) // 搜索弹窗显示状态
 const propertyPickerVisible = ref(false) // 属性选择器状态
-const propertyOptions = ref<{ label: string, value: number }[]>([]) // 属性选项
+const propertyOptions = ref<{ id?: number, name: string }[]>([]) // 属性选项
 const formData = reactive({
   propertyId: undefined as number | undefined,
   name: undefined as string | undefined,
@@ -82,11 +88,11 @@ const placeholder = computed(() => {
 })
 
 /** 获取选项文本 */
-function getOptionText(options: { label: string, value: number }[], value?: number) {
+function getOptionText(options: { id?: number, name: string }[], value?: number) {
   if (value == null) {
     return ''
   }
-  return options.find(item => Number(item.value) === Number(value))?.label || String(value)
+  return options.find(item => Number(item.id) === Number(value))?.name || String(value)
 }
 
 /** 搜索按钮操作 */
@@ -108,7 +114,6 @@ function handleReset() {
 
 /** 初始化 */
 onMounted(async () => {
-  const list = await getSimpleProductPropertyList()
-  propertyOptions.value = list.map(item => ({ label: item.name || String(item.id), value: Number(item.id) }))
+  propertyOptions.value = await getSimpleProductPropertyList()
 })
 </script>

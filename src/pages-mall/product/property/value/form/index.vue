@@ -11,14 +11,15 @@
     <view>
       <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
-          <wd-form-item
-            title="所属属性"
-            title-width="220rpx"
+          <yd-form-picker
+            v-model="formData.propertyId"
+            label="所属属性"
+            label-width="220rpx"
             prop="propertyId"
-            :is-link="!propertyLocked"
-            :value="getOptionText(propertyOptions, formData.propertyId)"
-            placeholder="请选择所属属性"
-            @click="!propertyLocked && (pickerVisible = true)"
+            :columns="propertyOptions"
+            label-key="name"
+            value-key="id"
+            :disabled="propertyLocked"
           />
           <wd-form-item title="属性值" title-width="220rpx" prop="name">
             <wd-input v-model="formData.name" clearable placeholder="请输入属性值" />
@@ -29,14 +30,6 @@
         </wd-cell-group>
       </wd-form>
     </view>
-
-    <!-- 所属属性选择器 -->
-    <wd-picker
-      v-model:visible="pickerVisible"
-      :model-value="formData.propertyId"
-      :columns="propertyOptions"
-      @confirm="({ value }) => formData.propertyId = Number(value[0])"
-    />
 
     <!-- 底部保存按钮 -->
     <view class="yd-detail-footer">
@@ -81,10 +74,8 @@ definePage({
 const toast = useToast()
 const getTitle = computed(() => props.id ? '编辑属性值' : '新增属性值')
 const formLoading = ref(false) // 表单提交状态
-const pickerVisible = ref(false) // 所属属性选择器状态
-const propertyOptions = ref<{ label: string, value: number }[]>([]) // 属性选项
-// 从属性列表新增进入时，propertyId 经路由透传并锁定，不允许自由选择
-const lockedPropertyId = props.propertyId != null && props.propertyId !== '' ? Number(props.propertyId) : undefined
+const propertyOptions = ref<{ id?: number, name: string }[]>([]) // 属性选项
+const lockedPropertyId = props.propertyId != null && props.propertyId !== '' ? Number(props.propertyId) : undefined // 从属性列表新增进入时，经路由透传并锁定，不允许自由选择
 const propertyLocked = computed(() => !props.id && lockedPropertyId != null)
 const formData = ref<ProductPropertyValue>({
   id: undefined,
@@ -100,21 +91,12 @@ const formRef = ref<FormInstance>() // 表单组件引用
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-mall/product/property-value/index')
-}
-
-/** 获取选项文本 */
-function getOptionText(options: { label: string, value: number }[], value?: number) {
-  if (value == null) {
-    return ''
-  }
-  return options.find(item => Number(item.value) === Number(value))?.label || String(value)
+  navigateBackPlus('/pages-mall/product/property/value/index')
 }
 
 /** 加载属性选项 */
 async function loadOptions() {
-  const list = await getSimpleProductPropertyList()
-  propertyOptions.value = list.map(item => ({ label: item.name || String(item.id), value: Number(item.id) }))
+  propertyOptions.value = await getSimpleProductPropertyList()
 }
 
 /** 加载详情 */

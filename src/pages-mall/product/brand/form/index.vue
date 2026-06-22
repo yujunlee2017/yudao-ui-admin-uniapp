@@ -15,16 +15,7 @@
             <wd-input v-model="formData.name" clearable placeholder="请输入品牌名称" />
           </wd-form-item>
           <wd-form-item title="品牌图片" title-width="220rpx" prop="picUrl">
-            <!-- TODO @AI：图片的上传组件；看看其他地方，是不是也要修复； -->
-            <view class="w-full">
-              <image
-                v-if="formData.picUrl"
-                :src="formData.picUrl"
-                class="mb-12rpx h-140rpx w-140rpx rounded-8rpx bg-[#f5f5f5]"
-                mode="aspectFill"
-              />
-              <wd-input v-model="formData.picUrl" clearable placeholder="请输入品牌图片 URL" />
-            </view>
+            <yd-upload-img v-model="formData.picUrl" />
           </wd-form-item>
           <wd-form-item title="品牌排序" title-width="220rpx" prop="sort">
             <wd-input-number v-model="formData.sort" :min="0" />
