@@ -78,7 +78,7 @@ export function receiveTradeAfterSale(id: number) {
   return http.put<boolean>(`/trade/after-sale/receive?id=${id}`)
 }
 
-/** 拒绝收货（后端 refuseMemo 必填，经 query 透传） */
+/** 拒绝收货 */
 export function refuseTradeAfterSale(id: number, refuseMemo: string) {
   return http.put<boolean>(`/trade/after-sale/refuse?id=${id}&refuseMemo=${encodeURIComponent(refuseMemo)}`)
 }

@@ -7,6 +7,7 @@
       @click-left="handleBack"
     />
 
+    <!-- TODO @AI：是不是要 tabs？ -->
     <scroll-view scroll-y class="min-h-0 flex-1">
       <view class="p-24rpx">
         <!-- 会员概览：累计会员数等 4 项（累计值，无环比） -->
@@ -23,6 +24,7 @@
 
         <!-- 统计周期与刷新 -->
         <view class="mb-24rpx flex items-center justify-between">
+          <!-- TODO @AI：这里是不是不用噢？因为 search 那已经展示了 -->
           <view class="text-26rpx text-[#999]">
             {{ periodText }}
           </view>
@@ -48,6 +50,7 @@
         <StatisticsCard :section="sexSection" :rows="sexRows" />
 
         <!-- 地域分布（移动端以排行表呈现，不渲染地图） -->
+        <!-- TODO @AI：有没更好的呈现方式？ -->
         <StatisticsCard :section="areaSection" :rows="areaRows" />
       </view>
     </scroll-view>

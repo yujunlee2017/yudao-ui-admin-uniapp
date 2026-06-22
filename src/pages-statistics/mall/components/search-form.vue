@@ -7,6 +7,7 @@
   <!-- 搜索弹窗 -->
   <wd-popup v-model="visible" position="top" :custom-style="getTopPopupStyle()" :modal-style="getTopPopupModalStyle()" @close="visible = false">
     <view class="yd-search-form-container">
+      <!-- TODO @AI：是不是使用 yd search 组件？ -->
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           开始日期

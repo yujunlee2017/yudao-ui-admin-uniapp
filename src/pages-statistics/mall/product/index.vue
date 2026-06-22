@@ -7,6 +7,7 @@
       @click-left="handleBack"
     />
 
+    <!-- TODO @AI：是不是要 tabs？ -->
     <scroll-view scroll-y class="min-h-0 flex-1">
       <view class="p-24rpx">
         <!-- 搜索组件 -->
@@ -20,6 +21,7 @@
 
         <!-- 统计周期与刷新 -->
         <view class="mb-24rpx flex items-center justify-between">
+          <!-- TODO @AI：这里是不是不用噢？因为 search 那已经展示了 -->
           <view class="text-26rpx text-[#999]">
             {{ periodText }}
           </view>

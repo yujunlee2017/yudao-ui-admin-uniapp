@@ -1,9 +1,11 @@
 // 商城统计通用工具，改编自 crm/components/statistics.ts，金额以「分」为单位需自行转元
+// TODO @AI：是不是要把一些工具的方法，挪到 /Users/yunai/Java/yudao-ui-admin-uniapp-next-v4/src/pages-statistics/utils 里？和 crm 做一些合并？！
 import { getDictLabel } from '@/hooks/useDict'
 
 export const DEFAULT_VISIBLE_ROWS = 10 // 默认展示行数（折叠态）
 export const MAX_VISIBLE_ROWS = 50 // 展开后的最大展示行数，避免渲染超大列表
 
+// TODO @AI：全局有没可复用的方法？
 export interface StatisticsColumn {
   prop: string
   label: string
@@ -11,17 +13,20 @@ export interface StatisticsColumn {
   type?: 'money' | 'percent'
 }
 
+// TODO @AI：全局有没可复用的方法？
 export interface StatisticsChartSeries {
   name: string
   prop: string
   type?: 'bar' | 'line'
 }
 
+// TODO @AI：全局有没可复用的方法？
 export interface StatisticsFunnelItem {
   name: string
   value: number
 }
 
+// TODO @AI：全局有没可复用的方法？
 export interface StatisticsChart {
   type: 'line' | 'bar' | 'pie' | 'funnel'
   categoryProp?: string
@@ -31,6 +36,7 @@ export interface StatisticsChart {
   funnelData?: StatisticsFunnelItem[]
 }
 
+// TODO @AI：全局有没可复用的方法？
 export interface StatisticsSection {
   title: string
   columns?: StatisticsColumn[]
@@ -38,12 +44,14 @@ export interface StatisticsSection {
   load?: (params: Record<string, any>) => Promise<any>
 }
 
+// TODO @AI：全局有没可复用的方法？
 /** 分转元（金额以分存储，展示前转元） */
 export function fenToYuan(value: any) {
   const amount = Number(value || 0)
   return Number.isNaN(amount) ? 0 : amount / 100
 }
 
+// TODO @AI：全局有没可复用的方法？
 /** 计算环比增长率（百分比，整数） */
 export function calculateRelativeRate(value?: number, reference?: number) {
   // 防止除 0
@@ -53,6 +61,7 @@ export function calculateRelativeRate(value?: number, reference?: number) {
   return Number(((100 * ((value || 0) - reference)) / reference).toFixed(0))
 }
 
+// TODO @AI：全局有没可复用的方法？
 /** 统一转换统计结果 */
 export function normalizeRows(data: any) {
   if (Array.isArray(data)) {
@@ -64,6 +73,7 @@ export function normalizeRows(data: any) {
   return [data]
 }
 
+// TODO @AI：全局有没可复用的方法？
 /** 构建图表配置 */
 export function buildChartOption(section: StatisticsSection, rows: Record<string, any>[], options: { rank?: boolean } = {}) {
   if (!section.chart) {
@@ -81,6 +91,7 @@ export function buildChartOption(section: StatisticsSection, rows: Record<string
   return buildAxisOption(section, rows, options)
 }
 
+// TODO @AI：全局有没可复用的方法？
 /** 获取图表高度 */
 export function getChartHeight(section: StatisticsSection, options: { rank?: boolean } = {}) {
   if (options.rank || section.chart?.type === 'funnel') {
@@ -92,6 +103,7 @@ export function getChartHeight(section: StatisticsSection, options: { rank?: boo
   return '460rpx'
 }
 
+// TODO @AI：全局有没可复用的方法？
 /** 格式化字段值 */
 export function formatColumnValue(row: Record<string, any>, column: StatisticsColumn) {
   const value = row[column.prop]
@@ -112,6 +124,7 @@ export function formatColumnValue(row: Record<string, any>, column: StatisticsCo
 }
 
 /** 格式化未知结构 */
+// TODO @AI：全局有没可复用的方法？
 export function formatEntries(row: Record<string, any>) {
   return Object.entries(row)
     .filter(([, value]) => typeof value !== 'object')
@@ -119,12 +132,14 @@ export function formatEntries(row: Record<string, any>) {
 }
 
 /** 格式化金额数值 */
+// TODO @AI：全局有没可复用的方法？
 export function formatMoneyValue(value: any) {
   const numberValue = Number(value || 0)
   return Number.isNaN(numberValue) ? String(value ?? '-') : numberValue.toFixed(2)
 }
 
 /** 转换为数字 */
+// TODO @AI：全局有没可复用的方法？
 export function toNumber(value: any) {
   const numberValue = Number(value || 0)
   return Number.isNaN(numberValue) ? 0 : numberValue
@@ -136,6 +151,7 @@ export function getChartColors() {
 }
 
 /** 构建坐标轴图表 */
+// TODO @AI：全局有没可复用的方法？
 function buildAxisOption(section: StatisticsSection, rows: Record<string, any>[], options: { rank?: boolean }) {
   const chart = section.chart!
   const series = chart.series || []
@@ -232,6 +248,7 @@ function buildPieOption(section: StatisticsSection, rows: Record<string, any>[])
 }
 
 /** 构建漏斗图（接收带标签数据，区别于 crm 写死字段） */
+// TODO @AI：全局有没可复用的方法？
 function buildFunnelOption(items: StatisticsFunnelItem[]) {
   return {
     color: getChartColors(),
@@ -263,6 +280,7 @@ function buildFunnelOption(items: StatisticsFunnelItem[]) {
 }
 
 /** 获取图表类目文案 */
+// TODO @AI：全局有没可复用的方法？
 function getChartCategory(section: StatisticsSection, row: Record<string, any>, prop?: string) {
   if (!prop) {
     return '-'

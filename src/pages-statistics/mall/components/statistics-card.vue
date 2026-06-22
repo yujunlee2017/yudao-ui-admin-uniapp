@@ -1,3 +1,8 @@
+<!-- TODO @AI：有必要抽到 /Users/yunai/Java/yudao-ui-admin-uniapp-next-v4/src/pages-statistics/components 下么？包括
+ /Users/yunai/Java/yudao-ui-admin-uniapp-next-v4/src/pages-statistics/crm/components/statistics-card.vue
+ /Users/yunai/Java/yudao-ui-admin-uniapp-next-v4/src/pages-statistics/mall/components/statistics-card.vue
+/Users/yunai/Java/yudao-ui-admin-uniapp-next-v4/src/pages-statistics/mall/components/summary-grid.vue
+ -->
 <template>
   <view class="mb-24rpx rounded-12rpx bg-white p-24rpx shadow-sm">
     <view class="mb-20rpx flex items-center justify-between">
