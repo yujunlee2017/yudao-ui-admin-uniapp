@@ -181,6 +181,7 @@ import { formatDateTime } from '@/utils/date'
 type ActionKey = 'agree' | 'disagree' | 'receive' | 'refuse' | 'refund'
 
 // 售后状态：10 申请中、20 卖家拒绝、30 待买家退货/卖家待收货、40 待退款、50 已完成
+// TODO @AI：全局应该是有枚举的把。
 const AFTER_SALE_STATUS = { APPLY: 10, WAIT_RECEIVE: 30, WAIT_REFUND: 40 }
 
 definePage({
@@ -269,6 +270,7 @@ function handleSelectAction({ item }: { item: { value: ActionKey } }) {
 }
 
 /** 执行动作 */
+// TODO @AI：不使用这种，参考别的模块
 async function runAction(key: ActionKey) {
   if (!detailId.value) {
     return
@@ -339,6 +341,8 @@ onMounted(async () => {
   // #endif
   await loadDetail()
 })
+// TODO @AI：参考 /Users/yunai/Java/yudao-ui-admin-uniapp-next-v4/src/pages-mall/trade/order 的一些建议；
+// TODO @AI：能不能用 unocss 减少 style？
 </script>
 
 <style lang="scss" scoped>

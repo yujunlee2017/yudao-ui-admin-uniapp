@@ -122,8 +122,12 @@ const submitting = ref(false) // 操作提交状态
 const rejectVisible = ref(false) // 驳回弹窗
 const auditReason = ref('') // 驳回原因
 const hasAuditPermi = computed(() => hasAccessByCodes(['trade:brokerage-withdraw:audit']))
+// TODO @AI：枚举值；
+// TODO @AI：简单的 computed 写成尾注释把。。。更新 agents md 里，看看有没别的地方，也有类似问题。
 // 仅「审核中(0)」状态可审核（通过/驳回）
 const canAudit = computed(() => formData.value.status === 0 && hasAuditPermi.value)
+// TODO @AI：枚举值；
+// TODO @AI：简单的 computed 写成尾注释把。。。更新 agents md 里，看看有没别的地方，也有类似问题。（复杂的，写到 computed { 第一行，）
 // 「提现失败(21)」可重新转账
 const canRetry = computed(() => formData.value.status === 21 && hasAuditPermi.value)
 
@@ -146,6 +150,7 @@ async function getDetail() {
 }
 
 /** 预览收款码 */
+// TODO @AI：是不是可以直接使用 wd-img 支持预览的；别的地方，也检查下！
 function previewQrCode() {
   if (formData.value.qrCodeUrl) {
     uni.previewImage({ urls: [formData.value.qrCodeUrl] })
@@ -154,6 +159,7 @@ function previewQrCode() {
 
 /** 通过申请 / 重新转账（均调用 /approve） */
 async function handleApprove() {
+  // TODO @AI：是不是 21 可以有枚举？检查下，有没类似的情况，没用枚举的！！！
   const isRetry = formData.value.status === 21
   try {
     await dialog.confirm({ title: '提示', msg: isRetry ? '确定要重新转账吗？' : '确定通过该提现申请吗？' })

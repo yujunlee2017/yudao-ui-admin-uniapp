@@ -108,6 +108,7 @@ const toast = useToast()
 const list = ref<TradeBrokerageUser[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({}) // 查询参数
+// TODO @AI：只要是权限的 hasAccessByCodes，都不要抽这种变量；所有界面都检查一遍。
 // 推广资格开关：后端 /update-brokerage-enable 校验 trade:brokerage-user:update-brokerage-enable
 const canUpdateEnabled = computed(() => hasAccessByCodes(['trade:brokerage-user:update-brokerage-enable']))
 

@@ -61,6 +61,7 @@
     </z-paging>
 
     <!-- 核销码核销弹窗 -->
+    <!-- TODO @AI：这个输入后，要类似 pc 有一个确认把。 -->
     <wd-popup
       v-model="verifyVisible"
       position="bottom"
@@ -151,6 +152,7 @@ function reload() {
 }
 
 /** 查看详情：透传行数据标量字段，避免详情页二次拉取 */
+// todo @AI：这个是不是复用订单的详情界面？应该这个详情界面，也可以核销把？
 function handleDetail(item: TradeOrder) {
   const query = [
     item.id != null ? `id=${item.id}` : '',

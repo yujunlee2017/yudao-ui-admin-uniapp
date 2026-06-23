@@ -17,6 +17,7 @@
           <wd-form-item title="联系电话" title-width="200rpx" prop="phone">
             <wd-input v-model="formData.phone" clearable placeholder="请输入联系电话" />
           </wd-form-item>
+          <!-- TODO @AI：是不是不用 directory？看看其他地方也是，对齐 vue3 + ep 风格！ -->
           <wd-form-item title="门店 Logo" title-width="200rpx" prop="logo">
             <yd-upload-img v-model="formData.logo" directory="mall/pick-up-store" />
           </wd-form-item>
@@ -30,9 +31,11 @@
           <wd-form-item title="营业结束" title-width="200rpx" prop="closingTime">
             <wd-input v-model="formData.closingTime" clearable placeholder="请输入营业结束时间" />
           </wd-form-item>
+          <!-- TODO @AI：可以把宽度拉大？如果可以，看看其他的 input-number 是不是也拉大？ -->
           <wd-form-item title="纬度" title-width="200rpx" prop="latitude" center>
             <wd-input-number v-model="formData.latitude" :min="-90" :max="90" :step="0.000001" :precision="6" allow-null />
           </wd-form-item>
+          <!-- TODO @AI：可以把宽度拉大？如果可以，看看其他的 input-number 是不是也拉大？ -->
           <wd-form-item title="经度" title-width="200rpx" prop="longitude" center>
             <wd-input-number v-model="formData.longitude" :min="-180" :max="180" :step="0.000001" :precision="6" allow-null />
           </wd-form-item>
@@ -87,6 +90,7 @@ import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
+// TODO @AI：看看最新 vue3 + ep，是怎么处理这个场景哈；
 // 表单内 verifyUserIds 以逗号分隔字符串编辑，提交时转换为 number[]
 interface PickUpStoreFormData extends Omit<DeliveryPickUpStore, 'verifyUserIds'> {
   verifyUserIds?: string
@@ -163,6 +167,7 @@ async function handleSubmit() {
   try {
     const data: DeliveryPickUpStore = {
       ...formData.value,
+      // TODO @AI：是不是全局搞个工具类，专门处理类似的场景；（可通用）
       verifyUserIds: String(formData.value.verifyUserIds || '')
         .split(',')
         .map(s => s.trim())

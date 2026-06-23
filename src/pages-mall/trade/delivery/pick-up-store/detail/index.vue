@@ -162,6 +162,7 @@ async function handleDelete() {
 
 /** 打开绑定核销员弹窗 */
 function handleOpenBindStaff() {
+  // TODO @AI：能不能改成 select ，不要输入数字，和 pc 不一致呀；
   bindStaffIds.value = (formData.value.verifyUserIds || []).join(',')
   bindStaffVisible.value = true
 }
@@ -170,6 +171,7 @@ function handleOpenBindStaff() {
 async function handleBindStaff() {
   binding.value = true
   try {
+    // TODO @AI：找个工具方法；
     const verifyUserIds = String(bindStaffIds.value || '')
       .split(',')
       .map(s => s.trim())

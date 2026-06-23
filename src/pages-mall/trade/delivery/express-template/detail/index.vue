@@ -13,9 +13,11 @@
       <wd-cell title="计费方式" :value="formData.chargeMode != null ? String(formData.chargeMode) : '-'" />
       <wd-cell title="排序" :value="formData.sort != null ? String(formData.sort) : '-'" />
       <!-- 移动端简化：区域计费以 JSON 文本展示，不复刻 PC 区域编辑器 -->
+      <!-- TODO @AI：还是尽量展示吧；详情值展示多少条；点击弹出展示具体内容 -->
       <wd-cell title="计费区域">
         <text class="whitespace-pre-wrap break-all text-26rpx text-[#666]">{{ stringifyJson(formData.charges) }}</text>
       </wd-cell>
+      <!-- TODO @AI：还是尽量展示吧；详情值展示多少条；点击弹出展示具体内容 -->
       <wd-cell title="包邮区域">
         <text class="whitespace-pre-wrap break-all text-26rpx text-[#666]">{{ stringifyJson(formData.frees) }}</text>
       </wd-cell>
@@ -61,6 +63,7 @@ const dialog = useDialog()
 const toast = useToast()
 const formData = ref<DeliveryExpressTemplate>({} as DeliveryExpressTemplate) // 详情数据
 const deleting = ref(false) // 删除状态
+// TODO @AI：这种，是不是不用重复弄，类似别的模块；
 const canUpdate = computed(() => hasAccessByCodes(['trade:delivery:express-template:update']))
 const canDelete = computed(() => hasAccessByCodes(['trade:delivery:express-template:delete']))
 
