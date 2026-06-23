@@ -27,35 +27,35 @@ export interface PromotionCouponTemplate {
 
 /** 获取优惠券模板分页列表 */
 export function getPromotionCouponTemplatePage(params: PageParam) {
-  return http.get<PageResult<PromotionCouponTemplate>>('/promotion/coupon-template/page', params)
+  return http.get<PageResult<PromotionCouponTemplate>>('/promotion/coupon/template/page', params)
 }
 
 /** 获取优惠券模板详情 */
 export function getPromotionCouponTemplate(id: number) {
-  return http.get<PromotionCouponTemplate>(`/promotion/coupon-template/get?id=${id}`)
+  return http.get<PromotionCouponTemplate>(`/promotion/coupon/template/get?id=${id}`)
 }
 
 /** 获取优惠券模板列表 */
 export function getPromotionCouponTemplateList(ids: number[]) {
-  return http.get<PromotionCouponTemplate[]>(`/promotion/coupon-template/list?ids=${ids.join(',')}`)
+  return http.get<PromotionCouponTemplate[]>(`/promotion/coupon/template/list?ids=${ids.join(',')}`)
 }
 
 /** 创建优惠券模板 */
 export function createPromotionCouponTemplate(data: PromotionCouponTemplate) {
-  return http.post<number>('/promotion/coupon-template/create', data as Record<string, any>)
+  return http.post<number>('/promotion/coupon/template/create', data as Record<string, any>)
 }
 
 /** 更新优惠券模板 */
 export function updatePromotionCouponTemplate(data: PromotionCouponTemplate) {
-  return http.put<boolean>('/promotion/coupon-template/update', data as Record<string, any>)
+  return http.put<boolean>('/promotion/coupon/template/update', data as Record<string, any>)
 }
 
 /** 更新优惠券模板状态 */
 export function updatePromotionCouponTemplateStatus(data: { id: number, status: number }) {
-  return http.put<boolean>('/promotion/coupon-template/update-status', data)
+  return http.put<boolean>('/promotion/coupon/template/update-status', data)
 }
 
 /** 删除优惠券模板 */
 export function deletePromotionCouponTemplate(id: number) {
-  return http.delete<boolean>(`/promotion/coupon-template/delete?id=${id}`)
+  return http.delete<boolean>(`/promotion/coupon/template/delete?id=${id}`)
 }

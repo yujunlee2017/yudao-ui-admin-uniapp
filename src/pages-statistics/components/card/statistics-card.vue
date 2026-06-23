@@ -102,7 +102,7 @@ const chartOption = computed(() => {
   if (chart.type === 'funnel') {
     // 漏斗各阶段 = columns（如客户数/商机数/赢单数），取值来自 rows[0]
     const row = props.rows[0] || {}
-    return buildFunnelOption((props.section.columns || []).map(col => ({ name: col.label, value: toNumber(row[col.prop]) })))
+    return buildFunnelOption((props.section.columns || []).map(col => ({ name: col.label, value: toNumber(row[col.prop]) })), props.section.title)
   }
   return buildAxisOption(props.section, props.rows, { rank: props.rank })
 })

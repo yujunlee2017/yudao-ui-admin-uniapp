@@ -31,11 +31,13 @@ export const DeliveryTypeEnum = {
  */
 export const TradeAfterSaleStatusEnum = {
   APPLY: 10, // 申请中
-  SELLER_DISAGREE: 20, // 卖家拒绝
+  WAIT_BUYER_RETURN: 20, // 商品待退货
   WAIT_RETURN: 30, // 待买家退货 / 卖家待收货
   WAIT_REFUND: 40, // 待退款
   COMPLETE: 50, // 已完成
   BUYER_CANCEL: 61, // 买家取消
+  SELLER_DISAGREE: 62, // 商家拒绝
+  SELLER_REFUSE_RECEIVE: 63, // 商家拒收货
 }
 
 /**
@@ -47,4 +49,21 @@ export const BrokerageWithdrawStatusEnum = {
   WITHDRAW_SUCCESS: 11, // 提现成功
   AUDIT_FAIL: 20, // 审核不通过
   WITHDRAW_FAIL: 21, // 提现失败
+}
+
+/**
+ * 快递运费模板计费方式枚举
+ */
+export const DeliveryExpressChargeModeEnum = {
+  COUNT: 1, // 按件
+  WEIGHT: 2, // 按重量
+  VOLUME: 3, // 按体积
+}
+
+/**
+ * 营销优惠类型枚举
+ */
+export const PromotionDiscountTypeEnum = {
+  PRICE: 1, // 满减（具体金额）
+  PERCENT: 2, // 折扣（百分比）
 }

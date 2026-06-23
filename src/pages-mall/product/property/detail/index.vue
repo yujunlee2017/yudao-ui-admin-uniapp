@@ -15,12 +15,12 @@
     </wd-cell-group>
 
     <!-- 底部操作按钮 -->
-    <view v-if="canUpdate || canDelete" class="yd-detail-footer">
+    <view v-if="hasAccessByCodes(['product:property:update', 'product:property:delete'])" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['product:property:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['product:property:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -33,7 +33,7 @@ import type { ProductProperty } from '@/api/mall/product/property'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { deleteProductProperty, getProductProperty } from '@/api/mall/product/property'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
@@ -53,8 +53,6 @@ const dialog = useDialog()
 const toast = useToast()
 const formData = ref<ProductProperty>({} as ProductProperty) // 详情数据
 const deleting = ref(false) // 删除状态
-const canUpdate = computed(() => hasAccessByCodes(['product:property:update']))
-const canDelete = computed(() => hasAccessByCodes(['product:property:delete']))
 
 /** 返回上一页 */
 function handleBack() {

@@ -26,7 +26,6 @@
       <wd-cell title="营业结束" :value="formData.closingTime || '-'" />
       <wd-cell title="纬度" :value="formData.latitude != null ? String(formData.latitude) : '-'" />
       <wd-cell title="经度" :value="formData.longitude != null ? String(formData.longitude) : '-'" />
-      <wd-cell title="核销员编号" :value="(formData.verifyUserIds || []).join('，') || '-'" />
       <wd-cell title="开启状态">
         <dict-tag v-if="formData.status != null" :type="DICT_TYPE.COMMON_STATUS" :value="formData.status" />
         <text v-else>-</text>
@@ -35,48 +34,24 @@
     </wd-cell-group>
 
     <!-- 底部操作按钮 -->
-    <view v-if="canUpdate || canDelete" class="yd-detail-footer">
+    <view v-if="hasAccessByCodes(['trade:delivery:pick-up-store:update', 'trade:delivery:pick-up-store:delete'])" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['trade:delivery:pick-up-store:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['trade:delivery:pick-up-store:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
-        <wd-button v-if="canUpdate" class="flex-1" type="primary" @click="handleOpenBindStaff">
-          绑定核销员
-        </wd-button>
+        <!-- 点击即弹出用户多选（UserPicker 自管加载），选完确定即绑定 -->
+        <view v-if="hasAccessByCodes(['trade:delivery:pick-up-store:update'])" class="flex-1">
+          <UserPicker v-model="bindStaffIds" use-default-slot placeholder="请选择核销员" @confirm="handleBindStaff">
+            <wd-button class="w-full" type="primary" :loading="binding">
+              绑定核销员
+            </wd-button>
+          </UserPicker>
+        </view>
       </view>
     </view>
-
-    <!-- 绑定核销员弹窗 -->
-    <wd-popup
-      v-model="bindStaffVisible"
-      position="bottom"
-      closable
-      custom-style="border-radius: 24rpx 24rpx 0 0;"
-      @close="bindStaffVisible = false"
-    >
-      <view class="p-24rpx">
-        <view class="mb-24rpx text-32rpx text-[#333] font-semibold">
-          绑定核销员
-        </view>
-        <wd-textarea
-          v-model="bindStaffIds"
-          clearable
-          :maxlength="500"
-          placeholder="多个核销员编号用逗号分隔"
-        />
-        <view class="mt-24rpx flex gap-20rpx">
-          <wd-button class="flex-1" variant="plain" @click="bindStaffVisible = false">
-            取消
-          </wd-button>
-          <wd-button class="flex-1" type="primary" :loading="binding" @click="handleBindStaff">
-            确定
-          </wd-button>
-        </view>
-      </view>
-    </wd-popup>
   </view>
 </template>
 
@@ -85,7 +60,7 @@ import type { DeliveryPickUpStore } from '@/api/mall/trade/delivery/pick-up-stor
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import {
   bindDeliveryPickUpStoreStaff,
   deleteDeliveryPickUpStore,
@@ -110,11 +85,8 @@ const dialog = useDialog()
 const toast = useToast()
 const formData = ref<DeliveryPickUpStore>({} as DeliveryPickUpStore) // 详情数据
 const deleting = ref(false) // 删除状态
-const bindStaffVisible = ref(false) // 绑定核销员弹窗
-const bindStaffIds = ref('') // 绑定核销员编号（逗号分隔）
+const bindStaffIds = ref<number[]>([]) // 绑定的核销员用户编号（与已绑定保持同步，打开选择器即回显）
 const binding = ref(false) // 绑定提交状态
-const canUpdate = computed(() => hasAccessByCodes(['trade:delivery:pick-up-store:update']))
-const canDelete = computed(() => hasAccessByCodes(['trade:delivery:pick-up-store:delete']))
 
 /** 返回上一页 */
 function handleBack() {
@@ -129,6 +101,8 @@ async function getDetail() {
   try {
     toast.loading('加载中...')
     formData.value = await getDeliveryPickUpStore(Number(props.id))
+    // 详情 get 返回 verifyUsers（用户对象），取 id 回显已绑定核销员
+    bindStaffIds.value = (formData.value.verifyUsers || []).map(u => Number(u.id)).filter(Boolean)
   } finally {
     toast.close()
   }
@@ -160,27 +134,13 @@ async function handleDelete() {
   }
 }
 
-/** 打开绑定核销员弹窗 */
-function handleOpenBindStaff() {
-  // TODO @AI：能不能改成 select ，不要输入数字，和 pc 不一致呀；
-  bindStaffIds.value = (formData.value.verifyUserIds || []).join(',')
-  bindStaffVisible.value = true
-}
-
-/** 提交绑定核销员 */
+/** 提交绑定核销员（用户选择器确定后触发） */
 async function handleBindStaff() {
   binding.value = true
   try {
-    // TODO @AI：找个工具方法；
-    const verifyUserIds = String(bindStaffIds.value || '')
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean)
-      .map(Number)
-    await bindDeliveryPickUpStoreStaff({ id: formData.value.id, verifyUserIds })
+    await bindDeliveryPickUpStoreStaff({ id: formData.value.id, verifyUserIds: bindStaffIds.value })
     toast.success('绑定成功')
     uni.$emit('mall:delivery-pick-up-store:reload')
-    bindStaffVisible.value = false
     await getDetail()
   } finally {
     binding.value = false

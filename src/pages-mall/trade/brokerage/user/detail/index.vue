@@ -34,15 +34,15 @@
     </wd-cell-group>
 
     <!-- 底部操作按钮 -->
-    <view v-if="canUpdate" class="yd-detail-footer">
+    <view v-if="hasAccessByCodes(['trade:brokerage-user:update-bind-user', 'trade:brokerage-user:clear-bind-user', 'trade:brokerage-user:update-brokerage-enable'])" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdateBind" class="flex-1" type="primary" @click="bindVisible = true">
+        <wd-button v-if="hasAccessByCodes(['trade:brokerage-user:update-bind-user'])" class="flex-1" type="primary" @click="bindVisible = true">
           修改推广员
         </wd-button>
-        <wd-button v-if="formData.bindUserId && canClearBind" class="flex-1" type="warning" :loading="submitting" @click="handleClearBind">
+        <wd-button v-if="formData.bindUserId && hasAccessByCodes(['trade:brokerage-user:clear-bind-user'])" class="flex-1" type="warning" :loading="submitting" @click="handleClearBind">
           清除推广员
         </wd-button>
-        <wd-button v-if="canUpdateEnabled" class="flex-1" type="info" :loading="submitting" @click="handleToggleEnabled">
+        <wd-button v-if="hasAccessByCodes(['trade:brokerage-user:update-brokerage-enable'])" class="flex-1" type="info" :loading="submitting" @click="handleToggleEnabled">
           {{ formData.brokerageEnabled ? '取消资格' : '开通资格' }}
         </wd-button>
       </view>
@@ -78,7 +78,7 @@
 import type { TradeBrokerageUser } from '@/api/mall/trade/brokerage/user'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import {
   clearTradeBrokerageUserBind,
   getTradeBrokerageUser,
@@ -106,11 +106,6 @@ const formData = ref<TradeBrokerageUser>({}) // 详情数据
 const submitting = ref(false) // 操作提交状态
 const bindVisible = ref(false) // 修改推广员弹窗
 const bindUserId = ref<number | string>('') // 推广员编号输入
-// 各操作按后端 @PreAuthorize 单独网关
-const canUpdateBind = computed(() => hasAccessByCodes(['trade:brokerage-user:update-bind-user']))
-const canClearBind = computed(() => hasAccessByCodes(['trade:brokerage-user:clear-bind-user']))
-const canUpdateEnabled = computed(() => hasAccessByCodes(['trade:brokerage-user:update-brokerage-enable']))
-const canUpdate = computed(() => canUpdateBind.value || canClearBind.value || canUpdateEnabled.value)
 
 /** 返回上一页 */
 function handleBack() {

@@ -61,7 +61,6 @@
     </z-paging>
 
     <!-- 核销码核销弹窗 -->
-    <!-- TODO @AI：这个输入后，要类似 pc 有一个确认把。 -->
     <wd-popup
       v-model="verifyVisible"
       position="bottom"
@@ -73,15 +72,34 @@
         <view class="mb-24rpx text-32rpx text-[#333] font-semibold">
           核销码核销
         </view>
-        <wd-input v-model="verifyCode" clearable placeholder="请输入核销码" />
-        <view class="mt-24rpx flex gap-20rpx">
-          <wd-button class="flex-1" variant="plain" @click="closeVerifyPopup">
-            取消
-          </wd-button>
-          <wd-button class="flex-1" type="primary" :loading="verifySubmitting" @click="handleVerify">
-            确定
-          </wd-button>
-        </view>
+        <!-- 录入态：输入核销码查订单 -->
+        <template v-if="!verifyOrder">
+          <wd-input v-model="verifyCode" clearable placeholder="请输入核销码" />
+          <view class="mt-24rpx flex gap-20rpx">
+            <wd-button class="flex-1" variant="plain" @click="closeVerifyPopup">
+              取消
+            </wd-button>
+            <wd-button class="flex-1" type="primary" :loading="verifyQuerying" @click="handleQueryVerify">
+              查询订单
+            </wd-button>
+          </view>
+        </template>
+        <!-- 确认态：展示查到的订单，二次确认后核销 -->
+        <template v-else>
+          <wd-cell-group border>
+            <wd-cell title="订单号" :value="verifyOrder.no || '-'" />
+            <wd-cell title="实付金额" :value="formatDisplayMoney(verifyOrder.payPrice)" />
+            <wd-cell title="下单时间" :value="formatDateTime(verifyOrder.createTime) || '-'" />
+          </wd-cell-group>
+          <view class="mt-24rpx flex gap-20rpx">
+            <wd-button class="flex-1" variant="plain" @click="verifyOrder = undefined">
+              重新输入
+            </wd-button>
+            <wd-button class="flex-1" type="primary" :loading="verifySubmitting" @click="handleVerify">
+              确认核销
+            </wd-button>
+          </view>
+        </template>
       </view>
     </wd-popup>
   </view>
@@ -89,12 +107,11 @@
 
 <script lang="ts" setup>
 import type { TradeOrder } from '@/api/mall/trade/order'
-import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { getDeliveryPickUpOrderPage } from '@/api/mall/trade/delivery/pick-up-order'
-import { pickUpTradeOrderByVerifyCode } from '@/api/mall/trade/order'
+import { getTradeOrderByPickUpVerifyCode, pickUpTradeOrderByVerifyCode } from '@/api/mall/trade/order'
 import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { useAccess } from '@/hooks/useAccess'
@@ -110,7 +127,6 @@ definePage({
 })
 
 const toast = useToast()
-const dialog = useDialog()
 const { hasAccessByCodes } = useAccess()
 
 const list = ref<TradeOrder[]>([]) // 列表数据
@@ -118,6 +134,8 @@ const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({}) // 查询参数
 const verifyVisible = ref(false) // 核销码弹窗显示状态
 const verifyCode = ref('') // 核销码
+const verifyOrder = ref<TradeOrder>() // 按核销码查到的订单（确认态展示）
+const verifyQuerying = ref(false) // 查询订单状态
 const verifySubmitting = ref(false) // 核销提交状态
 
 /** 返回上一页 */
@@ -151,24 +169,18 @@ function reload() {
   pagingRef.value?.reload()
 }
 
-/** 查看详情：透传行数据标量字段，避免详情页二次拉取 */
-// todo @AI：这个是不是复用订单的详情界面？应该这个详情界面，也可以核销把？
+/** 查看详情：复用订单详情页（其底部即支持自提核销） */
 function handleDetail(item: TradeOrder) {
-  const query = [
-    item.id != null ? `id=${item.id}` : '',
-    item.no ? `no=${encodeURIComponent(item.no)}` : '',
-    item.status != null ? `status=${item.status}` : '',
-    item.payPrice != null ? `payPrice=${item.payPrice}` : '',
-    item.pickUpVerifyCode ? `pickUpVerifyCode=${encodeURIComponent(item.pickUpVerifyCode)}` : '',
-    item.pickUpStoreId != null ? `pickUpStoreId=${item.pickUpStoreId}` : '',
-    item.createTime ? `createTime=${encodeURIComponent(item.createTime)}` : '',
-  ].filter(Boolean).join('&')
-  uni.navigateTo({ url: `/pages-mall/trade/delivery/pick-up-order/detail/index${query ? `?${query}` : ''}` })
+  if (item.id == null) {
+    return
+  }
+  uni.navigateTo({ url: `/pages-mall/trade/order/detail/index?id=${item.id}` })
 }
 
 /** 打开核销码弹窗 */
 function openVerifyPopup() {
   verifyCode.value = ''
+  verifyOrder.value = undefined
   verifyVisible.value = true
 }
 
@@ -176,26 +188,36 @@ function openVerifyPopup() {
 function closeVerifyPopup() {
   verifyVisible.value = false
   verifyCode.value = ''
+  verifyOrder.value = undefined
 }
 
-/** 核销码核销 */
-async function handleVerify() {
+/** 第一步：按核销码查订单，进入确认态 */
+async function handleQueryVerify() {
   if (!verifyCode.value) {
     toast.error('请输入核销码')
     return
   }
+  verifyQuerying.value = true
   try {
-    await dialog.confirm({ title: '提示', msg: '确定要核销该核销码对应的订单吗？' })
-  } catch {
-    return
+    const order = await getTradeOrderByPickUpVerifyCode(verifyCode.value)
+    if (!order?.id) {
+      toast.error('未找到该核销码对应的订单')
+      return
+    }
+    verifyOrder.value = order
+  } finally {
+    verifyQuerying.value = false
   }
+}
+
+/** 第二步：确认订单信息后核销 */
+async function handleVerify() {
   verifySubmitting.value = true
   try {
     await pickUpTradeOrderByVerifyCode(verifyCode.value)
     toast.success('核销成功')
     closeVerifyPopup()
-    uni.$emit('mall:delivery-pick-up-order:reload')
-    pagingRef.value?.reload()
+    uni.$emit('mall:trade-order:reload')
   } finally {
     verifySubmitting.value = false
   }
@@ -203,11 +225,11 @@ async function handleVerify() {
 
 /** 初始化 */
 onMounted(() => {
-  uni.$on('mall:delivery-pick-up-order:reload', reload)
+  uni.$on('mall:trade-order:reload', reload)
 })
 
 /** 卸载 */
 onUnload(() => {
-  uni.$off('mall:delivery-pick-up-order:reload', reload)
+  uni.$off('mall:trade-order:reload', reload)
 })
 </script>

@@ -45,7 +45,7 @@
                 <!-- 推广资格开关（有权限时可直接切换） -->
                 <view @click.stop>
                   <wd-switch
-                    v-if="canUpdateEnabled"
+                    v-if="hasAccessByCodes(['trade:brokerage-user:update-brokerage-enable'])"
                     :model-value="!!item.brokerageEnabled"
                     @change="handleEnabledChange(item)"
                   />
@@ -88,7 +88,7 @@ import type { TradeBrokerageUser } from '@/api/mall/trade/brokerage/user'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { getTradeBrokerageUserPage, updateTradeBrokerageUserEnabled } from '@/api/mall/trade/brokerage/user'
 import { useAccess } from '@/hooks/useAccess'
 import { formatDisplayMoney } from '@/utils/format'
@@ -108,9 +108,6 @@ const toast = useToast()
 const list = ref<TradeBrokerageUser[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({}) // 查询参数
-// TODO @AI：只要是权限的 hasAccessByCodes，都不要抽这种变量；所有界面都检查一遍。
-// 推广资格开关：后端 /update-brokerage-enable 校验 trade:brokerage-user:update-brokerage-enable
-const canUpdateEnabled = computed(() => hasAccessByCodes(['trade:brokerage-user:update-brokerage-enable']))
 
 /** 返回上一页 */
 function handleBack() {

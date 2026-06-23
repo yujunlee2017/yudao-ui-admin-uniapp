@@ -41,9 +41,8 @@
                   <dict-tag v-if="product.discountType != null" :type="DICT_TYPE.PROMOTION_DISCOUNT_TYPE" :value="product.discountType" />
                   <text v-else>-</text>
                 </view>
-                <!-- TODO @AI：没使用枚举 -->
-                <text v-if="product.discountType === 1">优惠金额：{{ formatDisplayMoney(product.discountPrice) }}</text>
-                <text v-if="product.discountType === 2">折扣：{{ product.discountPercent ?? '-' }}%</text>
+                <text v-if="product.discountType === PromotionDiscountTypeEnum.PRICE">优惠金额：{{ formatDisplayMoney(product.discountPrice) }}</text>
+                <text v-if="product.discountType === PromotionDiscountTypeEnum.PERCENT">折扣：{{ product.discountPercent ?? '-' }}%</text>
               </view>
             </view>
           </wd-cell-group>
@@ -52,15 +51,15 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="canUpdate || canDelete || canClose" class="yd-detail-footer">
+    <view v-if="hasAccessByCodes(['promotion:discount-activity:update', 'promotion:discount-activity:delete', 'promotion:discount-activity:close'])" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['promotion:discount-activity:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canClose" class="flex-1" type="info" :loading="closing" @click="handleClose">
+        <wd-button v-if="hasAccessByCodes(['promotion:discount-activity:close'])" class="flex-1" type="info" :loading="closing" @click="handleClose">
           关闭活动
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['promotion:discount-activity:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -73,7 +72,7 @@ import type { PromotionDiscountActivity } from '@/api/mall/promotion/discount'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import {
   closePromotionDiscountActivity,
   deletePromotionDiscountActivity,
@@ -82,7 +81,7 @@ import {
 import { useAccess } from '@/hooks/useAccess'
 import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
-import { DICT_TYPE } from '@/utils/constants'
+import { DICT_TYPE, PromotionDiscountTypeEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()
@@ -100,9 +99,6 @@ const toast = useToast()
 const formData = ref<PromotionDiscountActivity>({}) // 详情数据
 const deleting = ref(false) // 删除状态
 const closing = ref(false) // 关闭状态
-const canUpdate = computed(() => hasAccessByCodes(['promotion:discount-activity:update']))
-const canDelete = computed(() => hasAccessByCodes(['promotion:discount-activity:delete']))
-const canClose = computed(() => hasAccessByCodes(['promotion:discount-activity:close']))
 
 /** 返回上一页 */
 function handleBack() {

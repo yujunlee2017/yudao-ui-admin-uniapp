@@ -249,7 +249,8 @@ const formSchema = createFormSchema({
   picUrl: [{ required: true, message: '商品封面不能为空' }],
   sliderPicUrls: [{ required: true, message: '轮播图不能为空' }],
   deliveryTypes: [{ required: true, message: '配送方式不能为空' }],
-  deliveryTemplateId: [{ required: true, message: '运费模板不能为空' }], // 运费模板字段仅快递配送时 v-if 渲染，等价于「选快递必填」
+  // TODO @AI：1 需要使用枚举值；
+  deliveryTemplateId: [{ required: (model: Record<string, any>) => !!model?.deliveryTypes?.includes(1), message: '运费模板不能为空' }], // 仅选快递配送时必填（与字段 v-if 一致），避免自提-only 商品卡在隐藏字段
   specType: [{ required: true, message: '多规格不能为空' }],
   subCommissionType: [{ required: true, message: '单独分佣不能为空' }],
   description: [{ required: true, message: '商品详情不能为空' }],

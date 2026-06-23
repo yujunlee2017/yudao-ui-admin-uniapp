@@ -45,15 +45,15 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="canUpdate || canDelete || canClose" class="yd-detail-footer">
+    <view v-if="hasAccessByCodes(['promotion:reward-activity:update', 'promotion:reward-activity:delete', 'promotion:reward-activity:close'])" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['promotion:reward-activity:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canClose" class="flex-1" type="info" :loading="closing" @click="handleClose">
+        <wd-button v-if="hasAccessByCodes(['promotion:reward-activity:close'])" class="flex-1" type="info" :loading="closing" @click="handleClose">
           关闭活动
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['promotion:reward-activity:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -96,9 +96,6 @@ const formData = ref<PromotionRewardActivity>({}) // 详情数据
 const couponTemplates = ref<PromotionCouponTemplate[]>([]) // 优惠券模板列表（用于赠券名称回显）
 const deleting = ref(false) // 删除状态
 const closing = ref(false) // 关闭状态
-const canUpdate = computed(() => hasAccessByCodes(['promotion:reward-activity:update']))
-const canDelete = computed(() => hasAccessByCodes(['promotion:reward-activity:delete']))
-const canClose = computed(() => hasAccessByCodes(['promotion:reward-activity:close']))
 const conditionTypeLabel = computed(() => formData.value.conditionType === 20 ? '满件数' : '满金额') // 条件类型文案
 const productScopeLabel = computed(() => ({ 1: '全部商品', 2: '指定商品', 3: '指定分类' } as Record<number, string>)[formData.value.productScope ?? 1] || '-') // 商品范围文案
 

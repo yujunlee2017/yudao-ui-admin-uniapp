@@ -1,6 +1,6 @@
-<!-- TODO @AI：是不是要做到 /Users/yunai/Java/yudao-ui-admin-uniapp-next-v4/src/pages-statistics 里；因为需要使用到 echart；ps：尽量按照 vue3 + ep 的功能来做； -->
 <template>
   <view class="yd-page-container">
+    <!-- TODO @AI：挪到 /Users/yunai/Java/yudao-ui-admin-uniapp-next-v4/src/pages-statistics/mall/home 里；然后去掉快捷入口，重点保留表单，对齐 /Users/yunai/Java/yudao-ui-admin-vue3/src/views/mall/home/index.vue -->
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="商城工作台"
@@ -107,6 +107,15 @@ const { hasAccessByCodes } = useAccess()
 
 const mallGroups = [ // 商城资源分组（指向逐模块显式页）
   {
+    key: 'statistics',
+    name: '数据统计',
+    items: [ // 统计页在 pages-statistics（含 echart 图表），工作台仅作入口
+      { title: '交易统计', route: '/pages-statistics/mall/trade/index', permission: '', icon: 'dashboard' },
+      { title: '商品统计', route: '/pages-statistics/mall/product/index', permission: '', icon: 'dashboard' },
+      { title: '会员统计', route: '/pages-statistics/mall/member/index', permission: '', icon: 'dashboard' },
+    ],
+  },
+  {
     key: 'product',
     name: '商品中心',
     items: [
@@ -139,21 +148,21 @@ const mallGroups = [ // 商城资源分组（指向逐模块显式页）
     items: [
       { title: 'Banner', route: '/pages-mall/promotion/banner/index', permission: 'promotion:banner:query', icon: 'picture' },
       { title: '文章', route: '/pages-mall/promotion/article/index', permission: 'promotion:article:query', icon: 'edit' },
-      { title: '文章分类', route: '/pages-mall/promotion/article-category/index', permission: 'promotion:article-category:query', icon: 'folder' },
-      { title: '优惠券模板', route: '/pages-mall/promotion/coupon-template/index', permission: 'promotion:coupon-template:query', icon: 'coupon' },
+      { title: '文章分类', route: '/pages-mall/promotion/article/category/index', permission: 'promotion:article-category:query', icon: 'folder' },
+      { title: '优惠券模板', route: '/pages-mall/promotion/coupon/template/index', permission: 'promotion:coupon-template:query', icon: 'coupon' },
       { title: '优惠券', route: '/pages-mall/promotion/coupon/index', permission: 'promotion:coupon:query', icon: 'coupon' },
       { title: '限时折扣', route: '/pages-mall/promotion/discount-activity/index', permission: 'promotion:discount-activity:query', icon: 'tag' },
       { title: '满减送', route: '/pages-mall/promotion/reward-activity/index', permission: 'promotion:reward-activity:query', icon: 'gift' },
-      { title: '秒杀活动', route: '/pages-mall/promotion/seckill-activity/index', permission: 'promotion:seckill-activity:query', icon: 'clock' },
-      { title: '秒杀时段', route: '/pages-mall/promotion/seckill-config/index', permission: 'promotion:seckill-config:query', icon: 'setting' },
-      { title: '拼团活动', route: '/pages-mall/promotion/combination-activity/index', permission: 'promotion:combination-activity:query', icon: 'usergroup' },
-      { title: '拼团记录', route: '/pages-mall/promotion/combination-record/index', permission: 'promotion:combination-record:query', icon: 'list' },
-      { title: '砍价活动', route: '/pages-mall/promotion/bargain-activity/index', permission: 'promotion:bargain-activity:query', icon: 'scissors' },
-      { title: '砍价记录', route: '/pages-mall/promotion/bargain-record/index', permission: 'promotion:bargain-record:query', icon: 'list' },
-      { title: '砍价助力', route: '/pages-mall/promotion/bargain-help/index', permission: 'promotion:bargain-help:query', icon: 'usergroup' },
-      { title: '积分商城', route: '/pages-mall/promotion/point-activity/index', permission: 'promotion:point-activity:query', icon: 'star' },
-      { title: '装修页面', route: '/pages-mall/promotion/diy-page/index', permission: 'promotion:diy-page:query', icon: 'view-list' },
-      { title: '装修模板', route: '/pages-mall/promotion/diy-template/index', permission: 'promotion:diy-template:query', icon: 'copy' },
+      { title: '秒杀活动', route: '/pages-mall/promotion/seckill/activity/index', permission: 'promotion:seckill-activity:query', icon: 'clock' },
+      { title: '秒杀时段', route: '/pages-mall/promotion/seckill/config/index', permission: 'promotion:seckill-config:query', icon: 'setting' },
+      { title: '拼团活动', route: '/pages-mall/promotion/combination/activity/index', permission: 'promotion:combination-activity:query', icon: 'usergroup' },
+      { title: '拼团记录', route: '/pages-mall/promotion/combination/record/index', permission: 'promotion:combination-record:query', icon: 'list' },
+      { title: '砍价活动', route: '/pages-mall/promotion/bargain/activity/index', permission: 'promotion:bargain-activity:query', icon: 'scissors' },
+      { title: '砍价记录', route: '/pages-mall/promotion/bargain/record/index', permission: 'promotion:bargain-record:query', icon: 'list' },
+      { title: '砍价助力', route: '/pages-mall/promotion/bargain/help/index', permission: 'promotion:bargain-help:query', icon: 'usergroup' },
+      { title: '积分商城', route: '/pages-mall/promotion/point/activity/index', permission: 'promotion:point-activity:query', icon: 'star' },
+      { title: '装修页面', route: '/pages-mall/promotion/diy/page/index', permission: 'promotion:diy-page:query', icon: 'view-list' },
+      { title: '装修模板', route: '/pages-mall/promotion/diy/template/index', permission: 'promotion:diy-template:query', icon: 'copy' },
       { title: '客服会话', route: '/pages-mall/kefu/index', permission: 'promotion:kefu-conversation:query', icon: 'chat' },
     ],
   },

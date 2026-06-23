@@ -29,12 +29,12 @@
     </wd-cell-group>
 
     <!-- 底部操作按钮 -->
-    <view v-if="canUpdate || canDelete" class="yd-detail-footer">
+    <view v-if="hasAccessByCodes(['product:category:update', 'product:category:delete'])" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['product:category:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['product:category:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -69,8 +69,6 @@ const toast = useToast()
 const formData = ref<ProductCategory>({} as ProductCategory) // 详情数据
 const deleting = ref(false) // 删除状态
 const categoryNameMap = ref<Record<number, string>>({}) // 分类编号到名称映射，用于回显上级分类名
-const canUpdate = computed(() => hasAccessByCodes(['product:category:update']))
-const canDelete = computed(() => hasAccessByCodes(['product:category:delete']))
 
 /** 上级分类名称：0 或空为顶级分类，否则从映射取名 */
 const parentName = computed(() => {

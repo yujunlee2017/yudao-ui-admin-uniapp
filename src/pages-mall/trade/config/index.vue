@@ -7,32 +7,47 @@
       @click-left="handleBack"
     />
 
-    <!-- TODO @AI：tabs 交互更好，避免太长了。 -->
+    <!-- 分组 tab -->
+    <view class="bg-white">
+      <wd-tabs v-model="activeTab" slidable="always">
+        <wd-tab v-for="(tab, index) in CONFIG_TABS" :key="index" :title="tab" />
+      </wd-tabs>
+    </view>
 
     <!-- 表单区域 -->
     <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
       <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <view class="p-24rpx">
           <!-- 售后配置 -->
-          <view class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
-            <view class="border-b border-[#f0f0f0] px-24rpx py-18rpx text-30rpx text-[#333] font-semibold">
-              售后
-            </view>
+          <view v-show="activeTab === 0" class="mb-160rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
             <wd-cell-group border>
               <wd-form-item title="退款理由" title-width="200rpx">
-                <wd-textarea v-model="formData.afterSaleRefundReasonsText" clearable placeholder="多个理由用英文逗号分隔" />
+                <view class="w-full py-8rpx">
+                  <view v-for="(_, i) in formData.afterSaleRefundReasons" :key="i" class="mb-12rpx flex items-center gap-16rpx">
+                    <wd-input v-model="formData.afterSaleRefundReasons[i]" class="flex-1" placeholder="请输入退款理由" />
+                    <text class="shrink-0 text-26rpx text-[#fa4350]" @click="formData.afterSaleRefundReasons.splice(i, 1)">删除</text>
+                  </view>
+                  <wd-button size="small" plain @click="formData.afterSaleRefundReasons.push('')">
+                    + 添加退款理由
+                  </wd-button>
+                </view>
               </wd-form-item>
               <wd-form-item title="退货理由" title-width="200rpx">
-                <wd-textarea v-model="formData.afterSaleReturnReasonsText" clearable placeholder="多个理由用英文逗号分隔" />
+                <view class="w-full py-8rpx">
+                  <view v-for="(_, i) in formData.afterSaleReturnReasons" :key="i" class="mb-12rpx flex items-center gap-16rpx">
+                    <wd-input v-model="formData.afterSaleReturnReasons[i]" class="flex-1" placeholder="请输入退货理由" />
+                    <text class="shrink-0 text-26rpx text-[#fa4350]" @click="formData.afterSaleReturnReasons.splice(i, 1)">删除</text>
+                  </view>
+                  <wd-button size="small" plain @click="formData.afterSaleReturnReasons.push('')">
+                    + 添加退货理由
+                  </wd-button>
+                </view>
               </wd-form-item>
             </wd-cell-group>
           </view>
 
           <!-- 配送配置 -->
-          <view class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
-            <view class="border-b border-[#f0f0f0] px-24rpx py-18rpx text-30rpx text-[#333] font-semibold">
-              配送
-            </view>
+          <view v-show="activeTab === 1" class="mb-160rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
             <wd-cell-group border>
               <wd-form-item title="启用包邮" title-width="200rpx" prop="deliveryExpressFreeEnabled" center>
                 <wd-switch v-model="formData.deliveryExpressFreeEnabled" />
@@ -47,10 +62,7 @@
           </view>
 
           <!-- 分销配置 -->
-          <view class="mb-160rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
-            <view class="border-b border-[#f0f0f0] px-24rpx py-18rpx text-30rpx text-[#333] font-semibold">
-              分销
-            </view>
+          <view v-show="activeTab === 2" class="mb-160rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
             <wd-cell-group border>
               <wd-form-item title="分销启用" title-width="200rpx" prop="brokerageEnabled" center>
                 <wd-switch v-model="formData.brokerageEnabled" />
@@ -128,13 +140,13 @@ import { onMounted, ref } from 'vue'
 import { getTradeConfig, saveTradeConfig } from '@/api/mall/trade/config'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { fenToYuan, yuanToFen } from '@/utils/format'
-import { navigateBackPlus } from '@/utils'
+import { navigateBackPlus, trimArray } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
 interface TradeConfigForm {
-  afterSaleRefundReasonsText: string
-  afterSaleReturnReasonsText: string
+  afterSaleRefundReasons: string[]
+  afterSaleReturnReasons: string[]
   deliveryExpressFreeEnabled: boolean
   deliveryExpressFreePrice: number
   deliveryPickUpEnabled: boolean
@@ -150,6 +162,8 @@ interface TradeConfigForm {
   brokeragePosterUrls: string[]
 }
 
+const CONFIG_TABS = ['售后', '配送', '分销'] // 分组 tab
+
 definePage({
   style: {
     navigationBarTitleText: '',
@@ -160,9 +174,10 @@ definePage({
 const toast = useToast()
 const formRef = ref<FormInstance>() // 表单组件引用
 const formLoading = ref(false) // 表单提交状态
+const activeTab = ref(0) // 当前分组 tab 下标
 const formData = ref<TradeConfigForm>({
-  afterSaleRefundReasonsText: '',
-  afterSaleReturnReasonsText: '',
+  afterSaleRefundReasons: [],
+  afterSaleReturnReasons: [],
   deliveryExpressFreeEnabled: false,
   deliveryExpressFreePrice: 0,
   deliveryPickUpEnabled: false,
@@ -189,10 +204,17 @@ const formSchema = createFormSchema({
   brokerageWithdrawTypes: [{ required: true, message: '提现方式不能为空' }],
 })
 
-/** 逗号文本转数组 */
-// TODO @AI：抽到全局的 utils 里？
-function textToArray(text: string) {
-  return text.split(/[,，\n]/).map(item => item.trim()).filter(Boolean)
+/** 字段 → tab 映射（校验失败时切到对应 tab） */
+const PROP_TAB: Record<string, number> = {
+  deliveryExpressFreePrice: 1,
+  brokerageEnabledCondition: 2,
+  brokerageBindMode: 2,
+  brokerageFirstPercent: 2,
+  brokerageSecondPercent: 2,
+  brokerageFrozenDays: 2,
+  brokerageWithdrawMinPrice: 2,
+  brokerageWithdrawFeePercent: 2,
+  brokerageWithdrawTypes: 2,
 }
 
 /** 返回上一页 */
@@ -207,8 +229,8 @@ async function loadConfig() {
     return
   }
   formData.value = {
-    afterSaleRefundReasonsText: (data.afterSaleRefundReasons || []).join(','),
-    afterSaleReturnReasonsText: (data.afterSaleReturnReasons || []).join(','),
+    afterSaleRefundReasons: data.afterSaleRefundReasons || [],
+    afterSaleReturnReasons: data.afterSaleReturnReasons || [],
     deliveryExpressFreeEnabled: !!data.deliveryExpressFreeEnabled,
     deliveryExpressFreePrice: fenToYuan(data.deliveryExpressFreePrice),
     deliveryPickUpEnabled: !!data.deliveryPickUpEnabled,
@@ -227,15 +249,20 @@ async function loadConfig() {
 
 /** 提交表单 */
 async function handleSubmit() {
-  const { valid } = await formRef.value.validate()
-  if (!valid) {
+  const result = await formRef.value.validate()
+  if (!result?.valid) {
+    // 校验失败时切到首个错误字段所在的 tab
+    const prop = result?.errors?.[0]?.prop
+    if (prop != null && PROP_TAB[prop] != null) {
+      activeTab.value = PROP_TAB[prop]
+    }
     return
   }
   formLoading.value = true
   try {
     await saveTradeConfig({
-      afterSaleRefundReasons: textToArray(formData.value.afterSaleRefundReasonsText),
-      afterSaleReturnReasons: textToArray(formData.value.afterSaleReturnReasonsText),
+      afterSaleRefundReasons: trimArray(formData.value.afterSaleRefundReasons),
+      afterSaleReturnReasons: trimArray(formData.value.afterSaleReturnReasons),
       deliveryExpressFreeEnabled: formData.value.deliveryExpressFreeEnabled,
       deliveryExpressFreePrice: yuanToFen(formData.value.deliveryExpressFreePrice),
       deliveryPickUpEnabled: formData.value.deliveryPickUpEnabled,

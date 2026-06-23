@@ -27,7 +27,7 @@
     </wd-cell-group>
 
     <!-- 底部操作按钮 -->
-    <view v-if="canDelete" class="yd-detail-footer">
+    <view v-if="hasAccessByCodes(['promotion:coupon:delete'])" class="yd-detail-footer">
       <wd-button type="danger" block :loading="deleting" @click="handleDelete">
         删除（回收）
       </wd-button>
@@ -74,7 +74,6 @@ const deleting = ref(false) // 删除状态
 const name = computed(() => props.name ? decodeURIComponent(props.name) : '') // 优惠券名称
 const useTime = computed(() => props.useTime ? decodeURIComponent(props.useTime) : '') // 使用时间
 const createTime = computed(() => props.createTime ? decodeURIComponent(props.createTime) : '') // 领取时间
-const canDelete = computed(() => hasAccessByCodes(['promotion:coupon:delete']))
 
 /** 返回上一页 */
 function handleBack() {

@@ -11,7 +11,7 @@
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
     <!-- 列表操作 -->
-    <view v-if="canSend" class="bg-white px-24rpx py-16rpx">
+    <view v-if="hasAccessByCodes(['promotion:coupon:send'])" class="bg-white px-24rpx py-16rpx">
       <wd-button size="small" type="primary" @click="sendVisible = true">
         发送优惠券
       </wd-button>
@@ -93,7 +93,7 @@
 import type { PromotionCoupon } from '@/api/mall/promotion/coupon/coupon'
 import { onUnload } from '@dcloudio/uni-app'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { getPromotionCouponPage, sendPromotionCoupon } from '@/api/mall/promotion/coupon/coupon'
 import { useAccess } from '@/hooks/useAccess'
 import { formatDisplayMoney } from '@/utils/format'
@@ -116,7 +116,6 @@ const queryParams = ref<Record<string, any>>({}) // 查询参数
 const sendVisible = ref(false) // 发送弹窗
 const submitting = ref(false) // 发送提交状态
 const sendForm = reactive({ templateId: '', userIds: '' }) // 发送表单
-const canSend = computed(() => hasAccessByCodes(['promotion:coupon:send']))
 
 /** 返回上一页 */
 function handleBack() {

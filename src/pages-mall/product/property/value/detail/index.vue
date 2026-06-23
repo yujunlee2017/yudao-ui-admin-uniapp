@@ -16,12 +16,12 @@
     </wd-cell-group>
 
     <!-- 底部操作按钮 -->
-    <view v-if="canUpdate || canDelete" class="yd-detail-footer">
+    <view v-if="hasAccessByCodes(['product:property:update', 'product:property:delete'])" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['product:property:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['product:property:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -55,8 +55,6 @@ const toast = useToast()
 const formData = ref<ProductPropertyValue>({} as ProductPropertyValue) // 详情数据
 const deleting = ref(false) // 删除状态
 const propertyNameMap = ref<Record<number, string>>({}) // 属性编号到名称映射，用于回显所属属性名
-const canUpdate = computed(() => hasAccessByCodes(['product:property:update']))
-const canDelete = computed(() => hasAccessByCodes(['product:property:delete']))
 
 /** 所属属性名称 */
 const propertyName = computed(() => {

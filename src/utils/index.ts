@@ -246,3 +246,8 @@ export function getTopPopupStyle() {
 export function getTopPopupModalStyle() {
   return `top: ${getNavbarHeight()}px;`
 }
+
+/** 字符串数组逐项去空白并过滤空项 */
+export function trimArray(list: string[]): string[] {
+  return list.map(item => item.trim()).filter(Boolean)
+}

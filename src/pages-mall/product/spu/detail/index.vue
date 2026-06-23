@@ -145,13 +145,13 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="canUpdate || canDelete" class="yd-detail-footer">
+    <view v-if="hasAccessByCodes(['product:spu:update', 'product:spu:delete'])" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['product:spu:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
         <wd-button
-          v-if="canUpdate && formData.status === ProductSpuStatusEnum.RECYCLE"
+          v-if="hasAccessByCodes(['product:spu:update']) && formData.status === ProductSpuStatusEnum.RECYCLE"
           class="flex-1"
           type="primary"
           :loading="statusChanging"
@@ -160,14 +160,14 @@
           恢复
         </wd-button>
         <wd-button
-          v-else-if="canUpdate"
+          v-else-if="hasAccessByCodes(['product:spu:update'])"
           class="flex-1"
           :loading="statusChanging"
           @click="handleStatusChange(ProductSpuStatusEnum.RECYCLE)"
         >
           回收
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['product:spu:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -208,8 +208,6 @@ const SPU_DETAIL_TABS = ['基础设置', '价格库存', '物流设置', '商品
 const formData = ref<ProductSpu>({}) // 详情数据
 const deleting = ref(false) // 删除状态
 const statusChanging = ref(false) // 回收/恢复切换中
-const canUpdate = computed(() => hasAccessByCodes(['product:spu:update']))
-const canDelete = computed(() => hasAccessByCodes(['product:spu:delete']))
 const categoryNameMap = ref<Record<number, string>>({}) // 分类 id→名称（详情仅返回 categoryId，按 id 映射）
 const brandNameMap = ref<Record<number, string>>({}) // 品牌 id→名称
 const templateNameMap = ref<Record<number, string>>({}) // 运费模板 id→名称

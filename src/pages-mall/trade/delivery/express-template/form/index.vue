@@ -81,7 +81,7 @@ import RegionEditor from '@/pages-mall/trade/delivery/express-template/component
 import { getIntDictOptions } from '@/hooks/useDict'
 import { fenToYuan, yuanToFen } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
-import { DICT_TYPE } from '@/utils/constants'
+import { DeliveryExpressChargeModeEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{ id?: number | any }>()
@@ -103,7 +103,7 @@ const frees = ref<Record<string, any>[]>([]) // 包邮区域规则（金额单�
 const formData = ref<DeliveryExpressTemplate>({
   id: undefined,
   name: '',
-  chargeMode: 1, // TODO @AI：是不是有枚举么？？？
+  chargeMode: DeliveryExpressChargeModeEnum.COUNT,
   sort: 0,
 }) // 表单数据
 const formSchema = createFormSchema({
@@ -123,7 +123,12 @@ async function getDetail() {
     return
   }
   const data = await getDeliveryExpressTemplate(Number(props.id))
-  formData.value = { id: data.id, name: data.name, chargeMode: data.chargeMode ?? 1, sort: data.sort }
+  formData.value = {
+    id: data.id,
+    name: data.name,
+    chargeMode: data.chargeMode ?? DeliveryExpressChargeModeEnum.COUNT,
+    sort: data.sort,
+  }
   // 区域金额 分→元 回显
   charges.value = (data.charges || []).map(item => ({
     ...item,
