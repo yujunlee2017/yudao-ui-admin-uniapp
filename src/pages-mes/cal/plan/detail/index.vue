@@ -57,7 +57,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deletePlan, getPlan } from '@/api/mes/cal/plan'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
 import PlanShiftList from '../components/plan-shift-list.vue'
@@ -128,7 +128,7 @@ async function handleDelete() {
     await deletePlan(planId.value)
     toast.success('删除成功')
     uni.$emit('mes:cal:plan:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

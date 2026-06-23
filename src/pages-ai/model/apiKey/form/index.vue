@@ -73,7 +73,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createApiKey, getApiKey, updateApiKey } from '@/api/ai/model/apiKey'
 import { getIntDictOptions, getStrDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
 
@@ -140,9 +140,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('ai:api-key:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

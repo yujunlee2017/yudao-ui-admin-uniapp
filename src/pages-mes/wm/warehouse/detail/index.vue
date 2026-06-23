@@ -37,7 +37,7 @@ import { deleteWarehouse, getWarehouse } from '@/api/mes/wm/warehouse'
 import { getSimpleUserList } from '@/api/system/user'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | string }>()
@@ -109,7 +109,7 @@ async function handleDelete() {
     toast.close()
     toast.success('删除成功')
     uni.$emit('mes:wm:warehouse:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } catch {
     toast.close()
   } finally {

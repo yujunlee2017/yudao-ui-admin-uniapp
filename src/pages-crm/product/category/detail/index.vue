@@ -44,7 +44,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { deleteProductCategory, getProductCategory } from '@/api/crm/product/category'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()
@@ -127,7 +127,7 @@ async function handleDelete() {
     await deleteProductCategory(categoryId.value)
     toast.success('删除成功')
     uni.$emit('crm:productCategory:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

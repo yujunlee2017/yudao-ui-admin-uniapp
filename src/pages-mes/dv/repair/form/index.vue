@@ -201,7 +201,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref, watch } from 'vue'
 import { confirmRepair, createRepair, finishRepair, getRepair, submitRepair, updateRepair } from '@/api/mes/dv/repair'
 import { generateAutoCode } from '@/api/mes/md/autocode/record'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesAutoCodeRuleCode, MesDvRepairResultEnum, MesDvRepairStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
@@ -439,9 +439,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:dv:repair:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }
@@ -470,9 +468,7 @@ async function handleSubmitRepair() {
     await submitRepair(currentId.value)
     toast.success('提交成功')
     uni.$emit('mes:dv:repair:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     submitLoading.value = false
   }
@@ -503,9 +499,7 @@ async function handleConfirmRepair() {
     })
     toast.success('操作成功')
     uni.$emit('mes:dv:repair:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     confirmLoading.value = false
   }
@@ -530,9 +524,7 @@ async function handleFinishRepair(result: number) {
     await finishRepair(currentId.value, result)
     toast.success(`验收${label}`)
     uni.$emit('mes:dv:repair:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     finishLoading.value = false
   }

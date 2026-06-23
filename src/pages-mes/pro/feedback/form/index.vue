@@ -138,7 +138,7 @@ import { getWorkOrder } from '@/api/mes/pro/workorder'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { useUserStore } from '@/store/user'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import ItemConsumeList from '../components/item-consume-list.vue'
@@ -577,7 +577,7 @@ async function handleSubmitFeedback() {
     }
     toast.success('报工单已提交')
     uni.$emit('mes:pro:feedback:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }
@@ -598,7 +598,7 @@ async function handleApprove() {
     const finished = await approveFeedback(formData.value.id)
     toast.success(finished ? '报工单已审批完成' : '报工成功，请等待质量检验完成')
     uni.$emit('mes:pro:feedback:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }
@@ -619,7 +619,7 @@ async function handleReject() {
     await rejectFeedback(formData.value.id)
     toast.success('报工单已驳回')
     uni.$emit('mes:pro:feedback:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

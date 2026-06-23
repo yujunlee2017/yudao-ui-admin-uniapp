@@ -144,7 +144,7 @@ import { deleteCustomer, distributeCustomer, getCustomer, lockCustomer, putCusto
 import { BizTypeEnum } from '@/api/crm/permission'
 import UserPicker from '@/components/system-select/user-picker.vue'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
@@ -369,7 +369,7 @@ async function handlePutPool() {
     await putCustomerPool(customerId.value)
     toast.success('放入公海成功')
     uni.$emit('crm:customer:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     actionLoading.value = false
   }
@@ -378,7 +378,7 @@ async function handlePutPool() {
 /** 退出团队后返回 */
 function handleQuitTeam() {
   uni.$emit('crm:customer:reload')
-  setTimeout(() => handleBack(), 500)
+  delay(handleBack)
 }
 
 /** 编辑 */
@@ -401,7 +401,7 @@ async function handleDelete() {
     await deleteCustomer(customerId.value)
     toast.success('删除成功')
     uni.$emit('crm:customer:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

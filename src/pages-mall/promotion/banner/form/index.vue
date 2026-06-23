@@ -74,7 +74,7 @@ import {
   updatePromotionBanner,
 } from '@/api/mall/promotion/banner'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -143,9 +143,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mall:promotion-banner:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

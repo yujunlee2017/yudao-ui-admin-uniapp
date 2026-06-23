@@ -132,7 +132,7 @@ import {
 } from '@/api/mes/wm/miscissue'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesAutoCodeRuleCode, MesWmMiscIssueStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
@@ -345,9 +345,7 @@ async function handleSubmitIssue() {
     await submitMiscIssue(currentId.value)
     toast.success('提交成功')
     uni.$emit('mes:wm:miscissue:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     submitLoading.value = false
   }
@@ -371,9 +369,7 @@ async function handleFinishIssue() {
     await finishMiscIssue(currentId.value)
     toast.success('出库成功')
     uni.$emit('mes:wm:miscissue:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     finishLoading.value = false
   }

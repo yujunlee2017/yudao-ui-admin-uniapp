@@ -94,7 +94,7 @@ import {
 } from '@/api/mes/wm/returnissue'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmReturnIssueStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import ReturnIssueLineList from '../components/return-issue-line-list.vue'
@@ -237,9 +237,7 @@ async function handleDelete() {
     await deleteReturnIssue(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:wm:returnissue:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

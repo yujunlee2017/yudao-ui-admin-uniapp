@@ -8,7 +8,9 @@
       <wd-cell-group border>
         <wd-cell title="功能编号" :value="String(formData?.id || '-')" />
         <wd-cell title="产品编号" :value="String(formData?.productId || '-')" />
-        <wd-cell title="功能类型"><dict-tag :type="DICT_TYPE.IOT_THING_MODEL_TYPE" :value="formData?.type" /></wd-cell>
+        <wd-cell title="功能类型">
+          <dict-tag :type="DICT_TYPE.IOT_THING_MODEL_TYPE" :value="formData?.type" />
+        </wd-cell>
         <wd-cell title="功能名称" :value="formData?.name || '-'" />
         <wd-cell title="标识符" :value="formData?.identifier || '-'" />
         <wd-cell title="功能描述" :value="formData?.description || '-'" />
@@ -48,7 +50,15 @@
     </view>
 
     <!-- 底部操作按钮 -->
-    <view class="yd-detail-footer"><view class="yd-detail-footer-actions"><wd-button v-if="hasAccessByCodes(['iot:thing-model:update'])" class="flex-1" type="warning" @click="handleEdit">编辑</wd-button><wd-button v-if="hasAccessByCodes(['iot:thing-model:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">删除</wd-button></view></view>
+    <view class="yd-detail-footer">
+      <view class="yd-detail-footer-actions">
+        <wd-button v-if="hasAccessByCodes(['iot:thing-model:update'])" class="flex-1" type="warning" @click="handleEdit">
+          编辑
+        </wd-button><wd-button v-if="hasAccessByCodes(['iot:thing-model:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+          删除
+        </wd-button>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -61,7 +71,7 @@ import { computed, ref } from 'vue'
 import { deleteThingModel, getThingModel } from '@/api/iot/thingmodel'
 import { useAccess } from '@/hooks/useAccess'
 import { getDataTypeOptionsLabel, IoTDataSpecsDataTypeEnum, IoTThingModelAccessModeEnum, IoTThingModelEventTypeEnum, IoTThingModelServiceCallTypeEnum, IoTThingModelTypeEnum } from '@/pages-iot/utils/constants'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -104,7 +114,8 @@ function handleBack() {
 
 /** 加载物模型详情 */
 async function getDetail() {
-  if (props.id && !deleting.value) formData.value = await getThingModel(Number(props.id))
+  if (props.id && !deleting.value)
+    formData.value = await getThingModel(Number(props.id))
 }
 
 /** 编辑物模型 */
@@ -114,14 +125,15 @@ function handleEdit() {
 
 /** 删除物模型 */
 async function handleDelete() {
-  if (!props.id) return
+  if (!props.id)
+    return
   try { await dialog.confirm({ title: '提示', msg: '确定要删除该物模型吗？' }) } catch { return }
   deleting.value = true
   try {
     await deleteThingModel(Number(props.id))
     toast.success('删除成功')
     uni.$emit('iot:thingmodel:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

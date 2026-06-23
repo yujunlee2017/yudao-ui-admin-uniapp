@@ -38,7 +38,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteWorkshop, getWorkshop } from '@/api/mes/md/workstation/workshop'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -101,7 +101,7 @@ async function handleDelete() {
     toast.close()
     toast.success('删除成功')
     uni.$emit('mes:md:workshop:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } catch {
     toast.close()
   } finally {

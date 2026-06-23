@@ -107,7 +107,7 @@ import { computed, onMounted, ref } from 'vue'
 import { createDictData, getDictData, updateDictData } from '@/api/system/dict/data'
 import { getSimpleDictTypeList } from '@/api/system/dict/type'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
 
@@ -188,9 +188,7 @@ async function handleSubmit() {
       await createDictData(formData.value)
       toast.success('新增成功')
     }
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

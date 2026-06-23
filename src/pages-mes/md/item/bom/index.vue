@@ -104,7 +104,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createProductBom, deleteProductBom, getProductBomListByItemId, updateProductBom } from '@/api/mes/md/item/productBom'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import ItemSelector from '../components/item-selector.vue'
 
@@ -278,7 +278,7 @@ async function handleDelete(bom: MdProductBomVO) {
 onMounted(() => {
   if (!itemId.value) {
     uni.showToast({ icon: 'none', title: '缺少物料编号' })
-    setTimeout(() => handleBack(), 1000)
+    delay(handleBack, 1000)
     return
   }
   loadList()

@@ -42,7 +42,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
 import { deletePayWalletRechargePackage, getPayWalletRechargePackage } from '@/api/pay/wallet/rechargePackage'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { formatPayMoney } from '../../../utils'
@@ -100,7 +100,7 @@ async function handleDelete() {
     await deletePayWalletRechargePackage(Number(props.id))
     toast.success('删除成功')
     uni.$emit('pay:recharge-package:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

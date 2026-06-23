@@ -90,7 +90,7 @@ import { computed, onMounted, ref } from 'vue'
 import { deleteReceivable, getReceivable, submitReceivable } from '@/api/crm/receivable'
 import { BizTypeEnum, CrmAuditStatusEnum } from '@/api/crm/permission'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
 import { formatMoney } from '@/utils/format'
@@ -213,7 +213,7 @@ function handleViewProcess() {
 /** 退出团队后返回 */
 function handleQuitTeam() {
   uni.$emit('crm:receivable:reload')
-  setTimeout(() => handleBack(), 500)
+  delay(handleBack)
 }
 
 /** 编辑 */
@@ -236,7 +236,7 @@ async function handleDelete() {
     await deleteReceivable(receivableId.value)
     toast.success('删除成功')
     uni.$emit('crm:receivable:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

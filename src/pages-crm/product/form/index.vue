@@ -48,7 +48,7 @@ import { computed, onMounted, ref } from 'vue'
 import { createProduct, getProduct, updateProduct } from '@/api/crm/product'
 import UserPicker from '@/components/system-select/user-picker.vue'
 import { useUserStore } from '@/store/user'
-import { currRoute, navigateBackPlus } from '@/utils'
+import { currRoute, delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import CrmPicker from '@/pages-crm/components/crm-picker.vue'
@@ -135,7 +135,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('crm:product:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

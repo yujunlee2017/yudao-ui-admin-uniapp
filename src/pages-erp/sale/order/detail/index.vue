@@ -70,7 +70,7 @@ import { useAccess } from '@/hooks/useAccess'
 import ErpDetailItems from '@/pages-erp/components/erp-detail-items.vue'
 import ErpAuditActions from '@/pages-erp/components/erp-audit-actions.vue'
 import type { ErpDetailItemField } from '@/pages-erp/components/types'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { enrichErpDocumentDetail, formatCount, formatMoney, formatPercent, openErpFile } from '@/pages-erp/utils'
@@ -158,7 +158,7 @@ async function handleDelete() {
     await deleteSaleOrder([Number(currentId.value)])
     toast.success('删除成功')
     uni.$emit('erp:sale-order:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

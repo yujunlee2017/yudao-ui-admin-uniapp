@@ -98,7 +98,7 @@ import { getWarehouseLocationSimpleList } from '@/api/mes/wm/warehouse/location'
 import { getWarehouseAreaSimpleList } from '@/api/mes/wm/warehouse/area'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import WorkstationResourceList from '../components/workstation-resource-list.vue'
@@ -299,7 +299,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:md:workstation:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

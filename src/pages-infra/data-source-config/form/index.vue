@@ -64,7 +64,7 @@ import type { DataSourceConfig } from '@/api/infra/data-source-config'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createDataSourceConfig, getDataSourceConfig, updateDataSourceConfig } from '@/api/infra/data-source-config'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
@@ -125,9 +125,7 @@ async function handleSubmit() {
       await createDataSourceConfig(formData.value)
       toast.success('新增成功')
     }
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

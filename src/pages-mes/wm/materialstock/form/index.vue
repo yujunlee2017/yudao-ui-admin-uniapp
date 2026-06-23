@@ -48,7 +48,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref, watch } from 'vue'
 import { getMaterialStock, updateMaterialStockFrozen } from '@/api/mes/wm/materialstock'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
 
 const props = defineProps<{
@@ -136,9 +136,7 @@ async function handleSubmit() {
     await updateMaterialStockFrozen({ id: formData.value.id, frozen: frozen.value })
     toast.success(`${actionText}成功`)
     uni.$emit('mes:wm:materialstock:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

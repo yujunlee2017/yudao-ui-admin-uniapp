@@ -158,7 +158,7 @@ import {
   submitOutsourceReceipt,
   updateOutsourceReceipt,
 } from '@/api/mes/wm/outsourcereceipt'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import {
   DICT_TYPE,
   MesAutoCodeRuleCode,
@@ -511,9 +511,7 @@ async function handleSubmitIssue() {
     await submitOutsourceReceipt(currentId.value)
     toast.success('提交成功')
     uni.$emit('mes:wm:outsourcereceipt:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     submitLoading.value = false
   }
@@ -537,9 +535,7 @@ async function handleStockIssue() {
     await stockOutsourceReceipt(currentId.value)
     toast.success('上架成功')
     uni.$emit('mes:wm:outsourcereceipt:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     stockLoading.value = false
   }
@@ -563,9 +559,7 @@ async function handleFinishIssue() {
     await finishOutsourceReceipt(currentId.value)
     toast.success('入库成功')
     uni.$emit('mes:wm:outsourcereceipt:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     finishLoading.value = false
   }

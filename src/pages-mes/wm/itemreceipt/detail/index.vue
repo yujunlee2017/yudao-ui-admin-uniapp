@@ -82,7 +82,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { cancelItemReceipt, deleteItemReceipt, getItemReceipt, submitItemReceipt } from '@/api/mes/wm/itemreceipt'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmItemReceiptStatusEnum } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
 import ItemReceiptLineList from '../components/item-receipt-line-list.vue'
@@ -208,9 +208,7 @@ async function handleDelete() {
     await deleteItemReceipt(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:wm:itemreceipt:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

@@ -30,12 +30,9 @@
           class="mb-24rpx overflow-hidden rounded-12rpx bg-white p-24rpx shadow-sm"
         >
           <view class="mb-16rpx flex items-start gap-16rpx">
-            <image
-              v-if="item.picUrl || item.avatar"
-              :src="item.picUrl || item.avatar"
-              class="h-96rpx w-96rpx shrink-0 rounded-8rpx bg-[#f5f5f5]"
-              mode="aspectFill"
-            />
+            <view v-if="item.picUrl || item.avatar" class="shrink-0">
+              <wd-img :src="item.picUrl || item.avatar" width="96rpx" height="96rpx" radius="8rpx" mode="aspectFill" />
+            </view>
             <view class="min-w-0 flex-1">
               <view class="flex items-center justify-between gap-16rpx">
                 <text class="min-w-0 flex-1 truncate text-30rpx text-[#333] font-semibold">

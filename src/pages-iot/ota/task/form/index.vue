@@ -79,7 +79,7 @@ import { createOtaTask } from '@/api/iot/ota/task'
 import { getIntDictOptions } from '@/hooks/useDict'
 import EntityPicker from '@/pages-iot/components/entity-picker.vue'
 import { IoTOtaTaskDeviceScopeEnum } from '@/pages-iot/utils/constants'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -141,7 +141,7 @@ async function handleSubmit() {
     await createOtaTask(formData.value)
     toast.success('创建成功')
     uni.$emit('iot:ota-task:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }
@@ -151,6 +151,7 @@ async function handleSubmit() {
 onMounted(async () => {
   const firmwarePage = await getOtaFirmwarePage({ pageNo: 1, pageSize: 100 })
   firmwareOptions.value = firmwarePage.list
-  if (formData.value.firmwareId) loadDevicesByFirmware(formData.value.firmwareId)
+  if (formData.value.firmwareId)
+    loadDevicesByFirmware(formData.value.firmwareId)
 })
 </script>

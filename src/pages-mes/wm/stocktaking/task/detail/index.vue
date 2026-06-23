@@ -95,7 +95,7 @@ import {
 } from '@/api/mes/wm/stocktaking/task'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmStockTakingTaskStatusEnum } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
 import TaskLinePreview from '../components/task-line-preview.vue'
@@ -231,9 +231,7 @@ async function handleDelete() {
     await deleteStockTaking(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:wm:stocktaking:task:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

@@ -62,7 +62,7 @@ import { computed, onMounted, ref } from 'vue'
 import { createReceivablePlan, getReceivablePlan, updateReceivablePlan } from '@/api/crm/receivable/plan'
 import UserPicker from '@/components/system-select/user-picker.vue'
 import { useUserStore } from '@/store/user'
-import { currRoute, navigateBackPlus } from '@/utils'
+import { currRoute, delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
@@ -158,7 +158,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('crm:receivablePlan:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

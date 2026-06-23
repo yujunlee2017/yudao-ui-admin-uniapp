@@ -110,7 +110,7 @@ import { computed, onMounted, ref } from 'vue'
 import { deleteContact, getContact } from '@/api/crm/contact'
 import { BizTypeEnum } from '@/api/crm/permission'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import ContactBusiness from '@/pages-crm/contact/components/contact-business.vue'
@@ -212,7 +212,7 @@ function handleTransfer() {
 /** 退出团队后返回 */
 function handleQuitTeam() {
   uni.$emit('crm:contact:reload')
-  setTimeout(() => handleBack(), 500)
+  delay(handleBack)
 }
 
 /** 编辑 */
@@ -235,7 +235,7 @@ async function handleDelete() {
     await deleteContact(contactId.value)
     toast.success('删除成功')
     uni.$emit('crm:contact:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

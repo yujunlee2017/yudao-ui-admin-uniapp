@@ -59,7 +59,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { createProductCategory, getProductCategory, getProductCategoryList, updateProductCategory } from '@/api/erp/product/category'
 import YdTreeSelect from '@/components/yudao-ui/yd-tree-select/yd-tree-select.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum } from '@/utils/constants'
 import { handleTree } from '@/utils/tree'
 import { createFormSchema } from '@/utils/wot'
@@ -166,7 +166,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('erp:product-category:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

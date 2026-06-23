@@ -58,7 +58,7 @@ import { computed, onMounted, ref } from 'vue'
 import { deleteProduct, getProduct } from '@/api/crm/product'
 import { BizTypeEnum } from '@/api/crm/permission'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatMoney } from '@/utils/format'
 import CrmOperateLogs from '@/pages-crm/operate-log/components/operate-log-list.vue'
@@ -134,7 +134,7 @@ async function handleDelete() {
     await deleteProduct(productId.value)
     toast.success('删除成功')
     uni.$emit('crm:product:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

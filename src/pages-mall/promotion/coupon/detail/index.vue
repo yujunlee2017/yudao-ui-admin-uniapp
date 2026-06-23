@@ -42,7 +42,7 @@ import { computed, ref } from 'vue'
 import { deletePromotionCoupon } from '@/api/mall/promotion/coupon/coupon'
 import { useAccess } from '@/hooks/useAccess'
 import { formatDisplayMoney } from '@/utils/format'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -95,7 +95,7 @@ async function handleDelete() {
     await deletePromotionCoupon(Number(props.id))
     toast.success('回收成功')
     uni.$emit('mall:promotion-coupon:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

@@ -8,7 +8,9 @@
       <wd-cell-group border>
         <wd-cell title="分组编号" :value="String(formData?.id || '-')" />
         <wd-cell title="分组名字" :value="formData?.name || '-'" />
-        <wd-cell title="分组状态"><dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="formData?.status" /></wd-cell>
+        <wd-cell title="分组状态">
+          <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="formData?.status" />
+        </wd-cell>
         <wd-cell title="设备数量" :value="String(formData?.deviceCount || 0)" />
         <wd-cell title="分组描述" :value="formData?.description || '-'" />
         <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime) || '-'" />
@@ -18,8 +20,12 @@
     <!-- 底部操作按钮 -->
     <view class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="hasAccessByCodes(['iot:device-group:update'])" class="flex-1" type="warning" @click="handleEdit">编辑</wd-button>
-        <wd-button v-if="hasAccessByCodes(['iot:device-group:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">删除</wd-button>
+        <wd-button v-if="hasAccessByCodes(['iot:device-group:update'])" class="flex-1" type="warning" @click="handleEdit">
+          编辑
+        </wd-button>
+        <wd-button v-if="hasAccessByCodes(['iot:device-group:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+          删除
+        </wd-button>
       </view>
     </view>
   </view>
@@ -33,7 +39,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { ref } from 'vue'
 import { deleteDeviceGroup, getDeviceGroup } from '@/api/iot/device/group'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -80,7 +86,7 @@ async function handleDelete() {
     await deleteDeviceGroup(Number(props.id))
     toast.success('删除成功')
     uni.$emit('iot:device-group:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

@@ -109,7 +109,7 @@ import { computed, onMounted, ref } from 'vue'
 import { getSimpleMailAccountList } from '@/api/system/mail/account'
 import { createMailTemplate, getMailTemplate, updateMailTemplate } from '@/api/system/mail/template'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
 
@@ -186,9 +186,7 @@ async function handleSubmit() {
       await createMailTemplate(formData.value)
       toast.success('新增成功')
     }
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

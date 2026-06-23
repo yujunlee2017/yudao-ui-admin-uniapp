@@ -101,7 +101,7 @@ import { getVendorPage } from '@/api/mes/md/vendor'
 import { confirmWorkOrder, createWorkOrder, getWorkOrder, updateWorkOrder } from '@/api/mes/pro/workorder'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import WorkOrderBomList from '../components/workorder-bom-list.vue'
@@ -406,7 +406,7 @@ async function handleConfirm() {
     await confirmWorkOrder(formData.value.id)
     toast.success('工单已确认')
     uni.$emit('mes:pro:workorder:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

@@ -64,7 +64,7 @@ import { createCustomer, getCustomer, updateCustomer } from '@/api/crm/customer'
 import { getAreaTree } from '@/api/system/area'
 import UserPicker from '@/components/system-select/user-picker.vue'
 import { useUserStore } from '@/store/user'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
@@ -144,7 +144,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('crm:customer:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

@@ -9,12 +9,8 @@
         class="user-card flex items-center rounded-12rpx bg-white p-32rpx"
         @click="handleGoProfile"
       >
-        <view class="avatar-wrapper mr-24rpx h-120rpx w-120rpx overflow-hidden rounded-full">
-          <image
-            :src="userInfo.avatar"
-            mode="aspectFill"
-            class="h-full w-full"
-          />
+        <view class="avatar-wrapper mr-24rpx">
+          <wd-img :src="userInfo.avatar" width="120rpx" height="120rpx" mode="aspectFill" round />
         </view>
         <view class="flex-1">
           <view class="mb-8rpx text-40rpx text-[#323333] font-semibold">

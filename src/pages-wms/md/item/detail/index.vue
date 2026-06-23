@@ -71,7 +71,7 @@ import { onMounted, ref } from 'vue'
 import { deleteItem, getItem } from '@/api/wms/md/item'
 import { useAccess } from '@/hooks/useAccess'
 import { formatDimensionText, formatPrice, formatWeight } from '@/pages-wms/utils/format'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{
@@ -135,9 +135,7 @@ async function handleDelete() {
     await deleteItem(Number(props.id))
     toast.success('删除成功')
     uni.$emit('wms:item:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

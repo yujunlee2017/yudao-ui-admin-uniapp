@@ -31,12 +31,9 @@
           @click="handleDetail(item)"
         >
           <view class="mb-16rpx flex items-center gap-20rpx">
-            <image
-              v-if="item.avatar"
-              :src="item.avatar"
-              class="h-88rpx w-88rpx shrink-0 rounded-full bg-[#f5f5f5]"
-              mode="aspectFill"
-            />
+            <view v-if="item.avatar" class="shrink-0">
+              <wd-img :src="item.avatar" width="88rpx" height="88rpx" mode="aspectFill" round />
+            </view>
             <view class="min-w-0 flex-1">
               <view class="flex items-center justify-between gap-16rpx">
                 <text class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">

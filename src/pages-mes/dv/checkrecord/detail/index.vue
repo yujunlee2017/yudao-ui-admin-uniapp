@@ -98,7 +98,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteCheckRecord, getCheckRecord, submitCheckRecord } from '@/api/mes/dv/checkrecord'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesDvCheckRecordStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import CheckRecordLineList from '../components/check-record-line-list.vue'
@@ -190,9 +190,7 @@ async function handleDelete() {
     await deleteCheckRecord(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:dv:checkrecord:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

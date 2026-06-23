@@ -81,7 +81,7 @@ import { cancelMiscReceipt, deleteMiscReceipt, getMiscReceipt, submitMiscReceipt
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MiscReceiptLineList from '@/pages-mes/wm/miscreceipt/components/misc-receipt-line-list.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmMiscReceiptStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -194,9 +194,7 @@ async function handleDelete() {
     await deleteMiscReceipt(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:wm:miscreceipt:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

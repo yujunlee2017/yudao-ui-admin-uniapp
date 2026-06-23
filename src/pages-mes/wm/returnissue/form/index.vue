@@ -174,7 +174,7 @@ import {
 } from '@/api/mes/wm/returnissue'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesAutoCodeRuleCode, MesWmReturnIssueStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
@@ -511,9 +511,7 @@ async function handleSubmitIssue() {
     await submitReturnIssue(currentId.value)
     toast.success('提交成功')
     uni.$emit('mes:wm:returnissue:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     submitLoading.value = false
   }
@@ -537,9 +535,7 @@ async function handleStockIssue() {
     await stockReturnIssue(currentId.value)
     toast.success('上架成功')
     uni.$emit('mes:wm:returnissue:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     stockLoading.value = false
   }
@@ -563,9 +559,7 @@ async function handleFinishIssue() {
     await finishReturnIssue(currentId.value)
     toast.success('执行成功')
     uni.$emit('mes:wm:returnissue:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     finishLoading.value = false
   }

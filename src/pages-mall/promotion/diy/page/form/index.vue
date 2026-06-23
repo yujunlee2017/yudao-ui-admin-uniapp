@@ -17,14 +17,8 @@
           <wd-form-item title="模板编号" title-width="200rpx" prop="templateId" center>
             <wd-input-number v-model="formData.templateId" :min="0" />
           </wd-form-item>
-          <!-- TODO @AI：upload 组件？？？ -->
-          <wd-form-item title="预览图 URL" title-width="200rpx" prop="previewPicUrlsText">
-            <wd-textarea
-              v-model="formData.previewPicUrlsText"
-              clearable
-              :maxlength="2000"
-              placeholder="多个 URL 用逗号或换行分隔"
-            />
+          <wd-form-item title="预览图" title-width="200rpx" prop="previewPicUrls">
+            <yd-upload-imgs v-model="formData.previewPicUrls" :limit="9" />
           </wd-form-item>
           <wd-form-item title="备注" title-width="200rpx" prop="remark">
             <wd-textarea v-model="formData.remark" clearable :maxlength="500" placeholder="请输入备注" />
@@ -44,17 +38,6 @@
       <!-- 装修属性说明 -->
       <view class="px-24rpx py-18rpx text-24rpx text-[#999]">
         移动端仅维护页面基础信息与 JSON 装修属性，可视化拖拽装修请前往 PC 端。
-      </view>
-
-      <!-- 预览图预览 -->
-      <view v-if="previewUrls.length" class="flex flex-wrap gap-12rpx px-24rpx pb-24rpx">
-        <image
-          v-for="url in previewUrls"
-          :key="url"
-          :src="url"
-          class="h-120rpx w-120rpx rounded-8rpx bg-[#eee]"
-          mode="aspectFill"
-        />
       </view>
     </scroll-view>
 
@@ -83,7 +66,7 @@ import {
   updatePromotionDiyPage,
   updatePromotionDiyPageProperty,
 } from '@/api/mall/promotion/diy/page'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 
 interface DiyPageFormData {
@@ -91,7 +74,7 @@ interface DiyPageFormData {
   templateId?: number
   name?: string
   remark?: string
-  previewPicUrlsText?: string
+  previewPicUrls?: string[]
   propertyText?: string // TODO @AI：property 是不是就够了，不用这里抽一个IE出来？？？
 }
 
@@ -115,10 +98,9 @@ const formData = ref<DiyPageFormData>({
   templateId: undefined,
   name: '',
   remark: '',
-  previewPicUrlsText: '',
+  previewPicUrls: [],
   propertyText: '{}', // TODO @AI：property 是不是就够了，不用这里抽一个IE出来？？？
 }) // 表单数据
-const previewUrls = computed(() => parseUrls(formData.value.previewPicUrlsText || ''))
 const formSchema = createFormSchema({
   name: [{ required: true, message: '页面名称不能为空' }],
   propertyText: [{ validator: validateProperty }], // 装修属性仅编辑时显示，需为合法 JSON
@@ -138,14 +120,6 @@ function validateProperty(value: string) {
   }
 }
 
-/** 解析多 URL 文本为数组 */
-function parseUrls(text: string) {
-  return text
-    .split(/[,，\n]/)
-    .map(item => item.trim())
-    .filter(Boolean)
-}
-
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mall/promotion/diy/page/index')
@@ -163,7 +137,7 @@ async function getDetail() {
     templateId: detail.templateId,
     name: detail.name,
     remark: detail.remark,
-    previewPicUrlsText: (detail.previewPicUrls || []).join('\n'),
+    previewPicUrls: detail.previewPicUrls || [],
     propertyText: formatProperty(property.property ?? detail.property),
   }
 }
@@ -197,7 +171,7 @@ async function handleSubmit() {
       templateId: formData.value.templateId,
       name: formData.value.name,
       remark: formData.value.remark,
-      previewPicUrls: previewUrls.value,
+      previewPicUrls: formData.value.previewPicUrls || [],
     }
     if (props.id) {
       await updatePromotionDiyPage(baseData)
@@ -212,9 +186,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mall:promotion-diy-page:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

@@ -79,7 +79,7 @@ import { computed, onMounted, ref } from 'vue'
 import { getSimpleMenuList } from '@/api/system/menu'
 import { createTenantPackage, getTenantPackage, updateTenantPackage } from '@/api/system/tenant/package'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { handleTree } from '@/utils/tree'
 import { createFormSchema } from '@/utils/wot'
@@ -154,9 +154,7 @@ async function handleSubmit() {
       await createTenantPackage(data)
       toast.success('新增成功')
     }
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

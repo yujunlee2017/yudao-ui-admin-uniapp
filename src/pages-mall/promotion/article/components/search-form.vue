@@ -19,18 +19,7 @@
         </view>
         <wd-input v-model="formData.title" placeholder="请输入文章标题" clearable />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          文章分类
-        </view>
-        <view class="w-full" @click="categoryPickerVisible = true">
-          <wd-input
-            :model-value="getCategoryText"
-            placeholder="请选择文章分类"
-            readonly
-          />
-        </view>
-      </view>
+      <yd-search-picker v-model="formData.categoryId" label="文章分类" :columns="categoryOptions" placeholder="请选择文章分类" />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           状态
@@ -59,14 +48,6 @@
       </view>
     </view>
   </wd-popup>
-
-  <!-- 文章分类选择器 -->
-  <wd-picker
-    v-model:visible="categoryPickerVisible"
-    :model-value="formData.categoryId"
-    :columns="categoryOptions"
-    @confirm="({ value }) => formData.categoryId = Number(value[0])"
-  />
 </template>
 
 <script lang="ts" setup>
@@ -83,7 +64,6 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const categoryPickerVisible = ref(false) // 文章分类选择器状态
 const categoryOptions = ref<{ label: string, value: number }[]>([]) // 文章分类选项
 const formData = reactive({
   title: undefined as string | undefined,

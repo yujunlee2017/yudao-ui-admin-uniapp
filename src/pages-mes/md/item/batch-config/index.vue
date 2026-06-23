@@ -163,7 +163,7 @@ import { computed, onMounted, ref } from 'vue'
 import { getItem } from '@/api/mes/md/item'
 import { getBatchConfigByItemId, saveBatchConfig } from '@/api/mes/md/item/batchConfig'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 
 const props = defineProps<{ itemId?: number | string, mode?: string }>()
@@ -243,7 +243,7 @@ async function loadAll() {
     item.value = itemData
     if (!itemData.batchFlag) {
       uni.showToast({ icon: 'none', title: '该物料未启用批次管理' })
-      setTimeout(() => handleBack(), 1500)
+      delay(handleBack, 1500)
       return
     }
     formData.value = hydrateConfig(config)
@@ -313,7 +313,7 @@ async function handleSave() {
 onMounted(() => {
   if (!props.itemId) {
     uni.showToast({ icon: 'none', title: '缺少物料编号' })
-    setTimeout(() => handleBack(), 1000)
+    delay(handleBack, 1000)
     return
   }
   loadAll()

@@ -11,11 +11,14 @@
     <view>
       <wd-cell-group border>
         <wd-cell title="频道头像" center>
-          <image
+          <wd-img
             v-if="formData?.avatar"
             :src="formData.avatar"
-            class="h-96rpx w-96rpx rounded-12rpx bg-[#f0f2f5]"
+            width="96rpx"
+            height="96rpx"
+            radius="12rpx"
             mode="aspectFill"
+            enable-preview
           />
           <text v-else>-</text>
         </wd-cell>
@@ -57,7 +60,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
 import { deleteManagerChannel, getManagerChannel } from '@/api/im/manager/channel'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -122,9 +125,7 @@ async function handleDelete() {
     await deleteManagerChannel(Number(props.id))
     toast.success('删除成功')
     uni.$emit('im:manager:channel:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

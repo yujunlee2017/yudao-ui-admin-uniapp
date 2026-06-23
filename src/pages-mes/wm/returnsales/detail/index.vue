@@ -76,7 +76,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteReturnSales, getReturnSales, submitReturnSales } from '@/api/mes/wm/returnsales'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmReturnSalesStatusEnum } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
 import ReturnSalesLineList from '../components/return-sales-line-list.vue'
@@ -214,9 +214,7 @@ async function handleDelete() {
     await deleteReturnSales(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:wm:returnsales:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

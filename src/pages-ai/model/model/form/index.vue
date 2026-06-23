@@ -122,7 +122,7 @@ import { computed, onMounted, ref } from 'vue'
 import { getApiKeySimpleList } from '@/api/ai/model/apiKey'
 import { createModel, getModel, updateModel } from '@/api/ai/model/model'
 import { getIntDictOptions, getStrDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
 import { AiModelTypeEnum } from '@/pages-ai/utils/constants'
@@ -206,9 +206,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('ai:model:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

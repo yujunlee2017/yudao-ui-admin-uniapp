@@ -57,7 +57,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { getHolidayByDay, saveHoliday } from '@/api/mes/cal/holiday'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -141,7 +141,7 @@ async function handleSubmit() {
     })
     toast.success('设置成功')
     uni.$emit('mes:cal:holiday:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

@@ -148,7 +148,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { createAndonRecord, getAndonRecord, updateAndonRecord } from '@/api/mes/pro/andon/record'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { useUserStore } from '@/store/user'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import AndonConfigSelector from '../components/andon-config-selector.vue'
@@ -366,7 +366,7 @@ async function handleCreate() {
     await createAndonRecord(data)
     toast.success('新增成功')
     uni.$emit('mes:pro:andon:record:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }
@@ -388,7 +388,7 @@ async function handleSave() {
     })
     toast.success('保存成功')
     uni.$emit('mes:pro:andon:record:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }
@@ -423,7 +423,7 @@ async function handleFinish() {
     })
     toast.success('处置成功')
     uni.$emit('mes:pro:andon:record:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

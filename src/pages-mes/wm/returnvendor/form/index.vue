@@ -157,7 +157,7 @@ import {
   submitReturnVendor,
   updateReturnVendor,
 } from '@/api/mes/wm/returnvendor'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesAutoCodeRuleCode, MesWmReturnVendorStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
@@ -440,9 +440,7 @@ async function handleSubmitReturnVendor() {
     await submitReturnVendor(currentId.value)
     toast.success('提交成功')
     uni.$emit('mes:wm:returnvendor:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     submitLoading.value = false
   }
@@ -470,9 +468,7 @@ async function handleStockReturnVendor() {
     await stockReturnVendor(currentId.value)
     toast.success('拣货成功')
     uni.$emit('mes:wm:returnvendor:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } catch {
   } finally {
     stockLoading.value = false
@@ -497,9 +493,7 @@ async function handleFinishReturnVendor() {
     await finishReturnVendor(currentId.value)
     toast.success('完成成功')
     uni.$emit('mes:wm:returnvendor:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     finishLoading.value = false
   }

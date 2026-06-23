@@ -160,7 +160,7 @@ import {
   submitProductReceipt,
   updateProductReceipt,
 } from '@/api/mes/wm/productreceipt'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesAutoCodeRuleCode, MesWmProductReceiptStatusEnum } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
@@ -429,9 +429,7 @@ async function handleSubmitReceipt() {
     await submitProductReceipt(currentId.value)
     toast.success('提交成功')
     uni.$emit('mes:wm:productreceipt:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     submitLoading.value = false
   }
@@ -462,9 +460,7 @@ async function handleStockReceipt() {
     await stockProductReceipt(currentId.value)
     toast.success('上架成功')
     uni.$emit('mes:wm:productreceipt:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     stockLoading.value = false
   }
@@ -488,9 +484,7 @@ async function handleFinishReceipt() {
     await finishProductReceipt(currentId.value)
     toast.success('入库成功')
     uni.$emit('mes:wm:productreceipt:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     finishLoading.value = false
   }

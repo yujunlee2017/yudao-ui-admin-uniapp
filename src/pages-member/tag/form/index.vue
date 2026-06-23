@@ -33,7 +33,7 @@ import type { MemberTag } from '@/api/member/tag'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createMemberTag, getMemberTag, updateMemberTag } from '@/api/member/tag'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
@@ -89,9 +89,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('member:tag:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

@@ -51,7 +51,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { deleteBusinessStatus, getBusinessStatus } from '@/api/crm/business/status'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 
 const props = defineProps<{ id?: number | any }>()
 definePage({
@@ -106,7 +106,7 @@ async function handleDelete() {
     await deleteBusinessStatus(statusId.value)
     toast.success('删除成功')
     uni.$emit('crm:businessStatus:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

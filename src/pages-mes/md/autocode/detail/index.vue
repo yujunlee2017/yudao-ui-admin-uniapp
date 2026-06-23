@@ -70,7 +70,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteAutoCodeRule, getAutoCodeRule } from '@/api/mes/md/autocode/rule'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -147,9 +147,7 @@ async function handleDelete() {
     await deleteAutoCodeRule(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:md:autocode:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

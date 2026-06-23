@@ -60,7 +60,7 @@ import { getContactListByCustomer } from '@/api/crm/contact'
 import { createFollowUpRecord } from '@/api/crm/followup'
 import { BizTypeEnum } from '@/api/crm/permission'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
@@ -127,7 +127,7 @@ async function handleSubmit() {
     })
     toast.success('保存成功')
     uni.$emit('crm:followup:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

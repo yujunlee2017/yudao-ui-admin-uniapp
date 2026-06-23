@@ -22,7 +22,7 @@
           <view
             v-for="(article, index) in articles"
             :key="index"
-            class="shrink-0 rounded-8rpx border px-20rpx py-12rpx text-26rpx"
+            class="shrink-0 border rounded-8rpx px-20rpx py-12rpx text-26rpx"
             :class="activeIndex === index ? 'border-[#1677ff] text-[#1677ff]' : 'border-[#eee] text-[#666]'"
             @click="handleSwitchArticle(index)"
           >
@@ -97,7 +97,7 @@ import { onLoad } from '@dcloudio/uni-app'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, ref } from 'vue'
 import { createDraft, createEmptyNewsItem, updateDraft } from '@/api/mp/draft'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 import MaterialPicker from '../../components/material-picker.vue'
 import { getMpRouteNumber, getMpRouteString, useMpRouteParams } from '../../utils/route'
@@ -229,9 +229,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mp:draft:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

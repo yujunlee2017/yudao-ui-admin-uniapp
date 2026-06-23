@@ -65,7 +65,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
 import { deleteSmsTemplate, getSmsTemplate } from '@/api/system/sms/template'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import SendForm from './components/send-form.vue'
@@ -133,9 +133,7 @@ async function handleDelete() {
   try {
     await deleteSmsTemplate(props.id)
     toast.success('删除成功')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

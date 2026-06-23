@@ -120,7 +120,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref, watch } from 'vue'
 import { createMaintenRecord, getMaintenRecord, submitMaintenRecord, updateMaintenRecord } from '@/api/mes/dv/maintenrecord'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesDvMaintenRecordStatusEnum, MesDvSubjectTypeEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
@@ -304,9 +304,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:dv:maintenrecord:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }
@@ -335,9 +333,7 @@ async function handleSubmitRecord() {
     await submitMaintenRecord(currentId.value)
     toast.success('提交成功')
     uni.$emit('mes:dv:maintenrecord:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     submitLoading.value = false
   }

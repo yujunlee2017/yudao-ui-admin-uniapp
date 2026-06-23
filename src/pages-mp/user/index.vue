@@ -34,12 +34,7 @@
           @click="handleDetail(item)"
         >
           <view class="mb-16rpx flex items-center gap-16rpx">
-            <image
-              v-if="item.headImageUrl"
-              :src="item.headImageUrl"
-              class="h-80rpx w-80rpx rounded-full"
-              mode="aspectFill"
-            />
+            <wd-img v-if="item.headImageUrl" :src="item.headImageUrl" width="80rpx" height="80rpx" mode="aspectFill" round />
             <view
               v-else
               class="h-80rpx w-80rpx flex items-center justify-center rounded-full bg-[#07c160] text-30rpx text-white"

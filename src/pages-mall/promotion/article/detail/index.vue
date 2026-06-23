@@ -14,12 +14,7 @@
       <wd-cell title="文章分类" :value="categoryName" />
       <wd-cell title="文章作者" :value="formData.author || '-'" />
       <wd-cell title="文章封面">
-        <image
-          v-if="formData.picUrl"
-          :src="formData.picUrl"
-          class="h-112rpx w-112rpx rounded-8rpx bg-[#f5f5f5]"
-          mode="aspectFill"
-        />
+        <wd-img v-if="formData.picUrl" :src="formData.picUrl" width="112rpx" height="112rpx" radius="8rpx" mode="aspectFill" enable-preview />
         <text v-else>-</text>
       </wd-cell>
       <wd-cell title="文章简介" :value="formData.introduction || '-'" />
@@ -59,7 +54,7 @@ import { computed, onMounted, ref } from 'vue'
 import { deletePromotionArticle, getPromotionArticle } from '@/api/mall/promotion/article'
 import { getSimplePromotionArticleCategoryList } from '@/api/mall/promotion/article-category'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -118,7 +113,7 @@ async function handleDelete() {
     await deletePromotionArticle(Number(props.id))
     toast.success('删除成功')
     uni.$emit('mall:promotion-article:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

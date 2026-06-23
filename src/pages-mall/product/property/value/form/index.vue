@@ -56,7 +56,7 @@ import {
   getSimpleProductPropertyList,
   updateProductPropertyValue,
 } from '@/api/mall/product/property'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
@@ -125,9 +125,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mall:product-property-value:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

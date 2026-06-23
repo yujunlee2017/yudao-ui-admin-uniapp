@@ -1,14 +1,11 @@
-<!-- todo @AI：是不是要写下作用？类似别的 components -->
+<!-- 商品与 SKU 选择器：促销活动复用，负责加载商品 SKU 并把配置行回写给父组件 -->
 <template>
   <view>
     <!-- 已选商品 -->
     <view v-if="spu" class="mb-16rpx flex items-center gap-16rpx rounded-8rpx bg-[#f7f8fa] p-16rpx">
-      <image
-        v-if="spu.picUrl"
-        :src="spu.picUrl"
-        class="h-96rpx w-96rpx shrink-0 rounded-8rpx bg-[#f0f0f0]"
-        mode="aspectFill"
-      />
+      <view v-if="spu.picUrl" class="shrink-0">
+        <wd-img :src="spu.picUrl" width="96rpx" height="96rpx" radius="8rpx" mode="aspectFill" />
+      </view>
       <view class="min-w-0 flex-1">
         <view class="truncate text-28rpx text-[#333] font-medium">
           {{ spu.name || `商品 #${spu.id}` }}
@@ -32,12 +29,9 @@
         class="mb-16rpx rounded-8rpx bg-[#f7f8fa] p-16rpx"
       >
         <view class="mb-12rpx flex items-center gap-12rpx">
-          <image
-            v-if="row.picUrl"
-            :src="row.picUrl"
-            class="h-72rpx w-72rpx shrink-0 rounded-8rpx bg-[#f0f0f0]"
-            mode="aspectFill"
-          />
+          <view v-if="row.picUrl" class="shrink-0">
+            <wd-img :src="row.picUrl" width="72rpx" height="72rpx" radius="8rpx" mode="aspectFill" />
+          </view>
           <view class="min-w-0 flex-1">
             <view class="truncate text-26rpx text-[#333]">
               {{ row.skuName || `SKU #${row.skuId}` }}
@@ -72,12 +66,9 @@
             class="mb-12rpx flex items-center gap-16rpx rounded-8rpx bg-[#f7f8fa] p-16rpx"
             @click="handleSelectSpu(item)"
           >
-            <image
-              v-if="item.picUrl"
-              :src="item.picUrl"
-              class="h-80rpx w-80rpx shrink-0 rounded-8rpx bg-[#f0f0f0]"
-              mode="aspectFill"
-            />
+            <view v-if="item.picUrl" class="shrink-0">
+              <wd-img :src="item.picUrl" width="80rpx" height="80rpx" radius="8rpx" mode="aspectFill" />
+            </view>
             <view class="min-w-0 flex-1">
               <view class="truncate text-28rpx text-[#333]">
                 {{ item.name || `商品 #${item.id}` }}

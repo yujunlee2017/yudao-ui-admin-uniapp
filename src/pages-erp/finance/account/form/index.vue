@@ -45,7 +45,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { createAccount, getAccount, updateAccount } from '@/api/erp/finance/account'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -111,7 +111,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('erp:account:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

@@ -83,7 +83,7 @@ import {
   updateUnitMeasure,
 } from '@/api/mes/md/unitmeasure'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum } from '@/utils/constants'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
 
@@ -190,7 +190,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:md:unitmeasure:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

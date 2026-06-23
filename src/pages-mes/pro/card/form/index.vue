@@ -70,7 +70,7 @@ import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { createCard, getCard, submitCard, updateCard } from '@/api/mes/pro/card'
 import { getWorkOrder } from '@/api/mes/pro/workorder'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import ItemSelector from '@/pages-mes/md/item/components/item-selector.vue'
@@ -342,7 +342,7 @@ async function handleSubmitCard() {
     await submitCard(formData.value.id)
     toast.success('提交成功')
     uni.$emit('mes:pro:card:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

@@ -107,7 +107,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { createAutoCodeRule, getAutoCodeRule, updateAutoCodeRule } from '@/api/mes/md/autocode/rule'
 import { getBoolDictOptions, getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import AutoCodePartSection from '../components/auto-code-part-section.vue'
@@ -206,9 +206,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:md:autocode:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

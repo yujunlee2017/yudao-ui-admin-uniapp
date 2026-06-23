@@ -75,12 +75,9 @@
                 v-else-if="item.kind === 'product'"
                 class="max-w-420rpx inline-flex items-center rounded-12rpx bg-white p-16rpx shadow-sm"
               >
-                <image
-                  v-if="item.picUrl"
-                  :src="item.picUrl"
-                  class="mr-16rpx h-96rpx w-96rpx rounded-8rpx bg-[#eee]"
-                  mode="aspectFill"
-                />
+                <view v-if="item.picUrl" class="mr-16rpx shrink-0">
+                  <wd-img :src="item.picUrl" width="96rpx" height="96rpx" radius="8rpx" mode="aspectFill" />
+                </view>
                 <view class="min-w-0 flex-1">
                   <view class="line-clamp-2 text-26rpx text-[#333]">
                     {{ item.title || '商品' }}

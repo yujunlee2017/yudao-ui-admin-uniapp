@@ -112,7 +112,7 @@ import { createItem, getItem, updateItem } from '@/api/wms/md/item'
 import ItemBrandPicker from '@/pages-wms/components/item-brand-picker.vue'
 import ItemCategoryPicker from '@/pages-wms/components/item-category-picker.vue'
 import { generateWmsCode } from '@/pages-wms/utils/constants'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
@@ -227,9 +227,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('wms:item:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

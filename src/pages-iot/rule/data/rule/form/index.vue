@@ -12,7 +12,9 @@
           </wd-form-item>
           <wd-form-item title="规则状态" title-width="200rpx" center prop="status">
             <wd-radio-group v-model="formData.status" type="button">
-              <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)" :key="dict.value" :value="dict.value">{{ dict.label }}</wd-radio>
+              <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)" :key="dict.value" :value="dict.value">
+                {{ dict.label }}
+              </wd-radio>
             </wd-radio-group>
           </wd-form-item>
           <EntityPicker v-model="formData.sinkIds" label="数据目的" prop="sinkIds" :columns="sinkOptions" type="checkbox" placeholder="请选择数据目的" />
@@ -23,8 +25,12 @@
 
         <view class="mt-24rpx px-24rpx">
           <view class="mb-16rpx flex items-center justify-between">
-            <view class="text-30rpx text-[#333] font-semibold">数据源</view>
-            <wd-button size="small" type="primary" @click="handleAddSource">添加数据源</wd-button>
+            <view class="text-30rpx text-[#333] font-semibold">
+              数据源
+            </view>
+            <wd-button size="small" type="primary" @click="handleAddSource">
+              添加数据源
+            </wd-button>
           </view>
 
           <view v-if="sourceConfigs.length === 0" class="rounded-12rpx bg-white py-56rpx text-center text-28rpx text-[#999]">
@@ -33,8 +39,12 @@
 
           <view v-for="(item, index) in sourceConfigs" :key="index" class="mb-24rpx rounded-12rpx bg-white p-24rpx shadow-sm">
             <view class="mb-16rpx flex items-center justify-between">
-              <view class="text-28rpx text-[#333] font-semibold">数据源 {{ index + 1 }}</view>
-              <wd-button size="small" type="danger" variant="plain" @click="handleDeleteSource(index)">删除</wd-button>
+              <view class="text-28rpx text-[#333] font-semibold">
+                数据源 {{ index + 1 }}
+              </view>
+              <wd-button size="small" type="danger" variant="plain" @click="handleDeleteSource(index)">
+                删除
+              </wd-button>
             </view>
             <EntityPicker
               v-model="item.productId"
@@ -77,7 +87,9 @@
 
     <!-- 底部保存按钮 -->
     <view class="yd-detail-footer">
-      <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">保存</wd-button>
+      <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
+        保存
+      </wd-button>
     </view>
   </view>
 </template>
@@ -99,7 +111,7 @@ import { getThingModelList } from '@/api/iot/thingmodel'
 import { getIntDictOptions } from '@/hooks/useDict'
 import EntityPicker from '@/pages-iot/components/entity-picker.vue'
 import { IotDeviceMessageMethodEnum, IoTThingModelTypeEnum } from '@/pages-iot/utils/constants'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -143,7 +155,8 @@ function handleBack() { navigateBackPlus('/pages-iot/rule/data/rule/index') }
 
 /** 加载数据规则详情 */
 async function getDetail() {
-  if (!props.id) return
+  if (!props.id)
+    return
   formData.value = await getDataRule(Number(props.id))
   sourceConfigs.value = [...(formData.value.sourceConfigs || [])]
   sourceConfigs.value.forEach((item) => {
@@ -234,7 +247,8 @@ function validateSourceConfigs() {
 /** 提交表单 */
 async function handleSubmit() {
   const { valid } = await formRef.value.validate()
-  if (!valid) return
+  if (!valid)
+    return
   if (!validateSourceConfigs()) {
     return
   }
@@ -249,7 +263,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('iot:data-rule:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

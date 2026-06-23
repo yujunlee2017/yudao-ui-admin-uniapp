@@ -12,12 +12,7 @@
       <wd-cell title="用户编号" :value="formData.id != null ? String(formData.id) : '-'" />
       <wd-cell title="用户昵称" :value="formData.nickname || '-'" />
       <wd-cell title="头像">
-        <image
-          v-if="formData.avatar"
-          :src="formData.avatar"
-          class="h-88rpx w-88rpx rounded-full bg-[#f5f5f5]"
-          mode="aspectFill"
-        />
+        <wd-img v-if="formData.avatar" :src="formData.avatar" width="88rpx" height="88rpx" mode="aspectFill" round enable-preview />
         <text v-else>-</text>
       </wd-cell>
       <wd-cell title="上级推广员编号" :value="formData.bindUserId != null ? String(formData.bindUserId) : '-'" />

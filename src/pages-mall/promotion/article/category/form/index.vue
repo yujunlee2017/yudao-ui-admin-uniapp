@@ -60,7 +60,7 @@ import {
   updatePromotionArticleCategory,
 } from '@/api/mall/promotion/article-category'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -124,9 +124,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mall:promotion-article-category:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

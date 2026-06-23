@@ -59,7 +59,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteTeam, getTeam } from '@/api/mes/cal/team'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import TeamMemberList from '../components/team-member-list.vue'
@@ -125,7 +125,7 @@ async function handleDelete() {
     await deleteTeam(teamId.value)
     toast.success('删除成功')
     uni.$emit('mes:cal:team:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

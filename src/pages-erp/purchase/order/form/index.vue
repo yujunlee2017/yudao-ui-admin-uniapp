@@ -67,7 +67,7 @@ import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { getAccountSimpleList } from '@/api/erp/finance/account'
 import { getProductSimpleList } from '@/api/erp/product/product'
 import { createPurchaseOrder, getPurchaseOrder, updatePurchaseOrder } from '@/api/erp/purchase/order'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 import ErpPicker from '@/pages-erp/components/erp-picker.vue'
@@ -171,7 +171,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('erp:purchase-order:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

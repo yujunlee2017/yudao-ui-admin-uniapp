@@ -88,7 +88,7 @@ import { deleteFeedback, getFeedback, submitFeedback } from '@/api/mes/pro/feedb
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { useUserStore } from '@/store/user'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import ItemConsumeList from '../components/item-consume-list.vue'
@@ -230,7 +230,7 @@ async function handleDelete() {
     await deleteFeedback(formData.value.id)
     toast.success('删除成功')
     uni.$emit('mes:pro:feedback:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

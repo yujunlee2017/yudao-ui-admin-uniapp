@@ -80,7 +80,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { cancelMiscIssue, deleteMiscIssue, getMiscIssue, submitMiscIssue } from '@/api/mes/wm/miscissue'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmMiscIssueStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import MiscIssueLineList from '../components/misc-issue-line-list.vue'
@@ -194,9 +194,7 @@ async function handleDelete() {
     await deleteMiscIssue(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:wm:miscissue:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

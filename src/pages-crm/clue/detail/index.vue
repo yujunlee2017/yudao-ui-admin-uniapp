@@ -113,7 +113,7 @@ import { computed, onMounted, ref } from 'vue'
 import { deleteClue, getClue, transformClue } from '@/api/crm/clue'
 import { BizTypeEnum } from '@/api/crm/permission'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import CrmFollowupRecords from '@/pages-crm/followup/components/followup-list.vue'
@@ -237,7 +237,7 @@ async function handleTransform() {
 /** 退出团队后返回 */
 function handleQuitTeam() {
   uni.$emit('crm:clue:reload')
-  setTimeout(() => handleBack(), 500)
+  delay(handleBack)
 }
 
 /** 编辑 */
@@ -260,7 +260,7 @@ async function handleDelete() {
     await deleteClue(clueId.value)
     toast.success('删除成功')
     uni.$emit('crm:clue:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

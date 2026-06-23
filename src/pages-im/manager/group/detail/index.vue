@@ -12,11 +12,14 @@
       <!-- 基本信息 -->
       <wd-cell-group border>
         <wd-cell title="群头像" center>
-          <image
+          <wd-img
             v-if="formData?.avatar"
             :src="formData.avatar"
-            class="h-96rpx w-96rpx rounded-12rpx bg-[#f0f2f5]"
+            width="96rpx"
+            height="96rpx"
+            radius="12rpx"
             mode="aspectFill"
+            enable-preview
           />
           <text v-else>-</text>
         </wd-cell>
@@ -47,11 +50,13 @@
           :key="member.userId"
           class="flex items-center gap-16rpx border-t border-t-[#f2f3f5] px-24rpx py-16rpx"
         >
-          <image
+          <wd-img
             v-if="member.avatar"
             :src="member.avatar"
-            class="h-64rpx w-64rpx rounded-full bg-[#f0f2f5]"
+            width="64rpx"
+            height="64rpx"
             mode="aspectFill"
+            round
           />
           <view v-else class="h-64rpx w-64rpx flex items-center justify-center rounded-full bg-[#f0f2f5] text-22rpx text-[#bbb]">
             {{ (member.nickname || '?').slice(0, 1) }}
@@ -114,7 +119,7 @@ import {
   unbanManagerGroup,
 } from '@/api/im/manager/group'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -195,9 +200,7 @@ async function handleDissolve() {
     await dissolveManagerGroup(Number(props.id))
     toast.success('解散成功')
     uni.$emit('im:manager:group:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     processing.value = false
   }

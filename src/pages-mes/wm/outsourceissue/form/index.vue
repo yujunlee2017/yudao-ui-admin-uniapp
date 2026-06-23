@@ -160,7 +160,7 @@ import {
   submitOutsourceIssue,
   updateOutsourceIssue,
 } from '@/api/mes/wm/outsourceissue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import {
   DICT_TYPE,
   MesAutoCodeRuleCode,
@@ -518,9 +518,7 @@ async function handleSubmitIssue() {
     await submitOutsourceIssue(currentId.value)
     toast.success('提交成功')
     uni.$emit('mes:wm:outsourceissue:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     submitLoading.value = false
   }
@@ -551,9 +549,7 @@ async function handleStockIssue() {
     await stockOutsourceIssue(currentId.value)
     toast.success('拣货成功')
     uni.$emit('mes:wm:outsourceissue:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     stockLoading.value = false
   }
@@ -577,9 +573,7 @@ async function handleFinishIssue() {
     await finishOutsourceIssue(currentId.value)
     toast.success('领出成功')
     uni.$emit('mes:wm:outsourceissue:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     finishLoading.value = false
   }

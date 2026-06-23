@@ -56,7 +56,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteDefect, getDefect } from '@/api/mes/qc/defect'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -129,7 +129,7 @@ async function handleDelete() {
     await deleteDefect(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:qc:defect:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

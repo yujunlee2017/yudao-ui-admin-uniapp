@@ -64,7 +64,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { getWorkstation } from '@/api/mes/md/workstation'
 import { createTask, getTask, updateTask } from '@/api/mes/pro/task'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 import TaskStatusTag from '../components/task-status-tag.vue'
@@ -272,7 +272,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:pro:task:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

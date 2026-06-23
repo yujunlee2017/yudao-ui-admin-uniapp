@@ -68,7 +68,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteTemplate, getTemplate } from '@/api/mes/qc/template'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import TemplateIndicatorSection from '../components/template-indicator-section.vue'
@@ -144,7 +144,7 @@ async function handleDelete() {
     await deleteTemplate(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:qc:template:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

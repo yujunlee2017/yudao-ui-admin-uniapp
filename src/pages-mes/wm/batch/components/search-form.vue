@@ -79,7 +79,7 @@
         <view class="yd-search-form-label">
           质量状态
         </view>
-        <wd-radio-group v-model="formData.qualityStatus" shape="button">
+        <wd-radio-group v-model="formData.qualityStatus" type="button">
           <wd-radio :value="undefined">
             全部
           </wd-radio>

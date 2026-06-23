@@ -53,7 +53,7 @@ import ErpDetailItems from '@/pages-erp/components/erp-detail-items.vue'
 import ErpAuditActions from '@/pages-erp/components/erp-audit-actions.vue'
 import type { ErpDetailItemField } from '@/pages-erp/components/types'
 import { enrichErpDocumentDetail, formatCount, formatMoney, openErpFile } from '@/pages-erp/utils'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -137,7 +137,7 @@ async function handleDelete() {
     await deleteStockCheck([Number(currentId.value)])
     toast.success('删除成功')
     uni.$emit('erp:stock-check:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

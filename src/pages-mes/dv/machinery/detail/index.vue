@@ -43,7 +43,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteMachinery, getMachinery } from '@/api/mes/dv/machinery'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import MachineryRecordList from '../components/machinery-record-list.vue'
@@ -114,7 +114,7 @@ async function handleDelete() {
     toast.close()
     toast.success('删除成功')
     uni.$emit('mes:dv:machinery:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } catch {
     toast.close()
   } finally {

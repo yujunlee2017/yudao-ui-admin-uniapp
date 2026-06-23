@@ -33,7 +33,9 @@
 
     <!-- 底部保存按钮 -->
     <view class="yd-detail-footer">
-      <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">保存</wd-button>
+      <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
+        保存
+      </wd-button>
     </view>
   </view>
 </template>
@@ -49,7 +51,7 @@ import { createDevice, getDevice, updateDevice } from '@/api/iot/device/device'
 import { getSimpleDeviceGroupList } from '@/api/iot/device/group'
 import { getSimpleProductList } from '@/api/iot/product/product'
 import EntityPicker from '@/pages-iot/components/entity-picker.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{ id?: number | any }>()
@@ -78,7 +80,7 @@ const formSchema = createFormSchema({
   productId: [{ required: true, message: '所属产品不能为空' }],
   deviceName: [
     { required: true, message: 'DeviceName 不能为空' },
-    { pattern: /^[a-zA-Z0-9_.\-:@]{4,32}$/, message: 'DeviceName 长度 4~32，支持字母、数字和 _-.:@' },
+    { pattern: /^[\w.\-:@]{4,32}$/, message: 'DeviceName 长度 4~32，支持字母、数字和 _-.:@' },
   ],
   nickname: [{ pattern: /^.{2,64}$/, message: '备注名称长度为 2~64 个字符' }],
   longitude: [{ validator: value => Number(value) >= -180 && Number(value) <= 180, message: '经度需在 -180 ~ 180 之间' }],
@@ -101,19 +103,23 @@ function handleBack() { navigateBackPlus('/pages-iot/device/device/index') }
 
 /** 加载设备详情 */
 async function getDetail() {
-  if (!props.id) return
+  if (!props.id)
+    return
   formData.value = await getDevice(Number(props.id))
 }
 
 /** 提交表单 */
 async function handleSubmit() {
   const { valid } = await formRef.value.validate()
-  if (!valid) return
+  if (!valid)
+    return
   formLoading.value = true
   try {
     const data = { ...formData.value }
-    if (data.longitude !== undefined && data.longitude !== '') data.longitude = Number(data.longitude)
-    if (data.latitude !== undefined && data.latitude !== '') data.latitude = Number(data.latitude)
+    if (data.longitude !== undefined && data.longitude !== '')
+      data.longitude = Number(data.longitude)
+    if (data.latitude !== undefined && data.latitude !== '')
+      data.latitude = Number(data.latitude)
     if (props.id) {
       await updateDevice(data)
       toast.success('修改成功')
@@ -122,7 +128,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('iot:device:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

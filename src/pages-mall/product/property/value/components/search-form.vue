@@ -13,18 +13,15 @@
     @close="visible = false"
   >
     <view class="yd-search-form-container">
-      <view v-if="propertyId == null" class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          所属属性
-        </view>
-        <view class="w-full" @click="propertyPickerVisible = true">
-          <wd-input
-            :model-value="getOptionText(propertyOptions, formData.propertyId)"
-            readonly
-            placeholder="请选择所属属性"
-          />
-        </view>
-      </view>
+      <yd-search-picker
+        v-if="propertyId == null"
+        v-model="formData.propertyId"
+        label="所属属性"
+        :columns="propertyOptions"
+        label-key="name"
+        value-key="id"
+        placeholder="请选择所属属性"
+      />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           属性值
@@ -41,16 +38,6 @@
       </view>
     </view>
   </wd-popup>
-
-  <!-- 所属属性选择器 -->
-  <wd-picker
-    v-model:visible="propertyPickerVisible"
-    :model-value="formData.propertyId"
-    :columns="propertyOptions"
-    label-key="name"
-    value-key="id"
-    @confirm="({ value }) => formData.propertyId = Number(value[0])"
-  />
 </template>
 
 <script lang="ts" setup>
@@ -68,7 +55,6 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const propertyPickerVisible = ref(false) // 属性选择器状态
 const propertyOptions = ref<{ id?: number, name: string }[]>([]) // 属性选项
 const formData = reactive({
   propertyId: undefined as number | undefined,

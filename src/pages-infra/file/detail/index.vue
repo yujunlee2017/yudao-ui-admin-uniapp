@@ -57,7 +57,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
 import { deleteFile, getFile } from '@/api/infra/file'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 import { formatFileSize } from '@/utils/download'
 
@@ -129,9 +129,7 @@ async function handleDelete() {
   try {
     await deleteFile(props.id)
     toast.success('删除成功')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

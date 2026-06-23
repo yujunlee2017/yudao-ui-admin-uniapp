@@ -68,7 +68,7 @@ import { getRouteProductListByRoute } from '@/api/mes/pro/route/product'
 import { getRouteProductBomList } from '@/api/mes/pro/route/productbom'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import RouteProcessList from '../components/route-process-list.vue'
@@ -192,7 +192,7 @@ async function handleDelete() {
     toast.close()
     toast.success('删除成功')
     uni.$emit('mes:pro:route:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } catch {
     toast.close()
   } finally {

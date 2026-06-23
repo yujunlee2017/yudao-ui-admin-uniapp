@@ -85,7 +85,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { cancelReturnVendor, deleteReturnVendor, getReturnVendor, submitReturnVendor } from '@/api/mes/wm/returnvendor'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmReturnVendorStatusEnum } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
 import ReturnVendorLineList from '../components/return-vendor-line-list.vue'
@@ -211,9 +211,7 @@ async function handleDelete() {
     await deleteReturnVendor(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:wm:returnvendor:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

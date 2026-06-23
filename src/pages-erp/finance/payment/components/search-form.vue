@@ -17,26 +17,7 @@
         </view>
         <wd-input v-model="formData.no" placeholder="请输入付款单号" clearable />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          付款时间
-        </view>
-        <view class="yd-search-form-date-range-container">
-          <view class="flex-1" @click="dateVisible.start = true">
-            <view class="yd-search-form-date-range-picker">
-              {{ formatDate(formData.paymentTime[0]) || '开始日期' }}
-            </view>
-          </view>
-          -
-          <view class="flex-1" @click="dateVisible.end = true">
-            <view class="yd-search-form-date-range-picker">
-              {{ formatDate(formData.paymentTime[1]) || '结束日期' }}
-            </view>
-          </view>
-        </view>
-        <wd-datetime-picker v-model="formData.paymentTime[0]" v-model:visible="dateVisible.start" title="请选择开始日期" type="date" />
-        <wd-datetime-picker v-model="formData.paymentTime[1]" v-model:visible="dateVisible.end" title="请选择结束日期" type="date" />
-      </view>
+      <yd-search-date-range v-model="formData.paymentTime" label="付款时间" />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           供应商
@@ -136,10 +117,6 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false)
-const dateVisible = reactive({
-  start: false,
-  end: false,
-})
 const selectedNames = reactive({
   account: '',
   creator: '',

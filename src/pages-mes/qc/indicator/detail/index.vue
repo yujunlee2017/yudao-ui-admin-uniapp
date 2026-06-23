@@ -60,7 +60,7 @@ import { deleteIndicator, getIndicator } from '@/api/mes/qc/indicator'
 import { getSimpleDictTypeList } from '@/api/system/dict/type'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -159,7 +159,7 @@ async function handleDelete() {
     await deleteIndicator(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:qc:indicator:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

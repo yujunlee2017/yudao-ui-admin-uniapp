@@ -103,7 +103,7 @@ import {
 } from '@/api/mall/promotion/seckill'
 import SpuSkuEditor from '@/pages-mall/promotion/components/spu-sku-editor.vue'
 import { fenToYuan, yuanToFen } from '@/utils/format'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 
@@ -211,7 +211,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mall:promotion-seckill-activity:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

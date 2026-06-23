@@ -88,7 +88,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { cancelOutsourceIssue, deleteOutsourceIssue, getOutsourceIssue, submitOutsourceIssue } from '@/api/mes/wm/outsourceissue'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmOutsourceIssueStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import OutsourceIssueLineList from '../components/outsource-issue-line-list.vue'
@@ -214,9 +214,7 @@ async function handleDelete() {
     await deleteOutsourceIssue(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:wm:outsourceissue:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

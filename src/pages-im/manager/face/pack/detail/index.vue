@@ -11,11 +11,14 @@
     <view>
       <wd-cell-group border>
         <wd-cell title="封面" center>
-          <image
+          <wd-img
             v-if="formData?.icon"
             :src="formData.icon"
-            class="h-96rpx w-96rpx rounded-12rpx bg-[#f0f2f5]"
+            width="96rpx"
+            height="96rpx"
+            radius="12rpx"
             mode="aspectFill"
+            enable-preview
           />
           <text v-else>-</text>
         </wd-cell>
@@ -66,7 +69,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
 import { deleteManagerFacePack, getManagerFacePack } from '@/api/im/manager/face/pack'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -138,9 +141,7 @@ async function handleDelete() {
     await deleteManagerFacePack(Number(props.id))
     toast.success('删除成功')
     uni.$emit('im:manager:face-pack:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

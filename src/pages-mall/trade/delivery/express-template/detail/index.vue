@@ -73,7 +73,7 @@ import { deleteDeliveryExpressTemplate, getDeliveryExpressTemplate } from '@/api
 import { getAreaTree } from '@/api/system/area'
 import { useAccess } from '@/hooks/useAccess'
 import { getDictLabel } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { fenToYuan } from '@/utils/format'
@@ -163,7 +163,7 @@ async function handleDelete() {
     await deleteDeliveryExpressTemplate(Number(props.id))
     toast.success('删除成功')
     uni.$emit('mall:delivery-express-template:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

@@ -66,7 +66,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { getRouteProcessListByProduct } from '@/api/mes/pro/route/process'
 import { finishWorkOrder, getWorkOrder } from '@/api/mes/pro/workorder'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
 import ProcessTaskList from '../components/process-task-list.vue'
@@ -155,7 +155,7 @@ async function handleFinish() {
     await finishWorkOrder(formData.value.id)
     toast.success('工单已完成')
     uni.$emit('mes:pro:task:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     finishing.value = false
   }

@@ -37,7 +37,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { deleteProductPropertyValue, getProductPropertyValue, getSimpleProductPropertyList } from '@/api/mall/product/property'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()
@@ -115,7 +115,7 @@ async function handleDelete() {
     await deleteProductPropertyValue(Number(props.id))
     toast.success('删除成功')
     uni.$emit('mall:product-property-value:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

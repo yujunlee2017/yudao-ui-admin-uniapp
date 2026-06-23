@@ -73,7 +73,7 @@ import {
   updatePayChannel,
 } from '@/api/pay/channel'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE, PayChannelEnum } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -230,9 +230,7 @@ async function handleSubmit() {
       await createPayChannel(data)
       toast.success('新增成功')
     }
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

@@ -89,7 +89,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createProductComment } from '@/api/mall/product/comment'
 import { getProductSpu, getSimpleProductSpuList } from '@/api/mall/product/spu'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 
 definePage({
@@ -204,9 +204,7 @@ async function handleSubmit() {
     })
     toast.success('新增成功')
     uni.$emit('mall:product-comment:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

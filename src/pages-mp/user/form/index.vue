@@ -58,7 +58,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, ref } from 'vue'
 import { getSimpleTagList } from '@/api/mp/tag'
 import { getUser, updateUser } from '@/api/mp/user'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { getMpRouteNumber, useMpRouteParams } from '../../utils/route'
 
 const props = defineProps<{
@@ -147,9 +147,7 @@ async function handleSubmit() {
     })
     toast.success('修改成功')
     uni.$emit('mp:user:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

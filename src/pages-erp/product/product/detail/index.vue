@@ -52,7 +52,7 @@ import { deleteProduct, getProduct } from '@/api/erp/product/product'
 import { useAccess } from '@/hooks/useAccess'
 import ErpBasicActions from '@/pages-erp/components/erp-basic-actions.vue'
 import { enrichErpDocumentDetail, formatMoney, formatNumber } from '@/pages-erp/utils'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 
 const props = defineProps<{ id?: number | any }>()
@@ -115,7 +115,7 @@ async function handleDelete() {
     await deleteProduct(Number(currentId.value))
     toast.success('删除成功')
     uni.$emit('erp:product:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

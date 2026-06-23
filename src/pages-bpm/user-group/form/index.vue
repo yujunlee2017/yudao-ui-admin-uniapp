@@ -70,7 +70,7 @@ import { computed, onMounted, ref } from 'vue'
 import { createUserGroup, getUserGroup, updateUserGroup } from '@/api/bpm/user-group'
 import { UserPicker } from '@/components/system-select'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -133,9 +133,7 @@ async function handleSubmit() {
       await createUserGroup(formData.value)
       toast.success('新增成功')
     }
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

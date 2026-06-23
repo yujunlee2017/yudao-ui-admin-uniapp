@@ -49,7 +49,7 @@ import { getWarehouseLocationSimpleList } from '@/api/mes/wm/warehouse/location'
 import { getWarehouseAreaSimpleList } from '@/api/mes/wm/warehouse/area'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import WorkstationResourceList from '../components/workstation-resource-list.vue'
@@ -136,7 +136,7 @@ async function handleDelete() {
     toast.close()
     toast.success('删除成功')
     uni.$emit('mes:md:workstation:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } catch {
     toast.close()
   } finally {

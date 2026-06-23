@@ -87,7 +87,7 @@ import {
 } from '@/api/mall/promotion/point'
 import SpuSkuEditor from '@/pages-mall/promotion/components/spu-sku-editor.vue'
 import { fenToYuan, yuanToFen } from '@/utils/format'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{ id?: number | any }>()
@@ -179,7 +179,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mall:promotion-point-activity:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

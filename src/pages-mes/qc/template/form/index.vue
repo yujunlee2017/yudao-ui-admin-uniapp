@@ -66,7 +66,7 @@ import { createTemplate, getTemplate, updateTemplate } from '@/api/mes/qc/templa
 import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import TemplateIndicatorSection from '../components/template-indicator-section.vue'
@@ -181,7 +181,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:qc:template:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

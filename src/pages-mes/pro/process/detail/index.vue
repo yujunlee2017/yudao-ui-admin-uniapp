@@ -38,7 +38,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteProcess, getProcess } from '@/api/mes/pro/process'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import ProcessContentList from '../components/process-content-list.vue'
@@ -115,7 +115,7 @@ async function handleDelete() {
     toast.close()
     toast.success('删除成功')
     uni.$emit('mes:pro:process:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } catch {
     toast.close()
   } finally {

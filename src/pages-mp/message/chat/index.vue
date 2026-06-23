@@ -69,7 +69,7 @@
             :class="item.sendFrom === 2 ? 'flex-row-reverse' : 'flex-row'"
           >
             <view
-              class="h-64rpx w-64rpx shrink-0 flex items-center justify-center rounded-full text-24rpx text-white"
+              class="h-64rpx w-64rpx flex shrink-0 items-center justify-center rounded-full text-24rpx text-white"
               :class="item.sendFrom === 2 ? 'bg-[#1677ff]' : 'bg-[#07c160]'"
             >
               {{ item.sendFrom === 2 ? '号' : '粉' }}

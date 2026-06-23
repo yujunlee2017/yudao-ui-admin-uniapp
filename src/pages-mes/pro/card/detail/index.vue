@@ -69,7 +69,7 @@ import { cancelCard, deleteCard, finishCard, getCard, submitCard } from '@/api/m
 import { getBarcodeByBusiness } from '@/api/mes/wm/barcode'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import CardProcessList from '../components/card-process-list.vue'
@@ -210,7 +210,7 @@ async function handleDelete() {
     await deleteCard(formData.value.id)
     toast.success('删除成功')
     uni.$emit('mes:pro:card:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

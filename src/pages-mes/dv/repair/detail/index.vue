@@ -133,7 +133,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteRepair, getRepair, submitRepair } from '@/api/mes/dv/repair'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesDvRepairStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import RepairLineList from '../components/repair-line-list.vue'
@@ -239,9 +239,7 @@ async function handleDelete() {
     await deleteRepair(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:dv:repair:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

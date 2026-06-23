@@ -78,7 +78,7 @@ import {
 } from '@/api/mall/promotion/coupon/coupon-template'
 import { useAccess } from '@/hooks/useAccess'
 import { formatDisplayMoney } from '@/utils/format'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE, PromotionDiscountTypeEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -151,7 +151,7 @@ async function handleDelete() {
     await deletePromotionCouponTemplate(Number(props.id))
     toast.success('删除成功')
     uni.$emit('mall:promotion-coupon-template:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

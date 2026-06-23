@@ -15,7 +15,9 @@
           </wd-form-item>
           <wd-form-item title="分类状态" title-width="200rpx" center prop="status">
             <wd-radio-group v-model="formData.status" type="button">
-              <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)" :key="dict.value" :value="dict.value">{{ dict.label }}</wd-radio>
+              <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)" :key="dict.value" :value="dict.value">
+                {{ dict.label }}
+              </wd-radio>
             </wd-radio-group>
           </wd-form-item>
           <wd-form-item title="分类描述" title-width="200rpx" prop="description">
@@ -27,7 +29,9 @@
 
     <!-- 底部保存按钮 -->
     <view class="yd-detail-footer">
-      <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">保存</wd-button>
+      <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
+        保存
+      </wd-button>
     </view>
   </view>
 </template>
@@ -39,7 +43,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createProductCategory, getProductCategory, updateProductCategory } from '@/api/iot/product/category'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -99,7 +103,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('iot:product-category:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

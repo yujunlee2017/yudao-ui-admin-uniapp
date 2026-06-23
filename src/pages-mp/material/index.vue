@@ -52,11 +52,15 @@
           class="mb-24rpx rounded-12rpx bg-white p-24rpx shadow-sm"
         >
           <template v-if="currentType === 'image'">
-            <image
+            <wd-img
               v-if="item.url"
               :src="item.url"
-              class="mb-16rpx h-360rpx w-full rounded-8rpx"
+              class="mb-16rpx"
+              width="100%"
+              height="360rpx"
+              radius="8rpx"
               mode="aspectFit"
+              enable-preview
             />
             <view class="text-30rpx text-[#333] font-semibold">
               {{ item.name || item.mediaId || '图片素材' }}

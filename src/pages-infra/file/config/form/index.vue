@@ -181,7 +181,7 @@ import type { FileConfig } from '@/api/infra/file/config'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createFileConfig, getFileConfig, updateFileConfig } from '@/api/infra/file/config'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -275,9 +275,7 @@ async function handleSubmit() {
       await createFileConfig(formData.value)
       toast.success('新增成功')
     }
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

@@ -49,7 +49,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { deleteWarehouse, getWarehouse, updateWarehouseDefaultStatus } from '@/api/erp/stock/warehouse'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatMoney } from '@/pages-erp/utils'
 
@@ -111,7 +111,7 @@ async function handleDelete() {
     await deleteWarehouse(Number(currentId.value))
     toast.success('删除成功')
     uni.$emit('erp:warehouse:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

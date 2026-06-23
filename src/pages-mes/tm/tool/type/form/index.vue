@@ -55,7 +55,7 @@ import { createToolType, getToolType, updateToolType } from '@/api/mes/tm/tool/t
 import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -169,7 +169,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:tm:tool-type:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

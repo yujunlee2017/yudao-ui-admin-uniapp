@@ -75,7 +75,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { cancelWorkOrder, deleteWorkOrder, finishWorkOrder, getWorkOrder } from '@/api/mes/pro/workorder'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
 import WorkOrderBomList from '../components/workorder-bom-list.vue'
@@ -213,7 +213,7 @@ async function handleDelete() {
     await deleteWorkOrder(formData.value.id)
     toast.success('删除成功')
     uni.$emit('mes:pro:workorder:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

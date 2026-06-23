@@ -31,10 +31,12 @@
           @click="handleDetail(item)"
         >
           <view class="flex items-center gap-20rpx p-24rpx">
-            <image
+            <wd-img
               v-if="item.avatar"
               :src="item.avatar"
-              class="h-88rpx w-88rpx rounded-12rpx bg-[#f0f2f5]"
+              width="88rpx"
+              height="88rpx"
+              radius="12rpx"
               mode="aspectFill"
             />
             <view v-else class="h-88rpx w-88rpx flex items-center justify-center rounded-12rpx bg-[#f0f2f5] text-24rpx text-[#bbb]">

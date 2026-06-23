@@ -160,7 +160,7 @@ import CrmFollowupRecords from '@/pages-crm/followup/components/followup-list.vu
 import CrmOperateLogs from '@/pages-crm/operate-log/components/operate-log-list.vue'
 import CrmPermissionTeam from '@/pages-crm/permission/components/permission-list.vue'
 import CrmTransferForm from '@/pages-crm/permission/components/transfer-form.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
 import { formatMoney } from '@/utils/format'
@@ -275,7 +275,7 @@ function handleBusinessStatus() {
 /** 退出团队后返回 */
 function handleQuitTeam() {
   uni.$emit('crm:business:reload')
-  setTimeout(() => handleBack(), 500)
+  delay(handleBack)
 }
 
 /** 编辑 */
@@ -298,7 +298,7 @@ async function handleDelete() {
     await deleteBusiness(businessId.value)
     toast.success('删除成功')
     uni.$emit('crm:business:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

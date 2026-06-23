@@ -219,6 +219,11 @@ export function navigateBackPlus(fallbackUrl?: string) {
   }
 }
 
+/** 延迟执行回调，给成功提示等交互留出展示时间 */
+export function delay(callback: () => void, ms = 500) {
+  setTimeout(callback, ms)
+}
+
 /** 获取 wd-navbar 导航栏高度 */
 export function getNavbarHeight() {
   const systemInfo = uni.getSystemInfoSync()

@@ -23,12 +23,15 @@
         预览图
       </view>
       <view v-if="formData.previewPicUrls?.length" class="flex flex-wrap gap-12rpx">
-        <image
+        <wd-img
           v-for="url in formData.previewPicUrls"
           :key="url"
           :src="url"
-          class="h-120rpx w-120rpx rounded-8rpx bg-[#eee]"
+          width="120rpx"
+          height="120rpx"
+          radius="8rpx"
           mode="aspectFill"
+          enable-preview
         />
       </view>
       <text v-else class="text-28rpx text-[#999]">-</text>
@@ -73,7 +76,7 @@ import {
   usePromotionDiyTemplate,
 } from '@/api/mall/promotion/diy/template'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()
@@ -168,7 +171,7 @@ async function handleDelete() {
     await deletePromotionDiyTemplate(Number(props.id))
     toast.success('删除成功')
     uni.$emit('mall:promotion-diy-template:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

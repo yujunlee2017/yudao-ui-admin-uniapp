@@ -32,10 +32,12 @@
           @longpress="handleLongPress(item)"
         >
           <view class="flex gap-20rpx p-24rpx">
-            <image
+            <wd-img
               v-if="item.materialCoverUrl"
               :src="item.materialCoverUrl"
-              class="h-120rpx w-120rpx rounded-12rpx bg-[#f0f2f5]"
+              width="120rpx"
+              height="120rpx"
+              radius="12rpx"
               mode="aspectFill"
             />
             <view v-else class="h-120rpx w-120rpx flex items-center justify-center rounded-12rpx bg-[#f0f2f5] text-24rpx text-[#bbb]">

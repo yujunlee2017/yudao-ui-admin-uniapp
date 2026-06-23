@@ -74,7 +74,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteSalesNotice, getSalesNotice, submitSalesNotice } from '@/api/mes/wm/salesnotice'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmSalesNoticeStatusEnum } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
 import SalesNoticeLineList from '../components/sales-notice-line-list.vue'
@@ -180,9 +180,7 @@ async function handleDelete() {
     await deleteSalesNotice(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:wm:salesnotice:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

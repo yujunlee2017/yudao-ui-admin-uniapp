@@ -73,7 +73,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deletePackage, finishPackage, getPackage } from '@/api/mes/wm/packages'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmPackageStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import PackageLineList from '../components/package-line-list.vue'
@@ -190,9 +190,7 @@ async function handleDelete() {
     await deletePackage(packageId.value)
     toast.success('删除成功')
     uni.$emit('mes:wm:packages:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

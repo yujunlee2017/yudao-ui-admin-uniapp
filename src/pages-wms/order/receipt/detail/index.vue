@@ -97,7 +97,7 @@ import {
 import { useAccess } from '@/hooks/useAccess'
 import { WmsOrderDeleteStatusList, WmsOrderUpdateStatusList } from '@/pages-wms/utils/constants'
 import { formatPrice, formatQuantity, multiplyPrice } from '@/pages-wms/utils/format'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
 
@@ -190,9 +190,7 @@ async function handleDelete() {
     await deleteReceiptOrder(Number(props.id))
     toast.success('删除成功')
     uni.$emit('wms:receipt-order:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

@@ -85,7 +85,7 @@ import { getSimpleChannelList } from '@/api/im/manager/channel'
 import { getSimpleManagerChannelMaterialList } from '@/api/im/manager/channel/material'
 import { sendManagerChannelMessage } from '@/api/im/manager/channel/message'
 import { UserPicker } from '@/components/system-select'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
 
 definePage({
@@ -178,7 +178,7 @@ async function handleSubmit() {
     })
     toast.success('推送成功')
     uni.$emit('im:manager:channel-message:reload')
-    setTimeout(handleBack, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

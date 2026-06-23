@@ -87,7 +87,7 @@ import {
 } from '@/api/mes/wm/outsourcereceipt'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmOutsourceReceiptStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import OutsourceReceiptLineList from '../components/outsource-receipt-line-list.vue'
@@ -207,9 +207,7 @@ async function handleDelete() {
     await deleteOutsourceReceipt(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:wm:outsourcereceipt:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

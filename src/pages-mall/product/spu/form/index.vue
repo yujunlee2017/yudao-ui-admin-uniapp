@@ -196,7 +196,7 @@ import { createProductSpu, getProductSpu, updateProductSpu } from '@/api/mall/pr
 import { getSimpleProductBrandList } from '@/api/mall/product/brand'
 import { getProductCategoryList } from '@/api/mall/product/category'
 import { getSimpleDeliveryExpressTemplateList } from '@/api/mall/trade/delivery/express-template'
-import { currRoute, navigateBackPlus } from '@/utils'
+import { currRoute, delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import SkuEditor from '@/pages-mall/product/spu/components/sku-editor.vue'
 import { getIntDictOptions } from '@/hooks/useDict'
@@ -400,7 +400,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mall:product-spu:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

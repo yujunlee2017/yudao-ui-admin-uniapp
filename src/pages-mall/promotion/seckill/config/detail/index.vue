@@ -14,12 +14,15 @@
       <wd-cell title="结束时间" :value="formData.endTime || '-'" />
       <wd-cell title="轮播图">
         <view v-if="formData.sliderPicUrls?.length" class="flex flex-wrap gap-12rpx">
-          <image
+          <wd-img
             v-for="(pic, index) in formData.sliderPicUrls"
             :key="index"
             :src="pic"
-            class="h-112rpx w-112rpx rounded-8rpx bg-[#f5f5f5]"
+            width="112rpx"
+            height="112rpx"
+            radius="8rpx"
             mode="aspectFill"
+            enable-preview
           />
         </view>
         <text v-else>-</text>
@@ -59,7 +62,7 @@ import {
   updatePromotionSeckillConfigStatus,
 } from '@/api/mall/promotion/seckill'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -133,7 +136,7 @@ async function handleDelete() {
     await deletePromotionSeckillConfig(Number(props.id))
     toast.success('删除成功')
     uni.$emit('mall:promotion-seckill-config:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

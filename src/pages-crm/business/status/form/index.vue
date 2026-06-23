@@ -114,7 +114,7 @@ import {
   updateBusinessStatus,
 } from '@/api/crm/business/status'
 import { getSimpleDeptList } from '@/api/system/dept'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { handleTree } from '@/utils/tree'
 import { createFormSchema } from '@/utils/wot'
 
@@ -214,9 +214,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('crm:businessStatus:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

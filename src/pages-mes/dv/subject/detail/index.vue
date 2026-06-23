@@ -57,7 +57,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteSubject, getSubject } from '@/api/mes/dv/subject'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -135,9 +135,7 @@ async function handleDelete() {
     await deleteSubject(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:dv:subject:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

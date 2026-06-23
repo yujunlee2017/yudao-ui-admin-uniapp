@@ -70,7 +70,7 @@ import {
 } from '@/api/mall/promotion/point'
 import { useAccess } from '@/hooks/useAccess'
 import { formatDisplayMoney } from '@/utils/format'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()
@@ -142,7 +142,7 @@ async function handleDelete() {
     await deletePromotionPointActivity(Number(props.id))
     toast.success('删除成功')
     uni.$emit('mall:promotion-point-activity:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

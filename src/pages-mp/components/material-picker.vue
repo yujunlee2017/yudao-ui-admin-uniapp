@@ -29,10 +29,13 @@
           >
             <NewsCard v-if="type === 'news'" :articles="getNewsArticles(item)" />
             <template v-else-if="type === 'image'">
-              <image
+              <wd-img
                 v-if="item.url"
                 :src="item.url"
-                class="mb-16rpx h-280rpx w-full rounded-8rpx"
+                class="mb-16rpx"
+                width="100%"
+                height="280rpx"
+                radius="8rpx"
                 mode="aspectFit"
               />
               <view class="text-28rpx text-[#333]">

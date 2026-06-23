@@ -13,7 +13,7 @@
         <wd-cell title="供应商评分" :value="formData?.score ?? '-'" />
         <wd-cell title="供应商简介" :value="formData?.description || '-'" />
         <wd-cell title="供应商 LOGO">
-          <image v-if="formData?.logo" :src="formData.logo" mode="aspectFit" class="h-96rpx w-96rpx rounded-8rpx" @click="handlePreviewLogo" />
+          <wd-img v-if="formData?.logo" :src="formData.logo" width="96rpx" height="96rpx" radius="8rpx" mode="aspectFit" enable-preview />
           <text v-else>-</text>
         </wd-cell>
         <wd-cell title="供应商地址" :value="formData?.address || '-'" />
@@ -58,7 +58,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteVendor, getVendor } from '@/api/mes/md/vendor'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import VendorItemReceiptList from '../components/vendor-item-receipt-list.vue'
@@ -104,12 +104,6 @@ function handleEdit() {
   uni.navigateTo({ url: `/pages-mes/md/vendor/form/index?id=${currentId.value}` })
 }
 
-/** 预览供应商 LOGO */
-function handlePreviewLogo() {
-  if (formData.value?.logo)
-    uni.previewImage({ urls: [formData.value.logo], current: formData.value.logo })
-}
-
 async function handleDelete() {
   if (!currentId.value) {
     return
@@ -126,7 +120,7 @@ async function handleDelete() {
     toast.close()
     toast.success('删除成功')
     uni.$emit('mes:md:vendor:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } catch {
     toast.close()
   } finally {

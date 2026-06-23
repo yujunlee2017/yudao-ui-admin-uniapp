@@ -21,12 +21,7 @@
           </view>
         </wd-cell>
         <wd-cell title="二维码">
-          <image
-            v-if="formData?.qrCodeUrl"
-            :src="formData.qrCodeUrl"
-            class="h-180rpx w-180rpx"
-            mode="aspectFit"
-          />
+          <wd-img v-if="formData?.qrCodeUrl" :src="formData.qrCodeUrl" width="180rpx" height="180rpx" mode="aspectFit" enable-preview />
           <text v-else>-</text>
         </wd-cell>
         <wd-cell title="备注" :value="formData?.remark || '-'" />
@@ -71,7 +66,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, ref } from 'vue'
 import { clearAccountQuota, deleteAccount, generateAccountQrCode, getAccount } from '@/api/mp/account'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 import { getMpRouteNumber, useMpRouteParams } from '../../utils/route'
 
@@ -151,9 +146,7 @@ async function handleDelete() {
     await deleteAccount(id.value)
     toast.success('删除成功')
     uni.$emit('mp:account:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

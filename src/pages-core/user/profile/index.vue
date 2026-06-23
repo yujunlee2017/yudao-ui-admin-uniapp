@@ -10,9 +10,7 @@
     <!-- 信息区域 -->
     <wd-cell-group custom-class="cell-group" border>
       <wd-cell title="头像" is-link center @click="handleEditAvatar">
-        <view class="ml-auto h-50rpx w-50rpx overflow-hidden rounded-full">
-          <image :src="userProfile?.avatar" mode="aspectFill" class="h-full w-full" />
-        </view>
+        <wd-img :src="userProfile?.avatar" width="50rpx" height="50rpx" mode="aspectFill" round />
       </wd-cell>
       <wd-cell title="昵称" :value="userProfile?.nickname || '-'" is-link @click="handleEdit('nickname')" />
       <wd-cell title="性别" :value="getDictLabel(DICT_TYPE.SYSTEM_USER_SEX, userProfile?.sex) || '-'" is-link @click="handleEdit('sex')" />

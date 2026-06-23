@@ -64,7 +64,7 @@ import { createItemCategory, getItemCategory, updateItemCategory } from '@/api/w
 import { getIntDictOptions } from '@/hooks/useDict'
 import ItemCategoryPicker from '@/pages-wms/components/item-category-picker.vue'
 import { generateWmsCode } from '@/pages-wms/utils/constants'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -129,9 +129,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('wms:item-category:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

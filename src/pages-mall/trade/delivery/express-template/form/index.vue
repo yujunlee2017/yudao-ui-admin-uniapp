@@ -80,7 +80,7 @@ import { getAreaTree } from '@/api/system/area'
 import RegionEditor from '@/pages-mall/trade/delivery/express-template/components/region-editor.vue'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { fenToYuan, yuanToFen } from '@/utils/format'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DeliveryExpressChargeModeEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -175,7 +175,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mall:delivery-express-template:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

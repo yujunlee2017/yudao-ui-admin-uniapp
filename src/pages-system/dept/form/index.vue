@@ -82,7 +82,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createDept, getDept, updateDept } from '@/api/system/dept'
 import UserPicker from '@/components/system-select/user-picker.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import DeptPicker from './components/dept-picker.vue'
@@ -149,9 +149,7 @@ async function handleSubmit() {
       await createDept(formData.value)
       toast.success('新增成功')
     }
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

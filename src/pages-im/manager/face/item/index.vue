@@ -31,10 +31,12 @@
           @click="handleDetail(item)"
         >
           <view class="flex items-center gap-20rpx p-24rpx">
-            <image
+            <wd-img
               v-if="item.url"
               :src="item.url"
-              class="h-100rpx w-100rpx rounded-12rpx bg-[#f0f2f5]"
+              width="100rpx"
+              height="100rpx"
+              radius="12rpx"
               mode="aspectFit"
             />
             <view class="min-w-0 flex-1">

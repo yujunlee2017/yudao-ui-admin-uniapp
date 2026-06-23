@@ -87,7 +87,7 @@ import { createItemType, getItemType, getItemTypeList, updateItemType } from '@/
 import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { getIntDictOptions, getStrDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { handleTree } from '@/utils/tree'
 import { createFormSchema } from '@/utils/wot'
@@ -245,7 +245,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:md:item:type:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

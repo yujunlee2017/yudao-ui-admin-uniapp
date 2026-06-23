@@ -12,12 +12,7 @@
       <wd-cell title="编号" :value="formData.id != null ? String(formData.id) : '-'" />
       <wd-cell title="标题" :value="formData.title || '-'" />
       <wd-cell title="图片">
-        <image
-          v-if="formData.picUrl"
-          :src="formData.picUrl"
-          class="h-112rpx w-112rpx rounded-8rpx bg-[#f5f5f5]"
-          mode="aspectFill"
-        />
+        <wd-img v-if="formData.picUrl" :src="formData.picUrl" width="112rpx" height="112rpx" radius="8rpx" mode="aspectFill" enable-preview />
         <text v-else>-</text>
       </wd-cell>
       <wd-cell title="跳转地址" :value="formData.url || '-'" />
@@ -56,7 +51,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
 import { deletePromotionBanner, getPromotionBanner } from '@/api/mall/promotion/banner'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -113,7 +108,7 @@ async function handleDelete() {
     await deletePromotionBanner(Number(props.id))
     toast.success('删除成功')
     uni.$emit('mall:promotion-banner:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

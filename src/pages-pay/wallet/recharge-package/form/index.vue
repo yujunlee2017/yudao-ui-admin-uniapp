@@ -66,7 +66,7 @@ import {
   updatePayWalletRechargePackage,
 } from '@/api/pay/wallet/rechargePackage'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import { fenToYuan, yuanToFen } from '../../../utils'
@@ -145,9 +145,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('pay:recharge-package:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

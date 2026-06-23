@@ -164,7 +164,7 @@ import {
   submitProductIssue,
   updateProductIssue,
 } from '@/api/mes/wm/productissue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesAutoCodeRuleCode, MesWmProductIssueStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
@@ -481,9 +481,7 @@ async function handleSubmitIssue() {
     await submitProductIssue(currentId.value)
     toast.success('提交成功')
     uni.$emit('mes:wm:productissue:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     submitLoading.value = false
   }
@@ -514,9 +512,7 @@ async function handleStockIssue() {
     await stockProductIssue(currentId.value)
     toast.success('拣货成功')
     uni.$emit('mes:wm:productissue:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     stockLoading.value = false
   }
@@ -540,9 +536,7 @@ async function handleFinishIssue() {
     await finishProductIssue(currentId.value)
     toast.success('完成成功')
     uni.$emit('mes:wm:productissue:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     finishLoading.value = false
   }

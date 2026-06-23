@@ -47,7 +47,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { deleteAccount, getAccount, updateAccountDefaultStatus } from '@/api/erp/finance/account'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -109,7 +109,7 @@ async function handleDelete() {
     await deleteAccount(Number(currentId.value))
     toast.success('删除成功')
     uni.$emit('erp:account:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

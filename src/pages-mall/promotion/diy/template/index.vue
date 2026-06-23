@@ -31,12 +31,9 @@
           @click="handleDetail(item)"
         >
           <view class="mb-16rpx flex items-start gap-16rpx">
-            <image
-              v-if="item.previewPicUrls?.[0]"
-              :src="item.previewPicUrls[0]"
-              class="h-112rpx w-112rpx shrink-0 rounded-8rpx bg-[#f5f5f5]"
-              mode="aspectFill"
-            />
+            <view v-if="item.previewPicUrls?.[0]" class="shrink-0">
+              <wd-img :src="item.previewPicUrls[0]" width="112rpx" height="112rpx" radius="8rpx" mode="aspectFill" />
+            </view>
             <view class="min-w-0 flex-1">
               <view class="mb-8rpx flex items-start justify-between gap-16rpx">
                 <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">

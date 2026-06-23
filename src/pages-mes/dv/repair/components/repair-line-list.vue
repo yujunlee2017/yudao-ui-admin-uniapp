@@ -46,7 +46,7 @@
         </view>
         <view v-if="item.malfunctionUrl" class="mb-8rpx flex text-26rpx text-[#666]">
           <text class="mr-8rpx shrink-0 text-[#999]">故障图片：</text>
-          <image :src="item.malfunctionUrl" mode="aspectFill" class="h-96rpx w-96rpx rounded-8rpx" @click="handlePreviewImage(item.malfunctionUrl)" />
+          <wd-img :src="item.malfunctionUrl" width="96rpx" height="96rpx" radius="8rpx" mode="aspectFill" enable-preview />
         </view>
         <view class="mb-8rpx flex text-26rpx text-[#666]">
           <text class="mr-8rpx shrink-0 text-[#999]">维修描述：</text>
@@ -245,14 +245,6 @@ function openSubjectSelector() {
 function handleSubjectConfirm(item: DvSubjectVO) {
   selectedSubject.value = item
   formData.value.subjectId = item.id
-}
-
-/** 预览故障图片 */
-function handlePreviewImage(url: string) {
-  uni.previewImage({
-    urls: [url],
-    current: url,
-  })
 }
 
 /** 提交明细 */

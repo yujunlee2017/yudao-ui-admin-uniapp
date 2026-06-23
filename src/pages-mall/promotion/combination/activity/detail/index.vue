@@ -72,7 +72,7 @@ import {
 } from '@/api/mall/promotion/combination'
 import { useAccess } from '@/hooks/useAccess'
 import { formatDisplayMoney } from '@/utils/format'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()
@@ -144,7 +144,7 @@ async function handleDelete() {
     await deletePromotionCombinationActivity(Number(props.id))
     toast.success('删除成功')
     uni.$emit('mall:promotion-combination-activity:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

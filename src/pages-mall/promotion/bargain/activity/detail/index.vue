@@ -60,7 +60,7 @@ import {
 } from '@/api/mall/promotion/bargain'
 import { useAccess } from '@/hooks/useAccess'
 import { formatDisplayMoney } from '@/utils/format'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -133,7 +133,7 @@ async function handleDelete() {
     await deletePromotionBargainActivity(Number(props.id))
     toast.success('删除成功')
     uni.$emit('mall:promotion-bargain-activity:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }
