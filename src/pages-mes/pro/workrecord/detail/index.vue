@@ -10,39 +10,33 @@
     <!-- 详情内容 -->
     <view>
       <wd-cell-group border>
-        <wd-cell title="编号" :value="formatFieldValue(formData?.id) || '-'" />
-        <wd-cell title="用户" :value="formatFieldValue(formData?.userNickname) || '-'" />
-        <wd-cell title="工作站编码" :value="formatFieldValue(formData?.workstationCode) || '-'" />
-        <wd-cell title="工作站名称" :value="formatFieldValue(formData?.workstationName) || '-'" />
-        <wd-cell title="操作类型" :value="formatFieldValue(formData?.type) || '-'" />
-        <wd-cell title="创建时间" :value="formatFieldValue(formData?.createTime) || '-'" />
-        <wd-cell title="userId" :value="formatFieldValue(formData?.userId) || '-'" />
-        <wd-cell title="workstationId" :value="formatFieldValue(formData?.workstationId) || '-'" />
-        <wd-cell title="remark" :value="formatFieldValue(formData?.remark) || '-'" />
+        <wd-cell title="编号" :value="formData?.id ? String(formData.id) : '-'" />
+        <wd-cell title="用户" :value="formData?.userNickname || '-'" />
+        <wd-cell title="工作站编码" :value="formData?.workstationCode || '-'" />
+        <wd-cell title="工作站名称" :value="formData?.workstationName || '-'" />
+        <wd-cell title="操作类型">
+          <dict-tag v-if="formData?.type != null" :type="DICT_TYPE.MES_PRO_WORK_RECORD_TYPE" :value="formData.type" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="操作时间" :value="formatDateTime(formData?.createTime) || '-'" />
+        <wd-cell title="备注" :value="formData?.remark || '-'" />
       </wd-cell-group>
-    </view>
-
-    <!-- 底部操作按钮 -->
-    <view class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-
-      </view>
     </view>
   </view>
 </template>
 
 <script lang="ts" setup>
 import type { ProWorkRecordLogVO } from '@/api/mes/pro/workrecord'
-import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { getWorkRecordLog } from '@/api/mes/pro/workrecord'
-import { useAccess } from '@/hooks/useAccess'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{
-  id?: number | string | any
+  id?: number | string
 }>()
 
 definePage({
@@ -52,39 +46,25 @@ definePage({
   },
 })
 
-const { hasAccessByCodes } = useAccess()
-const dialog = useDialog()
 const toast = useToast()
-const formData = ref<any>() // 详情数据
-const deleting = ref(false) // 删除状态
+const formData = ref<ProWorkRecordLogVO>() // 详情数据
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/pro/workrecord/detail/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/pro/workrecord/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
-}
-
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
+    formData.value = undefined
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getWorkRecordLog(props.id)
+    formData.value = await getWorkRecordLog(currentId.value)
   } finally {
     toast.close()
   }
@@ -92,6 +72,10 @@ async function getDetail() {
 
 /** 初始化 */
 onMounted(() => {
+  getDetail()
+})
+
+watch(currentId, () => {
   getDetail()
 })
 </script>

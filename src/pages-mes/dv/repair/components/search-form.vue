@@ -8,6 +8,8 @@
   <wd-popup
     v-model="visible"
     position="top"
+    transition="fade"
+    :duration="0"
     :custom-style="getTopPopupStyle()"
     :modal-style="getTopPopupModalStyle()"
     @close="visible = false"
@@ -37,31 +39,34 @@
         <view class="yd-search-form-label">
           设备
         </view>
-        <wd-input
-          v-model="formData.machineryId"
-          placeholder="请输入设备"
-          clearable
-        />
+        <view class="yd-search-form-selector" @click="openMachinerySelector">
+          <text v-if="selectedMachineryText" class="text-[#333]">
+            {{ selectedMachineryText }}
+          </text>
+          <text v-else class="text-[#999]">
+            请选择设备
+          </text>
+        </view>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           维修结果
         </view>
-        <wd-input
-          v-model="formData.result"
-          placeholder="请输入维修结果"
-          clearable
-        />
+        <wd-radio-group v-model="formData.result" type="button">
+          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_DV_REPAIR_RESULT)" :key="dict.value" :value="dict.value">
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           单据状态
         </view>
-        <wd-input
-          v-model="formData.status"
-          placeholder="请输入单据状态"
-          clearable
-        />
+        <wd-radio-group v-model="formData.status" type="button">
+          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_DV_REPAIR_STATUS)" :key="dict.value" :value="dict.value">
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -73,61 +78,127 @@
       </view>
     </view>
   </wd-popup>
+
+  <MachinerySelector ref="machinerySelectorRef" @confirm="handleMachineryConfirm" />
 </template>
 
 <script lang="ts" setup>
+import type { DvMachineryVO } from '@/api/mes/dv/machinery'
+import type { DvRepairQueryParams } from '@/api/mes/dv/repair'
 import { computed, reactive, ref } from 'vue'
+import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
+import MachinerySelector from '../../machinery/components/machinery-selector.vue'
 
 const emit = defineEmits<{
-  search: [data: Record<string, any>]
+  search: [data: DvRepairQueryParams]
   reset: []
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
+const machinerySelectorRef = ref<InstanceType<typeof MachinerySelector>>() // 设备选择器
+const selectedMachinery = ref<DvMachineryVO>() // 已选设备
 const formData = reactive({
-  code: undefined as any,
-  name: undefined as any,
-  machineryId: undefined as any,
-  result: undefined as any,
-  status: undefined as any,
+  code: '',
+  name: '',
+  machineryId: undefined as number | undefined,
+  result: undefined as number | undefined,
+  status: undefined as number | undefined,
 }) // 搜索表单数据
+const selectedMachineryText = computed(() => {
+  return selectedMachinery.value
+    ? `${selectedMachinery.value.code || '-'} / ${selectedMachinery.value.name || '-'}`
+    : ''
+})
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
   const conditions: string[] = []
-  if (formData.code !== undefined && formData.code !== '') {
-    conditions.push(`维修单编号:${formData.code}`)
+  if (formData.code) {
+    conditions.push(`编号:${formData.code}`)
   }
-  if (formData.name !== undefined && formData.name !== '') {
-    conditions.push(`维修单名称:${formData.name}`)
+  if (formData.name) {
+    conditions.push(`名称:${formData.name}`)
   }
-  if (formData.machineryId !== undefined && formData.machineryId !== '') {
-    conditions.push(`设备:${formData.machineryId}`)
+  if (selectedMachinery.value) {
+    conditions.push(`设备:${selectedMachinery.value.code || selectedMachinery.value.name}`)
   }
-  if (formData.result !== undefined && formData.result !== '') {
-    conditions.push(`维修结果:${formData.result}`)
+  if (formData.result != null) {
+    conditions.push(`结果:${getDictLabel(DICT_TYPE.MES_DV_REPAIR_RESULT, formData.result)}`)
   }
-  if (formData.status !== undefined && formData.status !== '') {
-    conditions.push(`单据状态:${formData.status}`)
+  if (formData.status != null) {
+    conditions.push(`状态:${getDictLabel(DICT_TYPE.MES_DV_REPAIR_STATUS, formData.status)}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索维修工单'
 })
 
+/** 打开设备选择器 */
+function openMachinerySelector() {
+  machinerySelectorRef.value?.open()
+}
+
+/** 选择设备 */
+function handleMachineryConfirm(item: DvMachineryVO) {
+  selectedMachinery.value = item
+  formData.machineryId = item.id
+}
+
+/** 构造搜索参数 */
+function buildParams() {
+  const params: DvRepairQueryParams = {}
+  if (formData.code) {
+    params.code = formData.code
+  }
+  if (formData.name) {
+    params.name = formData.name
+  }
+  if (formData.machineryId != null) {
+    params.machineryId = formData.machineryId
+  }
+  if (formData.result != null) {
+    params.result = formData.result
+  }
+  if (formData.status != null) {
+    params.status = formData.status
+  }
+  return params
+}
+
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  emit('search', { ...formData })
+  emit('search', buildParams())
+}
+
+/** 重置字段 */
+function resetFields() {
+  formData.code = ''
+  formData.name = ''
+  formData.machineryId = undefined
+  formData.result = undefined
+  formData.status = undefined
+  selectedMachinery.value = undefined
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  formData.code = undefined
-  formData.name = undefined
-  formData.machineryId = undefined
-  formData.result = undefined
-  formData.status = undefined
+  resetFields()
   visible.value = false
   emit('reset')
 }
+
+defineExpose({ resetFields })
 </script>
+
+<style lang="scss" scoped>
+.yd-search-form-selector {
+  min-height: 72rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+  border-radius: 8rpx;
+  background: #f7f8fa;
+  font-size: 28rpx;
+}
+</style>

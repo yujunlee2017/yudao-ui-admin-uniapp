@@ -1,51 +1,47 @@
 <template>
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
-    <wd-navbar
-      title="MES 假期设置详情"
-      left-arrow placeholder safe-area-inset-top fixed
-      @click-left="handleBack"
-    />
+    <wd-navbar title="假期详情" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
 
     <!-- 详情内容 -->
-    <view>
+    <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
       <wd-cell-group border>
-        <wd-cell title="日期" :value="formatFieldValue(formData?.day) || '-'" />
-        <wd-cell title="日期类型" :value="formatFieldValue(formData?.type) || '-'" />
-        <wd-cell title="备注" :value="formatFieldValue(formData?.remark) || '-'" />
-        <wd-cell title="编号" :value="formatFieldValue(formData?.id) || '-'" />
-        <wd-cell title="创建时间" :value="formatFieldValue(formData?.createTime) || '-'" />
+        <wd-cell title="日期" :value="dayText || '-'" />
+        <wd-cell title="日期类型">
+          <dict-tag v-if="formData?.type != null" :type="DICT_TYPE.MES_CAL_HOLIDAY_TYPE" :value="formData.type" />
+          <text v-else>
+            工作日
+          </text>
+        </wd-cell>
+        <wd-cell title="备注" :value="formData?.remark || '-'" />
       </wd-cell-group>
-    </view>
+    </scroll-view>
 
     <!-- 底部操作按钮 -->
     <view class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button
-          v-if="hasAccessByCodes(['mes:cal-holiday:update'])"
-          class="flex-1" type="warning" @click="handleEdit"
-        >
-          编辑
-        </wd-button>
-
-      </view>
+      <wd-button
+        v-if="hasAccessByCodes(['mes:cal-holiday:create'])"
+        type="primary"
+        block
+        @click="handleEdit"
+      >
+        设置
+      </wd-button>
     </view>
   </view>
 </template>
 
 <script lang="ts" setup>
 import type { CalHolidayVO } from '@/api/mes/cal/holiday'
-import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
+import dayjs from 'dayjs'
+import { computed, onMounted, ref } from 'vue'
 import { getHolidayByDay } from '@/api/mes/cal/holiday'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
-import { formatDateTime } from '@/utils/date'
+import { DICT_TYPE } from '@/utils/constants'
 
-const props = defineProps<{
-  id?: number | string | any
-}>()
+const props = defineProps<{ day?: string }>()
 
 definePage({
   style: {
@@ -55,55 +51,37 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
-const dialog = useDialog()
 const toast = useToast()
-const formData = ref<any>() // 详情数据
-const deleting = ref(false) // 删除状态
+const formData = ref<CalHolidayVO>() // 详情数据
+const dayText = computed(() => props.day ? dayjs(props.day).format('YYYY-MM-DD') : '')
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/cal/holiday/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
-}
-
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!dayText.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getHolidayByDay(props.id)
+    formData.value = await getHolidayByDay(`${dayText.value} 00:00:00`)
   } finally {
     toast.close()
   }
 }
 
-/** 编辑 */
+/** 设置假期 */
 function handleEdit() {
-  uni.navigateTo({
-    url: `/pages-mes/cal/holiday/form/index?id=${props.id}`,
-  })
+  if (!dayText.value) {
+    return
+  }
+  uni.navigateTo({ url: `/pages-mes/cal/holiday/form/index?day=${dayText.value}` })
 }
 
-/** 初始化 */
 onMounted(() => {
   getDetail()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

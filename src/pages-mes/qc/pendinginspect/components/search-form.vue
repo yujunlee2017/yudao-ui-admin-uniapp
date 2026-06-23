@@ -27,31 +27,30 @@
         <view class="yd-search-form-label">
           产品物料
         </view>
-        <wd-input
-          v-model="formData.itemId"
-          placeholder="请输入产品物料"
-          clearable
-        />
+        <view class="flex items-center gap-16rpx">
+          <wd-input
+            :model-value="selectedItemName"
+            placeholder="请选择产品物料"
+            clearable
+            readonly
+            class="min-w-0 flex-1"
+            @click="openItemSelector"
+            @clear="clearItem"
+          />
+          <wd-button size="small" @click="openItemSelector">
+            选择
+          </wd-button>
+        </view>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           检验类型
         </view>
-        <wd-input
-          v-model="formData.qcType"
-          placeholder="请输入检验类型"
-          clearable
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          来源单据类型
-        </view>
-        <wd-input
-          v-model="formData.sourceDocType"
-          placeholder="请输入来源单据类型"
-          clearable
-        />
+        <wd-radio-group v-model="formData.qcType" shape="button">
+          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_QC_TYPE)" :key="dict.value" :value="dict.value">
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -63,24 +62,43 @@
       </view>
     </view>
   </wd-popup>
+
+  <ItemSelector ref="itemSelectorRef" title="选择产品物料" :multiple="false" @confirm="handleItemConfirm" />
 </template>
 
 <script lang="ts" setup>
+import type { MdItemVO } from '@/api/mes/md/item'
 import { computed, reactive, ref } from 'vue'
+import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
+import { DICT_TYPE } from '@/utils/constants'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import ItemSelector from '@/pages-mes/md/item/components/item-selector.vue'
+
+const props = defineProps<{
+  initialQuery?: {
+    sourceDocCode?: string
+    qcType?: number
+    itemId?: number
+  }
+}>()
 
 const emit = defineEmits<{
-  search: [data: Record<string, any>]
+  search: [data: {
+    sourceDocCode?: string
+    qcType?: number
+    itemId?: number
+  }]
   reset: []
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
-  sourceDocCode: undefined as any,
-  itemId: undefined as any,
-  qcType: undefined as any,
-  sourceDocType: undefined as any,
+  sourceDocCode: props.initialQuery?.sourceDocCode,
+  itemId: props.initialQuery?.itemId,
+  qcType: props.initialQuery?.qcType,
 }) // 搜索表单数据
+const selectedItemName = ref('') // 已选物料展示名
+const itemSelectorRef = ref<InstanceType<typeof ItemSelector>>() // 物料选择器引用
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
@@ -88,17 +106,32 @@ const placeholder = computed(() => {
   if (formData.sourceDocCode !== undefined && formData.sourceDocCode !== '') {
     conditions.push(`来源单据编号:${formData.sourceDocCode}`)
   }
-  if (formData.itemId !== undefined && formData.itemId !== '') {
-    conditions.push(`产品物料:${formData.itemId}`)
+  if (formData.itemId !== undefined) {
+    conditions.push(`产品物料:${selectedItemName.value || formData.itemId}`)
   }
-  if (formData.qcType !== undefined && formData.qcType !== '') {
-    conditions.push(`检验类型:${formData.qcType}`)
-  }
-  if (formData.sourceDocType !== undefined && formData.sourceDocType !== '') {
-    conditions.push(`来源单据类型:${formData.sourceDocType}`)
+  if (formData.qcType !== undefined) {
+    conditions.push(`检验类型:${getDictLabel(DICT_TYPE.MES_QC_TYPE, formData.qcType) || formData.qcType}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索待检任务'
 })
+
+/** 打开物料选择器 */
+function openItemSelector() {
+  itemSelectorRef.value?.open()
+}
+
+/** 清空物料 */
+function clearItem() {
+  formData.itemId = undefined
+  selectedItemName.value = ''
+}
+
+/** 确认物料 */
+function handleItemConfirm(items: MdItemVO[]) {
+  const item = items[0]
+  formData.itemId = item?.id
+  selectedItemName.value = item ? `${item.code || '-'} ${item.name || ''}`.trim() : ''
+}
 
 /** 搜索按钮操作 */
 function handleSearch() {
@@ -111,7 +144,7 @@ function handleReset() {
   formData.sourceDocCode = undefined
   formData.itemId = undefined
   formData.qcType = undefined
-  formData.sourceDocType = undefined
+  selectedItemName.value = ''
   visible.value = false
   emit('reset')
 }

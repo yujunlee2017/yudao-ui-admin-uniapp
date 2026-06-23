@@ -1,40 +1,25 @@
 <template>
   <view class="yd-page-container">
-    <!-- 顶部导航栏 -->
-    <wd-navbar
-      title="MES 仓库详情"
-      left-arrow placeholder safe-area-inset-top fixed
-      @click-left="handleBack"
-    />
-
-    <!-- 详情内容 -->
-    <view>
+    <wd-navbar title="仓库详情" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
+    <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
       <wd-cell-group border>
-        <wd-cell title="仓库编码" :value="formatFieldValue(formData?.code) || '-'" />
-        <wd-cell title="仓库名称" :value="formatFieldValue(formData?.name) || '-'" />
-        <wd-cell title="仓库地址" :value="formatFieldValue(formData?.address) || '-'" />
-        <wd-cell title="面积" :value="formatFieldValue(formData?.area) || '-'" />
-        <wd-cell title="负责人" :value="formatFieldValue(formData?.chargeUserId) || '-'" />
-        <wd-cell title="冻结" :value="formatFieldValue(formData?.frozen) || '-'" />
-        <wd-cell title="备注" :value="formatFieldValue(formData?.remark) || '-'" />
-        <wd-cell title="创建时间" :value="formatFieldValue(formData?.createTime) || '-'" />
-        <wd-cell title="id" :value="formatFieldValue(formData?.id) || '-'" />
+        <wd-cell title="仓库编码" :value="formData?.code || '-'" />
+        <wd-cell title="仓库名称" :value="formData?.name || '-'" />
+        <wd-cell title="负责人" :value="formData?.chargeUserName || '-'" />
+        <wd-cell title="仓库地址" :value="formData?.address || '-'" />
+        <wd-cell title="面积" :value="formData?.area != null ? `${formData.area} ㎡` : '-'" />
+        <wd-cell title="是否冻结" :value="formData?.frozen ? '是' : '否'" />
+        <wd-cell title="备注" :value="formData?.remark || '-'" />
+        <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime) || '-'" />
       </wd-cell-group>
-    </view>
-
-    <!-- 底部操作按钮 -->
-    <view class="yd-detail-footer">
+      <view class="h-160rpx" />
+    </scroll-view>
+    <view v-if="hasFooter" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button
-          v-if="hasAccessByCodes(['mes:wm-warehouse:update'])"
-          class="flex-1" type="warning" @click="handleEdit"
-        >
+        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button
-          v-if="hasAccessByCodes(['mes:wm-warehouse:delete'])"
-          class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
-        >
+        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -44,17 +29,18 @@
 
 <script lang="ts" setup>
 import type { WmWarehouseVO } from '@/api/mes/wm/warehouse'
+import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
-import { getWarehouse, deleteWarehouse } from '@/api/mes/wm/warehouse'
+import { computed, onMounted, ref, watch } from 'vue'
+import { deleteWarehouse, getWarehouse } from '@/api/mes/wm/warehouse'
+import { getSimpleUserList } from '@/api/system/user'
 import { useAccess } from '@/hooks/useAccess'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 
-const props = defineProps<{
-  id?: number | string | any
-}>()
+const props = defineProps<{ id?: number | string }>()
 
 definePage({
   style: {
@@ -66,79 +52,83 @@ definePage({
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const formData = ref<any>() // 详情数据
-const deleting = ref(false) // 删除状态
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/wm/warehouse/detail/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
+const formData = ref<WmWarehouseVO>()
+const deleting = ref(false)
+const canUpdate = computed(() => hasAccessByCodes(['mes:wm-warehouse:update']))
+const canDelete = computed(() => hasAccessByCodes(['mes:wm-warehouse:delete']))
+const hasFooter = computed(() => canUpdate.value || canDelete.value)
 
-/** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/wm/warehouse/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
-}
-
-/** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value || deleting.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getWarehouse(props.id)
+    const [data, users] = await Promise.all([
+      getWarehouse(currentId.value),
+      getSimpleUserList(),
+    ])
+    const chargeUser = users.find(user => user.id === data.chargeUserId)
+    formData.value = { ...data, chargeUserName: chargeUser?.nickname || null }
   } finally {
     toast.close()
   }
 }
 
-/** 编辑 */
-function handleEdit() {
-  uni.navigateTo({
-    url: `/pages-mes/wm/warehouse/form/index?id=${props.id}`,
-  })
+async function initPage() {
+  if (!currentId.value) {
+    formData.value = undefined
+    return
+  }
+  if (!formData.value || formData.value.id !== currentId.value) {
+    await getDetail()
+  }
 }
 
-/** 删除 */
+function handleEdit() {
+  uni.navigateTo({ url: `/pages-mes/wm/warehouse/form/index?id=${currentId.value}` })
+}
+
 async function handleDelete() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   try {
-    await dialog.confirm({
-      title: '提示',
-      msg: '确定要删除该仓库吗？',
-    })
+    await dialog.confirm({ title: '提示', msg: '确定要删除该仓库吗？' })
   } catch {
     return
   }
   deleting.value = true
   try {
-    await deleteWarehouse(props.id)
+    toast.loading('删除中...')
+    await deleteWarehouse(currentId.value)
+    toast.close()
     toast.success('删除成功')
     uni.$emit('mes:wm:warehouse:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    setTimeout(() => handleBack(), 500)
+  } catch {
+    toast.close()
   } finally {
     deleting.value = false
   }
 }
 
-/** 初始化 */
 onMounted(() => {
-  getDetail()
+  initPage()
+  uni.$on('mes:wm:warehouse:reload', getDetail)
+})
+
+watch(currentId, () => {
+  initPage()
+})
+
+onUnload(() => {
+  uni.$off('mes:wm:warehouse:reload', getDetail)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

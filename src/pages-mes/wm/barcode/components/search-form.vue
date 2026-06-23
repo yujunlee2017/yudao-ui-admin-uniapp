@@ -17,11 +17,11 @@
         <view class="yd-search-form-label">
           业务类型
         </view>
-        <wd-input
-          v-model="formData.bizType"
-          placeholder="请输入业务类型"
-          clearable
-        />
+        <wd-radio-group v-model="formData.bizType" type="button">
+          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_WM_BARCODE_BIZ_TYPE)" :key="dict.value" :value="dict.value">
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
@@ -53,16 +53,6 @@
           clearable
         />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          条码
-        </view>
-        <wd-input
-          v-model="formData.format"
-          placeholder="请输入条码"
-          clearable
-        />
-      </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -76,58 +66,89 @@
 </template>
 
 <script lang="ts" setup>
+import type { WmBarcodeQueryParams } from '@/api/mes/wm/barcode'
 import { computed, reactive, ref } from 'vue'
+import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
+
+interface SearchFormData {
+  bizType?: number
+  bizCode?: string
+  bizName?: string
+  content?: string
+}
 
 const emit = defineEmits<{
-  search: [data: Record<string, any>]
+  search: [data: WmBarcodeQueryParams]
   reset: []
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const formData = reactive({
-  bizType: undefined as any,
-  bizCode: undefined as any,
-  bizName: undefined as any,
-  content: undefined as any,
-  format: undefined as any,
+const formData = reactive<SearchFormData>({
+  bizType: undefined,
+  bizCode: undefined,
+  bizName: undefined,
+  content: undefined,
 }) // 搜索表单数据
 
-/** 搜索条件 placeholder 拼接 */
-const placeholder = computed(() => {
+const placeholder = computed(() => { // 搜索条件摘要
   const conditions: string[] = []
-  if (formData.bizType !== undefined && formData.bizType !== '') {
-    conditions.push(`业务类型:${formData.bizType}`)
+  if (formData.bizType != null) {
+    conditions.push(`业务类型:${getDictLabel(DICT_TYPE.MES_WM_BARCODE_BIZ_TYPE, formData.bizType)}`)
   }
-  if (formData.bizCode !== undefined && formData.bizCode !== '') {
+  if (formData.bizCode) {
     conditions.push(`业务编码:${formData.bizCode}`)
   }
-  if (formData.bizName !== undefined && formData.bizName !== '') {
+  if (formData.bizName) {
     conditions.push(`业务名称:${formData.bizName}`)
   }
-  if (formData.content !== undefined && formData.content !== '') {
+  if (formData.content) {
     conditions.push(`条码内容:${formData.content}`)
-  }
-  if (formData.format !== undefined && formData.format !== '') {
-    conditions.push(`条码:${formData.format}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索条码'
 })
 
+/** 构造搜索参数 */
+function buildSearchParams(): WmBarcodeQueryParams {
+  return {
+    pageNo: 1,
+    pageSize: 10,
+    bizType: formData.bizType,
+    bizCode: formData.bizCode || undefined,
+    bizName: formData.bizName || undefined,
+    content: formData.content || undefined,
+  }
+}
+
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  emit('search', { ...formData })
+  emit('search', buildSearchParams())
 }
 
 /** 重置按钮操作 */
 function handleReset() {
+  resetFields()
+  visible.value = false
+  emit('reset')
+}
+
+/** 设置搜索条件 */
+function setFields(data: Partial<SearchFormData>) {
+  formData.bizType = data.bizType
+  formData.bizCode = data.bizCode
+  formData.bizName = data.bizName
+  formData.content = data.content
+}
+
+/** 重置搜索条件 */
+function resetFields() {
   formData.bizType = undefined
   formData.bizCode = undefined
   formData.bizName = undefined
   formData.content = undefined
-  formData.format = undefined
-  visible.value = false
-  emit('reset')
 }
+
+defineExpose({ setFields, resetFields })
 </script>

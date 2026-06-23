@@ -10,6 +10,24 @@
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
+    <!-- 顶部操作 -->
+    <view class="bg-white px-24rpx py-16rpx">
+      <view class="grid grid-cols-2 gap-16rpx">
+        <wd-button
+          v-if="hasAccessByCodes(['mes:wm-transfer:create'])"
+          block variant="plain" @click="handleAdd"
+        >
+          新增转移单
+        </wd-button>
+        <wd-button
+          v-if="hasAccessByCodes(['mes:wm-transfer:export'])"
+          block variant="plain" :loading="exportLoading" @click="handleExport"
+        >
+          导出当前筛选
+        </wd-button>
+      </view>
+    </view>
+
     <!-- 列表 -->
     <z-paging
       ref="pagingRef"
@@ -33,56 +51,78 @@
           <view class="p-24rpx">
             <view class="mb-16rpx flex items-center justify-between gap-16rpx">
               <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-                {{ formatFieldValue(item.code) || '-' }}
+                {{ item.code || '-' }}
               </view>
-              <view class="shrink-0 text-24rpx text-[#999]">
-                #{{ item.id }}
-              </view>
+              <dict-tag v-if="item.status != null" :type="DICT_TYPE.MES_WM_TRANSFER_STATUS" :value="item.status" />
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">转移单名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.name) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.name || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">转移单类型：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.type) || '-' }}</text>
+              <dict-tag v-if="item.type != null" :type="DICT_TYPE.MES_WM_TRANSFER_TYPE" :value="item.type" />
+              <text v-else>-</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">是否配送：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.deliveryFlag) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.deliveryFlag ? '是' : '否' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">是否确认：</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.confirmFlag ? '是' : '否' }}</text>
+            </view>
+            <view class="flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">转移日期：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.transferDate) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ formatDate(item.transferDate) || '-' }}</text>
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">单据状态：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.status) || '-' }}</text>
+          </view>
+          <view v-if="hasRowActions(item)" class="flex flex-wrap border-t border-t-[#f0f0f0] text-28rpx" @click.stop>
+            <view v-if="canUpdatePrepare(item)" class="min-w-160rpx flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
+              编辑
+            </view>
+            <view v-if="canDeletePrepare(item)" class="min-w-160rpx flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
+              删除
+            </view>
+            <view v-if="canSubmitPrepare(item)" class="min-w-160rpx flex-1 py-18rpx text-center text-[#faad14]" @click="handleSubmitTransfer(item)">
+              提交
+            </view>
+            <view v-if="canConfirm(item)" class="min-w-160rpx flex-1 py-18rpx text-center text-[#52c41a]" @click="handleConfirm(item)">
+              到货确认
+            </view>
+            <view v-if="canStock(item)" class="min-w-160rpx flex-1 py-18rpx text-center text-[#52c41a]" @click="handleStock(item)">
+              执行上架
+            </view>
+            <view v-if="canFinish(item)" class="min-w-160rpx flex-1 py-18rpx text-center text-[#52c41a]" @click="handleFinish(item)">
+              执行转移
+            </view>
+            <view v-if="canCancel(item)" class="min-w-160rpx flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleCancel(item)">
+              取消
             </view>
           </view>
         </view>
       </view>
     </z-paging>
-
-    <!-- 新增按钮 -->
-    <wd-fab
-      v-if="hasAccessByCodes(['mes:wm-transfer:create'])"
-      position="right-bottom"
-      type="primary"
-      :expandable="false"
-      @click="handleAdd"
-    />
   </view>
 </template>
 
 <script lang="ts" setup>
-import type { WmTransferVO } from '@/api/mes/wm/transfer'
+import type { WmTransferQueryParams, WmTransferVO } from '@/api/mes/wm/transfer'
 import { onUnload } from '@dcloudio/uni-app'
+import { useDialog } from '@wot-ui/ui/components/wd-dialog'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
-import { getTransferPage } from '@/api/mes/wm/transfer'
+import {
+  cancelTransfer,
+  deleteTransfer,
+  getTransferPage,
+  submitTransfer,
+} from '@/api/mes/wm/transfer'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
-import { formatDateTime } from '@/utils/date'
+import { DICT_TYPE, MesWmTransferStatusEnum } from '@/utils/constants'
+import { formatDate } from '@/utils/date'
+import { downloadApiFile } from '@/utils/download'
 import SearchForm from './components/search-form.vue'
 
 definePage({
@@ -93,27 +133,16 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
-const list = ref<any[]>([]) // 列表数据
-const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const dialog = useDialog()
+const toast = useToast()
+const list = ref<WmTransferVO[]>([]) // 列表数据
+const pagingRef = ref<ZPagingRef<WmTransferVO>>() // 分页组件引用
+const queryParams = ref<WmTransferQueryParams>({}) // 查询参数
+const exportLoading = ref(false) // 导出状态
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
-}
-
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
 }
 
 /** 查询列表 */
@@ -124,7 +153,7 @@ async function queryList(pageNo: number, pageSize: number) {
       pageNo,
       pageSize,
     }
-    const data = await getTransferPage(params as any)
+    const data = await getTransferPage(params)
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
     pagingRef.value?.complete(false)
@@ -132,7 +161,7 @@ async function queryList(pageNo: number, pageSize: number) {
 }
 
 /** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) {
+function handleQuery(data?: WmTransferQueryParams) {
   queryParams.value = { ...data }
   reload()
 }
@@ -155,10 +184,155 @@ function handleAdd() {
 }
 
 /** 查看详情 */
-function handleDetail(item: any) {
+function handleDetail(item: WmTransferVO) {
   uni.navigateTo({
-    url: `/pages-mes/wm/transfer/detail/index?id=${(item as any).id}`,
+    url: `/pages-mes/wm/transfer/detail/index?id=${item.id}`,
   })
+}
+
+/** 是否可编辑草稿 */
+function canUpdatePrepare(item: WmTransferVO) {
+  return hasAccessByCodes(['mes:wm-transfer:update']) && item.status === MesWmTransferStatusEnum.PREPARE
+}
+
+/** 是否可删除草稿 */
+function canDeletePrepare(item: WmTransferVO) {
+  return hasAccessByCodes(['mes:wm-transfer:delete']) && item.status === MesWmTransferStatusEnum.PREPARE
+}
+
+/** 是否可提交草稿 */
+function canSubmitPrepare(item: WmTransferVO) {
+  return hasAccessByCodes(['mes:wm-transfer:update']) && item.status === MesWmTransferStatusEnum.PREPARE
+}
+
+/** 是否可到货确认 */
+function canConfirm(item: WmTransferVO) {
+  return hasAccessByCodes(['mes:wm-transfer:update']) && item.status === MesWmTransferStatusEnum.UNCONFIRMED
+}
+
+/** 是否可执行上架 */
+function canStock(item: WmTransferVO) {
+  return hasAccessByCodes(['mes:wm-transfer:update']) && item.status === MesWmTransferStatusEnum.APPROVING
+}
+
+/** 是否可执行转移 */
+function canFinish(item: WmTransferVO) {
+  return hasAccessByCodes(['mes:wm-transfer:finish']) && item.status === MesWmTransferStatusEnum.APPROVED
+}
+
+/** 是否可取消 */
+function canCancel(item: WmTransferVO) {
+  return hasAccessByCodes(['mes:wm-transfer:update'])
+    && [
+      MesWmTransferStatusEnum.UNCONFIRMED,
+      MesWmTransferStatusEnum.APPROVING,
+      MesWmTransferStatusEnum.APPROVED,
+    ].includes(item.status)
+}
+
+/** 是否存在行操作 */
+function hasRowActions(item: WmTransferVO) {
+  return canUpdatePrepare(item)
+    || canDeletePrepare(item)
+    || canSubmitPrepare(item)
+    || canConfirm(item)
+    || canStock(item)
+    || canFinish(item)
+    || canCancel(item)
+}
+
+/** 编辑 */
+function handleEdit(item: WmTransferVO) {
+  uni.navigateTo({
+    url: `/pages-mes/wm/transfer/form/index?id=${item.id}`,
+  })
+}
+
+/** 到货确认 */
+function handleConfirm(item: WmTransferVO) {
+  uni.navigateTo({
+    url: `/pages-mes/wm/transfer/form/index?id=${item.id}&mode=confirm`,
+  })
+}
+
+/** 执行上架 */
+function handleStock(item: WmTransferVO) {
+  uni.navigateTo({
+    url: `/pages-mes/wm/transfer/form/index?id=${item.id}&mode=stock`,
+  })
+}
+
+/** 执行转移 */
+function handleFinish(item: WmTransferVO) {
+  uni.navigateTo({
+    url: `/pages-mes/wm/transfer/form/index?id=${item.id}&mode=finish`,
+  })
+}
+
+/** 删除 */
+async function handleDelete(item: WmTransferVO) {
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: `确定要删除「${item.code || item.name || item.id}」吗？`,
+    })
+  } catch {
+    return
+  }
+  await deleteTransfer(item.id)
+  toast.success('删除成功')
+  reload()
+}
+
+/** 提交 */
+async function handleSubmitTransfer(item: WmTransferVO) {
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: '确认提交该转移单？提交前请确认已维护调拨物料，提交后将不能修改。',
+    })
+  } catch {
+    return
+  }
+  await submitTransfer(item.id)
+  toast.success('提交成功')
+  reload()
+}
+
+/** 取消 */
+async function handleCancel(item: WmTransferVO) {
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: '确认取消该转移单？取消后不可恢复。',
+    })
+  } catch {
+    return
+  }
+  await cancelTransfer(item.id)
+  toast.success('取消成功')
+  reload()
+}
+
+/** 导出按钮操作 */
+async function handleExport() {
+  if (exportLoading.value) {
+    return
+  }
+  const { confirm } = await uni.showModal({
+    title: '导出确认',
+    content: '确定要导出当前筛选数据吗？',
+  })
+  if (!confirm) {
+    return
+  }
+  exportLoading.value = true
+  try {
+    await downloadApiFile('/mes/wm/transfer/export-excel', queryParams.value, '转移单.xls')
+    toast.success('导出成功')
+  } finally {
+    exportLoading.value = false
+  }
 }
 
 /** 初始化 */

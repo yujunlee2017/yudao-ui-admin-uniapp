@@ -1,16 +1,17 @@
 <template>
   <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
-    <wd-navbar
-      title="MES 质检方案管理"
-      left-arrow placeholder safe-area-inset-top fixed
-      @click-left="handleBack"
-    />
+    <wd-navbar title="质检方案" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
 
-    <!-- 搜索组件 -->
-    <SearchForm @search="handleQuery" @reset="handleReset" />
+    <!-- 搜索与导出 -->
+    <SearchForm ref="searchFormRef" @search="handleQuery" @reset="handleReset" />
+    <view v-if="canExport" class="bg-white px-24rpx pb-16rpx">
+      <wd-button block variant="plain" :loading="exportLoading" @click="handleExport">
+        导出当前筛选数据
+      </wd-button>
+    </view>
 
-    <!-- 列表 -->
+    <!-- 质检方案列表 -->
     <z-paging
       ref="pagingRef"
       v-model="list"
@@ -27,38 +28,40 @@
         <view
           v-for="item in list"
           :key="item.id"
-          class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm"
+          class="mb-24rpx rounded-12rpx bg-white p-24rpx shadow-sm"
           @click="handleDetail(item)"
         >
-          <view class="p-24rpx">
-            <view class="mb-16rpx flex items-center justify-between gap-16rpx">
-              <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-                {{ formatFieldValue(item.code) || '-' }}
+          <view class="mb-16rpx flex items-start justify-between gap-16rpx">
+            <view class="min-w-0 flex-1">
+              <view class="truncate text-32rpx text-[#333] font-semibold">
+                {{ item.name || '-' }}
               </view>
-              <view class="shrink-0 text-24rpx text-[#999]">
-                #{{ item.id }}
+              <view class="mt-8rpx truncate text-24rpx text-[#999]">
+                {{ item.code || '-' }}
               </view>
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">方案名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.name) || '-' }}</text>
+            <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="item.status" />
+          </view>
+          <view class="mb-12rpx flex items-start text-28rpx text-[#666]">
+            <text class="mr-8rpx shrink-0 text-[#999]">检测种类：</text>
+            <view class="min-w-0 flex-1">
+              <template v-if="item.types?.length">
+                <dict-tag
+                  v-for="type in item.types"
+                  :key="type"
+                  class="mb-8rpx mr-8rpx"
+                  :type="DICT_TYPE.MES_QC_TYPE"
+                  :value="type"
+                />
+              </template>
+              <text v-else>-</text>
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">检测种类：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.types) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">状态：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.status) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">备注：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.remark) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">创建时间：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.createTime) || '-' }}</text>
-            </view>
+          </view>
+          <view v-if="item.remark" class="mb-12rpx text-28rpx text-[#666]">
+            <text class="mr-8rpx text-[#999]">备注：</text>{{ item.remark }}
+          </view>
+          <view class="text-28rpx text-[#666]">
+            <text class="mr-8rpx text-[#999]">创建时间：</text>{{ formatDateTime(item.createTime) || '-' }}
           </view>
         </view>
       </view>
@@ -76,13 +79,16 @@
 </template>
 
 <script lang="ts" setup>
-import type { QcTemplateVO } from '@/api/mes/qc/template'
+import type { QcTemplatePageParam, QcTemplateVO } from '@/api/mes/qc/template'
 import { onUnload } from '@dcloudio/uni-app'
-import { onMounted, ref } from 'vue'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { computed, onMounted, ref } from 'vue'
 import { getTemplatePage } from '@/api/mes/qc/template'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
+import { downloadApiFile } from '@/utils/download'
 import SearchForm from './components/search-form.vue'
 
 definePage({
@@ -93,38 +99,23 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
-const list = ref<any[]>([]) // 列表数据
-const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const toast = useToast()
+const list = ref<QcTemplateVO[]>([]) // 列表数据
+const pagingRef = ref<ZPagingRef<QcTemplateVO>>() // 分页组件引用
+const queryParams = ref<Partial<QcTemplatePageParam>>({}) // 查询参数
+const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索组件引用
+const exportLoading = ref(false) // 导出状态
+const canExport = computed(() => hasAccessByCodes(['mes:qc-template:export']))
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
-}
-
-/** 查询列表 */
+/** 查询质检方案列表 */
 async function queryList(pageNo: number, pageSize: number) {
   try {
-    const params = {
-      ...queryParams.value,
-      pageNo,
-      pageSize,
-    }
-    const data = await getTemplatePage(params as any)
+    const data = await getTemplatePage({ ...queryParams.value, pageNo, pageSize })
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
     pagingRef.value?.complete(false)
@@ -132,14 +123,16 @@ async function queryList(pageNo: number, pageSize: number) {
 }
 
 /** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) {
+function handleQuery(data: Partial<QcTemplatePageParam>) {
   queryParams.value = { ...data }
   reload()
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  handleQuery()
+  queryParams.value = {}
+  searchFormRef.value?.resetFields()
+  reload()
 }
 
 /** 重新加载 */
@@ -147,18 +140,35 @@ function reload() {
   pagingRef.value?.reload()
 }
 
-/** 新增 */
-function handleAdd() {
-  uni.navigateTo({
-    url: '/pages-mes/qc/template/form/index',
+/** 导出质检方案 */
+async function handleExport() {
+  if (exportLoading.value) {
+    return
+  }
+  const { confirm } = await uni.showModal({
+    title: '导出确认',
+    content: '确定要导出当前筛选条件下的质检方案吗？',
   })
+  if (!confirm) {
+    return
+  }
+  exportLoading.value = true
+  try {
+    await downloadApiFile('/mes/qc/template/export-excel', queryParams.value, '质检方案.xls')
+    toast.success('导出成功')
+  } finally {
+    exportLoading.value = false
+  }
+}
+
+/** 新增质检方案 */
+function handleAdd() {
+  uni.navigateTo({ url: '/pages-mes/qc/template/form/index' })
 }
 
 /** 查看详情 */
-function handleDetail(item: any) {
-  uni.navigateTo({
-    url: `/pages-mes/qc/template/detail/index?id=${(item as any).id}`,
-  })
+function handleDetail(item: QcTemplateVO) {
+  uni.navigateTo({ url: `/pages-mes/qc/template/detail/index?id=${item.id}` })
 }
 
 /** 初始化 */
@@ -171,6 +181,3 @@ onUnload(() => {
   uni.$off('mes:qc:template:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

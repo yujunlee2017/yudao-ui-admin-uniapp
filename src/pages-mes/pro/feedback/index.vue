@@ -10,7 +10,7 @@
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
-    <!-- 列表 -->
+    <!-- 分页列表 -->
     <z-paging
       ref="pagingRef"
       v-model="list"
@@ -31,37 +31,66 @@
           @click="handleDetail(item)"
         >
           <view class="p-24rpx">
-            <view class="mb-16rpx flex items-center justify-between gap-16rpx">
-              <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-                {{ formatFieldValue(item.code) || '-' }}
+            <view class="mb-16rpx flex items-start justify-between gap-16rpx">
+              <view class="min-w-0 flex-1">
+                <view class="truncate text-32rpx text-[#333] font-semibold">
+                  {{ item.code || '-' }}
+                </view>
+                <view class="mt-6rpx text-24rpx text-[#999]">
+                  {{ item.workOrderCode || '-' }} / {{ item.taskCode || '-' }}
+                </view>
               </view>
-              <view class="shrink-0 text-24rpx text-[#999]">
-                #{{ item.id }}
-              </view>
+              <dict-tag v-if="item.status != null" :type="DICT_TYPE.MES_PRO_FEEDBACK_STATUS" :value="item.status" />
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">报工类型：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.type) || '-' }}</text>
+            <view class="mb-14rpx flex flex-wrap gap-12rpx">
+              <dict-tag v-if="item.type != null" :type="DICT_TYPE.MES_PRO_FEEDBACK_TYPE" :value="item.type" />
+              <wd-tag v-if="item.checkFlag" plain type="warning">
+                待质检工序
+              </wd-tag>
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">工作站：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.workstationName) || '-' }}</text>
+            <view class="text-26rpx text-[#666] space-y-8rpx">
+              <view>工作站：{{ item.workstationName || '-' }}</view>
+              <view>工序：{{ item.processName || '-' }}</view>
+              <view>产品：{{ item.itemCode || '-' }} / {{ item.itemName || '-' }}</view>
+              <view>规格：{{ item.itemSpecification || '-' }} / 单位：{{ item.unitMeasureName || '-' }}</view>
+              <view>报工数量：{{ item.feedbackQuantity ?? '-' }}</view>
+              <view>报工人：{{ item.feedbackUserNickname || '-' }}</view>
+              <view>报工时间：{{ formatDateTime(item.feedbackTime) || '-' }}</view>
+              <view>审核人：{{ item.approveUserNickname || '-' }}</view>
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">工序：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.processName) || '-' }}</text>
+          </view>
+          <view
+            v-if="hasDraftActions(item) || hasApproveAction(item)"
+            class="flex border-t border-[#f0f0f0] text-28rpx"
+            @click.stop
+          >
+            <view
+              v-if="canUpdate && item.status === MesProFeedbackStatusEnum.PREPARE"
+              class="flex-1 py-18rpx text-center text-[#1677ff]"
+              @click="handleEdit(item)"
+            >
+              编辑
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">生产工单编码：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.workOrderCode) || '-' }}</text>
+            <view
+              v-if="canUpdate && item.status === MesProFeedbackStatusEnum.PREPARE"
+              class="flex-1 py-18rpx text-center text-[#52c41a]"
+              @click="handleSubmitFeedback(item)"
+            >
+              提交
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">产品物料编码：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.itemCode) || '-' }}</text>
+            <view
+              v-if="canDelete && item.status === MesProFeedbackStatusEnum.PREPARE"
+              class="flex-1 py-18rpx text-center text-[#f56c6c]"
+              @click="handleDelete(item)"
+            >
+              删除
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">产品物料名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.itemName) || '-' }}</text>
+            <view
+              v-if="hasApproveAction(item)"
+              class="flex-1 py-18rpx text-center text-[#1677ff]"
+              @click="handleApprove(item)"
+            >
+              审批
             </view>
           </view>
         </view>
@@ -70,7 +99,7 @@
 
     <!-- 新增按钮 -->
     <wd-fab
-      v-if="hasAccessByCodes(['mes:pro-feedback:create'])"
+      v-if="canCreate"
       position="right-bottom"
       type="primary"
       :expandable="false"
@@ -80,12 +109,16 @@
 </template>
 
 <script lang="ts" setup>
-import type { ProFeedbackVO } from '@/api/mes/pro/feedback'
+import type { ProFeedbackQueryParams, ProFeedbackVO } from '@/api/mes/pro/feedback'
+import { useDialog } from '@wot-ui/ui/components/wd-dialog'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onUnload } from '@dcloudio/uni-app'
-import { onMounted, ref } from 'vue'
-import { getFeedbackPage } from '@/api/mes/pro/feedback'
+import { computed, onMounted, ref } from 'vue'
+import { deleteFeedback, getFeedbackPage, submitFeedback } from '@/api/mes/pro/feedback'
 import { useAccess } from '@/hooks/useAccess'
+import { useUserStore } from '@/store/user'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import SearchForm from './components/search-form.vue'
 
@@ -96,54 +129,67 @@ definePage({
   },
 })
 
+const MesProFeedbackStatusEnum = {
+  PREPARE: 0,
+  APPROVING: 2,
+  UNCHECK: 3,
+  FINISHED: 4,
+  CANCELED: 5,
+} as const
+
 const { hasAccessByCodes } = useAccess()
-const list = ref<any[]>([]) // 列表数据
-const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const userStore = useUserStore()
+const dialog = useDialog()
+const toast = useToast()
+const list = ref<ProFeedbackVO[]>([]) // 列表数据
+const pagingRef = ref() // 分页组件引用
+const queryParams = ref<Partial<ProFeedbackQueryParams>>({}) // 查询参数
+const canCreate = computed(() => hasAccessByCodes(['mes:pro-feedback:create']))
+const canUpdate = computed(() => hasAccessByCodes(['mes:pro-feedback:update']))
+const canDelete = computed(() => hasAccessByCodes(['mes:pro-feedback:delete']))
+const canApprove = computed(() => hasAccessByCodes(['mes:pro-feedback:approve']))
+const currentUserId = computed(() => userStore.userInfo?.userId)
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
-}
-
 /** 查询列表 */
 async function queryList(pageNo: number, pageSize: number) {
   try {
-    const params = {
+    const data = await getFeedbackPage({
       ...queryParams.value,
       pageNo,
       pageSize,
-    }
-    const data = await getFeedbackPage(params as any)
+    })
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
     pagingRef.value?.complete(false)
   }
 }
 
+/** 是否有草稿操作 */
+function hasDraftActions(item: ProFeedbackVO) {
+  return item.status === MesProFeedbackStatusEnum.PREPARE && (canUpdate.value || canDelete.value)
+}
+
+/** 是否有审批操作 */
+function hasApproveAction(item: ProFeedbackVO) {
+  return canApprove.value
+    && item.status === MesProFeedbackStatusEnum.APPROVING
+    && item.approveUserId === currentUserId.value
+}
+
 /** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) {
+function handleQuery(data: Partial<ProFeedbackQueryParams>) {
   queryParams.value = { ...data }
   reload()
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  handleQuery()
+  handleQuery({})
 }
 
 /** 重新加载 */
@@ -154,15 +200,59 @@ function reload() {
 /** 新增 */
 function handleAdd() {
   uni.navigateTo({
-    url: '/pages-mes/pro/feedback/form/index',
+    url: '/pages-mes/pro/feedback/form/index?mode=create',
   })
 }
 
 /** 查看详情 */
-function handleDetail(item: any) {
+function handleDetail(item: ProFeedbackVO) {
   uni.navigateTo({
-    url: `/pages-mes/pro/feedback/detail/index?id=${(item as any).id}`,
+    url: `/pages-mes/pro/feedback/detail/index?id=${item.id}`,
   })
+}
+
+/** 编辑 */
+function handleEdit(item: ProFeedbackVO) {
+  uni.navigateTo({
+    url: `/pages-mes/pro/feedback/form/index?id=${item.id}&mode=update`,
+  })
+}
+
+/** 提交 */
+async function handleSubmitFeedback(item: ProFeedbackVO) {
+  try {
+    await dialog.confirm({
+      title: '提交报工单',
+      msg: `确定提交「${item.code || item.id}」吗？提交后将不能修改。`,
+    })
+  } catch {
+    return
+  }
+  await submitFeedback(item.id)
+  toast.success('提交成功')
+  reload()
+}
+
+/** 审批 */
+function handleApprove(item: ProFeedbackVO) {
+  uni.navigateTo({
+    url: `/pages-mes/pro/feedback/form/index?id=${item.id}&mode=approve`,
+  })
+}
+
+/** 删除 */
+async function handleDelete(item: ProFeedbackVO) {
+  try {
+    await dialog.confirm({
+      title: '删除报工单',
+      msg: `确定删除「${item.code || item.id}」吗？`,
+    })
+  } catch {
+    return
+  }
+  await deleteFeedback(item.id)
+  toast.success('删除成功')
+  reload()
 }
 
 /** 初始化 */
@@ -175,6 +265,3 @@ onUnload(() => {
   uni.$off('mes:pro:feedback:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

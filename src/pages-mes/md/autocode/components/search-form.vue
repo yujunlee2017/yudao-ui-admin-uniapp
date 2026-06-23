@@ -37,11 +37,14 @@
         <view class="yd-search-form-label">
           状态
         </view>
-        <wd-input
-          v-model="formData.status"
-          placeholder="请输入状态"
-          clearable
-        />
+        <wd-radio-group v-model="formData.status" type="button">
+          <wd-radio :value="-1">
+            全部
+          </wd-radio>
+          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)" :key="dict.value" :value="dict.value">
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -56,19 +59,22 @@
 </template>
 
 <script lang="ts" setup>
+import type { AutoCodeRuleQueryParams } from '@/api/mes/md/autocode/rule'
 import { computed, reactive, ref } from 'vue'
+import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 
 const emit = defineEmits<{
-  search: [data: Record<string, any>]
+  search: [data: AutoCodeRuleQueryParams]
   reset: []
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const formData = reactive({
-  code: undefined as any,
-  name: undefined as any,
-  status: undefined as any,
+const formData = reactive<AutoCodeRuleQueryParams>({
+  code: undefined,
+  name: undefined,
+  status: -1,
 }) // 搜索表单数据
 
 /** 搜索条件 placeholder 拼接 */
@@ -80,8 +86,8 @@ const placeholder = computed(() => {
   if (formData.name !== undefined && formData.name !== '') {
     conditions.push(`规则名称:${formData.name}`)
   }
-  if (formData.status !== undefined && formData.status !== '') {
-    conditions.push(`状态:${formData.status}`)
+  if (formData.status !== undefined && formData.status !== -1) {
+    conditions.push(`状态:${getDictLabel(DICT_TYPE.COMMON_STATUS, formData.status) || formData.status}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索编码规则'
 })
@@ -89,14 +95,18 @@ const placeholder = computed(() => {
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  emit('search', { ...formData })
+  const data: AutoCodeRuleQueryParams = { ...formData }
+  if (data.status === -1) {
+    delete data.status
+  }
+  emit('search', data)
 }
 
 /** 重置按钮操作 */
 function handleReset() {
   formData.code = undefined
   formData.name = undefined
-  formData.status = undefined
+  formData.status = -1
   visible.value = false
   emit('reset')
 }

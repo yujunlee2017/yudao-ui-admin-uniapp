@@ -1,53 +1,29 @@
 <template>
-  <!-- 搜索框入口 -->
   <view @click="visible = true">
     <wd-search :placeholder="placeholder" hide-cancel disabled />
   </view>
-
-  <!-- 搜索弹窗 -->
-  <wd-popup
-    v-model="visible"
-    position="top"
-    :custom-style="getTopPopupStyle()"
-    :modal-style="getTopPopupModalStyle()"
-    @close="visible = false"
-  >
+  <wd-popup v-model="visible" position="top" :custom-style="getTopPopupStyle()" :modal-style="getTopPopupModalStyle()" @close="visible = false">
     <view class="yd-search-form-container">
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           类型名称
-        </view>
-        <wd-input
-          v-model="formData.name"
-          placeholder="请输入类型名称"
-          clearable
-        />
+        </view><wd-input v-model="formData.name" placeholder="请输入类型名称" clearable />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           状态
-        </view>
-        <wd-input
-          v-model="formData.status"
-          placeholder="请输入状态"
-          clearable
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          设备类型编码
-        </view>
-        <wd-input
-          v-model="formData.code"
-          placeholder="请输入设备类型编码"
-          clearable
-        />
+        </view><wd-radio-group v-model="formData.status" type="button">
+          <wd-radio :value="-1">
+            全部
+          </wd-radio><wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)" :key="dict.value" :value="dict.value">
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
-        </wd-button>
-        <wd-button class="flex-1" type="primary" @click="handleSearch">
+        </wd-button><wd-button class="flex-1" type="primary" @click="handleSearch">
           搜索
         </wd-button>
       </view>
@@ -56,48 +32,36 @@
 </template>
 
 <script lang="ts" setup>
+import type { DvMachineryTypeQueryParams } from '@/api/mes/dv/machinery/type'
 import { computed, reactive, ref } from 'vue'
+import { getIntDictOptions } from '@/hooks/useDict'
+import { DICT_TYPE } from '@/utils/constants'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 
-const emit = defineEmits<{
-  search: [data: Record<string, any>]
-  reset: []
-}>()
-
-const visible = ref(false) // 搜索弹窗显示状态
-const formData = reactive({
-  name: undefined as any,
-  status: undefined as any,
-  code: undefined as any,
-}) // 搜索表单数据
-
-/** 搜索条件 placeholder 拼接 */
+const emit = defineEmits<{ search: [data: DvMachineryTypeQueryParams], reset: [] }>()
+const visible = ref(false)
+const formData = reactive({ name: '', status: -1 })
 const placeholder = computed(() => {
-  const conditions: string[] = []
-  if (formData.name !== undefined && formData.name !== '') {
-    conditions.push(`类型名称:${formData.name}`)
-  }
-  if (formData.status !== undefined && formData.status !== '') {
-    conditions.push(`状态:${formData.status}`)
-  }
-  if (formData.code !== undefined && formData.code !== '') {
-    conditions.push(`设备类型编码:${formData.code}`)
-  }
-  return conditions.length > 0 ? conditions.join(' | ') : '搜索设备类型'
+  const c: string[] = []
+  if (formData.name)
+    c.push(`名称:${formData.name}`)
+  if (formData.status !== -1)
+    c.push(`状态:${getIntDictOptions(DICT_TYPE.COMMON_STATUS).find(d => d.value === formData.status)?.label}`)
+  return c.length > 0 ? c.join(' | ') : '搜索设备类型'
 })
-
-/** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  emit('search', { ...formData })
+  emit('search', { name: formData.name || undefined, status: formData.status === -1 ? undefined : formData.status })
 }
-
-/** 重置按钮操作 */
 function handleReset() {
-  formData.name = undefined
-  formData.status = undefined
-  formData.code = undefined
+  formData.name = ''
+  formData.status = -1
   visible.value = false
   emit('reset')
 }
+function resetFields() {
+  formData.name = ''
+  formData.status = -1
+}
+defineExpose({ resetFields })
 </script>

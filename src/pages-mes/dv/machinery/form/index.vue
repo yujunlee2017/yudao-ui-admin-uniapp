@@ -1,95 +1,49 @@
 <template>
   <view class="yd-page-container">
-    <!-- 顶部导航栏 -->
-    <wd-navbar
-      :title="getTitle"
-      left-arrow placeholder safe-area-inset-top fixed
-      @click-left="handleBack"
-    />
-
-    <!-- 表单区域 -->
-    <view>
+    <wd-navbar :title="getTitle" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
+    <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
       <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
-          <wd-form-item title="设备编码" title-width="200rpx" prop="code">
-            <wd-input
-              v-model="formData.code"
-              clearable
-              placeholder="请输入设备编码"
-            />
+          <wd-form-item title="设备编码" title-width="220rpx" prop="code">
+            <wd-input v-model="formData.code" placeholder="请输入或点击生成" clearable>
+              <template #suffix>
+                <wd-button size="small" type="primary" variant="plain" @click="handleGenerateCode">
+                  生成
+                </wd-button>
+              </template>
+            </wd-input>
           </wd-form-item>
-          <wd-form-item title="设备名称" title-width="200rpx" prop="name">
-            <wd-input
-              v-model="formData.name"
-              clearable
-              placeholder="请输入设备名称"
-            />
+          <wd-form-item title="设备名称" title-width="220rpx" prop="name">
+            <wd-input v-model="formData.name" placeholder="请输入设备名称" clearable />
           </wd-form-item>
-          <wd-form-item title="品牌" title-width="200rpx" prop="brand">
-            <wd-input
-              v-model="formData.brand"
-              clearable
-              placeholder="请输入品牌"
-            />
+          <wd-form-item title="品牌" title-width="220rpx" prop="brand">
+            <wd-input v-model="formData.brand" placeholder="请输入品牌" clearable />
           </wd-form-item>
-          <wd-form-item title="规格型号" title-width="200rpx" prop="specification">
-            <wd-input
-              v-model="formData.specification"
-              clearable
-              placeholder="请输入规格型号"
-            />
+          <wd-form-item title="规格型号" title-width="220rpx" prop="specification">
+            <wd-input v-model="formData.specification" placeholder="请输入规格型号" clearable />
           </wd-form-item>
-          <wd-form-item title="设备类型编号" title-width="200rpx" prop="machineryTypeId" center>
-            <wd-input-number v-model="formData.machineryTypeId" :min="0" />
+          <wd-form-item title="设备类型" title-width="220rpx" prop="machineryTypeId" is-link :value="typeDisplayValue" placeholder="请选择设备类型" @click="typePickerVisible = true" />
+          <wd-picker v-model:visible="typePickerVisible" :model-value="formData.machineryTypeId !== undefined ? [formData.machineryTypeId] : []" :columns="typeOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.machineryTypeId = value[0]" />
+          <wd-form-item title="所属车间" title-width="220rpx" prop="workshopId" is-link :value="workshopDisplayValue" placeholder="请选择车间" @click="workshopPickerVisible = true" />
+          <wd-picker v-model:visible="workshopPickerVisible" :model-value="formData.workshopId !== undefined ? [formData.workshopId] : []" :columns="workshopOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.workshopId = value[0]" />
+          <wd-form-item title="设备状态" title-width="220rpx" prop="status">
+            <wd-radio-group v-model="formData.status" type="button">
+              <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_DV_MACHINERY_STATUS)" :key="dict.value" :value="dict.value">
+                {{ dict.label }}
+              </wd-radio>
+            </wd-radio-group>
           </wd-form-item>
-          <wd-form-item title="设备类型名称" title-width="200rpx" prop="machineryTypeName">
-            <wd-input
-              v-model="formData.machineryTypeName"
-              clearable
-              placeholder="请输入设备类型名称"
-            />
-          </wd-form-item>
-          <wd-form-item title="所属车间编号" title-width="200rpx" prop="workshopId" center>
-            <wd-input-number v-model="formData.workshopId" :min="0" />
-          </wd-form-item>
-          <wd-form-item title="所属车间名称" title-width="200rpx" prop="workshopName">
-            <wd-input
-              v-model="formData.workshopName"
-              clearable
-              placeholder="请输入所属车间名称"
-            />
-          </wd-form-item>
-          <wd-form-item title="设备状态" title-width="200rpx" prop="status" center>
-            <wd-input-number v-model="formData.status" :min="0" />
-          </wd-form-item>
-          <wd-datetime-picker
-            v-model="formData.lastMaintenTime"
-            type="datetime"
-            label="最近保养时间"
-            label-width="200rpx"
-            prop="lastMaintenTime"
-          />
-          <wd-datetime-picker
-            v-model="formData.lastCheckTime"
-            type="datetime"
-            label="最近点检时间"
-            label-width="200rpx"
-            prop="lastCheckTime"
-          />
-          <wd-form-item title="备注" title-width="200rpx" prop="remark">
-            <wd-textarea
-              v-model="formData.remark"
-              placeholder="请输入备注"
-              :maxlength="200"
-              show-word-limit
-              clearable
-            />
+          <wd-form-item title="备注" title-width="220rpx" prop="remark">
+            <wd-textarea v-model="formData.remark" placeholder="请输入备注" :maxlength="200" show-word-limit clearable />
           </wd-form-item>
         </wd-cell-group>
       </wd-form>
-    </view>
-
-    <!-- 底部保存按钮 -->
+      <MachineryRecordList v-if="currentId" :machinery-id="currentId" />
+      <view v-if="currentId" class="mx-24rpx mb-24rpx rounded-12rpx bg-[#f6ffed] p-20rpx text-24rpx text-[#389e0d]">
+        当前已对齐 PC 端设备详情中的点检、保养和维修记录只读展示；记录维护请进入对应业务模块。
+      </view>
+      <view class="h-160rpx" />
+    </scroll-view>
     <view class="yd-detail-footer">
       <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
         保存
@@ -100,16 +54,29 @@
 
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
-import type { DvMachineryVO } from '@/api/mes/dv/machinery'
+import type { DvMachineryCreateReqVO, DvMachineryUpdateReqVO, DvMachineryVO } from '@/api/mes/dv/machinery'
+import type { DvMachineryTypeVO } from '@/api/mes/dv/machinery/type'
+import type { MdWorkshopVO } from '@/api/mes/md/workstation/workshop'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
-import { createMachinery, updateMachinery, getMachinery } from '@/api/mes/dv/machinery'
+import { computed, onMounted, ref, watch } from 'vue'
+import { createMachinery, getMachinery, updateMachinery } from '@/api/mes/dv/machinery'
+import { getMachineryTypeList } from '@/api/mes/dv/machinery/type'
+import { getWorkshopSimpleList } from '@/api/mes/md/workstation/workshop'
+import { generateAutoCode } from '@/api/mes/md/autocode/record'
+import { getIntDictOptions } from '@/hooks/useDict'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
+import MachineryRecordList from '../components/machinery-record-list.vue'
 
-const props = defineProps<{
-  id?: number | string | any
-}>()
+const props = defineProps<{ id?: number | string }>()
+const MesAutoCodeRuleCode = {
+  DV_MACHINERY_CODE: 'DV_MACHINERY_CODE',
+} as const
+const MesDvMachineryStatusEnum = {
+  STOP: 1,
+} as const
 
 definePage({
   style: {
@@ -119,72 +86,130 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => props.id ? '编辑设备台账' : '新增设备台账')
-const formLoading = ref(false) // 表单提交状态
-const formData = ref<any>({
-  id: undefined,
-  code: '',
-  name: '',
-  brand: '',
-  specification: '',
-  machineryTypeId: undefined,
-  machineryTypeName: '',
-  workshopId: undefined,
-  workshopName: '',
-  status: undefined,
-  lastMaintenTime: undefined,
-  lastCheckTime: undefined,
-  remark: '',
-} as DvMachineryVO) // 表单数据
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/dv/machinery/form/index')
+const currentId = computed(() => getRouteQueryNumber('id')) // 当前设备编号
+const getTitle = computed(() => currentId.value ? '编辑设备' : '新增设备')
+const formLoading = ref(false)
+const formData = ref<Partial<DvMachineryVO>>(getDefaultFormData())
 const formSchema = createFormSchema({
   code: [{ required: true, message: '设备编码不能为空' }],
   name: [{ required: true, message: '设备名称不能为空' }],
+  machineryTypeId: [{ required: true, message: '设备类型不能为空' }],
+  workshopId: [{ required: true, message: '所属车间不能为空' }],
+  status: [{ required: true, message: '设备状态不能为空' }],
 })
-const formRef = ref<FormInstance>() // 表单组件引用
+const formRef = ref<FormInstance>()
+const typeOptions = ref<DvMachineryTypeVO[]>([])
+const workshopOptions = ref<MdWorkshopVO[]>([])
+const typePickerVisible = ref(false)
+const workshopPickerVisible = ref(false)
+const typeDisplayValue = computed(() => {
+  const t = typeOptions.value.find(o => o.id === formData.value.machineryTypeId)
+  return t?.name || ''
+})
+const workshopDisplayValue = computed(() => {
+  const w = workshopOptions.value.find(o => o.id === formData.value.workshopId)
+  return w?.name || ''
+})
 
-/** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/dv/machinery/index')
 }
 
-/** 加载详情 */
-async function getDetail() {
-  if (!props.id) {
-    return
+function getDefaultFormData(): Partial<DvMachineryVO> {
+  return {
+    code: '',
+    name: '',
+    brand: '',
+    specification: '',
+    machineryTypeId: undefined,
+    workshopId: undefined,
+    status: MesDvMachineryStatusEnum.STOP,
+    remark: '',
   }
-  formData.value = await getMachinery(props.id)
 }
 
-/** 提交表单 */
+async function loadOptions() {
+  const [types, workshops] = await Promise.all([
+    getMachineryTypeList(),
+    getWorkshopSimpleList(),
+  ])
+  typeOptions.value = types || []
+  workshopOptions.value = workshops || []
+}
+
+async function getDetail() {
+  if (!currentId.value) {
+    return
+  }
+  const data = await getMachinery(currentId.value)
+  formData.value = { ...getDefaultFormData(), ...data }
+}
+
+async function loadPageData() {
+  await loadOptions()
+  if (currentId.value) {
+    await getDetail()
+    return
+  }
+  formData.value = getDefaultFormData()
+}
+
+async function handleGenerateCode() {
+  try {
+    toast.loading('生成中...')
+    formData.value.code = await generateAutoCode(MesAutoCodeRuleCode.DV_MACHINERY_CODE)
+    toast.close()
+    toast.success('生成成功')
+  } catch {
+    toast.close()
+  }
+}
+
+function buildSubmitData(): DvMachineryCreateReqVO | DvMachineryUpdateReqVO {
+  const data = {
+    code: formData.value.code || '',
+    name: formData.value.name || '',
+    brand: formData.value.brand || undefined,
+    specification: formData.value.specification || undefined,
+    machineryTypeId: Number(formData.value.machineryTypeId),
+    workshopId: Number(formData.value.workshopId),
+    status: Number(formData.value.status),
+    remark: formData.value.remark || undefined,
+  }
+  if (currentId.value) {
+    return { ...data, id: currentId.value }
+  }
+  return data
+}
+
 async function handleSubmit() {
   const result = await formRef.value?.validate()
   if (result && !result.valid) {
     return
   }
-
   formLoading.value = true
   try {
-    if (props.id) {
-      await updateMachinery(formData.value)
+    const data = buildSubmitData()
+    if (currentId.value) {
+      await updateMachinery(data)
       toast.success('修改成功')
     } else {
-      await createMachinery(formData.value)
+      await createMachinery(data)
       toast.success('新增成功')
     }
     uni.$emit('mes:dv:machinery:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    setTimeout(() => handleBack(), 500)
   } finally {
     formLoading.value = false
   }
 }
 
-/** 初始化 */
-onMounted(() => {
-  getDetail()
+onMounted(async () => {
+  await loadPageData()
+})
+
+watch(currentId, () => {
+  loadPageData()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

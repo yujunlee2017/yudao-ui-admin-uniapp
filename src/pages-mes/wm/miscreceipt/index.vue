@@ -10,6 +10,24 @@
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
+    <!-- 顶部操作 -->
+    <view class="bg-white px-24rpx py-16rpx">
+      <view class="grid grid-cols-2 gap-16rpx">
+        <wd-button
+          v-if="hasAccessByCodes(['mes:wm:misc-receipt:create'])"
+          block variant="plain" @click="handleAdd"
+        >
+          新增入库单
+        </wd-button>
+        <wd-button
+          v-if="hasAccessByCodes(['mes:wm:misc-receipt:export'])"
+          block variant="plain" :loading="exportLoading" @click="handleExport"
+        >
+          导出当前筛选
+        </wd-button>
+      </view>
+    </view>
+
     <!-- 列表 -->
     <z-paging
       ref="pagingRef"
@@ -33,60 +51,67 @@
           <view class="p-24rpx">
             <view class="mb-16rpx flex items-center justify-between gap-16rpx">
               <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-                {{ formatFieldValue(item.code) || '-' }}
+                {{ item.code || '-' }}
               </view>
-              <view class="shrink-0 text-24rpx text-[#999]">
-                #{{ item.id }}
-              </view>
+              <dict-tag v-if="item.status != null" :type="DICT_TYPE.MES_WM_MISC_RECEIPT_STATUS" :value="item.status" />
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">入库单名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.name) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.name || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">杂项类型：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.type) || '-' }}</text>
+              <dict-tag v-if="item.type != null" :type="DICT_TYPE.MES_WM_MISC_RECEIPT_TYPE" :value="item.type" />
+              <text v-else>-</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">来源单据类型：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.sourceDocType) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.sourceDocType || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">来源单据编号：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.sourceDocCode) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.sourceDocCode || '-' }}</text>
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+            <view class="flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">入库日期：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.receiptDate) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ formatDate(item.receiptDate) || '-' }}</text>
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">单据状态：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.status) || '-' }}</text>
+          </view>
+          <view v-if="hasRowActions(item)" class="flex border-t border-t-[#f0f0f0] text-28rpx" @click.stop>
+            <view v-if="canUpdatePrepare(item)" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
+              编辑
+            </view>
+            <view v-if="canDeletePrepare(item)" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
+              删除
+            </view>
+            <view v-if="canSubmitPrepare(item)" class="flex-1 py-18rpx text-center text-[#faad14]" @click="handleSubmitReceipt(item)">
+              提交
+            </view>
+            <view v-if="canFinishApproved(item)" class="flex-1 py-18rpx text-center text-[#52c41a]" @click="handleFinish(item)">
+              执行入库
+            </view>
+            <view v-if="canCancelApproved(item)" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleCancel(item)">
+              取消
             </view>
           </view>
         </view>
       </view>
     </z-paging>
-
-    <!-- 新增按钮 -->
-    <wd-fab
-      v-if="hasAccessByCodes(['mes:wm:misc-receipt:create'])"
-      position="right-bottom"
-      type="primary"
-      :expandable="false"
-      @click="handleAdd"
-    />
   </view>
 </template>
 
 <script lang="ts" setup>
-import type { WmMiscReceiptVO } from '@/api/mes/wm/miscreceipt'
+import type { WmMiscReceiptQueryParams, WmMiscReceiptVO } from '@/api/mes/wm/miscreceipt'
 import { onUnload } from '@dcloudio/uni-app'
+import { useDialog } from '@wot-ui/ui/components/wd-dialog'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
-import { getMiscReceiptPage } from '@/api/mes/wm/miscreceipt'
+import { cancelMiscReceipt, deleteMiscReceipt, getMiscReceiptPage, submitMiscReceipt } from '@/api/mes/wm/miscreceipt'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
-import { formatDateTime } from '@/utils/date'
+import { DICT_TYPE, MesWmMiscReceiptStatusEnum } from '@/utils/constants'
+import { formatDate } from '@/utils/date'
+import { downloadApiFile } from '@/utils/download'
 import SearchForm from './components/search-form.vue'
 
 definePage({
@@ -97,27 +122,16 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
-const list = ref<any[]>([]) // 列表数据
-const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const dialog = useDialog()
+const toast = useToast()
+const list = ref<WmMiscReceiptVO[]>([]) // 列表数据
+const pagingRef = ref<ZPagingRef<WmMiscReceiptVO>>() // 分页组件引用
+const queryParams = ref<WmMiscReceiptQueryParams>({}) // 查询参数
+const exportLoading = ref(false) // 导出状态
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
-}
-
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
 }
 
 /** 查询列表 */
@@ -128,7 +142,7 @@ async function queryList(pageNo: number, pageSize: number) {
       pageNo,
       pageSize,
     }
-    const data = await getMiscReceiptPage(params as any)
+    const data = await getMiscReceiptPage(params)
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
     pagingRef.value?.complete(false)
@@ -136,7 +150,7 @@ async function queryList(pageNo: number, pageSize: number) {
 }
 
 /** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) {
+function handleQuery(data?: WmMiscReceiptQueryParams) {
   queryParams.value = { ...data }
   reload()
 }
@@ -159,10 +173,120 @@ function handleAdd() {
 }
 
 /** 查看详情 */
-function handleDetail(item: any) {
+function handleDetail(item: WmMiscReceiptVO) {
   uni.navigateTo({
-    url: `/pages-mes/wm/miscreceipt/detail/index?id=${(item as any).id}`,
+    url: `/pages-mes/wm/miscreceipt/detail/index?id=${item.id}`,
   })
+}
+
+/** 是否可编辑草稿 */
+function canUpdatePrepare(item: WmMiscReceiptVO) {
+  return hasAccessByCodes(['mes:wm:misc-receipt:update']) && item.status === MesWmMiscReceiptStatusEnum.PREPARE
+}
+
+/** 是否可删除草稿 */
+function canDeletePrepare(item: WmMiscReceiptVO) {
+  return hasAccessByCodes(['mes:wm:misc-receipt:delete']) && item.status === MesWmMiscReceiptStatusEnum.PREPARE
+}
+
+/** 是否可提交草稿 */
+function canSubmitPrepare(item: WmMiscReceiptVO) {
+  return hasAccessByCodes(['mes:wm:misc-receipt:update']) && item.status === MesWmMiscReceiptStatusEnum.PREPARE
+}
+
+/** 是否可执行入库 */
+function canFinishApproved(item: WmMiscReceiptVO) {
+  return hasAccessByCodes(['mes:wm:misc-receipt:finish']) && item.status === MesWmMiscReceiptStatusEnum.APPROVED
+}
+
+/** 是否可取消待执行入库 */
+function canCancelApproved(item: WmMiscReceiptVO) {
+  return hasAccessByCodes(['mes:wm:misc-receipt:update']) && item.status === MesWmMiscReceiptStatusEnum.APPROVED
+}
+
+/** 是否存在行操作 */
+function hasRowActions(item: WmMiscReceiptVO) {
+  return canUpdatePrepare(item) || canDeletePrepare(item) || canSubmitPrepare(item) || canFinishApproved(item) || canCancelApproved(item)
+}
+
+/** 编辑 */
+function handleEdit(item: WmMiscReceiptVO) {
+  uni.navigateTo({
+    url: `/pages-mes/wm/miscreceipt/form/index?id=${item.id}`,
+  })
+}
+
+/** 执行入库 */
+function handleFinish(item: WmMiscReceiptVO) {
+  uni.navigateTo({
+    url: `/pages-mes/wm/miscreceipt/form/index?id=${item.id}&mode=finish`,
+  })
+}
+
+/** 删除 */
+async function handleDelete(item: WmMiscReceiptVO) {
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: `确定要删除「${item.code || item.name || item.id}」吗？`,
+    })
+  } catch {
+    return
+  }
+  await deleteMiscReceipt(item.id)
+  toast.success('删除成功')
+  reload()
+}
+
+/** 提交 */
+async function handleSubmitReceipt(item: WmMiscReceiptVO) {
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: '确认提交该杂项入库单？提交前请确认已维护入库物料，提交后将不能修改。',
+    })
+  } catch {
+    return
+  }
+  await submitMiscReceipt(item.id)
+  toast.success('提交成功')
+  reload()
+}
+
+/** 取消 */
+async function handleCancel(item: WmMiscReceiptVO) {
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: '确认取消该杂项入库单？取消后不可恢复。',
+    })
+  } catch {
+    return
+  }
+  await cancelMiscReceipt(item.id)
+  toast.success('取消成功')
+  reload()
+}
+
+/** 导出按钮操作 */
+async function handleExport() {
+  if (exportLoading.value) {
+    return
+  }
+  const { confirm } = await uni.showModal({
+    title: '导出确认',
+    content: '确定要导出当前筛选数据吗？',
+  })
+  if (!confirm) {
+    return
+  }
+  exportLoading.value = true
+  try {
+    await downloadApiFile('/mes/wm/misc-receipt/export-excel', queryParams.value, '杂项入库单.xls')
+    toast.success('导出成功')
+  } finally {
+    exportLoading.value = false
+  }
 }
 
 /** 初始化 */

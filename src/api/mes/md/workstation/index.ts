@@ -1,51 +1,70 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
-// MES 工作站 VO
-export interface MdWorkstationVO {
-  id: number // 工作站编号
-  code: string // 工作站编码
-  name: string // 工作站名称
-  address: string // 工作站地点
-  workshopId: number // 所在车间 ID
-  workshopName: string // 所在车间名称
-  processId: number // 工序 ID
-  processName: string // 工序名称
-  warehouseId: number // 线边库 ID
-  locationId: number // 库区 ID
-  areaId: number // 库位 ID
-  status: number // 状态
-  remark: string // 备注
+export interface MdWorkstationQueryParams extends PageParam {
+  code?: string
+  name?: string
+  workshopId?: number
+  processId?: number
+  status?: number
 }
 
-/** 查询工作站分页 */
-export function getWorkstationPage(params: PageParam) {
+export interface MdWorkstationVO {
+  id: number
+  code: string
+  name: string
+  address: string | null
+  workshopId: number
+  workshopName: string | null
+  processId: number | null
+  processName: string | null
+  warehouseId: number | null
+  locationId: number | null
+  areaId: number | null
+  status: number
+  remark: string | null
+  createTime: string | number
+}
+
+export interface MdWorkstationCreateReqVO {
+  code: string
+  name: string
+  address?: string
+  workshopId: number
+  processId: number
+  warehouseId?: number
+  locationId?: number
+  areaId?: number
+  status: number
+  remark?: string
+}
+
+export interface MdWorkstationUpdateReqVO extends MdWorkstationCreateReqVO {
+  id: number
+}
+
+export function getWorkstationPage(params: MdWorkstationQueryParams) {
   return http.get<PageResult<MdWorkstationVO>>(`/mes/md-workstation/page`, params)
 }
 
-/** 查询工作站详情 */
 export function getWorkstation(id: number) {
-  return http.get<MdWorkstationVO>(`/mes/md-workstation/get?id=` + id)
+  return http.get<MdWorkstationVO>(`/mes/md-workstation/get?id=${id}`)
 }
 
-/** 新增工作站 */
-export function createWorkstation(data: MdWorkstationVO) {
+export function createWorkstation(data: MdWorkstationCreateReqVO) {
   return http.post<number>(`/mes/md-workstation/create`, data)
 }
 
-/** 修改工作站 */
-export function updateWorkstation(data: MdWorkstationVO) {
+export function updateWorkstation(data: MdWorkstationUpdateReqVO) {
   return http.put<boolean>(`/mes/md-workstation/update`, data)
 }
 
-/** 删除工作站 */
 export function deleteWorkstation(id: number) {
-  return http.delete<boolean>(`/mes/md-workstation/delete?id=` + id)
+  return http.delete<boolean>(`/mes/md-workstation/delete?id=${id}`)
 }
 
-/** 导出工作站 Excel */
-export function exportWorkstation(params: any) {
-  return http.get<any>(`/mes/md-workstation/export-excel`, params)
+export function exportWorkstation(params: MdWorkstationQueryParams) {
+  return http.get<Blob>(`/mes/md-workstation/export-excel`, params)
 }
 
 export const MdWorkstationApi = {

@@ -1,6 +1,13 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
+/** 盘点结果分页查询参数 */
+export interface StockTakingResultQueryParams extends PageParam {
+  taskId?: number // 盘点任务编号
+  lineId?: number // 盘点清单行编号
+  itemId?: number // 物料编号
+}
+
 export interface StockTakingResultVO {
   id?: number
   taskId?: number
@@ -24,8 +31,28 @@ export interface StockTakingResultVO {
   createTime?: string
 }
 
+/** 盘点结果新增参数 */
+export interface StockTakingResultCreateReqVO {
+  taskId: number // 盘点任务编号
+  lineId?: number // 盘点清单行编号
+  materialStockId?: number // 库存记录编号
+  itemId: number // 物料编号
+  batchId?: number // 批次编号
+  batchCode?: string // 批次编码
+  warehouseId: number // 仓库编号
+  locationId: number // 库区编号
+  areaId: number // 库位编号
+  takingQuantity: number // 盘点数量
+  remark?: string // 备注
+}
+
+/** 盘点结果修改参数 */
+export interface StockTakingResultUpdateReqVO extends StockTakingResultCreateReqVO {
+  id: number
+}
+
 /** 请求数据 */
-export function getStockTakingResultPage(params: PageParam) {
+export function getStockTakingResultPage(params: StockTakingResultQueryParams) {
   return http.get<PageResult<StockTakingResultVO>>('/mes/wm/stocktaking-task-result/page', params)
 }
 
@@ -35,18 +62,18 @@ export function getStockTakingResult(id: number) {
 }
 
 /** 请求数据 */
-export function createStockTakingResult(data: StockTakingResultVO) {
+export function createStockTakingResult(data: StockTakingResultCreateReqVO) {
   return http.post<number>('/mes/wm/stocktaking-task-result/create', data)
 }
 
 /** 请求数据 */
-export function updateStockTakingResult(data: StockTakingResultVO) {
+export function updateStockTakingResult(data: StockTakingResultUpdateReqVO) {
   return http.put<boolean>('/mes/wm/stocktaking-task-result/update', data)
 }
 
 /** 请求数据 */
 export function deleteStockTakingResult(id: number) {
-  return http.delete<boolean>('/mes/wm/stocktaking-task-result/delete?id=' + id)
+  return http.delete<boolean>(`/mes/wm/stocktaking-task-result/delete?id=${id}`)
 }
 
 export const StockTakingResultApi = {

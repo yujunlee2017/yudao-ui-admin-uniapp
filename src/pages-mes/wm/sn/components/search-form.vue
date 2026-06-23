@@ -17,21 +17,20 @@
         <view class="yd-search-form-label">
           SN 码
         </view>
-        <wd-input
-          v-model="formData.code"
-          placeholder="请输入SN 码"
-          clearable
-        />
+        <wd-input v-model="formData.code" placeholder="请输入 SN 码" clearable />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           物料
         </view>
-        <wd-input
-          v-model="formData.itemId"
-          placeholder="请输入物料"
-          clearable
-        />
+        <view class="yd-search-form-selector" @click="openItemSelector">
+          <text v-if="selectedItemText" class="text-[#333]">
+            {{ selectedItemText }}
+          </text>
+          <text v-else class="text-[#999]">
+            请选择物料
+          </text>
+        </view>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
@@ -47,21 +46,7 @@
         <view class="yd-search-form-label">
           创建时间
         </view>
-        <wd-input
-          v-model="formData.createTime"
-          placeholder="请输入创建时间"
-          clearable
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          物料编码
-        </view>
-        <wd-input
-          v-model="formData.itemCode"
-          placeholder="请输入物料编码"
-          clearable
-        />
+        <wd-calendar v-model="createTimeRange" type="daterange" placeholder="请选择创建时间范围" />
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -73,61 +58,112 @@
       </view>
     </view>
   </wd-popup>
+
+  <ItemSelector ref="itemSelectorRef" :multiple="false" @confirm="handleItemConfirm" />
 </template>
 
 <script lang="ts" setup>
+import type { MdItemVO } from '@/api/mes/md/item'
+import type { WmSnQueryParams } from '@/api/mes/wm/sn'
 import { computed, reactive, ref } from 'vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import { formatDateRange } from '@/utils/date'
+import ItemSelector from '../../../md/item/components/item-selector.vue'
 
 const emit = defineEmits<{
-  search: [data: Record<string, any>]
+  search: [data: WmSnQueryParams]
   reset: []
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const formData = reactive({
-  code: undefined as any,
-  itemId: undefined as any,
-  batchCode: undefined as any,
-  createTime: undefined as any,
-  itemCode: undefined as any,
+const itemSelectorRef = ref<InstanceType<typeof ItemSelector>>() // 物料选择器
+const selectedItem = ref<MdItemVO>() // 已选物料
+const createTimeRange = ref<[string, string]>() // 创建时间范围
+const formData = reactive<Pick<WmSnQueryParams, 'code' | 'itemId' | 'batchCode'>>({
+  code: '',
+  itemId: undefined,
+  batchCode: '',
 }) // 搜索表单数据
+const selectedItemText = computed(() => selectedItem.value ? `${selectedItem.value.code || '-'} / ${selectedItem.value.name || '-'}` : '')
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
   const conditions: string[] = []
-  if (formData.code !== undefined && formData.code !== '') {
+  if (formData.code) {
     conditions.push(`SN 码:${formData.code}`)
   }
-  if (formData.itemId !== undefined && formData.itemId !== '') {
-    conditions.push(`物料:${formData.itemId}`)
+  if (selectedItem.value) {
+    conditions.push(`物料:${selectedItem.value.code}`)
   }
-  if (formData.batchCode !== undefined && formData.batchCode !== '') {
+  if (formData.batchCode) {
     conditions.push(`批次号:${formData.batchCode}`)
   }
-  if (formData.createTime !== undefined && formData.createTime !== '') {
-    conditions.push(`创建时间:${formData.createTime}`)
-  }
-  if (formData.itemCode !== undefined && formData.itemCode !== '') {
-    conditions.push(`物料编码:${formData.itemCode}`)
+  if (createTimeRange.value?.length === 2) {
+    conditions.push('创建时间')
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索 SN 码'
 })
 
+/** 打开物料选择器 */
+function openItemSelector() {
+  itemSelectorRef.value?.open()
+}
+
+/** 确认选择物料 */
+function handleItemConfirm(items: MdItemVO[]) {
+  const item = items[0]
+  if (!item) {
+    return
+  }
+  selectedItem.value = item
+  formData.itemId = item.id
+}
+
+/** 构造搜索参数 */
+function buildParams() {
+  const params: WmSnQueryParams = {}
+  if (formData.code) {
+    params.code = formData.code
+  }
+  if (formData.itemId) {
+    params.itemId = formData.itemId
+  }
+  if (formData.batchCode) {
+    params.batchCode = formData.batchCode
+  }
+  const range = formatDateRange(createTimeRange.value)
+  if (range) {
+    params.createTime = range
+  }
+  return params
+}
+
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  emit('search', { ...formData })
+  emit('search', buildParams())
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  formData.code = undefined
+  formData.code = ''
   formData.itemId = undefined
-  formData.batchCode = undefined
-  formData.createTime = undefined
-  formData.itemCode = undefined
+  formData.batchCode = ''
+  selectedItem.value = undefined
+  createTimeRange.value = undefined
   visible.value = false
   emit('reset')
 }
 </script>
+
+<style lang="scss" scoped>
+.yd-search-form-selector {
+  min-height: 72rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+  border-radius: 8rpx;
+  background: #f7f8fa;
+  font-size: 28rpx;
+}
+</style>

@@ -1,162 +1,152 @@
 <template>
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
-    <wd-navbar
-      :title="getTitle"
-      left-arrow placeholder safe-area-inset-top fixed
-      @click-left="handleBack"
-    />
+    <wd-navbar :title="getTitle" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
 
     <!-- 表单区域 -->
-    <view>
+    <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
       <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
-          <wd-form-item title="工单编码" title-width="200rpx" prop="code">
-            <wd-input
-              v-model="formData.code"
-              clearable
-              placeholder="请输入工单编码"
-            />
+          <wd-cell v-if="parentWorkOrder" title="父工单" :value="`${parentWorkOrder.code} / ${parentWorkOrder.name}`" />
+          <wd-form-item title="工单编码" title-width="220rpx" prop="code">
+            <wd-input v-model="formData.code" placeholder="请输入或点击生成" clearable>
+              <template #suffix>
+                <wd-button size="small" type="primary" variant="plain" @click="handleGenerateCode">
+                  生成
+                </wd-button>
+              </template>
+            </wd-input>
           </wd-form-item>
-          <wd-form-item title="工单名称" title-width="200rpx" prop="name">
-            <wd-input
-              v-model="formData.name"
-              clearable
-              placeholder="请输入工单名称"
-            />
+          <wd-form-item title="工单名称" title-width="220rpx" prop="name">
+            <wd-input v-model="formData.name" placeholder="请输入工单名称" clearable />
           </wd-form-item>
-          <wd-form-item title="工单类型" title-width="200rpx" prop="type" center>
-            <wd-input-number v-model="formData.type" :min="0" />
+          <wd-form-item title="工单来源" title-width="220rpx" prop="orderSourceType">
+            <wd-radio-group v-model="formData.orderSourceType" type="button">
+              <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_PRO_WORK_ORDER_SOURCE_TYPE)" :key="dict.value" :value="dict.value">
+                {{ dict.label }}
+              </wd-radio>
+            </wd-radio-group>
           </wd-form-item>
-          <wd-form-item title="来源类型" title-width="200rpx" prop="orderSourceType" center>
-            <wd-input-number v-model="formData.orderSourceType" :min="0" />
+          <wd-form-item v-if="formData.orderSourceType === MesProWorkOrderSourceTypeEnum.ORDER" title="来源单据" title-width="220rpx" prop="orderSourceCode">
+            <wd-input v-model="formData.orderSourceCode" placeholder="请输入来源单据编号" clearable />
           </wd-form-item>
-          <wd-form-item title="来源单据编号" title-width="200rpx" prop="orderSourceCode">
-            <wd-input
-              v-model="formData.orderSourceCode"
-              clearable
-              placeholder="请输入来源单据编号"
-            />
+          <wd-form-item title="工单类型" title-width="220rpx" prop="type">
+            <wd-radio-group v-model="formData.type" type="button">
+              <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_PRO_WORK_ORDER_TYPE)" :key="dict.value" :value="dict.value">
+                {{ dict.label }}
+              </wd-radio>
+            </wd-radio-group>
           </wd-form-item>
-          <wd-form-item title="产品编号" title-width="200rpx" prop="productId" center>
-            <wd-input-number v-model="formData.productId" :min="0" />
+          <wd-form-item title="产品" title-width="220rpx" prop="productId" is-link :value="selectedProductText" placeholder="请选择产品" @click="openProductSelector" />
+          <wd-form-item title="工单数量" title-width="220rpx" prop="quantity" center>
+            <wd-input-number v-model="formData.quantity" :min="1" :precision="2" />
           </wd-form-item>
-          <wd-form-item title="产品名称" title-width="200rpx" prop="productName">
-            <wd-input
-              v-model="formData.productName"
-              clearable
-              placeholder="请输入产品名称"
-            />
+          <wd-form-item v-if="formData.orderSourceType === MesProWorkOrderSourceTypeEnum.ORDER" title="客户" title-width="220rpx" prop="clientId" is-link :value="selectedClientText" placeholder="请选择客户" @click="clientPickerVisible = true" />
+          <wd-form-item v-if="showVendor" title="供应商" title-width="220rpx" prop="vendorId" is-link :value="selectedVendorText" placeholder="请选择供应商" @click="vendorPickerVisible = true" />
+          <wd-form-item title="批次号" title-width="220rpx" prop="batchCode">
+            <wd-input v-model="formData.batchCode" placeholder="请输入批次号" clearable />
           </wd-form-item>
-          <wd-form-item title="产品编码" title-width="200rpx" prop="productCode">
-            <wd-input
-              v-model="formData.productCode"
-              clearable
-              placeholder="请输入产品编码"
-            />
+          <wd-form-item title="需求日期" title-width="220rpx" prop="requestDate">
+            <wd-datetime-picker v-model="formData.requestDate" type="date" placeholder="请选择需求日期" />
           </wd-form-item>
-          <wd-form-item title="规格型号" title-width="200rpx" prop="productSpecification">
-            <wd-input
-              v-model="formData.productSpecification"
-              clearable
-              placeholder="请输入规格型号"
-            />
-          </wd-form-item>
-          <wd-form-item title="单位名称" title-width="200rpx" prop="unitMeasureName">
-            <wd-input
-              v-model="formData.unitMeasureName"
-              clearable
-              placeholder="请输入单位名称"
-            />
-          </wd-form-item>
-          <wd-form-item title="生产数量" title-width="200rpx" prop="quantity" center>
-            <wd-input-number v-model="formData.quantity" :min="0" />
-          </wd-form-item>
-          <wd-form-item title="已生产数量" title-width="200rpx" prop="quantityProduced" center>
-            <wd-input-number v-model="formData.quantityProduced" :min="0" />
-          </wd-form-item>
-          <wd-form-item title="调整数量" title-width="200rpx" prop="quantityChanged" center>
-            <wd-input-number v-model="formData.quantityChanged" :min="0" />
-          </wd-form-item>
-          <wd-form-item title="已排产数量" title-width="200rpx" prop="quantityScheduled" center>
-            <wd-input-number v-model="formData.quantityScheduled" :min="0" />
-          </wd-form-item>
-          <wd-form-item title="客户编号" title-width="200rpx" prop="clientId" center>
-            <wd-input-number v-model="formData.clientId" :min="0" />
-          </wd-form-item>
-          <wd-form-item title="客户编码" title-width="200rpx" prop="clientCode">
-            <wd-input
-              v-model="formData.clientCode"
-              clearable
-              placeholder="请输入客户编码"
-            />
-          </wd-form-item>
-          <wd-form-item title="客户名称" title-width="200rpx" prop="clientName">
-            <wd-input
-              v-model="formData.clientName"
-              clearable
-              placeholder="请输入客户名称"
-            />
-          </wd-form-item>
-          <wd-form-item title="供应商编号" title-width="200rpx" prop="vendorId" center>
-            <wd-input-number v-model="formData.vendorId" :min="0" />
-          </wd-form-item>
-          <wd-form-item title="供应商名称" title-width="200rpx" prop="vendorName">
-            <wd-input
-              v-model="formData.vendorName"
-              clearable
-              placeholder="请输入供应商名称"
-            />
-          </wd-form-item>
-          <wd-form-item title="供应商编码" title-width="200rpx" prop="vendorCode">
-            <wd-input
-              v-model="formData.vendorCode"
-              clearable
-              placeholder="请输入供应商编码"
-            />
-          </wd-form-item>
-          <wd-form-item title="批次号" title-width="200rpx" prop="batchCode">
-            <wd-input
-              v-model="formData.batchCode"
-              clearable
-              placeholder="请输入批次号"
-            />
-          </wd-form-item>
-          <wd-datetime-picker
-            v-model="formData.requestDate"
-            type="datetime"
-            label="需求日期"
-            label-width="200rpx"
-            prop="requestDate"
-          />
-          <wd-form-item title="父工单编号" title-width="200rpx" prop="parentId" center>
-            <wd-input-number v-model="formData.parentId" :min="0" />
+          <wd-cell v-if="formData.status != null" title="工单状态">
+            <dict-tag :type="DICT_TYPE.MES_PRO_WORK_ORDER_STATUS" :value="formData.status" />
+          </wd-cell>
+          <wd-form-item title="备注" title-width="220rpx" prop="remark">
+            <wd-textarea v-model="formData.remark" placeholder="请输入备注" :maxlength="300" show-word-limit clearable />
           </wd-form-item>
         </wd-cell-group>
       </wd-form>
+
+      <view v-if="currentId" class="mx-24rpx mt-24rpx rounded-12rpx bg-[#fff7e6] p-20rpx text-26rpx text-[#8a5a00]">
+        草稿工单可继续编辑并确认；确认后将进入排产、流转卡和报工链路，不能再修改工单基础信息。
+      </view>
+      <WorkOrderBomList v-if="workOrderId" :work-order-id="workOrderId" mode="bom" />
+      <WorkOrderBomList v-if="workOrderId" :work-order-id="workOrderId" mode="item" />
+      <view class="h-180rpx" />
+    </scroll-view>
+
+    <!-- 底部按钮 -->
+    <view class="yd-detail-footer">
+      <view class="flex gap-16rpx">
+        <wd-button class="flex-1" type="primary" :loading="formLoading" @click="handleSubmit">
+          保存
+        </wd-button>
+        <wd-button v-if="canConfirm" class="flex-1" type="warning" :loading="formLoading" @click="handleConfirm">
+          确认
+        </wd-button>
+      </view>
     </view>
 
-    <!-- 底部保存按钮 -->
-    <view class="yd-detail-footer">
-      <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
-        保存
-      </wd-button>
-    </view>
+    <ItemSelector ref="productSelectorRef" item-or-product="PRODUCT" title="选择产品" :multiple="false" @confirm="handleProductConfirm" />
+    <wd-picker v-model:visible="clientPickerVisible" :model-value="clientPickerValue" title="选择客户" :columns="clientOptions" label-key="label" value-key="value" @confirm="handleClientConfirm" />
+    <wd-picker v-model:visible="vendorPickerVisible" :model-value="vendorPickerValue" title="选择供应商" :columns="vendorOptions" label-key="label" value-key="value" @confirm="handleVendorConfirm" />
   </view>
 </template>
 
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
-import type { ProWorkOrderVO } from '@/api/mes/pro/workorder'
+import type { MdClientVO } from '@/api/mes/md/client'
+import type { MdItemVO } from '@/api/mes/md/item'
+import type { MdVendorVO } from '@/api/mes/md/vendor'
+import type { ProWorkOrderCreateReqVO, ProWorkOrderUpdateReqVO, ProWorkOrderVO } from '@/api/mes/pro/workorder'
+import ItemSelector from '@/pages-mes/md/item/components/item-selector.vue'
+import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
-import { createWorkOrder, updateWorkOrder, getWorkOrder } from '@/api/mes/pro/workorder'
+import dayjs from 'dayjs'
+import { computed, onMounted, ref, watch } from 'vue'
+import { getClientPage } from '@/api/mes/md/client'
+import { generateAutoCode } from '@/api/mes/md/autocode/record'
+import { getVendorPage } from '@/api/mes/md/vendor'
+import { confirmWorkOrder, createWorkOrder, getWorkOrder, updateWorkOrder } from '@/api/mes/pro/workorder'
+import { getIntDictOptions } from '@/hooks/useDict'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
+import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
+import WorkOrderBomList from '../components/workorder-bom-list.vue'
+
+interface PickerOption {
+  label: string
+  value: number
+}
+
+interface WorkOrderFormData {
+  id?: number
+  parentId?: number
+  code: string
+  name: string
+  type?: number
+  orderSourceType?: number
+  orderSourceCode: string
+  productId?: number
+  quantity?: number
+  clientId?: number
+  vendorId?: number
+  batchCode: string
+  requestDate: string
+  status?: number
+  remark: string
+}
 
 const props = defineProps<{
-  id?: number | string | any
+  id?: number | string
+  parentId?: number | string
 }>()
+const MesAutoCodeRuleCode = {
+  PRO_WORK_ORDER_CODE: 'PRO_WORK_ORDER_CODE',
+} as const
+const MesProWorkOrderStatusEnum = {
+  PREPARE: 0,
+} as const
+const MesProWorkOrderTypeEnum = {
+  OUTSOURCE: 2,
+  PURCHASE: 3,
+} as const
+const MesProWorkOrderSourceTypeEnum = {
+  ORDER: 1,
+  STORE: 2,
+} as const
 
 definePage({
   style: {
@@ -166,51 +156,215 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => props.id ? '编辑生产工单' : '新增生产工单')
+const dialog = useDialog()
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/pro/workorder/form/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
+const currentParentId = computed(() => getRouteQueryNumber('parentId'))
+const getTitle = computed(() => currentParentId.value ? '新增子工单' : currentId.value ? '编辑生产工单' : '新增生产工单')
 const formLoading = ref(false) // 表单提交状态
-const formData = ref<any>({
-  id: undefined,
-  code: '',
-  name: '',
-  type: undefined,
-  orderSourceType: undefined,
-  orderSourceCode: '',
-  productId: undefined,
-  productName: '',
-  productCode: '',
-  productSpecification: '',
-  unitMeasureName: '',
-  quantity: undefined,
-  quantityProduced: undefined,
-  quantityChanged: undefined,
-  quantityScheduled: undefined,
-  clientId: undefined,
-  clientCode: '',
-  clientName: '',
-  vendorId: undefined,
-  vendorName: '',
-  vendorCode: '',
-  batchCode: '',
-  requestDate: undefined,
-  parentId: undefined,
-} as ProWorkOrderVO) // 表单数据
+const formRef = ref<FormInstance>() // 表单组件引用
+const productSelectorRef = ref<InstanceType<typeof ItemSelector>>() // 产品选择器
+const selectedProduct = ref<MdItemVO>() // 当前产品
+const parentWorkOrder = ref<ProWorkOrderVO>() // 父工单
+const clientList = ref<MdClientVO[]>([]) // 客户列表
+const vendorList = ref<MdVendorVO[]>([]) // 供应商列表
+const clientPickerVisible = ref(false) // 客户选择显示状态
+const vendorPickerVisible = ref(false) // 供应商选择显示状态
+const formData = ref<WorkOrderFormData>(getDefaultFormData())
 const formSchema = createFormSchema({
   code: [{ required: true, message: '工单编码不能为空' }],
   name: [{ required: true, message: '工单名称不能为空' }],
+  type: [{ required: true, message: '工单类型不能为空' }],
+  orderSourceType: [{ required: true, message: '工单来源不能为空' }],
+  productId: [{ required: true, message: '产品不能为空' }],
+  quantity: [{ required: true, message: '工单数量不能为空' }],
+  requestDate: [{ required: true, message: '需求日期不能为空' }],
 })
-const formRef = ref<FormInstance>() // 表单组件引用
+const workOrderId = computed(() => formData.value.id)
+const canConfirm = computed(() => !!formData.value.id && formData.value.status === MesProWorkOrderStatusEnum.PREPARE)
+const showVendor = computed(() =>
+  formData.value.type === MesProWorkOrderTypeEnum.OUTSOURCE || formData.value.type === MesProWorkOrderTypeEnum.PURCHASE,
+)
+const selectedProductText = computed(() => {
+  if (selectedProduct.value) {
+    return `${selectedProduct.value.code} / ${selectedProduct.value.name}`
+  }
+  return formData.value.productId ? `产品 #${formData.value.productId}` : ''
+})
+const clientOptions = computed<PickerOption[]>(() => clientList.value.map(item => ({
+  label: `${item.code} / ${item.name}`,
+  value: item.id,
+})))
+const vendorOptions = computed<PickerOption[]>(() => vendorList.value.map(item => ({
+  label: `${item.code} / ${item.name}`,
+  value: item.id,
+})))
+const selectedClientText = computed(() => clientOptions.value.find(item => item.value === formData.value.clientId)?.label || '')
+const selectedVendorText = computed(() => vendorOptions.value.find(item => item.value === formData.value.vendorId)?.label || '')
+const clientPickerValue = computed(() => formData.value.clientId ? [formData.value.clientId] : [])
+const vendorPickerValue = computed(() => formData.value.vendorId ? [formData.value.vendorId] : [])
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/pro/workorder/index')
 }
 
+/** 日期转接口日期时间 */
+function toDateTime(day: string) {
+  return `${dayjs(day).format('YYYY-MM-DD')} 00:00:00`
+}
+
+/** 默认表单数据 */
+function getDefaultFormData(): WorkOrderFormData {
+  return {
+    code: '',
+    name: '',
+    type: undefined,
+    orderSourceType: MesProWorkOrderSourceTypeEnum.STORE,
+    orderSourceCode: '',
+    productId: undefined,
+    quantity: 1,
+    clientId: undefined,
+    vendorId: undefined,
+    batchCode: '',
+    requestDate: dayjs().format('YYYY-MM-DD'),
+    remark: '',
+  }
+}
+
+/** 重置表单上下文 */
+function resetFormContext() {
+  formData.value = getDefaultFormData()
+  selectedProduct.value = undefined
+  parentWorkOrder.value = undefined
+}
+
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  resetFormContext()
+  if (currentParentId.value && !currentId.value) {
+    parentWorkOrder.value = await getWorkOrder(currentParentId.value)
+    formData.value.parentId = parentWorkOrder.value.id
+    formData.value.type = parentWorkOrder.value.type
+    formData.value.orderSourceType = parentWorkOrder.value.orderSourceType
+    formData.value.orderSourceCode = parentWorkOrder.value.orderSourceCode || ''
+    formData.value.clientId = parentWorkOrder.value.clientId
+    formData.value.vendorId = parentWorkOrder.value.vendorId
+    formData.value.requestDate = dayjs(parentWorkOrder.value.requestDate).format('YYYY-MM-DD')
     return
   }
-  formData.value = await getWorkOrder(props.id)
+  if (!currentId.value) {
+    return
+  }
+  const detail = await getWorkOrder(currentId.value)
+  formData.value = {
+    id: detail.id,
+    parentId: detail.parentId,
+    code: detail.code || '',
+    name: detail.name || '',
+    type: detail.type,
+    orderSourceType: detail.orderSourceType,
+    orderSourceCode: detail.orderSourceCode || '',
+    productId: detail.productId,
+    quantity: detail.quantity,
+    clientId: detail.clientId,
+    vendorId: detail.vendorId,
+    batchCode: detail.batchCode || '',
+    requestDate: dayjs(detail.requestDate).format('YYYY-MM-DD'),
+    status: detail.status,
+    remark: detail.remark || '',
+  }
+  selectedProduct.value = detail.productId
+    ? {
+        id: detail.productId,
+        code: detail.productCode || '',
+        name: detail.productName || '',
+        specification: detail.productSpecification || '',
+        unitMeasureId: 0,
+        unitMeasureName: detail.unitMeasureName,
+        itemTypeId: 0,
+        status: CommonStatusEnum.ENABLE,
+        safeStockFlag: false,
+        minStock: 0,
+        maxStock: 0,
+        highValue: false,
+        batchFlag: false,
+        remark: '',
+      }
+    : undefined
+}
+
+/** 加载选择数据 */
+async function loadOptions() {
+  const [clients, vendors] = await Promise.all([
+    getClientPage({ pageNo: 1, pageSize: 100, status: CommonStatusEnum.ENABLE }),
+    getVendorPage({ pageNo: 1, pageSize: 100, status: CommonStatusEnum.ENABLE }),
+  ])
+  clientList.value = clients.list
+  vendorList.value = vendors.list
+}
+
+/** 生成工单编码 */
+async function handleGenerateCode() {
+  try {
+    toast.loading('生成中...')
+    formData.value.code = await generateAutoCode(MesAutoCodeRuleCode.PRO_WORK_ORDER_CODE)
+    toast.close()
+    toast.success('生成成功')
+  } catch {
+    toast.close()
+  }
+}
+
+/** 打开产品选择 */
+function openProductSelector() {
+  productSelectorRef.value?.open()
+}
+
+/** 选择产品 */
+function handleProductConfirm(items: MdItemVO[]) {
+  const product = items[0]
+  if (!product) {
+    return
+  }
+  selectedProduct.value = product
+  formData.value.productId = product.id
+  if (!formData.value.name) {
+    formData.value.name = product.name
+  }
+}
+
+/** 选择客户 */
+function handleClientConfirm({ value }: { value: number[] }) {
+  formData.value.clientId = Number(value[0])
+}
+
+/** 选择供应商 */
+function handleVendorConfirm({ value }: { value: number[] }) {
+  formData.value.vendorId = Number(value[0])
+}
+
+/** 构造提交数据 */
+function buildSubmitData(): ProWorkOrderCreateReqVO | ProWorkOrderUpdateReqVO {
+  const data = {
+    parentId: formData.value.parentId,
+    code: formData.value.code,
+    name: formData.value.name,
+    type: Number(formData.value.type),
+    orderSourceType: Number(formData.value.orderSourceType),
+    orderSourceCode: formData.value.orderSourceType === MesProWorkOrderSourceTypeEnum.ORDER ? formData.value.orderSourceCode || undefined : undefined,
+    productId: Number(formData.value.productId),
+    quantity: Number(formData.value.quantity),
+    clientId: formData.value.orderSourceType === MesProWorkOrderSourceTypeEnum.ORDER ? formData.value.clientId : undefined,
+    vendorId: showVendor.value ? formData.value.vendorId : undefined,
+    batchCode: formData.value.batchCode || undefined,
+    requestDate: toDateTime(formData.value.requestDate),
+    remark: formData.value.remark || undefined,
+  }
+  if (formData.value.id) {
+    return { ...data, id: formData.value.id }
+  }
+  return data
 }
 
 /** 提交表单 */
@@ -219,30 +373,70 @@ async function handleSubmit() {
   if (result && !result.valid) {
     return
   }
-
   formLoading.value = true
   try {
-    if (props.id) {
-      await updateWorkOrder(formData.value)
+    const data = buildSubmitData()
+    if (formData.value.id) {
+      await updateWorkOrder(data)
       toast.success('修改成功')
     } else {
-      await createWorkOrder(formData.value)
+      const id = await createWorkOrder(data)
+      formData.value.id = id
+      formData.value.status = MesProWorkOrderStatusEnum.PREPARE
       toast.success('新增成功')
     }
     uni.$emit('mes:pro:workorder:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
   } finally {
     formLoading.value = false
   }
 }
 
-/** 初始化 */
-onMounted(() => {
+/** 确认工单 */
+async function handleConfirm() {
+  if (!formData.value.id) {
+    return
+  }
+  try {
+    await dialog.confirm({ title: '提示', msg: '确认要完成工单编制吗？确认后将不能更改。' })
+  } catch {
+    return
+  }
+  formLoading.value = true
+  try {
+    await confirmWorkOrder(formData.value.id)
+    toast.success('工单已确认')
+    uni.$emit('mes:pro:workorder:reload')
+    setTimeout(() => handleBack(), 500)
+  } finally {
+    formLoading.value = false
+  }
+}
+
+watch(
+  () => formData.value.orderSourceType,
+  (val) => {
+    if (val !== MesProWorkOrderSourceTypeEnum.ORDER) {
+      formData.value.orderSourceCode = ''
+      formData.value.clientId = undefined
+    }
+  },
+)
+
+watch(
+  () => formData.value.type,
+  () => {
+    if (!showVendor.value) {
+      formData.value.vendorId = undefined
+    }
+  },
+)
+
+onMounted(async () => {
+  await loadOptions()
+  await getDetail()
+})
+
+watch([currentId, currentParentId], () => {
   getDetail()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

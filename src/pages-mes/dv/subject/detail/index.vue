@@ -8,31 +8,37 @@
     />
 
     <!-- 详情内容 -->
-    <view>
+    <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
       <wd-cell-group border>
-        <wd-cell title="项目编码" :value="formatFieldValue(formData?.code) || '-'" />
-        <wd-cell title="项目名称" :value="formatFieldValue(formData?.name) || '-'" />
-        <wd-cell title="项目类型" :value="formatFieldValue(formData?.type) || '-'" />
-        <wd-cell title="项目内容" :value="formatFieldValue(formData?.content) || '-'" />
-        <wd-cell title="标准" :value="formatFieldValue(formData?.standard) || '-'" />
-        <wd-cell title="状态" :value="formatFieldValue(formData?.status) || '-'" />
-        <wd-cell title="创建时间" :value="formatFieldValue(formData?.createTime) || '-'" />
-        <wd-cell title="编号" :value="formatFieldValue(formData?.id) || '-'" />
-        <wd-cell title="备注" :value="formatFieldValue(formData?.remark) || '-'" />
+        <wd-cell title="项目编码" :value="formData?.code || '-'" />
+        <wd-cell title="项目名称" :value="formData?.name || '-'" />
+        <wd-cell title="项目类型">
+          <dict-tag v-if="formData?.type != null" :type="DICT_TYPE.MES_DV_SUBJECT_TYPE" :value="formData.type" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="项目内容" :value="formData?.content || '-'" />
+        <wd-cell title="标准" :value="formData?.standard || '-'" />
+        <wd-cell title="状态">
+          <dict-tag v-if="formData?.status != null" :type="DICT_TYPE.COMMON_STATUS" :value="formData.status" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime) || '-'" />
+        <wd-cell title="备注" :value="formData?.remark || '-'" />
       </wd-cell-group>
-    </view>
+      <view class="h-160rpx" />
+    </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view class="yd-detail-footer">
+    <view v-if="hasFooter" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <wd-button
-          v-if="hasAccessByCodes(['mes:dv-subject:update'])"
+          v-if="canUpdate"
           class="flex-1" type="warning" @click="handleEdit"
         >
           编辑
         </wd-button>
         <wd-button
-          v-if="hasAccessByCodes(['mes:dv-subject:delete'])"
+          v-if="canDelete"
           class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
         >
           删除
@@ -44,16 +50,19 @@
 
 <script lang="ts" setup>
 import type { DvSubjectVO } from '@/api/mes/dv/subject'
+import { onShow } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
-import { getSubject, deleteSubject } from '@/api/mes/dv/subject'
+import { computed, onMounted, ref, watch } from 'vue'
+import { deleteSubject, getSubject } from '@/api/mes/dv/subject'
 import { useAccess } from '@/hooks/useAccess'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{
-  id?: number | string | any
+  id?: number | string
 }>()
 
 definePage({
@@ -66,64 +75,66 @@ definePage({
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const formData = ref<any>() // 详情数据
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/dv/subject/detail/index')
+const currentId = computed(() => getRouteQueryNumber('id')) // 当前详情编号
+const formData = ref<DvSubjectVO>() // 详情数据
 const deleting = ref(false) // 删除状态
+const canUpdate = computed(() => hasAccessByCodes(['mes:dv-subject:update']))
+const canDelete = computed(() => hasAccessByCodes(['mes:dv-subject:delete']))
+const hasFooter = computed(() => canUpdate.value || canDelete.value)
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/dv/subject/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
-}
-
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getSubject(props.id)
+    formData.value = await getSubject(currentId.value)
   } finally {
     toast.close()
+  }
+}
+
+/** 初始化页面数据 */
+async function initPage() {
+  if (!currentId.value) {
+    formData.value = undefined
+    return
+  }
+  if (!formData.value || formData.value.id !== currentId.value) {
+    await getDetail()
   }
 }
 
 /** 编辑 */
 function handleEdit() {
   uni.navigateTo({
-    url: `/pages-mes/dv/subject/form/index?id=${props.id}`,
+    url: `/pages-mes/dv/subject/form/index?id=${currentId.value}`,
   })
 }
 
 /** 删除 */
 async function handleDelete() {
-  if (!props.id) {
+  if (!currentId.value || !formData.value) {
     return
   }
   try {
     await dialog.confirm({
       title: '提示',
-      msg: '确定要删除该点检项目吗？',
+      msg: `确定要删除「${formData.value.name || formData.value.code}」吗？`,
     })
   } catch {
     return
   }
   deleting.value = true
   try {
-    await deleteSubject(props.id)
+    await deleteSubject(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:dv:subject:reload')
     setTimeout(() => {
@@ -136,7 +147,15 @@ async function handleDelete() {
 
 /** 初始化 */
 onMounted(() => {
-  getDetail()
+  initPage()
+})
+
+onShow(() => {
+  initPage()
+})
+
+watch(currentId, () => {
+  initPage()
 })
 </script>
 

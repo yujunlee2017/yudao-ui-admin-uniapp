@@ -8,40 +8,54 @@
     />
 
     <!-- 详情内容 -->
-    <view>
-      <wd-cell-group border>
-        <wd-cell title="装箱单编号" :value="formatFieldValue(formData?.code) || '-'" />
-        <wd-cell title="装箱日期" :value="formatFieldValue(formData?.packageDate) || '-'" />
-        <wd-cell title="销售订单编号" :value="formatFieldValue(formData?.salesOrderCode) || '-'" />
-        <wd-cell title="发票编号" :value="formatFieldValue(formData?.invoiceCode) || '-'" />
-        <wd-cell title="客户编码" :value="formatFieldValue(formData?.clientCode) || '-'" />
-        <wd-cell title="客户名称" :value="formatFieldValue(formData?.clientName) || '-'" />
-        <wd-cell title="箱长度" :value="formatFieldValue(formData?.length) || '-'" />
-        <wd-cell title="箱宽度" :value="formatFieldValue(formData?.width) || '-'" />
-        <wd-cell title="id" :value="formatFieldValue(formData?.id) || '-'" />
-        <wd-cell title="parentId" :value="formatFieldValue(formData?.parentId) || '-'" />
-        <wd-cell title="clientId" :value="formatFieldValue(formData?.clientId) || '-'" />
-        <wd-cell title="clientNickname" :value="formatFieldValue(formData?.clientNickname) || '-'" />
-        <wd-cell title="height" :value="formatFieldValue(formData?.height) || '-'" />
-        <wd-cell title="sizeUnitId" :value="formatFieldValue(formData?.sizeUnitId) || '-'" />
-        <wd-cell title="sizeUnitName" :value="formatFieldValue(formData?.sizeUnitName) || '-'" />
-        <wd-cell title="netWeight" :value="formatFieldValue(formData?.netWeight) || '-'" />
-        <wd-cell title="grossWeight" :value="formatFieldValue(formData?.grossWeight) || '-'" />
-        <wd-cell title="weightUnitId" :value="formatFieldValue(formData?.weightUnitId) || '-'" />
-      </wd-cell-group>
-    </view>
+    <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
+      <view class="p-24rpx">
+        <wd-cell-group border>
+          <wd-cell title="装箱单编号" :value="formData?.code || '-'" />
+          <wd-cell title="装箱日期" :value="formatDateTime(formData?.packageDate) || '-'" />
+          <wd-cell title="单据状态">
+            <dict-tag v-if="formData?.status != null" :type="DICT_TYPE.MES_WM_PACKAGE_STATUS" :value="formData.status" />
+            <text v-else>-</text>
+          </wd-cell>
+          <wd-cell title="箱体类型" :value="formData?.parentId && formData.parentId !== 0 ? `子箱 #${formData.parentId}` : '主箱'" />
+          <wd-cell title="销售订单编号" :value="formData?.salesOrderCode || '-'" />
+          <wd-cell title="发票编号" :value="formData?.invoiceCode || '-'" />
+          <wd-cell title="客户编码" :value="formData?.clientCode || '-'" />
+          <wd-cell title="客户名称" :value="formData?.clientName || '-'" />
+          <wd-cell title="客户简称" :value="formData?.clientNickname || '-'" />
+          <wd-cell title="箱长度" :value="formatMeasure(formData?.length, formData?.sizeUnitName)" />
+          <wd-cell title="箱宽度" :value="formatMeasure(formData?.width, formData?.sizeUnitName)" />
+          <wd-cell title="箱高度" :value="formatMeasure(formData?.height, formData?.sizeUnitName)" />
+          <wd-cell title="净重" :value="formatMeasure(formData?.netWeight, formData?.weightUnitName)" />
+          <wd-cell title="毛重" :value="formatMeasure(formData?.grossWeight, formData?.weightUnitName)" />
+          <wd-cell title="检查员" :value="formData?.inspectorName || '-'" />
+          <wd-cell title="备注" :value="formData?.remark || '-'" />
+          <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime) || '-'" />
+        </wd-cell-group>
+
+        <SubPackageList :package-id="packageId" />
+        <PackageLineList :package-id="packageId" />
+        <view class="h-180rpx" />
+      </view>
+    </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view class="yd-detail-footer">
+    <view v-if="canOperate" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <wd-button
-          v-if="hasAccessByCodes(['mes:wm-package:update'])"
+          v-if="canUpdate"
           class="flex-1" type="warning" @click="handleEdit"
         >
           编辑
         </wd-button>
         <wd-button
-          v-if="hasAccessByCodes(['mes:wm-package:delete'])"
+          v-if="canUpdate"
+          class="flex-1" type="success" :loading="finishLoading" @click="handleFinish"
+        >
+          完成
+        </wd-button>
+        <wd-button
+          v-if="canDelete"
           class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
         >
           删除
@@ -55,14 +69,18 @@
 import type { WmPackageVO } from '@/api/mes/wm/packages'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
-import { getPackage, deletePackage } from '@/api/mes/wm/packages'
+import { computed, onMounted, ref, watch } from 'vue'
+import { deletePackage, finishPackage, getPackage } from '@/api/mes/wm/packages'
 import { useAccess } from '@/hooks/useAccess'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE, MesWmPackageStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
+import PackageLineList from '../components/package-line-list.vue'
+import SubPackageList from '../components/sub-package-list.vue'
 
 const props = defineProps<{
-  id?: number | string | any
+  id?: number | string
 }>()
 
 definePage({
@@ -75,64 +93,101 @@ definePage({
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const formData = ref<any>() // 详情数据
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/wm/packages/detail/index')
+const formData = ref<WmPackageVO>() // 详情数据
 const deleting = ref(false) // 删除状态
+const finishLoading = ref(false) // 完成状态
+const packageId = computed(() => getRouteQueryNumber('id'))
+const canUpdate = computed(() => {
+  return formData.value?.status === MesWmPackageStatusEnum.PREPARE && hasAccessByCodes(['mes:wm-package:update'])
+})
+const canDelete = computed(() => {
+  return formData.value?.status === MesWmPackageStatusEnum.PREPARE && hasAccessByCodes(['mes:wm-package:delete'])
+})
+const canOperate = computed(() => canUpdate.value || canDelete.value)
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/wm/packages/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
+/** 格式化数值和单位 */
+function formatMeasure(value?: number, unitName?: string) {
+  if (value === undefined || value === null) {
+    return '-'
   }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
+  return `${value} ${unitName || ''}`.trim()
 }
 
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!packageId.value) {
     return
   }
-  try {
-    toast.loading('加载中...')
-    formData.value = await getPackage(props.id)
-  } finally {
-    toast.close()
+  formData.value = await getPackage(packageId.value)
+}
+
+/** 初始化页面数据 */
+async function initPage() {
+  if (!packageId.value) {
+    formData.value = undefined
+    return
+  }
+  if (!formData.value || formData.value.id !== packageId.value) {
+    await getDetail()
   }
 }
 
 /** 编辑 */
 function handleEdit() {
+  if (!packageId.value) {
+    return
+  }
   uni.navigateTo({
-    url: `/pages-mes/wm/packages/form/index?id=${props.id}`,
+    url: `/pages-mes/wm/packages/form/index?id=${packageId.value}`,
   })
 }
 
-/** 删除 */
-async function handleDelete() {
-  if (!props.id) {
+/** 完成 */
+async function handleFinish() {
+  if (!packageId.value || !formData.value) {
     return
   }
   try {
     await dialog.confirm({
       title: '提示',
-      msg: '确定要删除该装箱单吗？',
+      msg: `确认完成装箱单「${formData.value.code}」？完成后将不可编辑。`,
+    })
+  } catch {
+    return
+  }
+  finishLoading.value = true
+  try {
+    await finishPackage(packageId.value)
+    toast.success('完成成功')
+    await getDetail()
+    uni.$emit('mes:wm:packages:reload')
+  } finally {
+    finishLoading.value = false
+  }
+}
+
+/** 删除 */
+async function handleDelete() {
+  if (!packageId.value || !formData.value) {
+    return
+  }
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: `确定要删除装箱单「${formData.value.code}」吗？`,
     })
   } catch {
     return
   }
   deleting.value = true
   try {
-    await deletePackage(props.id)
+    await deletePackage(packageId.value)
     toast.success('删除成功')
     uni.$emit('mes:wm:packages:reload')
     setTimeout(() => {
@@ -145,7 +200,11 @@ async function handleDelete() {
 
 /** 初始化 */
 onMounted(() => {
-  getDetail()
+  initPage()
+})
+
+watch(packageId, () => {
+  initPage()
 })
 </script>
 

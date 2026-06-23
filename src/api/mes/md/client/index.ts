@@ -1,72 +1,81 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
-// MES 客户 VO
-export interface MdClientVO {
-  id: number // 客户编号
-  code: string // 客户编码
-  name: string // 客户名称
-  nickname: string // 客户简称
-  englishName: string // 客户英文名称
-  description: string // 客户简介
-  logo: string // 客户LOGO地址
-  type: number // 客户类型
-  address: string // 客户地址
-  website: string // 客户官网地址
-  email: string // 客户邮箱地址
-  telephone: string // 客户电话
-  contact1Name: string // 联系人1
-  contact1Telephone: string // 联系人1-电话
-  contact1Email: string // 联系人1-邮箱
-  contact2Name: string // 联系人2
-  contact2Telephone: string // 联系人2-电话
-  contact2Email: string // 联系人2-邮箱
-  creditCode: string // 统一社会信用代码
-  status: number // 状态
-  remark: string // 备注
+export interface MdClientQueryParams extends PageParam {
+  code?: string
+  name?: string
+  nickname?: string
+  status?: number
 }
 
-/** 查询客户分页 */
-export function getClientPage(params: PageParam) {
+export interface MdClientVO {
+  id: number
+  code: string
+  name: string
+  nickname: string | null
+  englishName: string | null
+  description: string | null
+  logo: string | null
+  type: number
+  address: string | null
+  website: string | null
+  email: string | null
+  telephone: string | null
+  contact1Name: string | null
+  contact1Telephone: string | null
+  contact1Email: string | null
+  contact2Name: string | null
+  contact2Telephone: string | null
+  contact2Email: string | null
+  creditCode: string | null
+  status: number
+  remark: string | null
+  createTime: string | number
+}
+
+export interface MdClientCreateReqVO {
+  code: string
+  name: string
+  nickname?: string
+  englishName?: string
+  description?: string
+  logo?: string
+  type: number
+  address?: string
+  website?: string
+  email?: string
+  telephone?: string
+  contact1Name?: string
+  contact1Telephone?: string
+  contact1Email?: string
+  contact2Name?: string
+  contact2Telephone?: string
+  contact2Email?: string
+  creditCode?: string
+  status: number
+  remark?: string
+}
+
+export interface MdClientUpdateReqVO extends MdClientCreateReqVO {
+  id: number
+}
+
+export function getClientPage(params: MdClientQueryParams) {
   return http.get<PageResult<MdClientVO>>(`/mes/md-client/page`, params)
 }
-
-/** 查询客户详情 */
 export function getClient(id: number) {
-  return http.get<MdClientVO>(`/mes/md-client/get?id=` + id)
+  return http.get<MdClientVO>(`/mes/md-client/get?id=${id}`)
 }
-
-/** 新增客户 */
-export function createClient(data: MdClientVO) {
+export function createClient(data: MdClientCreateReqVO) {
   return http.post<number>(`/mes/md-client/create`, data)
 }
-
-/** 修改客户 */
-export function updateClient(data: MdClientVO) {
+export function updateClient(data: MdClientUpdateReqVO) {
   return http.put<boolean>(`/mes/md-client/update`, data)
 }
-
-/** 删除客户 */
 export function deleteClient(id: number) {
-  return http.delete<boolean>(`/mes/md-client/delete?id=` + id)
+  return http.delete<boolean>(`/mes/md-client/delete?id=${id}`)
 }
-
-/** 导出客户 Excel */
-export function exportClient(params: any) {
-  return http.get<any>(`/mes/md-client/export-excel`, params)
+export function exportClient(params: MdClientQueryParams) {
+  return http.get<Blob>(`/mes/md-client/export-excel`, params)
 }
-
-/** 下载客户导入模板 */
-export function importTemplate() {
-  return http.get<any>(`/mes/md-client/get-import-template`)
-}
-
-export const MdClientApi = {
-  getClientPage,
-  getClient,
-  createClient,
-  updateClient,
-  deleteClient,
-  exportClient,
-  importTemplate,
-}
+export const MdClientApi = { getClientPage, getClient, createClient, updateClient, deleteClient, exportClient }

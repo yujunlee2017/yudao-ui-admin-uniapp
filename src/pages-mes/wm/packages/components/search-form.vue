@@ -17,41 +17,51 @@
         <view class="yd-search-form-label">
           装箱单编号
         </view>
-        <wd-input
-          v-model="formData.code"
-          placeholder="请输入装箱单编号"
-          clearable
-        />
+        <wd-input v-model="formData.code" placeholder="请输入装箱单编号" clearable />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           销售订单编号
         </view>
-        <wd-input
-          v-model="formData.salesOrderCode"
-          placeholder="请输入销售订单编号"
-          clearable
-        />
+        <wd-input v-model="formData.salesOrderCode" placeholder="请输入销售订单编号" clearable />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           客户
         </view>
-        <wd-input
-          v-model="formData.clientId"
-          placeholder="请输入客户"
-          clearable
-        />
+        <view class="yd-search-form-selector" @click="openClientSelector">
+          <text :class="selectedClientText ? 'text-[#333]' : 'text-[#999]'">
+            {{ selectedClientText || '请选择客户' }}
+          </text>
+        </view>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           检查员
         </view>
-        <wd-input
+        <UserPicker
           v-model="formData.inspectorUserId"
-          placeholder="请输入检查员"
-          clearable
-        />
+          type="radio"
+          placeholder="请选择检查员"
+          use-default-slot
+          @confirm="handleInspectorConfirm"
+        >
+          <view class="yd-search-form-selector">
+            <text :class="selectedInspectorText ? 'text-[#333]' : 'text-[#999]'">
+              {{ selectedInspectorText || '请选择检查员' }}
+            </text>
+          </view>
+        </UserPicker>
+      </view>
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
+          单据状态
+        </view>
+        <wd-radio-group v-model="formData.status" type="button">
+          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_WM_PACKAGE_STATUS)" :key="dict.value" :value="dict.value">
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -63,56 +73,130 @@
       </view>
     </view>
   </wd-popup>
+
+  <ClientSelector ref="clientSelectorRef" :multiple="false" @confirm="handleClientConfirm" />
 </template>
 
 <script lang="ts" setup>
+import type { MdClientVO } from '@/api/mes/md/client'
+import type { WmPackageQueryParams } from '@/api/mes/wm/packages'
+import type { User } from '@/api/system/user'
 import { computed, reactive, ref } from 'vue'
+import UserPicker from '@/components/system-select/user-picker.vue'
+import { getIntDictOptions } from '@/hooks/useDict'
+import ClientSelector from '@/pages-mes/md/client/components/client-selector.vue'
+import { DICT_TYPE } from '@/utils/constants'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 
 const emit = defineEmits<{
-  search: [data: Record<string, any>]
+  search: [data: WmPackageQueryParams]
   reset: []
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const formData = reactive({
-  code: undefined as any,
-  salesOrderCode: undefined as any,
-  clientId: undefined as any,
-  inspectorUserId: undefined as any,
+const clientSelectorRef = ref<InstanceType<typeof ClientSelector>>() // 客户选择器
+const selectedClient = ref<MdClientVO>() // 已选客户
+const selectedInspectorText = ref('') // 已选检查员
+const formData = reactive<Pick<WmPackageQueryParams, 'code' | 'salesOrderCode' | 'clientId' | 'inspectorUserId' | 'status'>>({
+  code: '',
+  salesOrderCode: '',
+  clientId: undefined,
+  inspectorUserId: undefined,
+  status: undefined,
 }) // 搜索表单数据
+const selectedClientText = computed(() => selectedClient.value ? `${selectedClient.value.code || '-'} / ${selectedClient.value.name || '-'}` : '')
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
   const conditions: string[] = []
-  if (formData.code !== undefined && formData.code !== '') {
-    conditions.push(`装箱单编号:${formData.code}`)
+  if (formData.code) {
+    conditions.push(`编号:${formData.code}`)
   }
-  if (formData.salesOrderCode !== undefined && formData.salesOrderCode !== '') {
-    conditions.push(`销售订单编号:${formData.salesOrderCode}`)
+  if (formData.salesOrderCode) {
+    conditions.push(`销售订单:${formData.salesOrderCode}`)
   }
-  if (formData.clientId !== undefined && formData.clientId !== '') {
-    conditions.push(`客户:${formData.clientId}`)
+  if (selectedClient.value) {
+    conditions.push(`客户:${selectedClient.value.code}`)
   }
-  if (formData.inspectorUserId !== undefined && formData.inspectorUserId !== '') {
-    conditions.push(`检查员:${formData.inspectorUserId}`)
+  if (selectedInspectorText.value) {
+    conditions.push(`检查员:${selectedInspectorText.value}`)
+  }
+  if (formData.status !== undefined) {
+    const dict = getIntDictOptions(DICT_TYPE.MES_WM_PACKAGE_STATUS).find(item => item.value === formData.status)
+    conditions.push(`状态:${dict?.label || formData.status}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索装箱单'
 })
 
+/** 打开客户选择器 */
+function openClientSelector() {
+  clientSelectorRef.value?.open()
+}
+
+/** 确认选择客户 */
+function handleClientConfirm(clients: MdClientVO[]) {
+  const client = clients[0]
+  if (!client) {
+    return
+  }
+  selectedClient.value = client
+  formData.clientId = client.id
+}
+
+/** 确认选择检查员 */
+function handleInspectorConfirm(users: User[]) {
+  selectedInspectorText.value = users[0]?.nickname || ''
+}
+
+/** 构造搜索参数 */
+function buildParams() {
+  const params: WmPackageQueryParams = {}
+  if (formData.code) {
+    params.code = formData.code
+  }
+  if (formData.salesOrderCode) {
+    params.salesOrderCode = formData.salesOrderCode
+  }
+  if (formData.clientId) {
+    params.clientId = formData.clientId
+  }
+  if (formData.inspectorUserId) {
+    params.inspectorUserId = formData.inspectorUserId
+  }
+  if (formData.status !== undefined) {
+    params.status = formData.status
+  }
+  return params
+}
+
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  emit('search', { ...formData })
+  emit('search', buildParams())
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  formData.code = undefined
-  formData.salesOrderCode = undefined
+  formData.code = ''
+  formData.salesOrderCode = ''
   formData.clientId = undefined
   formData.inspectorUserId = undefined
+  formData.status = undefined
+  selectedClient.value = undefined
+  selectedInspectorText.value = ''
   visible.value = false
   emit('reset')
 }
 </script>
+
+<style lang="scss" scoped>
+.yd-search-form-selector {
+  min-height: 72rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+  border-radius: 8rpx;
+  background: #f7f8fa;
+  font-size: 28rpx;
+}
+</style>

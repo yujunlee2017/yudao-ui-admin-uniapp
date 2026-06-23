@@ -1,173 +1,153 @@
 <template>
-  <view class="yd-page-container yd-page-container-paging">
-    <!-- 顶部导航栏 -->
-    <wd-navbar
-      title="MES 设备类型管理"
-      left-arrow placeholder safe-area-inset-top fixed
-      @click-left="handleBack"
-    />
-
-    <!-- 搜索组件 -->
-    <SearchForm @search="handleQuery" @reset="handleReset" />
-
-    <!-- 列表 -->
-    <z-paging
-      ref="pagingRef"
-      v-model="list"
-      :fixed="false"
-      class="min-h-0 flex-1"
-      :default-page-size="10"
-      :refresher-enabled="true"
-      :inside-more="true"
-      :loading-more-default-as-loading="true"
-      empty-view-text="暂无设备类型数据"
-      @query="queryList"
-    >
+  <view class="yd-page-container">
+    <wd-navbar title="设备类型" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
+    <SearchForm ref="searchFormRef" @search="handleQuery" @reset="handleReset" />
+    <Breadcrumb v-if="!hasQuery" ref="breadcrumbRef" v-model="currentParentId" />
+    <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
       <view class="p-24rpx">
-        <view
-          v-for="item in list"
-          :key="item.id"
-          class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm"
-          @click="handleDetail(item)"
-        >
-          <view class="p-24rpx">
-            <view class="mb-16rpx flex items-center justify-between gap-16rpx">
-              <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-                {{ formatFieldValue(item.code) || '-' }}
+        <wd-swipe-action v-for="item in currentList" :key="item.id" :disabled="!canDelete">
+          <view class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
+            <view class="p-24rpx" @click="handleDetail(item)">
+              <view class="flex items-start justify-between gap-16rpx">
+                <view class="min-w-0 flex-1">
+                  <view class="mb-12rpx flex items-center">
+                    <view class="mr-16rpx h-48rpx w-48rpx flex shrink-0 items-center justify-center rounded-8rpx bg-[#722ed1]">
+                      <wd-icon name="folder" size="20px" color="#fff" />
+                    </view><view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
+                      {{ item.name || '-' }}
+                    </view>
+                  </view>
+                  <view class="text-26rpx text-[#666] space-y-8rpx">
+                    <view>编码：{{ item.code || '-' }}</view><view>排序：{{ item.sort ?? '-' }}</view><view class="flex items-center">
+                      <text class="mr-8rpx">状态：</text><dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="item.status" />
+                    </view>
+                  </view>
+                </view>
+                <view v-if="!hasQuery && item.children && item.children.length > 0" class="mt-4rpx flex shrink-0 items-center" @click.stop="handleEnterChildren(item)">
+                  <text class="text-24rpx text-[#722ed1]">子类型({{ item.children.length }})</text><wd-icon name="arrow-right" size="12px" color="#722ed1" />
+                </view>
               </view>
-              <view class="shrink-0 text-24rpx text-[#999]">
-                #{{ item.id }}
-              </view>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">设备类型名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.name) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">状态：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.status) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">排序：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.sort) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">创建时间：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.createTime) || '-' }}</text>
             </view>
           </view>
+          <template v-if="canDelete" #right>
+            <view class="h-full flex items-center justify-center px-36rpx" style="background:linear-gradient(135deg,#f56c6c,#e85d5d)" @click.stop="handleSwipeDelete(item)">
+              <wd-icon name="delete-outline" size="36rpx" custom-style="color:#fff" /><text class="ml-8rpx text-28rpx text-white">删除</text>
+            </view>
+          </template>
+        </wd-swipe-action>
+        <view v-if="!loading && currentList.length === 0" class="py-100rpx text-center">
+          <wd-empty icon="content" tip="暂无设备类型数据" />
         </view>
       </view>
-    </z-paging>
-
-    <!-- 新增按钮 -->
-    <wd-fab
-      v-if="hasAccessByCodes(['mes:dv-machinery-type:create'])"
-      position="right-bottom"
-      type="primary"
-      :expandable="false"
-      @click="handleAdd"
-    />
+    </scroll-view>
+    <wd-fab v-if="hasAccessByCodes(['mes:dv-machinery-type:create'])" position="right-bottom" type="primary" :expandable="false" @click="handleAdd" />
   </view>
 </template>
 
 <script lang="ts" setup>
-import type { DvMachineryTypeVO } from '@/api/mes/dv/machinery/type'
+import type { DvMachineryTypeQueryParams, DvMachineryTypeVO } from '@/api/mes/dv/machinery/type'
 import { onUnload } from '@dcloudio/uni-app'
-import { onMounted, ref } from 'vue'
-import { getMachineryTypeList } from '@/api/mes/dv/machinery/type'
+import { computed, onMounted, ref } from 'vue'
+import { deleteMachineryType, getMachineryTypeList } from '@/api/mes/dv/machinery/type'
 import { useAccess } from '@/hooks/useAccess'
+import { useDialog } from '@wot-ui/ui/components/wd-dialog'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { navigateBackPlus } from '@/utils'
-import { formatDateTime } from '@/utils/date'
+import { DICT_TYPE } from '@/utils/constants'
+import { findChildren, handleTree } from '@/utils/tree'
+import Breadcrumb from '@/pages-mes/md/item/type/components/breadcrumb.vue'
 import SearchForm from './components/search-form.vue'
 
-definePage({
-  style: {
-    navigationBarTitleText: '',
-    navigationStyle: 'custom',
-  },
-})
-
+definePage({ style: { navigationBarTitleText: '', navigationStyle: 'custom' } })
 const { hasAccessByCodes } = useAccess()
-const list = ref<any[]>([]) // 列表数据
-const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const dialog = useDialog()
+const toast = useToast()
+const loading = ref(false)
+const flatList = ref<DvMachineryTypeVO[]>([])
+const list = ref<DvMachineryTypeVO[]>([])
+const currentParentId = ref(0)
+const breadcrumbRef = ref<InstanceType<typeof Breadcrumb>>()
+const searchFormRef = ref<InstanceType<typeof SearchForm>>()
+const queryParams = ref<DvMachineryTypeQueryParams>({})
+const canDelete = computed(() => hasAccessByCodes(['mes:dv-machinery-type:delete']))
+const hasQuery = computed(() => Object.keys(queryParams.value).length > 0)
+const currentList = computed(() => hasQuery.value ? flatList.value : currentParentId.value === 0 ? list.value.filter(i => (i.parentId ?? 0) === 0) : findChildren(list.value, currentParentId.value))
 
-/** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-mes/home/index')
+  if (hasQuery.value) {
+    searchFormRef.value?.resetFields()
+    queryParams.value = {}
+    currentParentId.value = 0
+    getList()
+    return
+  }
+  if (!breadcrumbRef.value?.back()) {
+    navigateBackPlus('/pages-mes/home/index')
+  }
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
+function handleEnterChildren(item: DvMachineryTypeVO) {
+  breadcrumbRef.value?.enter({ id: item.id, name: item.name })
 }
 
-/** 查询列表 */
-async function queryList(pageNo: number, pageSize: number) {
+async function getList() {
+  loading.value = true
   try {
-    const params = {
-      ...queryParams.value,
-      pageNo,
-      pageSize,
-    }
-    const data = await getMachineryTypeList(params as any)
-    const rows = Array.isArray(data) ? data : (data as any)?.list || []
-    pagingRef.value?.completeByTotal(rows, rows.length)
-  } catch {
-    pagingRef.value?.complete(false)
+    const data = await getMachineryTypeList(queryParams.value)
+    flatList.value = data || []
+    list.value = handleTree(data || [])
+  } finally {
+    loading.value = false
   }
 }
 
-/** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) {
+function handleQuery(data: DvMachineryTypeQueryParams) {
   queryParams.value = { ...data }
-  reload()
+  currentParentId.value = 0
+  getList()
 }
 
-/** 重置按钮操作 */
 function handleReset() {
-  handleQuery()
+  queryParams.value = {}
+  currentParentId.value = 0
+  getList()
 }
 
-/** 重新加载 */
-function reload() {
-  pagingRef.value?.reload()
-}
-
-/** 新增 */
 function handleAdd() {
-  uni.navigateTo({
-    url: '/pages-mes/dv/machinery/type/form/index',
-  })
+  uni.navigateTo({ url: `/pages-mes/dv/machinery/type/form/index?parentId=${currentParentId.value}` })
 }
 
-/** 查看详情 */
-function handleDetail(item: any) {
-  uni.navigateTo({
-    url: `/pages-mes/dv/machinery/type/detail/index?id=${(item as any).id}`,
-  })
+function handleDetail(item: DvMachineryTypeVO) {
+  uni.navigateTo({ url: `/pages-mes/dv/machinery/type/detail/index?id=${item.id}` })
 }
 
-/** 初始化 */
+async function handleSwipeDelete(item: DvMachineryTypeVO) {
+  try {
+    await dialog.confirm({ title: '提示', msg: `确定要删除「${item.name || ''}」吗？` })
+  } catch {
+    return
+  }
+  try {
+    toast.loading('删除中...')
+    await deleteMachineryType(item.id)
+    toast.close()
+    toast.success('删除成功')
+    uni.$emit('mes:dv:machinery-type:reload')
+  } catch {
+    toast.close()
+  }
+}
+
+function reload() {
+  getList()
+}
+
 onMounted(() => {
-  uni.$on('mes:dv:machinery:type:reload', reload)
+  getList()
+  uni.$on('mes:dv:machinery-type:reload', reload)
 })
 
-/** 卸载 */
 onUnload(() => {
-  uni.$off('mes:dv:machinery:type:reload', reload)
+  uni.$off('mes:dv:machinery-type:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

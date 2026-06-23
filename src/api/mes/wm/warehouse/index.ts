@@ -1,47 +1,61 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
-// MES 仓库 VO
+export interface WmWarehouseQueryParams extends PageParam {
+  code?: string
+  name?: string
+  status?: number
+}
+
 export interface WmWarehouseVO {
   id: number
   code: string
   name: string
-  address: string
-  area: number
-  chargeUserId: number
+  address: string | null
+  area: number | null
+  chargeUserId: number | null
+  chargeUserName?: string | null
   frozen: boolean
-  remark: string
-  createTime: string
+  remark: string | null
+  createTime: string | number
 }
 
-/** 查询仓库分页 */
-export function getWarehousePage(params: PageParam) {
-  return http.get<PageResult<WmWarehouseVO>>('/mes/wm/warehouse/page', params)
+export interface WmWarehouseCreateReqVO {
+  code: string
+  name: string
+  address?: string
+  area?: number
+  chargeUserId?: number
+  frozen: boolean
+  remark?: string
 }
 
-/** 查询仓库精简列表 */
+export interface WmWarehouseUpdateReqVO extends WmWarehouseCreateReqVO {
+  id: number
+}
+
+export function getWarehousePage(params: WmWarehouseQueryParams) {
+  return http.get<PageResult<WmWarehouseVO>>(`/mes/wm/warehouse/page`, params)
+}
+
 export function getWarehouseSimpleList() {
-  return http.get<WmWarehouseVO[]>('/mes/wm/warehouse/simple-list')
+  return http.get<WmWarehouseVO[]>(`/mes/wm/warehouse/simple-list`)
 }
 
-/** 查询仓库详情 */
 export function getWarehouse(id: number) {
-  return http.get<WmWarehouseVO>('/mes/wm/warehouse/get?id=' + id)
+  return http.get<WmWarehouseVO>(`/mes/wm/warehouse/get?id=${id}`)
 }
 
-/** 新增仓库 */
-export function createWarehouse(data: WmWarehouseVO) {
-  return http.post<number>('/mes/wm/warehouse/create', data)
+export function createWarehouse(data: WmWarehouseCreateReqVO) {
+  return http.post<number>(`/mes/wm/warehouse/create`, data)
 }
 
-/** 修改仓库 */
-export function updateWarehouse(data: WmWarehouseVO) {
-  return http.put<boolean>('/mes/wm/warehouse/update', data)
+export function updateWarehouse(data: WmWarehouseUpdateReqVO) {
+  return http.put<boolean>(`/mes/wm/warehouse/update`, data)
 }
 
-/** 删除仓库 */
 export function deleteWarehouse(id: number) {
-  return http.delete<boolean>('/mes/wm/warehouse/delete?id=' + id)
+  return http.delete<boolean>(`/mes/wm/warehouse/delete?id=${id}`)
 }
 
 export const WmWarehouseApi = {

@@ -1,67 +1,59 @@
 <template>
   <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
-    <wd-navbar
-      title="MES 生产流转卡管理"
-      left-arrow placeholder safe-area-inset-top fixed
-      @click-left="handleBack"
-    />
+    <wd-navbar title="生产流转卡" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
+
+    <!-- 导出入口 -->
+    <view v-if="canExport" class="bg-white px-24rpx py-16rpx">
+      <view class="h-64rpx flex items-center justify-center border-2rpx border-[#1677ff] rounded-8rpx text-26rpx text-[#1677ff]" :class="exportLoading ? 'opacity-60' : ''" @click="handleExport">
+        {{ exportLoading ? '导出中...' : '导出当前筛选数据' }}
+      </view>
+    </view>
 
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
-    <!-- 列表 -->
-    <z-paging
-      ref="pagingRef"
-      v-model="list"
-      :fixed="false"
-      class="min-h-0 flex-1"
-      :default-page-size="10"
-      :refresher-enabled="true"
-      :inside-more="true"
-      :loading-more-default-as-loading="true"
-      empty-view-text="暂无生产流转卡数据"
-      @query="queryList"
-    >
+    <!-- 流转卡列表 -->
+    <z-paging ref="pagingRef" v-model="list" :fixed="false" class="min-h-0 flex-1" :default-page-size="10" :refresher-enabled="true" :inside-more="true" :loading-more-default-as-loading="true" empty-view-text="暂无生产流转卡数据" @query="queryList">
       <view class="p-24rpx">
-        <view
-          v-for="item in list"
-          :key="item.id"
-          class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm"
-          @click="handleDetail(item)"
-        >
-          <view class="p-24rpx">
-            <view class="mb-16rpx flex items-center justify-between gap-16rpx">
-              <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-                {{ formatFieldValue(item.code) || '-' }}
+        <view v-for="item in list" :key="item.id" class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
+          <view class="p-24rpx" @click="handleDetail(item)">
+            <view class="mb-16rpx flex items-start justify-between gap-16rpx">
+              <view class="min-w-0 flex-1">
+                <view class="truncate text-32rpx text-[#333] font-semibold">
+                  {{ item.code || '-' }}
+                </view>
+                <view class="mt-4rpx text-24rpx text-[#999]">
+                  {{ item.workOrderCode || '-' }} / {{ item.workOrderName || '-' }}
+                </view>
               </view>
-              <view class="shrink-0 text-24rpx text-[#999]">
-                #{{ item.id }}
-              </view>
+              <dict-tag v-if="item.status != null" :type="DICT_TYPE.MES_PRO_WORK_ORDER_STATUS" :value="item.status" />
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">生产工单编号：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.workOrderCode) || '-' }}</text>
+            <view class="text-26rpx text-[#666] space-y-8rpx">
+              <view>批次号：{{ item.batchCode || '-' }}</view>
+              <view>产品：{{ item.itemCode || '-' }} / {{ item.itemName || '-' }}</view>
+              <view>规格：{{ item.specification || '-' }} / 单位：{{ item.unitMeasureName || '-' }}</view>
+              <view>流转数量：{{ item.transferedQuantity ?? '-' }}</view>
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">工单名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.workOrderName) || '-' }}</text>
+          </view>
+          <view class="flex flex-wrap border-t border-[#f3f4f6] text-26rpx">
+            <view v-if="canUpdate && item.status === MesProCardStatusEnum.PREPARE" class="w-1/3 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
+              编辑
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">批次号：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.batchCode) || '-' }}</text>
+            <view v-if="canUpdate && item.status === MesProCardStatusEnum.PREPARE" class="w-1/3 py-18rpx text-center text-[#faad14]" @click="handleSubmitCard(item)">
+              提交
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">产品物料编码：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.itemCode) || '-' }}</text>
+            <view v-if="canDelete && item.status === MesProCardStatusEnum.PREPARE" class="w-1/3 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
+              删除
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">产品物料名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.itemName) || '-' }}</text>
+            <view v-if="canFinish && item.status === MesProCardStatusEnum.CONFIRMED" class="w-1/2 py-18rpx text-center text-[#52c41a]" @click="handleFinish(item)">
+              完成
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">规格型号：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.specification) || '-' }}</text>
+            <view v-if="canUpdate && item.status === MesProCardStatusEnum.CONFIRMED" class="w-1/2 py-18rpx text-center text-[#f56c6c]" @click="handleCancel(item)">
+              取消
+            </view>
+            <view class="flex-1 py-18rpx text-center text-[#666]" @click="handleDetail(item)">
+              详情
             </view>
           </view>
         </view>
@@ -69,25 +61,27 @@
     </z-paging>
 
     <!-- 新增按钮 -->
-    <wd-fab
-      v-if="hasAccessByCodes(['mes:pro-card:create'])"
-      position="right-bottom"
-      type="primary"
-      :expandable="false"
-      @click="handleAdd"
-    />
+    <wd-fab v-if="canCreate" position="right-bottom" type="primary" :expandable="false" @click="handleAdd" />
   </view>
 </template>
 
 <script lang="ts" setup>
-import type { ProCardVO } from '@/api/mes/pro/card'
+import type { ProCardQueryParams, ProCardVO } from '@/api/mes/pro/card'
 import { onUnload } from '@dcloudio/uni-app'
-import { onMounted, ref } from 'vue'
-import { getCardPage } from '@/api/mes/pro/card'
+import { useDialog } from '@wot-ui/ui/components/wd-dialog'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { computed, onMounted, ref } from 'vue'
+import { cancelCard, deleteCard, finishCard, getCardPage, submitCard } from '@/api/mes/pro/card'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
-import { formatDateTime } from '@/utils/date'
+import { DICT_TYPE } from '@/utils/constants'
+import { downloadApiFile } from '@/utils/download'
 import SearchForm from './components/search-form.vue'
+
+const MesProCardStatusEnum = {
+  PREPARE: 0,
+  CONFIRMED: 1,
+} as const
 
 definePage({
   style: {
@@ -97,38 +91,31 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
-const list = ref<any[]>([]) // 列表数据
-const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const dialog = useDialog()
+const toast = useToast()
+const list = ref<ProCardVO[]>([]) // 列表数据
+const pagingRef = ref<ZPagingRef<ProCardVO>>() // 分页组件引用
+const queryParams = ref<Partial<ProCardQueryParams>>({}) // 查询参数
+const exportLoading = ref(false) // 导出状态
+const canCreate = computed(() => hasAccessByCodes(['mes:pro-card:create']))
+const canUpdate = computed(() => hasAccessByCodes(['mes:pro-card:update']))
+const canDelete = computed(() => hasAccessByCodes(['mes:pro-card:delete']))
+const canFinish = computed(() => hasAccessByCodes(['mes:pro-card:finish']))
+const canExport = computed(() => hasAccessByCodes(['mes:pro-card:export']))
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
-}
-
 /** 查询列表 */
 async function queryList(pageNo: number, pageSize: number) {
   try {
-    const params = {
+    const data = await getCardPage({
       ...queryParams.value,
       pageNo,
       pageSize,
-    }
-    const data = await getCardPage(params as any)
+    })
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
     pagingRef.value?.complete(false)
@@ -136,14 +123,14 @@ async function queryList(pageNo: number, pageSize: number) {
 }
 
 /** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) {
+function handleQuery(data: Partial<ProCardQueryParams>) {
   queryParams.value = { ...data }
   reload()
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  handleQuery()
+  handleQuery({})
 }
 
 /** 重新加载 */
@@ -153,28 +140,93 @@ function reload() {
 
 /** 新增 */
 function handleAdd() {
-  uni.navigateTo({
-    url: '/pages-mes/pro/card/form/index',
-  })
+  uni.navigateTo({ url: '/pages-mes/pro/card/form/index' })
+}
+
+/** 编辑 */
+function handleEdit(item: ProCardVO) {
+  uni.navigateTo({ url: `/pages-mes/pro/card/form/index?id=${item.id}` })
 }
 
 /** 查看详情 */
-function handleDetail(item: any) {
-  uni.navigateTo({
-    url: `/pages-mes/pro/card/detail/index?id=${(item as any).id}`,
-  })
+function handleDetail(item: ProCardVO) {
+  uni.navigateTo({ url: `/pages-mes/pro/card/detail/index?id=${item.id}` })
 }
 
-/** 初始化 */
+/** 提交流转卡 */
+async function handleSubmitCard(item: ProCardVO) {
+  try {
+    await dialog.confirm({ title: '提示', msg: `确认提交「${item.code}」流转卡吗？提交后将不能修改。` })
+  } catch {
+    return
+  }
+  await submitCard(item.id)
+  toast.success('提交成功')
+  reload()
+}
+
+/** 完成流转卡 */
+async function handleFinish(item: ProCardVO) {
+  try {
+    await dialog.confirm({ title: '提示', msg: `确认完成「${item.code}」流转卡吗？` })
+  } catch {
+    return
+  }
+  await finishCard(item.id)
+  toast.success('完成成功')
+  reload()
+}
+
+/** 取消流转卡 */
+async function handleCancel(item: ProCardVO) {
+  try {
+    await dialog.confirm({ title: '提示', msg: `确认取消「${item.code}」流转卡吗？取消后不可恢复。` })
+  } catch {
+    return
+  }
+  await cancelCard(item.id)
+  toast.success('取消成功')
+  reload()
+}
+
+/** 删除流转卡 */
+async function handleDelete(item: ProCardVO) {
+  try {
+    await dialog.confirm({ title: '提示', msg: `确定要删除「${item.code}」流转卡吗？删除后会级联删除工序记录。` })
+  } catch {
+    return
+  }
+  await deleteCard(item.id)
+  toast.success('删除成功')
+  reload()
+}
+
+/** 导出流转卡 */
+async function handleExport() {
+  if (exportLoading.value) {
+    return
+  }
+  const { confirm } = await uni.showModal({
+    title: '导出确认',
+    content: '确定要导出当前筛选数据吗？',
+  })
+  if (!confirm) {
+    return
+  }
+  exportLoading.value = true
+  try {
+    await downloadApiFile('/mes/pro/card/export-excel', queryParams.value, '生产流转卡.xls')
+    toast.success('导出成功')
+  } finally {
+    exportLoading.value = false
+  }
+}
+
 onMounted(() => {
   uni.$on('mes:pro:card:reload', reload)
 })
 
-/** 卸载 */
 onUnload(() => {
   uni.$off('mes:pro:card:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

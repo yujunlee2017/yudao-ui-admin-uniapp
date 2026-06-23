@@ -8,50 +8,66 @@
     />
 
     <!-- 表单区域 -->
-    <view>
+    <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
       <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
-          <wd-form-item title="format" title-width="200rpx" prop="format" center>
-            <wd-input-number v-model="formData.format" :min="0" />
+          <wd-form-item title="条码格式" title-width="220rpx" prop="format">
+            <wd-radio-group v-model="formData.format" type="button">
+              <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_WM_BARCODE_FORMAT)" :key="dict.value" :value="dict.value">
+                {{ dict.label }}
+              </wd-radio>
+            </wd-radio-group>
           </wd-form-item>
-          <wd-form-item title="bizType" title-width="200rpx" prop="bizType" center>
-            <wd-input-number v-model="formData.bizType" :min="0" />
+          <wd-form-item title="业务类型" title-width="220rpx" prop="bizType">
+            <wd-radio-group v-if="!currentId" v-model="formData.bizType" type="button">
+              <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_WM_BARCODE_BIZ_TYPE)" :key="dict.value" :value="dict.value">
+                {{ dict.label }}
+              </wd-radio>
+            </wd-radio-group>
+            <view v-else class="py-8rpx text-28rpx text-[#666]">
+              {{ getDictLabel(DICT_TYPE.MES_WM_BARCODE_BIZ_TYPE, formData.bizType) || '-' }}
+            </view>
           </wd-form-item>
-          <wd-form-item title="contentFormat" title-width="200rpx" prop="contentFormat">
-            <wd-textarea
+          <wd-form-item title="内容格式模板" title-width="220rpx" prop="contentFormat">
+            <wd-input
               v-model="formData.contentFormat"
-              placeholder="请输入contentFormat"
-              :maxlength="200"
-              show-word-limit
+              placeholder="支持 {BUSINESSCODE} 占位符，如 WH-{BUSINESSCODE}"
+              :maxlength="100"
               clearable
             />
           </wd-form-item>
-          <wd-form-item title="contentExample" title-width="200rpx" prop="contentExample">
-            <wd-textarea
+          <wd-form-item title="内容样例" title-width="220rpx" prop="contentExample">
+            <wd-input
               v-model="formData.contentExample"
-              placeholder="请输入contentExample"
-              :maxlength="200"
-              show-word-limit
+              placeholder="如 WH-WH001"
+              :maxlength="100"
               clearable
             />
           </wd-form-item>
-          <wd-form-item title="autoGenerateFlag" title-width="200rpx" prop="autoGenerateFlag" center>
+          <wd-form-item title="自动生成" title-width="220rpx" prop="autoGenerateFlag" center>
             <wd-switch v-model="formData.autoGenerateFlag" />
           </wd-form-item>
-          <wd-form-item title="defaultTemplate" title-width="200rpx" prop="defaultTemplate">
+          <wd-form-item title="默认打印模板" title-width="220rpx" prop="defaultTemplate">
             <wd-input
               v-model="formData.defaultTemplate"
-              clearable
-              placeholder="请输入defaultTemplate"
+              readonly
+              placeholder="报表/打印专项维护"
             />
           </wd-form-item>
-          <wd-form-item title="status" title-width="200rpx" prop="status" center>
-            <wd-input-number v-model="formData.status" :min="0" />
+          <view class="px-24rpx pb-20rpx text-24rpx text-[#999] leading-36rpx">
+            默认打印模板暂不在移动端选择；正式打印和模板维护归入报表/打印专项。
+          </view>
+          <wd-form-item title="状态" title-width="220rpx" prop="status">
+            <wd-radio-group v-model="formData.status" type="button">
+              <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)" :key="dict.value" :value="dict.value">
+                {{ dict.label }}
+              </wd-radio>
+            </wd-radio-group>
           </wd-form-item>
-          <wd-form-item title="remark" title-width="200rpx" prop="remark">
+          <wd-form-item title="备注" title-width="220rpx" prop="remark">
             <wd-textarea
               v-model="formData.remark"
-              placeholder="请输入remark"
+              placeholder="请输入备注"
               :maxlength="200"
               show-word-limit
               clearable
@@ -59,7 +75,8 @@
           </wd-form-item>
         </wd-cell-group>
       </wd-form>
-    </view>
+      <view class="h-160rpx" />
+    </scroll-view>
 
     <!-- 底部保存按钮 -->
     <view class="yd-detail-footer">
@@ -72,15 +89,18 @@
 
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
-import type { WmBarcodeConfigVO } from '@/api/mes/wm/barcode/config'
+import type { WmBarcodeConfigCreateReqVO, WmBarcodeConfigUpdateReqVO } from '@/api/mes/wm/barcode/config'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
-import { createBarcodeConfig, updateBarcodeConfig, getBarcodeConfig } from '@/api/mes/wm/barcode/config'
+import { computed, onMounted, ref, watch } from 'vue'
+import { createBarcodeConfig, getBarcodeConfig, updateBarcodeConfig } from '@/api/mes/wm/barcode/config'
+import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
-  id?: number | string | any
+  id?: number | string
 }>()
 
 definePage({
@@ -91,21 +111,47 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => props.id ? '编辑条码配置' : '新增条码配置')
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/wm/barcode/config/form/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
+const getTitle = computed(() => currentId.value ? '编辑条码配置' : '新增条码配置')
 const formLoading = ref(false) // 表单提交状态
-const formData = ref<any>({
-  id: undefined,
-  format: undefined,
-  bizType: undefined,
-  contentFormat: '',
-  contentExample: '',
-  autoGenerateFlag: false,
-  defaultTemplate: '',
-  status: undefined,
-  remark: '',
-} as WmBarcodeConfigVO) // 表单数据
-const formSchema = createFormSchema({
+interface BarcodeConfigFormData {
+  id?: number
+  format?: number
+  bizType?: number
+  contentFormat: string
+  contentExample: string
+  autoGenerateFlag: boolean
+  defaultTemplate: string
+  status: number
+  remark: string
+}
+const formData = ref<BarcodeConfigFormData>(getDefaultFormData()) // 表单数据
 
+function getDefaultFormData(): BarcodeConfigFormData {
+  return {
+    id: undefined,
+    format: undefined,
+    bizType: undefined,
+    contentFormat: '',
+    contentExample: '',
+    autoGenerateFlag: true,
+    defaultTemplate: '',
+    status: 0,
+    remark: '',
+  }
+}
+const formSchema = createFormSchema({
+  format: [{ required: true, message: '条码格式不能为空' }],
+  bizType: [{ required: true, message: '业务类型不能为空' }],
+  contentFormat: [
+    { required: true, message: '内容格式模板不能为空' },
+    { max: 100, message: '内容格式模板长度不能超过 100 个字符' },
+  ],
+  contentExample: [{ max: 100, message: '内容样例长度不能超过 100 个字符' }],
+  autoGenerateFlag: [{ required: true, message: '是否自动生成不能为空' }],
+  status: [{ required: true, message: '状态不能为空' }],
+  remark: [{ max: 200, message: '备注长度不能超过 200 个字符' }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用
 
@@ -116,10 +162,48 @@ function handleBack() {
 
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
-  formData.value = await getBarcodeConfig(props.id)
+  const data = await getBarcodeConfig(currentId.value)
+  formData.value = {
+    id: data.id,
+    format: data.format,
+    bizType: data.bizType,
+    contentFormat: data.contentFormat || '',
+    contentExample: data.contentExample || '',
+    autoGenerateFlag: data.autoGenerateFlag,
+    defaultTemplate: data.defaultTemplate || '',
+    status: data.status,
+    remark: data.remark || '',
+  }
+}
+
+/** 加载页面数据 */
+async function loadPageData() {
+  if (currentId.value) {
+    await getDetail()
+    return
+  }
+  formData.value = getDefaultFormData()
+}
+
+/** 构造提交数据 */
+function buildSubmitData(): WmBarcodeConfigCreateReqVO | WmBarcodeConfigUpdateReqVO {
+  const data: WmBarcodeConfigCreateReqVO = {
+    format: Number(formData.value.format),
+    bizType: Number(formData.value.bizType),
+    contentFormat: formData.value.contentFormat,
+    contentExample: formData.value.contentExample || undefined,
+    autoGenerateFlag: formData.value.autoGenerateFlag,
+    defaultTemplate: formData.value.defaultTemplate || undefined,
+    status: formData.value.status,
+    remark: formData.value.remark || undefined,
+  }
+  if (currentId.value) {
+    return { ...data, id: currentId.value }
+  }
+  return data
 }
 
 /** 提交表单 */
@@ -131,11 +215,12 @@ async function handleSubmit() {
 
   formLoading.value = true
   try {
-    if (props.id) {
-      await updateBarcodeConfig(formData.value)
+    const data = buildSubmitData()
+    if (currentId.value) {
+      await updateBarcodeConfig(data as WmBarcodeConfigUpdateReqVO)
       toast.success('修改成功')
     } else {
-      await createBarcodeConfig(formData.value)
+      await createBarcodeConfig(data as WmBarcodeConfigCreateReqVO)
       toast.success('新增成功')
     }
     uni.$emit('mes:wm:barcode:config:reload')
@@ -149,7 +234,11 @@ async function handleSubmit() {
 
 /** 初始化 */
 onMounted(() => {
-  getDetail()
+  loadPageData()
+})
+
+watch(currentId, () => {
+  loadPageData()
 })
 </script>
 

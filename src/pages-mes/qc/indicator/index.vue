@@ -1,16 +1,17 @@
 <template>
   <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
-    <wd-navbar
-      title="MES 质检指标管理"
-      left-arrow placeholder safe-area-inset-top fixed
-      @click-left="handleBack"
-    />
+    <wd-navbar title="质检指标" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
 
-    <!-- 搜索组件 -->
-    <SearchForm @search="handleQuery" @reset="handleReset" />
+    <!-- 搜索与导出 -->
+    <SearchForm ref="searchFormRef" @search="handleQuery" @reset="handleReset" />
+    <view v-if="canExport" class="bg-white px-24rpx pb-16rpx">
+      <wd-button block variant="plain" :loading="exportLoading" @click="handleExport">
+        导出当前筛选数据
+      </wd-button>
+    </view>
 
-    <!-- 列表 -->
+    <!-- 质检指标列表 -->
     <z-paging
       ref="pagingRef"
       v-model="list"
@@ -27,42 +28,35 @@
         <view
           v-for="item in list"
           :key="item.id"
-          class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm"
+          class="mb-24rpx rounded-12rpx bg-white p-24rpx shadow-sm"
           @click="handleDetail(item)"
         >
-          <view class="p-24rpx">
-            <view class="mb-16rpx flex items-center justify-between gap-16rpx">
-              <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-                {{ formatFieldValue(item.code) || '-' }}
+          <view class="mb-16rpx flex items-start justify-between gap-16rpx">
+            <view class="min-w-0 flex-1">
+              <view class="truncate text-32rpx text-[#333] font-semibold">
+                {{ item.name || '-' }}
               </view>
-              <view class="shrink-0 text-24rpx text-[#999]">
-                #{{ item.id }}
+              <view class="mt-8rpx truncate text-24rpx text-[#999]">
+                {{ item.code || '-' }}
               </view>
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">检测项名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.name) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">检测项类型：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.type) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">检测工具：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.tool) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">结果值类型：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.resultType) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">备注：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.remark) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">创建时间：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.createTime) || '-' }}</text>
-            </view>
+            <dict-tag :type="DICT_TYPE.MES_QC_RESULT_TYPE" :value="item.resultType" />
+          </view>
+          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+            <text class="mr-8rpx shrink-0 text-[#999]">检测项类型：</text>
+            <dict-tag :type="DICT_TYPE.MES_INDICATOR_TYPE" :value="item.type" />
+          </view>
+          <view v-if="item.tool" class="mb-12rpx text-28rpx text-[#666]">
+            <text class="mr-8rpx text-[#999]">检测工具：</text>{{ item.tool }}
+          </view>
+          <view v-if="item.resultSpecification" class="mb-12rpx text-28rpx text-[#666]">
+            <text class="mr-8rpx text-[#999]">结果值属性：</text>{{ formatResultSpecification(item) }}
+          </view>
+          <view v-if="item.remark" class="mb-12rpx text-28rpx text-[#666]">
+            <text class="mr-8rpx text-[#999]">备注：</text>{{ item.remark }}
+          </view>
+          <view class="text-28rpx text-[#666]">
+            <text class="mr-8rpx text-[#999]">创建时间：</text>{{ formatDateTime(item.createTime) || '-' }}
           </view>
         </view>
       </view>
@@ -80,13 +74,16 @@
 </template>
 
 <script lang="ts" setup>
-import type { QcIndicatorVO } from '@/api/mes/qc/indicator'
+import type { QcIndicatorPageParam, QcIndicatorVO } from '@/api/mes/qc/indicator'
 import { onUnload } from '@dcloudio/uni-app'
-import { onMounted, ref } from 'vue'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { computed, onMounted, ref } from 'vue'
 import { getIndicatorPage } from '@/api/mes/qc/indicator'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
+import { downloadApiFile } from '@/utils/download'
 import SearchForm from './components/search-form.vue'
 
 definePage({
@@ -97,38 +94,34 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
-const list = ref<any[]>([]) // 列表数据
-const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const toast = useToast()
+const MesQcResultValueType = {
+  FILE: 5,
+} as const
+const list = ref<QcIndicatorVO[]>([]) // 列表数据
+const pagingRef = ref<ZPagingRef<QcIndicatorVO>>() // 分页组件引用
+const queryParams = ref<Partial<QcIndicatorPageParam>>({}) // 查询参数
+const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索组件引用
+const exportLoading = ref(false) // 导出状态
+const canExport = computed(() => hasAccessByCodes(['mes:qc-indicator:export']))
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
+/** 格式化结果值属性 */
+function formatResultSpecification(item: QcIndicatorVO) {
+  if (item.resultType === MesQcResultValueType.FILE) {
+    return item.resultSpecification === 'IMG' ? '图片/照片' : '文件'
   }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
+  return item.resultSpecification || '-'
 }
 
-/** 查询列表 */
+/** 查询质检指标列表 */
 async function queryList(pageNo: number, pageSize: number) {
   try {
-    const params = {
-      ...queryParams.value,
-      pageNo,
-      pageSize,
-    }
-    const data = await getIndicatorPage(params as any)
+    const data = await getIndicatorPage({ ...queryParams.value, pageNo, pageSize })
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
     pagingRef.value?.complete(false)
@@ -136,14 +129,16 @@ async function queryList(pageNo: number, pageSize: number) {
 }
 
 /** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) {
+function handleQuery(data: Partial<QcIndicatorPageParam>) {
   queryParams.value = { ...data }
   reload()
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  handleQuery()
+  queryParams.value = {}
+  searchFormRef.value?.resetFields()
+  reload()
 }
 
 /** 重新加载 */
@@ -151,18 +146,35 @@ function reload() {
   pagingRef.value?.reload()
 }
 
-/** 新增 */
-function handleAdd() {
-  uni.navigateTo({
-    url: '/pages-mes/qc/indicator/form/index',
+/** 导出质检指标 */
+async function handleExport() {
+  if (exportLoading.value) {
+    return
+  }
+  const { confirm } = await uni.showModal({
+    title: '导出确认',
+    content: '确定要导出当前筛选条件下的质检指标吗？',
   })
+  if (!confirm) {
+    return
+  }
+  exportLoading.value = true
+  try {
+    await downloadApiFile('/mes/qc/indicator/export-excel', queryParams.value, '质检指标.xls')
+    toast.success('导出成功')
+  } finally {
+    exportLoading.value = false
+  }
+}
+
+/** 新增质检指标 */
+function handleAdd() {
+  uni.navigateTo({ url: '/pages-mes/qc/indicator/form/index' })
 }
 
 /** 查看详情 */
-function handleDetail(item: any) {
-  uni.navigateTo({
-    url: `/pages-mes/qc/indicator/detail/index?id=${(item as any).id}`,
-  })
+function handleDetail(item: QcIndicatorVO) {
+  uni.navigateTo({ url: `/pages-mes/qc/indicator/detail/index?id=${item.id}` })
 }
 
 /** 初始化 */
@@ -175,6 +187,3 @@ onUnload(() => {
   uni.$off('mes:qc:indicator:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

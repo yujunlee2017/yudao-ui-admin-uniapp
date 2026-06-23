@@ -17,31 +17,21 @@
         <view class="yd-search-form-label">
           条码格式
         </view>
-        <wd-input
-          v-model="formData.format"
-          placeholder="请输入条码格式"
-          clearable
-        />
+        <wd-radio-group v-model="formData.format" type="button">
+          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_WM_BARCODE_FORMAT)" :key="dict.value" :value="dict.value">
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           业务类型
         </view>
-        <wd-input
-          v-model="formData.bizType"
-          placeholder="请输入业务类型"
-          clearable
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          编号
-        </view>
-        <wd-input
-          v-model="formData.id"
-          placeholder="请输入编号"
-          clearable
-        />
+        <wd-radio-group v-model="formData.bizType" type="button">
+          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_WM_BARCODE_BIZ_TYPE)" :key="dict.value" :value="dict.value">
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -56,47 +46,59 @@
 </template>
 
 <script lang="ts" setup>
+import type { WmBarcodeConfigQueryParams } from '@/api/mes/wm/barcode/config'
 import { computed, reactive, ref } from 'vue'
+import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
+
+interface SearchFormData {
+  format?: number
+  bizType?: number
+}
 
 const emit = defineEmits<{
-  search: [data: Record<string, any>]
+  search: [data: WmBarcodeConfigQueryParams]
   reset: []
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const formData = reactive({
-  format: undefined as any,
-  bizType: undefined as any,
-  id: undefined as any,
+const formData = reactive<SearchFormData>({
+  format: undefined,
+  bizType: undefined,
 }) // 搜索表单数据
 
-/** 搜索条件 placeholder 拼接 */
-const placeholder = computed(() => {
+const placeholder = computed(() => { // 搜索条件摘要
   const conditions: string[] = []
-  if (formData.format !== undefined && formData.format !== '') {
-    conditions.push(`条码格式:${formData.format}`)
+  if (formData.format != null) {
+    conditions.push(`条码格式:${getDictLabel(DICT_TYPE.MES_WM_BARCODE_FORMAT, formData.format)}`)
   }
-  if (formData.bizType !== undefined && formData.bizType !== '') {
-    conditions.push(`业务类型:${formData.bizType}`)
-  }
-  if (formData.id !== undefined && formData.id !== '') {
-    conditions.push(`编号:${formData.id}`)
+  if (formData.bizType != null) {
+    conditions.push(`业务类型:${getDictLabel(DICT_TYPE.MES_WM_BARCODE_BIZ_TYPE, formData.bizType)}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索条码配置'
 })
 
+/** 构造搜索参数 */
+function buildSearchParams(): WmBarcodeConfigQueryParams {
+  return {
+    pageNo: 1,
+    pageSize: 10,
+    format: formData.format,
+    bizType: formData.bizType,
+  }
+}
+
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  emit('search', { ...formData })
+  emit('search', buildSearchParams())
 }
 
 /** 重置按钮操作 */
 function handleReset() {
   formData.format = undefined
   formData.bizType = undefined
-  formData.id = undefined
   visible.value = false
   emit('reset')
 }

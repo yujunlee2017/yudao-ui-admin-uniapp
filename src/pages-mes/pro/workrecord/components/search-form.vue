@@ -17,50 +17,55 @@
         <view class="yd-search-form-label">
           用户
         </view>
-        <wd-input
+        <UserPicker
+          ref="userPickerRef"
           v-model="formData.userId"
-          placeholder="请输入用户"
-          clearable
-        />
+          type="radio"
+          placeholder="请选择用户"
+          use-default-slot
+          @confirm="handleUserConfirm"
+        >
+          <view class="yd-search-form-selector">
+            <text v-if="selectedUserName" class="text-[#333]">
+              {{ selectedUserName }}
+            </text>
+            <text v-else class="text-[#999]">
+              请选择用户
+            </text>
+          </view>
+        </UserPicker>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           工作站
         </view>
-        <wd-input
-          v-model="formData.workstationId"
-          placeholder="请输入工作站"
-          clearable
-        />
+        <view class="yd-search-form-selector" @click="openWorkstationSelector">
+          <text v-if="selectedWorkstationText" class="text-[#333]">
+            {{ selectedWorkstationText }}
+          </text>
+          <text v-else class="text-[#999]">
+            请选择工作站
+          </text>
+        </view>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           操作类型
         </view>
-        <wd-input
-          v-model="formData.type"
-          placeholder="请输入操作类型"
-          clearable
-        />
+        <wd-radio-group v-model="formData.type" type="button">
+          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_PRO_WORK_RECORD_TYPE)" :key="dict.value" :value="dict.value">
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           操作时间
         </view>
-        <wd-input
-          v-model="formData.createTime"
-          placeholder="请输入操作时间"
-          clearable
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          编号
-        </view>
-        <wd-input
-          v-model="formData.id"
-          placeholder="请输入编号"
-          clearable
+        <wd-calendar
+          v-model="createTimeRange"
+          type="daterange"
+          placeholder="请选择操作时间范围"
         />
       </view>
       <view class="yd-search-form-actions">
@@ -73,61 +78,131 @@
       </view>
     </view>
   </wd-popup>
+
+  <WorkstationSelector ref="workstationSelectorRef" @confirm="handleWorkstationConfirm" />
 </template>
 
 <script lang="ts" setup>
+import type { User } from '@/api/system/user'
+import type { MdWorkstationVO } from '@/api/mes/md/workstation'
+import type { ProWorkRecordLogQueryParams } from '@/api/mes/pro/workrecord'
 import { computed, reactive, ref } from 'vue'
+import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
+import { formatDateRange } from '@/utils/date'
+import UserPicker from '@/components/system-select/user-picker.vue'
+import WorkstationSelector from '@/pages-mes/pro/task/components/workstation-selector.vue'
 
 const emit = defineEmits<{
-  search: [data: Record<string, any>]
+  search: [data: Partial<ProWorkRecordLogQueryParams>]
   reset: []
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
+const createTimeRange = ref<[string, string]>() // 操作时间范围
+const userPickerRef = ref<InstanceType<typeof UserPicker>>() // 用户选择器
+const workstationSelectorRef = ref<InstanceType<typeof WorkstationSelector>>() // 工作站选择器
+const selectedUserName = ref('') // 已选用户名称
+const selectedWorkstation = ref<MdWorkstationVO>() // 已选工作站
 const formData = reactive({
-  userId: undefined as any,
-  workstationId: undefined as any,
-  type: undefined as any,
-  createTime: undefined as any,
-  id: undefined as any,
+  userId: undefined as number | undefined,
+  workstationId: undefined as number | undefined,
+  type: undefined as number | undefined,
 }) // 搜索表单数据
+const selectedWorkstationText = computed(() => {
+  return selectedWorkstation.value
+    ? `${selectedWorkstation.value.code || '-'} / ${selectedWorkstation.value.name || '-'}`
+    : ''
+})
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
   const conditions: string[] = []
-  if (formData.userId !== undefined && formData.userId !== '') {
-    conditions.push(`用户:${formData.userId}`)
+  if (selectedUserName.value) {
+    conditions.push(`用户:${selectedUserName.value}`)
   }
-  if (formData.workstationId !== undefined && formData.workstationId !== '') {
-    conditions.push(`工作站:${formData.workstationId}`)
+  if (selectedWorkstation.value) {
+    conditions.push(`工作站:${selectedWorkstation.value.code || selectedWorkstation.value.name}`)
   }
-  if (formData.type !== undefined && formData.type !== '') {
-    conditions.push(`操作类型:${formData.type}`)
+  if (formData.type != null) {
+    conditions.push(`类型:${getDictLabel(DICT_TYPE.MES_PRO_WORK_RECORD_TYPE, formData.type)}`)
   }
-  if (formData.createTime !== undefined && formData.createTime !== '') {
-    conditions.push(`操作时间:${formData.createTime}`)
-  }
-  if (formData.id !== undefined && formData.id !== '') {
-    conditions.push(`编号:${formData.id}`)
+  if (createTimeRange.value?.length === 2) {
+    conditions.push('操作时间')
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索工作记录'
 })
 
+/** 打开工作站选择器 */
+function openWorkstationSelector() {
+  workstationSelectorRef.value?.open(formData.workstationId)
+}
+
+/** 选择用户 */
+function handleUserConfirm(users: User[]) {
+  selectedUserName.value = users[0]?.nickname || ''
+}
+
+/** 选择工作站 */
+function handleWorkstationConfirm(item: MdWorkstationVO) {
+  selectedWorkstation.value = item
+  formData.workstationId = item.id
+}
+
+/** 构造搜索参数 */
+function buildParams(): Partial<ProWorkRecordLogQueryParams> {
+  const params: Partial<ProWorkRecordLogQueryParams> = {}
+  if (formData.userId != null) {
+    params.userId = formData.userId
+  }
+  if (formData.workstationId != null) {
+    params.workstationId = formData.workstationId
+  }
+  if (formData.type != null) {
+    params.type = formData.type
+  }
+  const range = formatDateRange(createTimeRange.value)
+  if (range) {
+    params.createTime = range
+  }
+  return params
+}
+
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  emit('search', { ...formData })
+  emit('search', buildParams())
+}
+
+/** 重置字段 */
+function resetFields() {
+  formData.userId = undefined
+  formData.workstationId = undefined
+  formData.type = undefined
+  selectedUserName.value = ''
+  selectedWorkstation.value = undefined
+  createTimeRange.value = undefined
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  formData.userId = undefined
-  formData.workstationId = undefined
-  formData.type = undefined
-  formData.createTime = undefined
-  formData.id = undefined
+  resetFields()
   visible.value = false
   emit('reset')
 }
+
+defineExpose({ resetFields })
 </script>
+
+<style lang="scss" scoped>
+.yd-search-form-selector {
+  min-height: 72rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+  border-radius: 8rpx;
+  background: #f7f8fa;
+  font-size: 28rpx;
+}
+</style>

@@ -10,6 +10,17 @@
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
+    <!-- 导出入口 -->
+    <view v-if="hasAccessByCodes(['mes:dv-check-record:export'])" class="bg-white px-24rpx py-16rpx">
+      <view
+        class="h-64rpx flex items-center justify-center border-2rpx border-[#1677ff] rounded-8rpx text-26rpx text-[#1677ff]"
+        :class="exportLoading ? 'opacity-60' : ''"
+        @click="handleExport"
+      >
+        {{ exportLoading ? '导出中...' : '导出当前筛选数据' }}
+      </view>
+    </view>
+
     <!-- 列表 -->
     <z-paging
       ref="pagingRef"
@@ -31,37 +42,44 @@
           @click="handleDetail(item)"
         >
           <view class="p-24rpx">
-            <view class="mb-16rpx flex items-center justify-between gap-16rpx">
-              <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-                {{ formatFieldValue(item.machineryCode) || '-' }}
+            <view class="mb-16rpx flex items-start justify-between gap-16rpx">
+              <view class="min-w-0 flex-1">
+                <view class="truncate text-32rpx text-[#333] font-semibold">
+                  {{ item.machineryCode || item.machineryName || '-' }}
+                </view>
+                <view class="mt-4rpx truncate text-24rpx text-[#999]">
+                  {{ item.machineryName || '-' }}
+                </view>
               </view>
-              <view class="shrink-0 text-24rpx text-[#999]">
-                #{{ item.id }}
-              </view>
+              <dict-tag v-if="item.status != null" :type="DICT_TYPE.MES_DV_CHECK_RECORD_STATUS" :value="item.status" />
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">设备名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.machineryName) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">品牌：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.machineryBrand) || '-' }}</text>
+              <text class="mr-8rpx shrink-0 text-[#999]">设备品牌：</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.machineryBrand || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">规格型号：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.machinerySpecification) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.machinerySpecification || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">计划编码：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.planCode) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">计划名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.planName) || '-' }}</text>
+              <text class="mr-8rpx shrink-0 text-[#999]">点检方案：</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.planCode || item.planName || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">点检时间：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.checkTime) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ formatDateTime(item.checkTime) || '-' }}</text>
+            </view>
+            <view class="flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">点检人：</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.nickname || '-' }}</text>
+            </view>
+          </view>
+          <view v-if="hasRowActions(item)" class="flex border-t border-t-[#f0f0f0] text-28rpx" @click.stop>
+            <view v-if="canUpdateDraft" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
+              编辑
+            </view>
+            <view v-if="canDeleteDraft" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
+              删除
             </view>
           </view>
         </view>
@@ -80,12 +98,16 @@
 </template>
 
 <script lang="ts" setup>
-import type { DvCheckRecordVO } from '@/api/mes/dv/checkrecord'
+import type { DvCheckRecordQueryParams, DvCheckRecordVO } from '@/api/mes/dv/checkrecord'
 import { onUnload } from '@dcloudio/uni-app'
-import { onMounted, ref } from 'vue'
-import { getCheckRecordPage } from '@/api/mes/dv/checkrecord'
+import { useDialog } from '@wot-ui/ui/components/wd-dialog'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { computed, onMounted, ref } from 'vue'
+import { deleteCheckRecord, getCheckRecordPage } from '@/api/mes/dv/checkrecord'
 import { useAccess } from '@/hooks/useAccess'
+import { downloadApiFile } from '@/utils/download'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE, MesDvCheckRecordStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import SearchForm from './components/search-form.vue'
 
@@ -97,27 +119,18 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
-const list = ref<any[]>([]) // 列表数据
-const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const dialog = useDialog()
+const toast = useToast()
+const list = ref<DvCheckRecordVO[]>([]) // 列表数据
+const pagingRef = ref<ZPagingRef<DvCheckRecordVO>>() // 分页组件引用
+const queryParams = ref<DvCheckRecordQueryParams>({}) // 查询参数
+const exportLoading = ref(false) // 导出状态
+const canUpdateDraft = computed(() => hasAccessByCodes(['mes:dv-check-record:update']))
+const canDeleteDraft = computed(() => hasAccessByCodes(['mes:dv-check-record:delete']))
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
-}
-
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
 }
 
 /** 查询列表 */
@@ -128,7 +141,7 @@ async function queryList(pageNo: number, pageSize: number) {
       pageNo,
       pageSize,
     }
-    const data = await getCheckRecordPage(params as any)
+    const data = await getCheckRecordPage(params)
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
     pagingRef.value?.complete(false)
@@ -136,7 +149,7 @@ async function queryList(pageNo: number, pageSize: number) {
 }
 
 /** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) {
+function handleQuery(data?: DvCheckRecordQueryParams) {
   queryParams.value = { ...data }
   reload()
 }
@@ -151,6 +164,26 @@ function reload() {
   pagingRef.value?.reload()
 }
 
+/** 导出按钮操作 */
+async function handleExport() {
+  if (exportLoading.value) {
+    return
+  }
+  const { confirm } = await uni.showModal({
+    title: '导出确认',
+    content: '确定要导出当前筛选数据吗？',
+  })
+  if (!confirm) {
+    return
+  }
+  exportLoading.value = true
+  try {
+    await downloadApiFile('/mes/dv/check-record/export-excel', queryParams.value, '设备点检记录.xls')
+  } finally {
+    exportLoading.value = false
+  }
+}
+
 /** 新增 */
 function handleAdd() {
   uni.navigateTo({
@@ -159,10 +192,37 @@ function handleAdd() {
 }
 
 /** 查看详情 */
-function handleDetail(item: any) {
+function handleDetail(item: DvCheckRecordVO) {
   uni.navigateTo({
-    url: `/pages-mes/dv/checkrecord/detail/index?id=${(item as any).id}`,
+    url: `/pages-mes/dv/checkrecord/detail/index?id=${item.id}`,
   })
+}
+
+/** 是否显示行操作 */
+function hasRowActions(item: DvCheckRecordVO) {
+  return item.status === MesDvCheckRecordStatusEnum.DRAFT && (canUpdateDraft.value || canDeleteDraft.value)
+}
+
+/** 编辑 */
+function handleEdit(item: DvCheckRecordVO) {
+  uni.navigateTo({
+    url: `/pages-mes/dv/checkrecord/form/index?id=${item.id}`,
+  })
+}
+
+/** 删除 */
+async function handleDelete(item: DvCheckRecordVO) {
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: `确定要删除「${item.machineryCode || item.machineryName || item.id}」吗？`,
+    })
+  } catch {
+    return
+  }
+  await deleteCheckRecord(item.id)
+  toast.success('删除成功')
+  reload()
 }
 
 /** 初始化 */

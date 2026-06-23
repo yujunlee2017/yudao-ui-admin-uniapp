@@ -1,73 +1,100 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
-// MES 供应商 VO
+/** MES 供应商查询参数 */
+export interface MdVendorQueryParams extends PageParam {
+  code?: string
+  name?: string
+  nickname?: string
+  englishName?: string
+  status?: number
+}
+
+/** MES 供应商 VO */
 export interface MdVendorVO {
-  id: number // 供应商编号
-  code: string // 供应商编码
-  name: string // 供应商名称
-  nickname: string // 供应商简称
-  englishName: string // 供应商英文名称
-  description: string // 供应商简介
-  logo: string // 供应商LOGO地址
-  level: string // 供应商等级
-  score: number // 供应商评分
-  address: string // 供应商地址
-  website: string // 供应商官网地址
-  email: string // 供应商邮箱地址
-  telephone: string // 供应商电话
-  contact1Name: string // 联系人1
-  contact1Telephone: string // 联系人1-电话
-  contact1Email: string // 联系人1-邮箱
-  contact2Name: string // 联系人2
-  contact2Telephone: string // 联系人2-电话
-  contact2Email: string // 联系人2-邮箱
-  creditCode: string // 统一社会信用代码
-  status: number // 状态
-  remark: string // 备注
+  id: number
+  code: string
+  name: string
+  nickname: string | null
+  englishName: string | null
+  description: string | null
+  logo: string | null
+  level: string | null
+  score: number | null
+  address: string | null
+  website: string | null
+  email: string | null
+  telephone: string | null
+  contact1Name: string | null
+  contact1Telephone: string | null
+  contact1Email: string | null
+  contact2Name: string | null
+  contact2Telephone: string | null
+  contact2Email: string | null
+  creditCode: string | null
+  status: number
+  remark: string | null
+  createTime: string | number
+}
+
+/** MES 供应商创建参数 */
+export interface MdVendorCreateReqVO {
+  code: string
+  name: string
+  nickname?: string
+  englishName?: string
+  description?: string
+  logo?: string
+  level?: string
+  score?: number
+  address?: string
+  website?: string
+  email?: string
+  telephone?: string
+  contact1Name?: string
+  contact1Telephone?: string
+  contact1Email?: string
+  contact2Name?: string
+  contact2Telephone?: string
+  contact2Email?: string
+  creditCode?: string
+  status: number
+  remark?: string
+}
+
+/** MES 供应商更新参数 */
+export interface MdVendorUpdateReqVO extends MdVendorCreateReqVO {
+  id: number
 }
 
 /** 查询供应商分页 */
-export function getVendorPage(params: PageParam) {
+export function getVendorPage(params: MdVendorQueryParams) {
   return http.get<PageResult<MdVendorVO>>(`/mes/md-vendor/page`, params)
 }
 
 /** 查询供应商详情 */
 export function getVendor(id: number) {
-  return http.get<MdVendorVO>(`/mes/md-vendor/get?id=` + id)
+  return http.get<MdVendorVO>(`/mes/md-vendor/get?id=${id}`)
 }
 
 /** 新增供应商 */
-export function createVendor(data: MdVendorVO) {
+export function createVendor(data: MdVendorCreateReqVO) {
   return http.post<number>(`/mes/md-vendor/create`, data)
 }
 
 /** 修改供应商 */
-export function updateVendor(data: MdVendorVO) {
+export function updateVendor(data: MdVendorUpdateReqVO) {
   return http.put<boolean>(`/mes/md-vendor/update`, data)
 }
 
 /** 删除供应商 */
 export function deleteVendor(id: number) {
-  return http.delete<boolean>(`/mes/md-vendor/delete?id=` + id)
+  return http.delete<boolean>(`/mes/md-vendor/delete?id=${id}`)
 }
 
 /** 导出供应商 Excel */
-export function exportVendor(params: any) {
-  return http.get<any>(`/mes/md-vendor/export-excel`, params)
+export function exportVendor(params: MdVendorQueryParams) {
+  return http.get<Blob>(`/mes/md-vendor/export-excel`, params)
 }
 
-/** 下载供应商导入模板 */
-export function importTemplate() {
-  return http.get<any>(`/mes/md-vendor/get-import-template`)
-}
-
-export const MdVendorApi = {
-  getVendorPage,
-  getVendor,
-  createVendor,
-  updateVendor,
-  deleteVendor,
-  exportVendor,
-  importTemplate,
-}
+export const MdVendorApi = { getVendorPage, getVendor, createVendor, updateVendor, deleteVendor, exportVendor }

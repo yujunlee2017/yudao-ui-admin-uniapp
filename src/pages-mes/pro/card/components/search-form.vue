@@ -17,41 +17,39 @@
         <view class="yd-search-form-label">
           流转卡编码
         </view>
-        <wd-input
-          v-model="formData.code"
-          placeholder="请输入流转卡编码"
-          clearable
-        />
+        <wd-input v-model="formData.code" placeholder="请输入流转卡编码" clearable />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           生产工单
         </view>
-        <wd-input
-          v-model="formData.workOrderId"
-          placeholder="请输入生产工单"
-          clearable
-        />
+        <view class="yd-search-form-selector" @click="openWorkOrderSelector">
+          <text v-if="selectedWorkOrderText" class="text-[#333]">
+            {{ selectedWorkOrderText }}
+          </text>
+          <text v-else class="text-[#999]">
+            请选择生产工单
+          </text>
+        </view>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           产品
         </view>
-        <wd-input
-          v-model="formData.itemId"
-          placeholder="请输入产品"
-          clearable
-        />
+        <view class="yd-search-form-selector" @click="openItemSelector">
+          <text v-if="selectedItemText" class="text-[#333]">
+            {{ selectedItemText }}
+          </text>
+          <text v-else class="text-[#999]">
+            请选择产品
+          </text>
+        </view>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           批次号
         </view>
-        <wd-input
-          v-model="formData.batchCode"
-          placeholder="请输入批次号"
-          clearable
-        />
+        <wd-input v-model="formData.batchCode" placeholder="请输入批次号" clearable />
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -63,47 +61,92 @@
       </view>
     </view>
   </wd-popup>
+
+  <WorkOrderSelector ref="workOrderSelectorRef" :confirmed-only="false" @confirm="handleWorkOrderConfirm" />
+  <ItemSelector ref="itemSelectorRef" item-or-product="PRODUCT" title="选择产品" :multiple="false" @confirm="handleItemConfirm" />
 </template>
 
 <script lang="ts" setup>
+import type { MdItemVO } from '@/api/mes/md/item'
+import type { ProCardQueryParams } from '@/api/mes/pro/card'
+import type { ProWorkOrderVO } from '@/api/mes/pro/workorder'
 import { computed, reactive, ref } from 'vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import ItemSelector from '@/pages-mes/md/item/components/item-selector.vue'
+import WorkOrderSelector from './workorder-selector.vue'
 
 const emit = defineEmits<{
-  search: [data: Record<string, any>]
+  search: [data: Partial<ProCardQueryParams>]
   reset: []
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const formData = reactive({
-  code: undefined as any,
-  workOrderId: undefined as any,
-  itemId: undefined as any,
-  batchCode: undefined as any,
+const workOrderSelectorRef = ref<InstanceType<typeof WorkOrderSelector>>() // 工单选择器
+const itemSelectorRef = ref<InstanceType<typeof ItemSelector>>() // 产品选择器
+const selectedWorkOrder = ref<ProWorkOrderVO>() // 已选工单
+const selectedItem = ref<MdItemVO>() // 已选产品
+const formData = reactive<Partial<ProCardQueryParams>>({
+  code: undefined,
+  workOrderId: undefined,
+  itemId: undefined,
+  batchCode: undefined,
 }) // 搜索表单数据
+const selectedWorkOrderText = computed(() => selectedWorkOrder.value ? `${selectedWorkOrder.value.code || '-'} / ${selectedWorkOrder.value.name || '-'}` : '')
+const selectedItemText = computed(() => selectedItem.value ? `${selectedItem.value.code || '-'} / ${selectedItem.value.name || '-'}` : '')
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
   const conditions: string[] = []
-  if (formData.code !== undefined && formData.code !== '') {
-    conditions.push(`流转卡编码:${formData.code}`)
+  if (formData.code) {
+    conditions.push(`编码:${formData.code}`)
   }
-  if (formData.workOrderId !== undefined && formData.workOrderId !== '') {
-    conditions.push(`生产工单:${formData.workOrderId}`)
+  if (selectedWorkOrder.value) {
+    conditions.push(`工单:${selectedWorkOrder.value.code}`)
   }
-  if (formData.itemId !== undefined && formData.itemId !== '') {
-    conditions.push(`产品:${formData.itemId}`)
+  if (selectedItem.value) {
+    conditions.push(`产品:${selectedItem.value.code}`)
   }
-  if (formData.batchCode !== undefined && formData.batchCode !== '') {
-    conditions.push(`批次号:${formData.batchCode}`)
+  if (formData.batchCode) {
+    conditions.push(`批次:${formData.batchCode}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索生产流转卡'
 })
 
+/** 打开工单选择器 */
+function openWorkOrderSelector() {
+  workOrderSelectorRef.value?.open(formData.workOrderId)
+}
+
+/** 打开产品选择器 */
+function openItemSelector() {
+  itemSelectorRef.value?.open()
+}
+
+/** 选择工单 */
+function handleWorkOrderConfirm(item: ProWorkOrderVO) {
+  selectedWorkOrder.value = item
+  formData.workOrderId = item.id
+}
+
+/** 选择产品 */
+function handleItemConfirm(items: MdItemVO[]) {
+  const item = items[0]
+  if (!item) {
+    return
+  }
+  selectedItem.value = item
+  formData.itemId = item.id
+}
+
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  emit('search', { ...formData })
+  emit('search', {
+    code: formData.code || undefined,
+    workOrderId: formData.workOrderId,
+    itemId: formData.itemId,
+    batchCode: formData.batchCode || undefined,
+  })
 }
 
 /** 重置按钮操作 */
@@ -112,7 +155,21 @@ function handleReset() {
   formData.workOrderId = undefined
   formData.itemId = undefined
   formData.batchCode = undefined
+  selectedWorkOrder.value = undefined
+  selectedItem.value = undefined
   visible.value = false
   emit('reset')
 }
 </script>
+
+<style lang="scss" scoped>
+.yd-search-form-selector {
+  min-height: 72rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+  border-radius: 8rpx;
+  background: #f7f8fa;
+  font-size: 28rpx;
+}
+</style>

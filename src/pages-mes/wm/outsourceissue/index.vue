@@ -10,6 +10,17 @@
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
+    <!-- 导出入口 -->
+    <view v-if="hasAccessByCodes(['mes:wm-outsource-issue:export'])" class="bg-white px-24rpx py-16rpx">
+      <view
+        class="h-64rpx flex items-center justify-center border-2rpx border-[#1677ff] rounded-8rpx text-26rpx text-[#1677ff]"
+        :class="exportLoading ? 'opacity-60' : ''"
+        @click="handleExport"
+      >
+        {{ exportLoading ? '导出中...' : '导出当前筛选数据' }}
+      </view>
+    </view>
+
     <!-- 列表 -->
     <z-paging
       ref="pagingRef"
@@ -31,33 +42,48 @@
           @click="handleDetail(item)"
         >
           <view class="p-24rpx">
-            <view class="mb-16rpx flex items-center justify-between gap-16rpx">
-              <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-                {{ formatFieldValue(item.code) || '-' }}
+            <view class="mb-16rpx flex items-start justify-between gap-16rpx">
+              <view class="min-w-0 flex-1">
+                <view class="truncate text-32rpx text-[#333] font-semibold">
+                  {{ item.code || '-' }}
+                </view>
+                <view class="mt-4rpx truncate text-24rpx text-[#999]">
+                  {{ item.name || '-' }}
+                </view>
               </view>
-              <view class="shrink-0 text-24rpx text-[#999]">
-                #{{ item.id }}
-              </view>
+              <dict-tag v-if="item.status != null" :type="DICT_TYPE.MES_WM_OUTSOURCE_ISSUE_STATUS" :value="item.status" />
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">发料单名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.name) || '-' }}</text>
+              <text class="mr-8rpx shrink-0 text-[#999]">外协工单：</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.workOrderCode || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">生产工单号：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.workOrderCode) || '-' }}</text>
+              <text class="mr-8rpx shrink-0 text-[#999]">供应商：</text>
+              <text class="min-w-0 flex-1 truncate">{{ getVendorText(item) }}</text>
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">供应商名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.vendorName) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+            <view class="flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">发料日期：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.issueDate) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ formatDateTime(item.issueDate) || '-' }}</text>
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">单据状态：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.status) || '-' }}</text>
+          </view>
+          <view v-if="hasRowActions(item)" class="flex border-t border-t-[#f0f0f0] text-28rpx" @click.stop>
+            <view v-if="canUpdatePrepare(item)" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
+              编辑
+            </view>
+            <view v-if="canSubmitPrepare(item)" class="flex-1 py-18rpx text-center text-[#faad14]" @click="handleSubmitIssue(item)">
+              提交
+            </view>
+            <view v-if="canDeletePrepare(item)" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
+              删除
+            </view>
+            <view v-if="canStockApproving(item)" class="flex-1 py-18rpx text-center text-[#52c41a]" @click="handleStock(item)">
+              执行拣货
+            </view>
+            <view v-if="canFinishApproved(item)" class="flex-1 py-18rpx text-center text-[#52c41a]" @click="handleFinish(item)">
+              执行领出
+            </view>
+            <view v-if="canCancelActive(item)" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleCancel(item)">
+              取消
             </view>
           </view>
         </view>
@@ -76,12 +102,16 @@
 </template>
 
 <script lang="ts" setup>
-import type { WmOutsourceIssueVO } from '@/api/mes/wm/outsourceissue'
+import type { WmOutsourceIssueQueryParams, WmOutsourceIssueVO } from '@/api/mes/wm/outsourceissue'
 import { onUnload } from '@dcloudio/uni-app'
+import { useDialog } from '@wot-ui/ui/components/wd-dialog'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
-import { getOutsourceIssuePage } from '@/api/mes/wm/outsourceissue'
+import { cancelOutsourceIssue, deleteOutsourceIssue, getOutsourceIssuePage, submitOutsourceIssue } from '@/api/mes/wm/outsourceissue'
 import { useAccess } from '@/hooks/useAccess'
+import { downloadApiFile } from '@/utils/download'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE, MesWmOutsourceIssueStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import SearchForm from './components/search-form.vue'
 
@@ -93,27 +123,24 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
-const list = ref<any[]>([]) // 列表数据
-const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const dialog = useDialog()
+const toast = useToast()
+const list = ref<WmOutsourceIssueVO[]>([]) // 列表数据
+const pagingRef = ref<ZPagingRef<WmOutsourceIssueVO>>() // 分页组件引用
+const queryParams = ref<WmOutsourceIssueQueryParams>({}) // 查询参数
+const exportLoading = ref(false) // 导出状态
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
+/** 供应商展示文案 */
+function getVendorText(item: WmOutsourceIssueVO) {
+  if (item.vendorCode || item.vendorName) {
+    return `${item.vendorCode || '-'} / ${item.vendorName || '-'}`.trim()
   }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
+  return '-'
 }
 
 /** 查询列表 */
@@ -124,7 +151,7 @@ async function queryList(pageNo: number, pageSize: number) {
       pageNo,
       pageSize,
     }
-    const data = await getOutsourceIssuePage(params as any)
+    const data = await getOutsourceIssuePage(params)
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
     pagingRef.value?.complete(false)
@@ -132,7 +159,7 @@ async function queryList(pageNo: number, pageSize: number) {
 }
 
 /** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) {
+function handleQuery(data?: WmOutsourceIssueQueryParams) {
   queryParams.value = { ...data }
   reload()
 }
@@ -147,6 +174,26 @@ function reload() {
   pagingRef.value?.reload()
 }
 
+/** 导出按钮操作 */
+async function handleExport() {
+  if (exportLoading.value) {
+    return
+  }
+  const { confirm } = await uni.showModal({
+    title: '导出确认',
+    content: '确定要导出当前筛选数据吗？',
+  })
+  if (!confirm) {
+    return
+  }
+  exportLoading.value = true
+  try {
+    await downloadApiFile('/mes/wm/outsource-issue/export-excel', queryParams.value, '外协发料单.xls')
+  } finally {
+    exportLoading.value = false
+  }
+}
+
 /** 新增 */
 function handleAdd() {
   uni.navigateTo({
@@ -155,10 +202,117 @@ function handleAdd() {
 }
 
 /** 查看详情 */
-function handleDetail(item: any) {
+function handleDetail(item: WmOutsourceIssueVO) {
   uni.navigateTo({
-    url: `/pages-mes/wm/outsourceissue/detail/index?id=${(item as any).id}`,
+    url: `/pages-mes/wm/outsourceissue/detail/index?id=${item.id}`,
   })
+}
+
+/** 是否可编辑草稿 */
+function canUpdatePrepare(item: WmOutsourceIssueVO) {
+  return hasAccessByCodes(['mes:wm-outsource-issue:update']) && item.status === MesWmOutsourceIssueStatusEnum.PREPARE
+}
+
+/** 是否可删除草稿 */
+function canDeletePrepare(item: WmOutsourceIssueVO) {
+  return hasAccessByCodes(['mes:wm-outsource-issue:delete']) && item.status === MesWmOutsourceIssueStatusEnum.PREPARE
+}
+
+/** 是否可提交草稿 */
+function canSubmitPrepare(item: WmOutsourceIssueVO) {
+  return hasAccessByCodes(['mes:wm-outsource-issue:update']) && item.status === MesWmOutsourceIssueStatusEnum.PREPARE
+}
+
+/** 是否可执行拣货 */
+function canStockApproving(item: WmOutsourceIssueVO) {
+  return hasAccessByCodes(['mes:wm-outsource-issue:update']) && item.status === MesWmOutsourceIssueStatusEnum.APPROVING
+}
+
+/** 是否可执行领出 */
+function canFinishApproved(item: WmOutsourceIssueVO) {
+  return hasAccessByCodes(['mes:wm-outsource-issue:finish']) && item.status === MesWmOutsourceIssueStatusEnum.APPROVED
+}
+
+/** 是否可取消 */
+function canCancelActive(item: WmOutsourceIssueVO) {
+  return hasAccessByCodes(['mes:wm-outsource-issue:update'])
+    && [MesWmOutsourceIssueStatusEnum.APPROVING, MesWmOutsourceIssueStatusEnum.APPROVED].includes(item.status)
+}
+
+/** 是否存在行操作 */
+function hasRowActions(item: WmOutsourceIssueVO) {
+  return canUpdatePrepare(item)
+    || canSubmitPrepare(item)
+    || canDeletePrepare(item)
+    || canStockApproving(item)
+    || canFinishApproved(item)
+    || canCancelActive(item)
+}
+
+/** 编辑 */
+function handleEdit(item: WmOutsourceIssueVO) {
+  uni.navigateTo({
+    url: `/pages-mes/wm/outsourceissue/form/index?id=${item.id}`,
+  })
+}
+
+/** 执行拣货 */
+function handleStock(item: WmOutsourceIssueVO) {
+  uni.navigateTo({
+    url: `/pages-mes/wm/outsourceissue/form/index?id=${item.id}&mode=stock`,
+  })
+}
+
+/** 执行领出 */
+function handleFinish(item: WmOutsourceIssueVO) {
+  uni.navigateTo({
+    url: `/pages-mes/wm/outsourceissue/form/index?id=${item.id}&mode=finish`,
+  })
+}
+
+/** 删除 */
+async function handleDelete(item: WmOutsourceIssueVO) {
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: `确定要删除「${item.code || item.name || item.id}」吗？`,
+    })
+  } catch {
+    return
+  }
+  await deleteOutsourceIssue(item.id)
+  toast.success('删除成功')
+  reload()
+}
+
+/** 提交外协发料单 */
+async function handleSubmitIssue(item: WmOutsourceIssueVO) {
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: '确认提交该外协发料单？提交前请确认已维护发料物料，提交后将不能修改。',
+    })
+  } catch {
+    return
+  }
+  await submitOutsourceIssue(item.id)
+  toast.success('提交成功')
+  reload()
+}
+
+/** 取消外协发料单 */
+async function handleCancel(item: WmOutsourceIssueVO) {
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: '确认取消该外协发料单？取消后不可恢复。',
+    })
+  } catch {
+    return
+  }
+  await cancelOutsourceIssue(item.id)
+  toast.success('取消成功')
+  reload()
 }
 
 /** 初始化 */

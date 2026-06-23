@@ -5,7 +5,7 @@ import { http } from '@/http/http'
 export interface StockMove {
   id?: number // 调拨编号
   no?: string // 调拨单号
-  outTime?: string | number | Date // 调拨时间
+  moveTime?: string | number | Date // 调拨时间
   totalCount?: number // 合计数量
   totalPrice?: number // 合计金额，单位：元
   status?: number // 状态

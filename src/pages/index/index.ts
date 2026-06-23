@@ -1004,6 +1004,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'code',
         url: '/pages-mes/md/autocode/index',
         iconColor: '#2f54eb',
+        permission: 'mes:auto-code-rule:query',
       },
       {
         key: 'mesMdClient',
@@ -1011,6 +1012,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'user',
         url: '/pages-mes/md/client/index',
         iconColor: '#13c2c2',
+        permission: 'mes:md-client:query',
       },
       {
         key: 'mesMdVendor',
@@ -1018,6 +1020,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'user-group',
         url: '/pages-mes/md/vendor/index',
         iconColor: '#52c41a',
+        permission: 'mes:md-vendor:query',
       },
       {
         key: 'mesMdItem',
@@ -1025,6 +1028,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'archive',
         url: '/pages-mes/md/item/index',
         iconColor: '#fa8c16',
+        permission: 'mes:md-item:query',
       },
       {
         key: 'mesMdItemType',
@@ -1032,6 +1036,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'folder',
         url: '/pages-mes/md/item/type/index',
         iconColor: '#faad14',
+        permission: 'mes:md-item-type:query',
       },
       {
         key: 'mesMdUnitmeasure',
@@ -1039,6 +1044,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'apps',
         url: '/pages-mes/md/unitmeasure/index',
         iconColor: '#722ed1',
+        permission: 'mes:md-unit-measure:query',
       },
       {
         key: 'mesMdWorkshop',
@@ -1046,6 +1052,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'home',
         url: '/pages-mes/md/workstation/workshop/index',
         iconColor: '#eb2f96',
+        permission: 'mes:md-workshop:query',
       },
       {
         key: 'mesMdWorkstation',
@@ -1053,6 +1060,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'location',
         url: '/pages-mes/md/workstation/index',
         iconColor: '#36cfc9',
+        permission: 'mes:md-workstation:query',
       },
     ],
   },
@@ -1066,6 +1074,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'ordered-list',
         url: '/pages-mes/pro/workorder/index',
         iconColor: '#52c41a',
+        permission: 'mes:pro-work-order:query',
       },
       {
         key: 'mesProTask',
@@ -1073,6 +1082,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'calendar-line',
         url: '/pages-mes/pro/task/index',
         iconColor: '#73d13d',
+        permission: 'mes:pro-task:query',
       },
       {
         key: 'mesProFeedback',
@@ -1080,6 +1090,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'edit',
         url: '/pages-mes/pro/feedback/index',
         iconColor: '#95de64',
+        permission: 'mes:pro-feedback:query',
       },
       {
         key: 'mesProProcess',
@@ -1087,6 +1098,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'settings',
         url: '/pages-mes/pro/process/index',
         iconColor: '#389e0d',
+        permission: 'mes:pro-process:query',
       },
       {
         key: 'mesProRoute',
@@ -1094,6 +1106,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'share-alt',
         url: '/pages-mes/pro/route/index',
         iconColor: '#13c2c2',
+        permission: 'mes:pro-route:query',
       },
       {
         key: 'mesProCard',
@@ -1101,6 +1114,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'idcard',
         url: '/pages-mes/pro/card/index',
         iconColor: '#1677ff',
+        permission: 'mes:pro-card:query',
       },
       {
         key: 'mesProAndonRecord',
@@ -1108,6 +1122,15 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'exclamation-circle',
         url: '/pages-mes/pro/andon/record/index',
         iconColor: '#fa8c16',
+        permission: 'mes:pro-andon-record:query',
+      },
+      {
+        key: 'mesProAndonConfig',
+        name: '安灯配置',
+        icon: 'settings',
+        url: '/pages-mes/pro/andon/config/index',
+        iconColor: '#faad14',
+        permission: 'mes:pro-andon-config:query',
       },
       {
         key: 'mesProWorkrecord',
@@ -1115,6 +1138,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'list',
         url: '/pages-mes/pro/workrecord/index',
         iconColor: '#722ed1',
+        permission: 'mes:pro-workrecord:query',
       },
     ],
   },
@@ -1128,6 +1152,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'notification',
         url: '/pages-mes/wm/arrivalnotice/index',
         iconColor: '#fa8c16',
+        permission: 'mes:wm-arrival-notice:query',
       },
       {
         key: 'mesWmItemreceipt',
@@ -1135,6 +1160,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'download',
         url: '/pages-mes/wm/itemreceipt/index',
         iconColor: '#faad14',
+        permission: 'mes:wm-item-receipt:query',
       },
       {
         key: 'mesWmReturnvendor',
@@ -1142,6 +1168,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'undo',
         url: '/pages-mes/wm/returnvendor/index',
         iconColor: '#ff7a45',
+        permission: 'mes:wm-return-vendor:query',
       },
       {
         key: 'mesWmMaterialstock',
@@ -1149,6 +1176,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'dashboard',
         url: '/pages-mes/wm/materialstock/index',
         iconColor: '#722ed1',
+        permission: 'mes:wm-material-stock:query',
       },
       {
         key: 'mesWmMiscreceipt',
@@ -1156,6 +1184,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'download',
         url: '/pages-mes/wm/miscreceipt/index',
         iconColor: '#52c41a',
+        permission: 'mes:wm:misc-receipt:query',
       },
       {
         key: 'mesWmMiscissue',
@@ -1163,6 +1192,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'upload',
         url: '/pages-mes/wm/miscissue/index',
         iconColor: '#13c2c2',
+        permission: 'mes:wm-misc-issue:query',
       },
       {
         key: 'mesWmOutsourceissue',
@@ -1170,6 +1200,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'upload',
         url: '/pages-mes/wm/outsourceissue/index',
         iconColor: '#2f54eb',
+        permission: 'mes:wm-outsource-issue:query',
       },
       {
         key: 'mesWmOutsourcereceipt',
@@ -1177,6 +1208,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'download',
         url: '/pages-mes/wm/outsourcereceipt/index',
         iconColor: '#597ef7',
+        permission: 'mes:wm-outsource-receipt:query',
       },
       {
         key: 'mesWmProductissue',
@@ -1184,6 +1216,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'upload',
         url: '/pages-mes/wm/productissue/index',
         iconColor: '#9254de',
+        permission: 'mes:wm-product-issue:query',
       },
       {
         key: 'mesWmReturnissue',
@@ -1191,6 +1224,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'undo',
         url: '/pages-mes/wm/returnissue/index',
         iconColor: '#eb2f96',
+        permission: 'mes:wm-return-issue:query',
       },
       {
         key: 'mesWmProductreceipt',
@@ -1198,6 +1232,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'download',
         url: '/pages-mes/wm/productreceipt/index',
         iconColor: '#36cfc9',
+        permission: 'mes:wm-product-receipt:query',
       },
       {
         key: 'mesWmProductsales',
@@ -1205,6 +1240,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'upload',
         url: '/pages-mes/wm/productsales/index',
         iconColor: '#f759ab',
+        permission: 'mes:wm-product-sales:query',
       },
       {
         key: 'mesWmReturnsales',
@@ -1212,6 +1248,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'undo',
         url: '/pages-mes/wm/returnsales/index',
         iconColor: '#ff85c0',
+        permission: 'mes:wm-return-sales:query',
       },
       {
         key: 'mesWmSalesnotice',
@@ -1219,6 +1256,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'send',
         url: '/pages-mes/wm/salesnotice/index',
         iconColor: '#5cdbd3',
+        permission: 'mes:wm-sales-notice:query',
       },
       {
         key: 'mesWmTransfer',
@@ -1226,6 +1264,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'swap',
         url: '/pages-mes/wm/transfer/index',
         iconColor: '#87e8de',
+        permission: 'mes:wm-transfer:query',
       },
       {
         key: 'mesWmPackages',
@@ -1233,6 +1272,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'archive',
         url: '/pages-mes/wm/packages/index',
         iconColor: '#ffc53d',
+        permission: 'mes:wm-package:query',
       },
       {
         key: 'mesWmSn',
@@ -1240,6 +1280,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'code',
         url: '/pages-mes/wm/sn/index',
         iconColor: '#1677ff',
+        permission: 'mes:wm-sn:query',
       },
       {
         key: 'mesWmBarcode',
@@ -1247,6 +1288,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'code',
         url: '/pages-mes/wm/barcode/index',
         iconColor: '#1890ff',
+        permission: 'mes:wm-barcode:query',
       },
       {
         key: 'mesWmBarcodeConfig',
@@ -1254,6 +1296,15 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'settings',
         url: '/pages-mes/wm/barcode/config/index',
         iconColor: '#2f54eb',
+        permission: 'mes:wm-barcode-config:query',
+      },
+      {
+        key: 'mesWmBatch',
+        name: '批次管理',
+        icon: 'list',
+        url: '/pages-mes/wm/batch/index',
+        iconColor: '#69c0ff',
+        permission: 'mes:wm-batch:query',
       },
       {
         key: 'mesWmStocktakingPlan',
@@ -1261,6 +1312,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'calendar-line',
         url: '/pages-mes/wm/stocktaking/plan/index',
         iconColor: '#722ed1',
+        permission: 'mes:wm-stock-taking-plan:query',
       },
       {
         key: 'mesWmStocktakingTask',
@@ -1268,6 +1320,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'check-circle',
         url: '/pages-mes/wm/stocktaking/task/index',
         iconColor: '#52c41a',
+        permission: 'mes:wm-stock-taking-task:query',
       },
       {
         key: 'mesWmWarehouse',
@@ -1275,6 +1328,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'home',
         url: '/pages-mes/wm/warehouse/index',
         iconColor: '#fa8c16',
+        permission: 'mes:wm-warehouse:query',
       },
       {
         key: 'mesWmWarehouseArea',
@@ -1282,6 +1336,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'folder',
         url: '/pages-mes/wm/warehouse/area/index',
         iconColor: '#faad14',
+        permission: 'mes:wm-warehouse:query',
       },
       {
         key: 'mesWmWarehouseLocation',
@@ -1289,6 +1344,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'location',
         url: '/pages-mes/wm/warehouse/location/index',
         iconColor: '#13c2c2',
+        permission: 'mes:wm-warehouse:query',
       },
     ],
   },
@@ -1302,6 +1358,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'safe',
         url: '/pages-mes/qc/template/index',
         iconColor: '#722ed1',
+        permission: 'mes:qc-template:query',
       },
       {
         key: 'mesQcIndicator',
@@ -1309,6 +1366,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'list',
         url: '/pages-mes/qc/indicator/index',
         iconColor: '#9254de',
+        permission: 'mes:qc-indicator:query',
       },
       {
         key: 'mesQcDefect',
@@ -1316,6 +1374,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'exclamation-circle',
         url: '/pages-mes/qc/defect/index',
         iconColor: '#f5222d',
+        permission: 'mes:qc-defect:query',
       },
       {
         key: 'mesQcPendinginspect',
@@ -1323,6 +1382,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'clock-circle',
         url: '/pages-mes/qc/pendinginspect/index',
         iconColor: '#fa8c16',
+        permission: 'mes:qc-pending-inspect:query',
       },
       {
         key: 'mesQcIqc',
@@ -1330,6 +1390,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'check-circle',
         url: '/pages-mes/qc/iqc/index',
         iconColor: '#52c41a',
+        permission: 'mes:qc-iqc:query',
       },
       {
         key: 'mesQcIpqc',
@@ -1337,6 +1398,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'check-circle',
         url: '/pages-mes/qc/ipqc/index',
         iconColor: '#13c2c2',
+        permission: 'mes:qc-ipqc:query',
       },
       {
         key: 'mesQcOqc',
@@ -1344,6 +1406,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'check-circle',
         url: '/pages-mes/qc/oqc/index',
         iconColor: '#2f54eb',
+        permission: 'mes:qc-oqc:query',
       },
       {
         key: 'mesQcRqc',
@@ -1351,6 +1414,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'undo',
         url: '/pages-mes/qc/rqc/index',
         iconColor: '#eb2f96',
+        permission: 'mes:qc-rqc:query',
       },
       {
         key: 'mesQcBatchtrace',
@@ -1358,6 +1422,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'share-alt',
         url: '/pages-mes/qc/batchtrace/index',
         iconColor: '#36cfc9',
+        permission: 'mes:wm-batch:query',
       },
     ],
   },
@@ -1371,6 +1436,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'tool',
         url: '/pages-mes/dv/machinery/index',
         iconColor: '#13c2c2',
+        permission: 'mes:dv-machinery:query',
       },
       {
         key: 'mesDvMachineryType',
@@ -1378,6 +1444,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'folder',
         url: '/pages-mes/dv/machinery/type/index',
         iconColor: '#36cfc9',
+        permission: 'mes:dv-machinery-type:query',
       },
       {
         key: 'mesDvSubject',
@@ -1385,6 +1452,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'list',
         url: '/pages-mes/dv/subject/index',
         iconColor: '#2f54eb',
+        permission: 'mes:dv-subject:query',
       },
       {
         key: 'mesDvCheckplan',
@@ -1392,6 +1460,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'calendar-line',
         url: '/pages-mes/dv/checkplan/index',
         iconColor: '#722ed1',
+        permission: 'mes:dv-check-plan:query',
       },
       {
         key: 'mesDvCheckrecord',
@@ -1399,6 +1468,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'check-circle',
         url: '/pages-mes/dv/checkrecord/index',
         iconColor: '#52c41a',
+        permission: 'mes:dv-check-record:query',
       },
       {
         key: 'mesDvMaintenrecord',
@@ -1406,6 +1476,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'settings',
         url: '/pages-mes/dv/maintenrecord/index',
         iconColor: '#faad14',
+        permission: 'mes:dv-mainten-record:query',
       },
       {
         key: 'mesDvRepair',
@@ -1413,6 +1484,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'edit',
         url: '/pages-mes/dv/repair/index',
         iconColor: '#fa8c16',
+        permission: 'mes:dv-repair:query',
       },
     ],
   },
@@ -1426,6 +1498,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'calendar-line',
         url: '/pages-mes/cal/calendar/index',
         iconColor: '#eb2f96',
+        permission: 'mes:cal-team-shift:query',
       },
       {
         key: 'mesCalPlan',
@@ -1433,6 +1506,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'calendar-line',
         url: '/pages-mes/cal/plan/index',
         iconColor: '#f759ab',
+        permission: 'mes:cal-plan:query',
       },
       {
         key: 'mesCalTeam',
@@ -1440,6 +1514,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'user-group',
         url: '/pages-mes/cal/team/index',
         iconColor: '#722ed1',
+        permission: 'mes:cal-team:query',
       },
       {
         key: 'mesCalHoliday',
@@ -1447,6 +1522,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'clock-circle',
         url: '/pages-mes/cal/holiday/index',
         iconColor: '#fa8c16',
+        permission: 'mes:cal-holiday:query',
       },
     ],
   },
@@ -1460,6 +1536,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'tool',
         url: '/pages-mes/tm/tool/index',
         iconColor: '#faad14',
+        permission: 'mes:tm-tool:query',
       },
       {
         key: 'mesTmToolType',
@@ -1467,6 +1544,7 @@ const menuGroupsData: MenuGroup[] = [
         icon: 'folder',
         url: '/pages-mes/tm/tool/type/index',
         iconColor: '#ffc53d',
+        permission: 'mes:tm-tool-type:query',
       },
     ],
   },
@@ -1961,7 +2039,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'erpProductCategory',
         name: '产品分类',
         icon: 'folder',
-        url: '/pages-erp/crud/index?module=product-category',
+        url: '/pages-erp/product/category/index',
         iconColor: '#13c2c2',
         permission: 'erp:product-category:query',
       },
@@ -1969,7 +2047,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'erpProduct',
         name: '产品管理',
         icon: 'apps',
-        url: '/pages-erp/crud/index?module=product',
+        url: '/pages-erp/product/product/index',
         iconColor: '#1890ff',
         permission: 'erp:product:query',
       },
@@ -1977,7 +2055,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'erpProductUnit',
         name: '产品单位',
         icon: 'apps',
-        url: '/pages-erp/crud/index?module=product-unit',
+        url: '/pages-erp/product/unit/index',
         iconColor: '#2f54eb',
         permission: 'erp:product-unit:query',
       },
@@ -1985,7 +2063,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'erpSupplier',
         name: '供应商',
         icon: 'user-group',
-        url: '/pages-erp/crud/index?module=supplier',
+        url: '/pages-erp/purchase/supplier/index',
         iconColor: '#fa8c16',
         permission: 'erp:supplier:query',
       },
@@ -1993,7 +2071,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'erpPurchaseOrder',
         name: '采购订单',
         icon: 'ordered-list',
-        url: '/pages-erp/crud/index?module=purchase-order',
+        url: '/pages-erp/purchase/order/index',
         iconColor: '#faad14',
         permission: 'erp:purchase-order:query',
       },
@@ -2001,7 +2079,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'erpPurchaseIn',
         name: '采购入库',
         icon: 'download',
-        url: '/pages-erp/crud/index?module=purchase-in',
+        url: '/pages-erp/purchase/in/index',
         iconColor: '#ffc53d',
         permission: 'erp:purchase-in:query',
       },
@@ -2009,7 +2087,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'erpPurchaseReturn',
         name: '采购退货',
         icon: 'undo',
-        url: '/pages-erp/crud/index?module=purchase-return',
+        url: '/pages-erp/purchase/return/index',
         iconColor: '#ff7a45',
         permission: 'erp:purchase-return:query',
       },
@@ -2017,7 +2095,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'erpCustomer',
         name: '客户',
         icon: 'user',
-        url: '/pages-erp/crud/index?module=customer',
+        url: '/pages-erp/sale/customer/index',
         iconColor: '#52c41a',
         permission: 'erp:customer:query',
       },
@@ -2025,7 +2103,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'erpSaleOrder',
         name: '销售订单',
         icon: 'ordered-list',
-        url: '/pages-erp/crud/index?module=sale-order',
+        url: '/pages-erp/sale/order/index',
         iconColor: '#73d13d',
         permission: 'erp:sale-order:query',
       },
@@ -2033,7 +2111,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'erpSaleOut',
         name: '销售出库',
         icon: 'upload',
-        url: '/pages-erp/crud/index?module=sale-out',
+        url: '/pages-erp/sale/out/index',
         iconColor: '#95de64',
         permission: 'erp:sale-out:query',
       },
@@ -2041,7 +2119,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'erpSaleReturn',
         name: '销售退货',
         icon: 'undo',
-        url: '/pages-erp/crud/index?module=sale-return',
+        url: '/pages-erp/sale/return/index',
         iconColor: '#389e0d',
         permission: 'erp:sale-return:query',
       },
@@ -2049,7 +2127,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'erpWarehouse',
         name: '仓库管理',
         icon: 'home',
-        url: '/pages-erp/crud/index?module=warehouse',
+        url: '/pages-erp/stock/warehouse/index',
         iconColor: '#722ed1',
         permission: 'erp:warehouse:query',
       },
@@ -2057,7 +2135,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'erpStock',
         name: '产品库存',
         icon: 'dashboard',
-        url: '/pages-erp/crud/index?module=stock',
+        url: '/pages-erp/stock/stock/index',
         iconColor: '#9254de',
         permission: 'erp:stock:query',
       },
@@ -2065,7 +2143,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'erpStockRecord',
         name: '库存明细',
         icon: 'list',
-        url: '/pages-erp/crud/index?module=stock-record',
+        url: '/pages-erp/stock/record/index',
         iconColor: '#597ef7',
         permission: 'erp:stock-record:query',
       },
@@ -2073,7 +2151,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'erpStockIn',
         name: '其它入库',
         icon: 'download',
-        url: '/pages-erp/crud/index?module=stock-in',
+        url: '/pages-erp/stock/in/index',
         iconColor: '#36cfc9',
         permission: 'erp:stock-in:query',
       },
@@ -2081,7 +2159,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'erpStockOut',
         name: '其它出库',
         icon: 'upload',
-        url: '/pages-erp/crud/index?module=stock-out',
+        url: '/pages-erp/stock/out/index',
         iconColor: '#13c2c2',
         permission: 'erp:stock-out:query',
       },
@@ -2089,7 +2167,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'erpStockMove',
         name: '库存调拨',
         icon: 'swap',
-        url: '/pages-erp/crud/index?module=stock-move',
+        url: '/pages-erp/stock/move/index',
         iconColor: '#5cdbd3',
         permission: 'erp:stock-move:query',
       },
@@ -2097,7 +2175,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'erpStockCheck',
         name: '库存盘点',
         icon: 'check-circle',
-        url: '/pages-erp/crud/index?module=stock-check',
+        url: '/pages-erp/stock/check/index',
         iconColor: '#87e8de',
         permission: 'erp:stock-check:query',
       },
@@ -2105,7 +2183,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'erpAccount',
         name: '结算账户',
         icon: 'safe',
-        url: '/pages-erp/crud/index?module=account',
+        url: '/pages-erp/finance/account/index',
         iconColor: '#eb2f96',
         permission: 'erp:account:query',
       },
@@ -2113,7 +2191,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'erpFinancePayment',
         name: '付款单',
         icon: 'safe',
-        url: '/pages-erp/crud/index?module=finance-payment',
+        url: '/pages-erp/finance/payment/index',
         iconColor: '#f759ab',
         permission: 'erp:finance-payment:query',
       },
@@ -2121,7 +2199,7 @@ const menuGroupsData: MenuGroup[] = [
         key: 'erpFinanceReceipt',
         name: '收款单',
         icon: 'safe',
-        url: '/pages-erp/crud/index?module=finance-receipt',
+        url: '/pages-erp/finance/receipt/index',
         iconColor: '#ff85c0',
         permission: 'erp:finance-receipt:query',
       },

@@ -1,6 +1,10 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
+export interface QcTemplateItemPageParam extends PageParam {
+  templateId?: number
+}
+
 // MES 质检方案-产品关联 VO
 export interface QcTemplateItemVO {
   id: number // 编号
@@ -17,31 +21,47 @@ export interface QcTemplateItemVO {
   itemName: string // 物料名称
   specification: string // 规格型号
   unitMeasureName: string // 计量单位名称
+  createTime?: string // 创建时间
+}
+
+export interface QcTemplateItemCreateReqVO {
+  templateId: number
+  itemId: number
+  quantityCheck?: number
+  quantityUnqualified?: number
+  criticalRate?: number
+  majorRate?: number
+  minorRate?: number
+  remark?: string
+}
+
+export interface QcTemplateItemUpdateReqVO extends QcTemplateItemCreateReqVO {
+  id: number
 }
 
 /** 查询产品关联分页 */
-export function getTemplateItemPage(params: PageParam) {
+export function getTemplateItemPage(params: QcTemplateItemPageParam) {
   return http.get<PageResult<QcTemplateItemVO>>(`/mes/qc/template/item/page`, params)
 }
 
 /** 查询产品关联详情 */
 export function getTemplateItem(id: number) {
-  return http.get<QcTemplateItemVO>(`/mes/qc/template/item/get?id=` + id)
+  return http.get<QcTemplateItemVO>(`/mes/qc/template/item/get?id=${id}`)
 }
 
 /** 新增产品关联 */
-export function createTemplateItem(data: QcTemplateItemVO) {
+export function createTemplateItem(data: QcTemplateItemCreateReqVO) {
   return http.post<number>(`/mes/qc/template/item/create`, data)
 }
 
 /** 修改产品关联 */
-export function updateTemplateItem(data: QcTemplateItemVO) {
+export function updateTemplateItem(data: QcTemplateItemUpdateReqVO) {
   return http.put<boolean>(`/mes/qc/template/item/update`, data)
 }
 
 /** 删除产品关联 */
 export function deleteTemplateItem(id: number) {
-  return http.delete<boolean>(`/mes/qc/template/item/delete?id=` + id)
+  return http.delete<boolean>(`/mes/qc/template/item/delete?id=${id}`)
 }
 
 export const QcTemplateItemApi = {

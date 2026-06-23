@@ -1,47 +1,30 @@
 <template>
-  <!-- 搜索框入口 -->
   <view @click="visible = true">
     <wd-search :placeholder="placeholder" hide-cancel disabled />
   </view>
-
-  <!-- 搜索弹窗 -->
-  <wd-popup
-    v-model="visible"
-    position="top"
-    :custom-style="getTopPopupStyle()"
-    :modal-style="getTopPopupModalStyle()"
-    @close="visible = false"
-  >
+  <wd-popup v-model="visible" position="top" :custom-style="getTopPopupStyle()" :modal-style="getTopPopupModalStyle()" @close="visible = false">
     <view class="yd-search-form-container">
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           类型编码
         </view>
-        <wd-input
-          v-model="formData.code"
-          placeholder="请输入类型编码"
-          clearable
-        />
+        <wd-input v-model="formData.code" placeholder="请输入类型编码" clearable />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           类型名称
         </view>
-        <wd-input
-          v-model="formData.name"
-          placeholder="请输入类型名称"
-          clearable
-        />
+        <wd-input v-model="formData.name" placeholder="请输入类型名称" clearable />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           保养维护类型
         </view>
-        <wd-input
-          v-model="formData.maintenType"
-          placeholder="请输入保养维护类型"
-          clearable
-        />
+        <wd-radio-group v-model="formData.maintenType" type="button">
+          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_TM_MAINTEN_TYPE)" :key="dict.value" :value="dict.value">
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -56,48 +39,57 @@
 </template>
 
 <script lang="ts" setup>
+import type { TmToolTypeQueryParams } from '@/api/mes/tm/tool/type'
 import { computed, reactive, ref } from 'vue'
+import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 
-const emit = defineEmits<{
-  search: [data: Record<string, any>]
-  reset: []
-}>()
-
-const visible = ref(false) // 搜索弹窗显示状态
-const formData = reactive({
-  code: undefined as any,
-  name: undefined as any,
-  maintenType: undefined as any,
-}) // 搜索表单数据
-
-/** 搜索条件 placeholder 拼接 */
+const emit = defineEmits<{ search: [data: TmToolTypeQueryParams], reset: [] }>()
+const visible = ref(false)
+const formData = reactive<TmToolTypeQueryParams>({ code: '', name: '', maintenType: undefined })
 const placeholder = computed(() => {
-  const conditions: string[] = []
-  if (formData.code !== undefined && formData.code !== '') {
-    conditions.push(`类型编码:${formData.code}`)
+  const c: string[] = []
+  if (formData.code) {
+    c.push(`编码:${formData.code}`)
   }
-  if (formData.name !== undefined && formData.name !== '') {
-    conditions.push(`类型名称:${formData.name}`)
+  if (formData.name) {
+    c.push(`名称:${formData.name}`)
   }
-  if (formData.maintenType !== undefined && formData.maintenType !== '') {
-    conditions.push(`保养维护类型:${formData.maintenType}`)
+  if (formData.maintenType != null) {
+    c.push(`保养:${getDictLabel(DICT_TYPE.MES_TM_MAINTEN_TYPE, formData.maintenType)}`)
   }
-  return conditions.length > 0 ? conditions.join(' | ') : '搜索工具类型'
+  return c.length > 0 ? c.join(' | ') : '搜索工具类型'
 })
 
-/** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  emit('search', { ...formData })
+  const p: TmToolTypeQueryParams = {}
+  if (formData.code) {
+    p.code = formData.code
+  }
+  if (formData.name) {
+    p.name = formData.name
+  }
+  if (formData.maintenType != null) {
+    p.maintenType = formData.maintenType
+  }
+  emit('search', p)
 }
 
-/** 重置按钮操作 */
 function handleReset() {
-  formData.code = undefined
-  formData.name = undefined
+  formData.code = ''
+  formData.name = ''
   formData.maintenType = undefined
   visible.value = false
   emit('reset')
 }
+
+function resetFields() {
+  formData.code = ''
+  formData.name = ''
+  formData.maintenType = undefined
+}
+
+defineExpose({ resetFields })
 </script>

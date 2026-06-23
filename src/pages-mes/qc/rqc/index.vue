@@ -1,16 +1,17 @@
 <template>
   <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
-    <wd-navbar
-      title="MES 退货检验单（RQC）管理"
-      left-arrow placeholder safe-area-inset-top fixed
-      @click-left="handleBack"
-    />
+    <wd-navbar title="退料检验单（RQC）" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
 
-    <!-- 搜索组件 -->
-    <SearchForm @search="handleQuery" @reset="handleReset" />
+    <!-- 搜索与导出 -->
+    <SearchForm ref="searchFormRef" @search="handleQuery" @reset="handleReset" />
+    <view v-if="canExport" class="bg-white px-24rpx pb-16rpx">
+      <wd-button block variant="plain" :loading="exportLoading" @click="handleExport">
+        导出当前筛选数据
+      </wd-button>
+    </view>
 
-    <!-- 列表 -->
+    <!-- 退料检验单列表 -->
     <z-paging
       ref="pagingRef"
       v-model="list"
@@ -20,49 +21,75 @@
       :refresher-enabled="true"
       :inside-more="true"
       :loading-more-default-as-loading="true"
-      empty-view-text="暂无退货检验单（RQC）数据"
+      empty-view-text="暂无退料检验单数据"
       @query="queryList"
     >
       <view class="p-24rpx">
         <view
           v-for="item in list"
           :key="item.id"
-          class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm"
+          class="mb-24rpx rounded-12rpx bg-white p-24rpx shadow-sm"
           @click="handleDetail(item)"
         >
-          <view class="p-24rpx">
-            <view class="mb-16rpx flex items-center justify-between gap-16rpx">
-              <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-                {{ formatFieldValue(item.code) || '-' }}
+          <view class="mb-16rpx flex items-start justify-between gap-16rpx">
+            <view class="min-w-0 flex-1">
+              <view class="truncate text-32rpx text-[#333] font-semibold">
+                {{ item.code || '-' }}
               </view>
-              <view class="shrink-0 text-24rpx text-[#999]">
-                #{{ item.id }}
+              <view class="mt-8rpx truncate text-24rpx text-[#999]">
+                {{ item.name || '-' }}
               </view>
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">检验单名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.name) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">来源单据类型：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.sourceDocType) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">来源单据编码：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.sourceDocCode) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">产品物料编码：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.itemCode) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">产品物料名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.itemName) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">规格型号：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.itemSpecification) || '-' }}</text>
-            </view>
+            <dict-tag :type="DICT_TYPE.MES_ORDER_STATUS" :value="item.status" />
+          </view>
+
+          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+            <text class="mr-8rpx shrink-0 text-[#999]">来源单据：</text>
+            <dict-tag v-if="item.sourceDocType != null" :type="DICT_TYPE.MES_QC_SOURCE_DOC_TYPE" :value="item.sourceDocType" />
+            <text class="ml-8rpx min-w-0 flex-1 truncate">{{ item.sourceDocCode || '-' }}</text>
+          </view>
+          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+            <text class="mr-8rpx shrink-0 text-[#999]">检验类型：</text>
+            <dict-tag v-if="item.type != null" :type="DICT_TYPE.MES_RQC_TYPE" :value="item.type" />
+            <text v-else>-</text>
+          </view>
+          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+            <text class="mr-8rpx shrink-0 text-[#999]">产品物料：</text>
+            <text class="min-w-0 flex-1 truncate">{{ item.itemCode || '-' }} / {{ item.itemName || '-' }}</text>
+          </view>
+          <view v-if="item.itemSpecification || item.unitName" class="mb-12rpx flex items-center text-28rpx text-[#666]">
+            <text class="mr-8rpx shrink-0 text-[#999]">规格单位：</text>
+            <text class="min-w-0 flex-1 truncate">{{ item.itemSpecification || '-' }} / {{ item.unitName || '-' }}</text>
+          </view>
+          <view v-if="item.batchCode" class="mb-12rpx flex items-center text-28rpx text-[#666]">
+            <text class="mr-8rpx shrink-0 text-[#999]">批次号：</text>
+            <text class="min-w-0 flex-1 truncate">{{ item.batchCode }}</text>
+          </view>
+          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+            <text class="mr-8rpx shrink-0 text-[#999]">数量：</text>
+            <text class="min-w-0 flex-1 truncate">
+              检测 {{ item.checkQuantity ?? '-' }}，合格 {{ item.qualifiedQuantity ?? '-' }}，不合格 {{ item.unqualifiedQuantity ?? '-' }}
+            </text>
+          </view>
+          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+            <text class="mr-8rpx shrink-0 text-[#999]">检测结果：</text>
+            <dict-tag v-if="item.checkResult != null" :type="DICT_TYPE.MES_QC_CHECK_RESULT" :value="item.checkResult" />
+            <text v-else>-</text>
+          </view>
+          <view class="mb-12rpx text-28rpx text-[#666]">
+            <text class="mr-8rpx text-[#999]">检测日期：</text>{{ formatDateTime(item.inspectDate) || '-' }}
+          </view>
+          <view v-if="item.inspectorNickname" class="mb-16rpx text-28rpx text-[#666]">
+            <text class="mr-8rpx text-[#999]">检测人员：</text>{{ item.inspectorNickname }}
+          </view>
+
+          <view v-if="isDraft(item) && (canUpdate || canDelete)" class="flex justify-end gap-16rpx border-t border-t-[#f0f0f0] pt-20rpx" @click.stop>
+            <wd-button v-if="canUpdate" size="small" type="warning" @click="handleEdit(item)">
+              编辑
+            </wd-button>
+            <wd-button v-if="canDelete" size="small" type="danger" @click="handleDelete(item)">
+              删除
+            </wd-button>
           </view>
         </view>
       </view>
@@ -80,13 +107,17 @@
 </template>
 
 <script lang="ts" setup>
-import type { QcRqcVO } from '@/api/mes/qc/rqc'
+import type { QcRqcPageParam, QcRqcVO } from '@/api/mes/qc/rqc'
 import { onUnload } from '@dcloudio/uni-app'
-import { onMounted, ref } from 'vue'
-import { getRqcPage } from '@/api/mes/qc/rqc'
+import { useDialog } from '@wot-ui/ui/components/wd-dialog'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { computed, onMounted, ref } from 'vue'
+import { deleteRqc, getRqcPage } from '@/api/mes/qc/rqc'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
+import { downloadApiFile } from '@/utils/download'
 import SearchForm from './components/search-form.vue'
 
 definePage({
@@ -96,39 +127,31 @@ definePage({
   },
 })
 
+const MesQcStatusEnum = {
+  DRAFT: 0,
+} as const
+
 const { hasAccessByCodes } = useAccess()
-const list = ref<any[]>([]) // 列表数据
-const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const dialog = useDialog()
+const toast = useToast()
+const list = ref<QcRqcVO[]>([]) // 列表数据
+const pagingRef = ref<ZPagingRef<QcRqcVO>>() // 分页组件引用
+const queryParams = ref<Partial<QcRqcPageParam>>({}) // 查询参数
+const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索组件引用
+const exportLoading = ref(false) // 导出状态
+const canExport = computed(() => hasAccessByCodes(['mes:qc-rqc:export']))
+const canUpdate = computed(() => hasAccessByCodes(['mes:qc-rqc:update']))
+const canDelete = computed(() => hasAccessByCodes(['mes:qc-rqc:delete']))
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
-}
-
 /** 查询列表 */
 async function queryList(pageNo: number, pageSize: number) {
   try {
-    const params = {
-      ...queryParams.value,
-      pageNo,
-      pageSize,
-    }
-    const data = await getRqcPage(params as any)
+    const data = await getRqcPage({ ...queryParams.value, pageNo, pageSize })
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
     pagingRef.value?.complete(false)
@@ -136,14 +159,16 @@ async function queryList(pageNo: number, pageSize: number) {
 }
 
 /** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) {
+function handleQuery(data: Partial<QcRqcPageParam>) {
   queryParams.value = { ...data }
   reload()
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  handleQuery()
+  queryParams.value = {}
+  searchFormRef.value?.resetFields()
+  reload()
 }
 
 /** 重新加载 */
@@ -151,18 +176,60 @@ function reload() {
   pagingRef.value?.reload()
 }
 
+/** 是否草稿 */
+function isDraft(item: QcRqcVO) {
+  return item.status === MesQcStatusEnum.DRAFT
+}
+
 /** 新增 */
 function handleAdd() {
-  uni.navigateTo({
-    url: '/pages-mes/qc/rqc/form/index',
-  })
+  uni.navigateTo({ url: '/pages-mes/qc/rqc/form/index' })
 }
 
 /** 查看详情 */
-function handleDetail(item: any) {
-  uni.navigateTo({
-    url: `/pages-mes/qc/rqc/detail/index?id=${(item as any).id}`,
+function handleDetail(item: QcRqcVO) {
+  uni.navigateTo({ url: `/pages-mes/qc/rqc/detail/index?id=${item.id}` })
+}
+
+/** 编辑 */
+function handleEdit(item: QcRqcVO) {
+  uni.navigateTo({ url: `/pages-mes/qc/rqc/form/index?id=${item.id}` })
+}
+
+/** 删除 */
+async function handleDelete(item: QcRqcVO) {
+  try {
+    await dialog.confirm({
+      title: '删除确认',
+      msg: `确定要删除退料检验单「${item.code}」吗？删除后将无法恢复。`,
+    })
+  } catch {
+    return
+  }
+  await deleteRqc(item.id)
+  toast.success('删除成功')
+  reload()
+}
+
+/** 导出 */
+async function handleExport() {
+  if (exportLoading.value) {
+    return
+  }
+  const { confirm } = await uni.showModal({
+    title: '导出确认',
+    content: '确定要导出当前筛选条件下的退料检验单吗？',
   })
+  if (!confirm) {
+    return
+  }
+  exportLoading.value = true
+  try {
+    await downloadApiFile('/mes/qc/rqc/export-excel', queryParams.value, '退料检验单.xls')
+    toast.success('导出成功')
+  } finally {
+    exportLoading.value = false
+  }
 }
 
 /** 初始化 */
@@ -175,6 +242,3 @@ onUnload(() => {
   uni.$off('mes:qc:rqc:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

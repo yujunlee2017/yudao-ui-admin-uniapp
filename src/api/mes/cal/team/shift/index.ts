@@ -13,8 +13,16 @@ export interface CalTeamShiftVO {
   remark: string // 备注
 }
 
+// MES 班组排班查询参数
+export interface CalTeamShiftQueryParams {
+  planId?: number // 排班计划编号
+  teamId?: number // 班组编号
+  shiftId?: number // 班次编号
+  day?: number // 日期
+}
+
 /** 查询班组排班列表 */
-export function getTeamShiftList(params: any) {
+export function getTeamShiftList(params?: CalTeamShiftQueryParams) {
   return http.get<CalTeamShiftVO[]>(`/mes/cal/team-shift/list`, params)
 }
 
