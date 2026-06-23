@@ -28,89 +28,24 @@
       </wd-cell-group>
 
       <!-- 退货明细 -->
-      <view v-if="items.length > 0" class="mt-24rpx">
-        <view class="px-24rpx py-16rpx text-28rpx text-[#666]">
-          退货产品清单
-        </view>
-        <view class="px-24rpx">
-          <view v-for="(item, index) in items" :key="index" class="mb-20rpx rounded-12rpx bg-white p-24rpx shadow-sm">
-            <view class="mb-12rpx text-28rpx text-[#333] font-semibold">
-              明细 {{ index + 1 }}
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">仓库：</text>
-              <text class="min-w-0 flex-1">{{ item.warehouseName || '-' }}</text>
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">产品：</text>
-              <text class="min-w-0 flex-1">{{ item.productName || '-' }}</text>
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">条码：</text>
-              <text class="min-w-0 flex-1">{{ item.productBarCode || '-' }}</text>
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">单位：</text>
-              <text class="min-w-0 flex-1">{{ item.productUnitName || '-' }}</text>
-            </view>
-            <view v-if="item.outCount != null" class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">已出库：</text>
-              <text class="min-w-0 flex-1">{{ formatCount(item.outCount) }}</text>
-            </view>
-            <view v-if="item.returnCount != null" class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">已退货：</text>
-              <text class="min-w-0 flex-1">{{ formatCount(item.returnCount) }}</text>
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">数量：</text>
-              <text class="min-w-0 flex-1">{{ formatCount(item.count) }}</text>
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">产品单价：</text>
-              <text class="min-w-0 flex-1">{{ formatMoney(item.productPrice) }}</text>
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">金额：</text>
-              <text class="min-w-0 flex-1">{{ formatMoney(item.totalProductPrice) }}</text>
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">税率：</text>
-              <text class="min-w-0 flex-1">{{ formatPercent(item.taxPercent) }}</text>
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">税额：</text>
-              <text class="min-w-0 flex-1">{{ formatMoney(item.taxPrice) }}</text>
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">含税金额：</text>
-              <text class="min-w-0 flex-1">{{ formatMoney(item.totalPrice) }}</text>
-            </view>
-            <view v-if="item.remark" class="flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">备注：</text>
-              <text class="min-w-0 flex-1">{{ item.remark }}</text>
-            </view>
-          </view>
-        </view>
-      </view>
+      <ErpDetailItems title="退货产品清单" :items="items" :fields="itemFields" />
 
       <!-- 底部安全区域 -->
       <view class="h-160rpx" />
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="hasFooter" class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
-          编辑
-        </wd-button>
-        <wd-button v-if="canUpdateStatus" class="flex-1" type="primary" :loading="statusLoading" @click="handleUpdateStatus(nextStatus)">
-          {{ nextStatus === 20 ? '审批' : '反审批' }}
-        </wd-button>
-        <wd-button v-if="hasAccessByCodes(['erp:sale-return:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
-          删除
-        </wd-button>
-      </view>
-    </view>
+    <ErpAuditActions
+      :can-update="canUpdate"
+      :can-update-status="canUpdateStatus"
+      :can-delete="canDelete"
+      :deleting="deleting"
+      :status-loading="statusLoading"
+      :next-status="nextStatus"
+      @edit="handleEdit"
+      @update-status="handleUpdateStatus"
+      @delete="handleDelete"
+    />
   </view>
 </template>
 
@@ -119,15 +54,21 @@ import type { SaleReturn } from '@/api/erp/sale/return'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { deleteSaleReturn, getSaleReturn, updateSaleReturnStatus } from '@/api/erp/sale/return'
 import { useAccess } from '@/hooks/useAccess'
+import ErpDetailItems from '@/pages-erp/components/erp-detail-items.vue'
+import ErpAuditActions from '@/pages-erp/components/erp-audit-actions.vue'
+import type { ErpDetailItemField } from '@/pages-erp/components/types'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { enrichErpDocumentDetail, formatCount, formatMoney, formatPercent, openErpFile } from '@/pages-erp/utils'
 
 const props = defineProps<{ id?: number | any }>()
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/sale/return/detail/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -143,11 +84,26 @@ const formData = ref<SaleReturn>() // 详情数据
 const deleting = ref(false) // 删除状态
 const statusLoading = ref(false) // 审批状态
 const items = computed(() => Array.isArray(formData.value?.items) ? formData.value.items : [])
+const itemFields: ErpDetailItemField[] = [
+  { prop: 'warehouseName', label: '仓库' },
+  { prop: 'productName', label: '产品' },
+  { prop: 'productBarCode', label: '条码' },
+  { prop: 'productUnitName', label: '单位' },
+  { prop: 'outCount', label: '已出库', type: 'count', hiddenWhenEmpty: true },
+  { prop: 'returnCount', label: '已退货', type: 'count', hiddenWhenEmpty: true },
+  { prop: 'count', label: '数量', type: 'count' },
+  { prop: 'productPrice', label: '产品单价', type: 'money' },
+  { prop: 'totalProductPrice', label: '金额', type: 'money' },
+  { prop: 'taxPercent', label: '税率', type: 'percent' },
+  { prop: 'taxPrice', label: '税额', type: 'money' },
+  { prop: 'totalPrice', label: '含税金额', type: 'money' },
+  { prop: 'remark', label: '备注', hiddenWhenEmpty: true },
+] // 退货明细字段
 const unrefundedPrice = computed(() => Number(formData.value?.totalPrice || 0) - Number(formData.value?.refundPrice || 0))
 const canUpdate = computed(() => formData.value?.status !== 20 && hasAccessByCodes(['erp:sale-return:update']))
+const canDelete = computed(() => hasAccessByCodes(['erp:sale-return:delete']))
 const canUpdateStatus = computed(() => hasAccessByCodes(['erp:sale-return:update-status']) && (formData.value?.status === 10 || formData.value?.status === 20))
 const nextStatus = computed(() => formData.value?.status === 10 ? 20 : 10)
-const hasFooter = computed(() => canUpdate.value || hasAccessByCodes(['erp:sale-return:delete']) || canUpdateStatus.value)
 
 /** 返回上一页 */
 function handleBack() {
@@ -156,12 +112,12 @@ function handleBack() {
 
 /** 加载销售退货详情 */
 async function getDetail() {
-  if (!props.id || deleting.value) {
+  if (!currentId.value || deleting.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await enrichErpDocumentDetail(await getSaleReturn(Number(props.id)), 'sale-return') as SaleReturn
+    formData.value = await enrichErpDocumentDetail(await getSaleReturn(Number(currentId.value)), 'sale-return') as SaleReturn
   } finally {
     toast.close()
   }
@@ -169,7 +125,7 @@ async function getDetail() {
 
 /** 编辑销售退货 */
 function handleEdit() {
-  uni.navigateTo({ url: `/pages-erp/sale/return/form/index?id=${props.id}` })
+  uni.navigateTo({ url: `/pages-erp/sale/return/form/index?id=${currentId.value}` })
 }
 
 /** 打开附件 */
@@ -181,7 +137,7 @@ function handleOpenFile() {
 
 /** 删除销售退货 */
 async function handleDelete() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   try {
@@ -191,7 +147,7 @@ async function handleDelete() {
   }
   deleting.value = true
   try {
-    await deleteSaleReturn([Number(props.id)])
+    await deleteSaleReturn([Number(currentId.value)])
     toast.success('删除成功')
     uni.$emit('erp:sale-return:reload')
     setTimeout(() => handleBack(), 500)
@@ -202,7 +158,7 @@ async function handleDelete() {
 
 /** 审批或反审批 */
 async function handleUpdateStatus(status: number) {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   const actionName = status === 20 ? '审批' : '反审批'
@@ -213,7 +169,7 @@ async function handleUpdateStatus(status: number) {
   }
   statusLoading.value = true
   try {
-    await updateSaleReturnStatus(Number(props.id), status)
+    await updateSaleReturnStatus(Number(currentId.value), status)
     toast.success(`${actionName}成功`)
     uni.$emit('erp:sale-return:reload')
     await getDetail()
@@ -226,6 +182,11 @@ async function handleUpdateStatus(status: number) {
 onMounted(() => {
   getDetail()
   uni.$on('erp:sale-return:reload', getDetail)
+})
+
+watch(currentId, () => {
+  formData.value = undefined
+  void getDetail()
 })
 
 /** 卸载 */

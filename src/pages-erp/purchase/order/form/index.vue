@@ -10,8 +10,7 @@
           <wd-cell title="订单单号" :value="formData.no || '保存时自动生成'" />
           <wd-form-item title="订单时间" title-width="220rpx" prop="orderTime" is-link :value="formatDate(formData.orderTime) || ''" placeholder="请选择订单时间" @click="dateVisible.orderTime = true" />
           <wd-datetime-picker v-model="formData.orderTime" v-model:visible="dateVisible.orderTime" title="请选择订单时间" type="date" />
-          <wd-form-item title="供应商" title-width="220rpx" prop="supplierId" is-link :value="supplierDisplayValue" placeholder="请选择供应商" @click="pickerVisible.supplier = true" />
-          <wd-picker v-model:visible="pickerVisible.supplier" :model-value="formData.supplierId" :columns="supplierOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.supplierId = value[0]" />
+          <ErpPicker v-model="formData.supplierId" label="供应商" label-width="220rpx" prop="supplierId" source="supplier" placeholder="请选择供应商" />
           <wd-form-item title="备注" title-width="220rpx" prop="remark">
             <wd-textarea v-model="formData.remark" placeholder="请输入备注" :maxlength="500" show-word-limit clearable />
           </wd-form-item>
@@ -38,8 +37,7 @@
           </wd-form-item>
           <wd-cell title="付款优惠" :value="formatMoney(formData.discountPrice)" />
           <wd-cell title="优惠后金额" :value="formatMoney(formData.totalPrice)" />
-          <wd-form-item title="结算账户" title-width="220rpx" is-link :value="accountDisplayValue" placeholder="请选择结算账户" @click="pickerVisible.account = true" />
-          <wd-picker v-model:visible="pickerVisible.account" :model-value="formData.accountId" :columns="accountOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.accountId = value[0]" />
+          <ErpPicker v-model="formData.accountId" label="结算账户" label-width="220rpx" source="account" placeholder="请选择结算账户" />
           <wd-form-item title="支付订金" title-width="220rpx" prop="depositPrice" center>
             <wd-input-number v-model="formData.depositPrice" :min="0" :precision="2" />
           </wd-form-item>
@@ -63,20 +61,22 @@ import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { Account } from '@/api/erp/finance/account'
 import type { Product } from '@/api/erp/product/product'
 import type { PurchaseOrder } from '@/api/erp/purchase/order'
-import type { Supplier } from '@/api/erp/purchase/supplier'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { getAccountSimpleList } from '@/api/erp/finance/account'
 import { getProductSimpleList } from '@/api/erp/product/product'
 import { createPurchaseOrder, getPurchaseOrder, updatePurchaseOrder } from '@/api/erp/purchase/order'
-import { getSupplierSimpleList } from '@/api/erp/purchase/supplier'
 import { navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
-import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
+import { createFormSchema } from '@/utils/wot'
+import ErpPicker from '@/pages-erp/components/erp-picker.vue'
 import OrderItemEditor from '../components/order-item-editor.vue'
 import { formatMoney, roundPrice, toNumber } from '@/pages-erp/utils'
 
 const props = defineProps<{ id?: number | any }>()
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/purchase/order/form/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -86,7 +86,7 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => props.id ? '编辑采购订单' : '新增采购订单')
+const getTitle = computed(() => currentId.value ? '编辑采购订单' : '新增采购订单')
 const formLoading = ref(false)
 const formData = ref<PurchaseOrder>({
   id: undefined,
@@ -104,13 +104,8 @@ const formData = ref<PurchaseOrder>({
 })
 const formRef = ref<FormInstance>()
 const itemEditorRef = ref<InstanceType<typeof OrderItemEditor>>()
-const supplierOptions = ref<Supplier[]>([])
 const accountOptions = ref<Account[]>([])
 const productOptions = ref<Product[]>([])
-const pickerVisible = reactive({
-  account: false,
-  supplier: false,
-})
 const dateVisible = reactive({
   orderTime: false,
 })
@@ -118,8 +113,6 @@ const formSchema = createFormSchema({
   supplierId: [{ required: true, message: '供应商不能为空' }],
   orderTime: [{ required: true, message: '订单时间不能为空' }],
 })
-const supplierDisplayValue = computed(() => getWotPickerFormValue(supplierOptions.value, formData.value.supplierId, { valueKey: 'id', labelKey: 'name' }))
-const accountDisplayValue = computed(() => getWotPickerFormValue(accountOptions.value, formData.value.accountId, { valueKey: 'id', labelKey: 'name' }))
 
 /** 返回上一页 */
 function handleBack() {
@@ -137,12 +130,10 @@ function refreshOrderAmount() {
 }
 
 async function loadOptions() {
-  const [suppliers, accounts, products] = await Promise.all([
-    getSupplierSimpleList(),
+  const [accounts, products] = await Promise.all([
     getAccountSimpleList(),
     getProductSimpleList(),
   ])
-  supplierOptions.value = suppliers || []
   accountOptions.value = accounts || []
   productOptions.value = products || []
   const defaultAccount = accountOptions.value.find(item => item.defaultStatus)
@@ -153,12 +144,12 @@ async function loadOptions() {
 
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   formData.value = {
     ...formData.value,
-    ...await getPurchaseOrder(Number(props.id)),
+    ...await getPurchaseOrder(Number(currentId.value)),
   }
   refreshOrderAmount()
 }
@@ -172,7 +163,7 @@ async function handleSubmit() {
   refreshOrderAmount()
   formLoading.value = true
   try {
-    if (props.id) {
+    if (currentId.value) {
       await updatePurchaseOrder(formData.value)
       toast.success('修改成功')
     } else {

@@ -43,12 +43,15 @@ import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { Account } from '@/api/erp/finance/account'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { createAccount, getAccount, updateAccount } from '@/api/erp/finance/account'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{ id?: number | any }>()
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/finance/account/form/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -58,7 +61,7 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => props.id ? '编辑结算账户' : '新增结算账户')
+const getTitle = computed(() => currentId.value ? '编辑结算账户' : '新增结算账户')
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<Account>({
   id: undefined,
@@ -83,12 +86,12 @@ function handleBack() {
 
 /** 加载结算账户详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   formData.value = {
     ...formData.value,
-    ...await getAccount(Number(props.id)),
+    ...await getAccount(Number(currentId.value)),
   }
 }
 
@@ -100,7 +103,7 @@ async function handleSubmit() {
   }
   formLoading.value = true
   try {
-    if (props.id) {
+    if (currentId.value) {
       await updateAccount(formData.value)
       toast.success('修改成功')
     } else {

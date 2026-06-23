@@ -9,7 +9,6 @@
 
     <!-- 搜索组件 -->
     <SearchForm ref="searchFormRef" @search="handleQuery" @reset="handleReset" />
-    <ExportAction module-key="product-category" :params="queryParams" />
 
     <!-- 面包屑导航 -->
     <Breadcrumb v-if="!hasQuery" ref="breadcrumbRef" v-model="currentParentId" />
@@ -17,52 +16,50 @@
     <!-- 分类列表 -->
     <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
       <view class="p-24rpx">
-        <wd-swipe-action
+        <ListCardWrapper
           v-for="item in currentList"
           :key="item.id"
-          :disabled="!hasAccessByCodes(['erp:product-category:delete'])"
+          :item="item"
+          :item-id="item.id"
+          :selecting="selecting"
+          :selected="isSelected(item.id)"
+          :can-delete="canDelete"
+          @click="handleDetail"
+          @longpress="enterSelectMode"
+          @toggle-select="toggleSelect"
+          @swipe-delete="handleSwipeDelete"
         >
-          <view class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
-            <view class="p-24rpx" @click="handleDetail(item)">
-              <view class="flex items-start justify-between gap-16rpx">
-                <view class="min-w-0 flex-1">
-                  <view class="mb-12rpx flex items-center">
-                    <view class="mr-16rpx h-48rpx w-48rpx flex shrink-0 items-center justify-center rounded-8rpx bg-[#13c2c2]">
-                      <wd-icon name="folder" size="20px" color="#fff" />
-                    </view>
-                    <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-                      {{ item.name || '-' }}
-                    </view>
+          <view class="p-24rpx">
+            <view class="flex items-start justify-between gap-16rpx">
+              <view class="min-w-0 flex-1">
+                <view class="mb-12rpx flex items-center">
+                  <view class="mr-16rpx h-48rpx w-48rpx flex shrink-0 items-center justify-center rounded-8rpx bg-[#13c2c2]">
+                    <wd-icon name="folder" size="20px" color="#fff" />
                   </view>
-                  <view class="text-26rpx text-[#666] space-y-8rpx">
-                    <view>分类编码：{{ item.code || '-' }}</view>
-                    <view>排序：{{ item.sort ?? '-' }}</view>
-                    <view class="flex items-center">
-                      <text class="mr-8rpx">状态：</text>
-                      <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="item.status" />
-                    </view>
+                  <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
+                    {{ item.name || '-' }}
                   </view>
                 </view>
-                <view
-                  v-if="!hasQuery && item.children && item.children.length > 0"
-                  class="mt-4rpx flex shrink-0 items-center"
-                  @click.stop="handleEnterChildren(item)"
-                >
-                  <text class="text-24rpx text-[#13c2c2]">子分类({{ item.children.length }})</text>
-                  <wd-icon name="arrow-right" size="12px" color="#13c2c2" />
+                <view class="text-26rpx text-[#666] space-y-8rpx">
+                  <view>分类编码：{{ item.code || '-' }}</view>
+                  <view>排序：{{ item.sort ?? '-' }}</view>
+                  <view class="flex items-center">
+                    <text class="mr-8rpx">状态：</text>
+                    <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="item.status" />
+                  </view>
                 </view>
+              </view>
+              <view
+                v-if="!hasQuery && item.children && item.children.length > 0 && !selecting"
+                class="mt-4rpx flex shrink-0 items-center"
+                @click.stop="handleEnterChildren(item)"
+              >
+                <text class="text-24rpx text-[#13c2c2]">子分类({{ item.children.length }})</text>
+                <wd-icon name="arrow-right" size="12px" color="#13c2c2" />
               </view>
             </view>
           </view>
-
-          <!-- 左滑删除按钮 -->
-          <template v-if="hasAccessByCodes(['erp:product-category:delete'])" #right>
-            <view class="h-full flex items-center justify-center px-36rpx" style="background: linear-gradient(135deg, #f56c6c, #e85d5d);" @click.stop="handleSwipeDelete(item)">
-              <wd-icon name="delete-outline" size="36rpx" custom-style="color: #fff;" />
-              <text class="ml-8rpx text-28rpx text-white">删除</text>
-            </view>
-          </template>
-        </wd-swipe-action>
+        </ListCardWrapper>
 
         <!-- 空状态 -->
         <view v-if="!loading && currentList.length === 0" class="py-100rpx text-center">
@@ -70,6 +67,19 @@
         </view>
       </view>
     </scroll-view>
+
+    <!-- 批量操作栏 -->
+    <view v-if="selecting" class="yd-detail-footer">
+      <view class="flex items-center justify-between px-24rpx">
+        <wd-button variant="plain" size="small" @click="exitSelectMode">
+          取消
+        </wd-button>
+        <text class="text-28rpx text-[#666]">已选 {{ selectedIds.size }} 项</text>
+        <wd-button type="danger" size="small" :loading="batchDeleting" :disabled="selectedIds.size === 0" @click="handleBatchDelete">
+          删除
+        </wd-button>
+      </view>
+    </view>
 
     <!-- 新增按钮 -->
     <wd-fab
@@ -88,13 +98,12 @@ import { onUnload } from '@dcloudio/uni-app'
 import { computed, onMounted, ref } from 'vue'
 import { deleteProductCategory, getProductCategoryList } from '@/api/erp/product/category'
 import { useAccess } from '@/hooks/useAccess'
-import { useDialog } from '@wot-ui/ui/components/wd-dialog'
-import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { useBatchSelect } from '@/pages-erp/hooks/useBatchSelect'
+import ListCardWrapper from '@/pages-erp/components/list-card-wrapper.vue'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { findChildren, handleTree } from '@/utils/tree'
 import Breadcrumb from './components/breadcrumb.vue'
-import ExportAction from '@/pages-erp/components/export-action.vue'
 import SearchForm from './components/search-form.vue'
 
 definePage({
@@ -105,8 +114,6 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
-const dialog = useDialog()
-const toast = useToast()
 const loading = ref(false) // 列表加载状态
 const flatList = ref<ProductCategory[]>([]) // 扁平分类列表
 const list = ref<ProductCategory[]>([]) // 树形分类列表
@@ -125,8 +132,33 @@ const currentList = computed(() => {
   return findChildren(list.value, currentParentId.value)
 }) // 当前层级展示的分类列表
 
+const {
+  selecting,
+  selectedIds,
+  batchDeleting,
+  canDelete,
+  isSelected,
+  toggleSelect,
+  enterSelectMode,
+  exitSelectMode,
+  handleSwipeDelete,
+  handleBatchDelete,
+} = useBatchSelect({
+  permission: 'erp:product-category:delete',
+  deleteApi: async (ids: number[]) => {
+    for (const id of ids) {
+      await deleteProductCategory(id)
+    }
+  },
+  reloadEvent: 'erp:product-category:reload',
+})
+
 /** 返回上一页或上一层级 */
 function handleBack() {
+  if (selecting.value) {
+    exitSelectMode()
+    return
+  }
   if (hasQuery.value) {
     searchFormRef.value?.resetFields()
     queryParams.value = {}
@@ -161,6 +193,7 @@ async function getList() {
 
 /** 搜索按钮操作 */
 function handleQuery(data: Record<string, any>) {
+  exitSelectMode()
   queryParams.value = {
     name: data.name || undefined,
     status: data.status === -1 ? undefined : data.status,
@@ -176,6 +209,7 @@ function handleQuery(data: Record<string, any>) {
 
 /** 重置按钮操作 */
 function handleReset() {
+  exitSelectMode()
   queryParams.value = {}
   currentParentId.value = 0
   getList()
@@ -191,28 +225,9 @@ function handleDetail(item: ProductCategory) {
   uni.navigateTo({ url: `/pages-erp/product/category/detail/index?id=${item.id}` })
 }
 
-/** 左滑删除 */
-async function handleSwipeDelete(item: ProductCategory) {
-  if (!item.id || !hasAccessByCodes(['erp:product-category:delete'])) {
-    return
-  }
-  try {
-    await dialog.confirm({ title: '提示', msg: `确定要删除「${item.name || ''}」吗？` })
-  } catch {
-    return
-  }
-  try {
-    toast.loading('删除中...')
-    await deleteProductCategory(item.id)
-    toast.success('删除成功')
-    uni.$emit('erp:product-category:reload')
-  } finally {
-    toast.close()
-  }
-}
-
 /** 重新加载 */
 function reload() {
+  exitSelectMode()
   getList()
 }
 

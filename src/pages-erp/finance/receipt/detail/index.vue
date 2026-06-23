@@ -22,60 +22,24 @@
         <wd-cell title="备注" :value="formData?.remark || '-'" />
       </wd-cell-group>
 
-      <view v-if="items.length > 0" class="mt-24rpx">
-        <view class="px-24rpx py-16rpx text-28rpx text-[#666]">
-          收款明细
-        </view>
-        <view class="px-24rpx">
-          <view v-for="(item, index) in items" :key="index" class="mb-20rpx rounded-12rpx bg-white p-24rpx shadow-sm">
-            <view class="mb-12rpx text-28rpx text-[#333] font-semibold">
-              明细 {{ index + 1 }}
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">销售单据编号：</text>
-              <text class="min-w-0 flex-1">{{ item.bizNo || '-' }}</text>
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">销售业务类型：</text>
-              <text class="min-w-0 flex-1">{{ getBizTypeName(item.bizType) }}</text>
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">应收金额：</text>
-              <text class="min-w-0 flex-1">{{ formatMoney(item.totalPrice) }}</text>
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">已收金额：</text>
-              <text class="min-w-0 flex-1">{{ formatMoney(item.receiptedPrice) }}</text>
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">本次收款：</text>
-              <text class="min-w-0 flex-1">{{ formatMoney(item.receiptPrice) }}</text>
-            </view>
-            <view v-if="item.remark" class="flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">备注：</text>
-              <text class="min-w-0 flex-1">{{ item.remark }}</text>
-            </view>
-          </view>
-        </view>
-      </view>
+      <!-- 收款明细 -->
+      <ErpDetailItems title="收款明细" :items="items" :fields="itemFields" />
 
       <view class="h-160rpx" />
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="hasFooter" class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
-          编辑
-        </wd-button>
-        <wd-button v-if="canUpdateStatus" class="flex-1" type="primary" :loading="statusLoading" @click="handleUpdateStatus(nextStatus)">
-          {{ nextStatus === 20 ? '审批' : '反审批' }}
-        </wd-button>
-        <wd-button v-if="hasAccessByCodes(['erp:finance-receipt:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
-          删除
-        </wd-button>
-      </view>
-    </view>
+    <ErpAuditActions
+      :can-update="canUpdate"
+      :can-update-status="canUpdateStatus"
+      :can-delete="canDelete"
+      :deleting="deleting"
+      :status-loading="statusLoading"
+      :next-status="nextStatus"
+      @edit="handleEdit"
+      @update-status="handleUpdateStatus"
+      @delete="handleDelete"
+    />
   </view>
 </template>
 
@@ -84,15 +48,21 @@ import type { FinanceReceipt } from '@/api/erp/finance/receipt'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { deleteFinanceReceipt, getFinanceReceipt, updateFinanceReceiptStatus } from '@/api/erp/finance/receipt'
 import { useAccess } from '@/hooks/useAccess'
+import ErpDetailItems from '@/pages-erp/components/erp-detail-items.vue'
+import ErpAuditActions from '@/pages-erp/components/erp-audit-actions.vue'
+import type { ErpDetailItemField } from '@/pages-erp/components/types'
 import { enrichErpDocumentDetail, formatMoney, openErpFile } from '@/pages-erp/utils'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/finance/receipt/detail/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -113,10 +83,18 @@ const formData = ref<FinanceReceipt>()
 const deleting = ref(false)
 const statusLoading = ref(false)
 const items = computed(() => Array.isArray(formData.value?.items) ? formData.value.items : [])
+const itemFields: ErpDetailItemField[] = [
+  { prop: 'bizNo', label: '销售单据编号' },
+  { prop: 'bizType', label: '销售业务类型', formatter: value => getBizTypeName(value) },
+  { prop: 'totalPrice', label: '应收金额', type: 'money' },
+  { prop: 'receiptedPrice', label: '已收金额', type: 'money' },
+  { prop: 'receiptPrice', label: '本次收款', type: 'money' },
+  { prop: 'remark', label: '备注', hiddenWhenEmpty: true },
+] // 收款明细字段
 const canUpdate = computed(() => formData.value?.status !== 20 && hasAccessByCodes(['erp:finance-receipt:update']))
+const canDelete = computed(() => hasAccessByCodes(['erp:finance-receipt:delete']))
 const canUpdateStatus = computed(() => hasAccessByCodes(['erp:finance-receipt:update-status']) && (formData.value?.status === 10 || formData.value?.status === 20))
 const nextStatus = computed(() => formData.value?.status === 10 ? 20 : 10)
-const hasFooter = computed(() => canUpdate.value || hasAccessByCodes(['erp:finance-receipt:delete']) || canUpdateStatus.value)
 
 /** 返回上一页 */
 function handleBack() {
@@ -135,12 +113,12 @@ function getBizTypeName(value?: number) {
 
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id || deleting.value) {
+  if (!currentId.value || deleting.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await enrichErpDocumentDetail(await getFinanceReceipt(Number(props.id)), 'finance-receipt')
+    formData.value = await enrichErpDocumentDetail(await getFinanceReceipt(Number(currentId.value)), 'finance-receipt')
   } finally {
     toast.close()
   }
@@ -148,7 +126,7 @@ async function getDetail() {
 
 /** 编辑 */
 function handleEdit() {
-  uni.navigateTo({ url: `/pages-erp/finance/receipt/form/index?id=${props.id}` })
+  uni.navigateTo({ url: `/pages-erp/finance/receipt/form/index?id=${currentId.value}` })
 }
 
 function handleOpenFile() {
@@ -159,7 +137,7 @@ function handleOpenFile() {
 
 /** 删除 */
 async function handleDelete() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   try {
@@ -169,7 +147,7 @@ async function handleDelete() {
   }
   deleting.value = true
   try {
-    await deleteFinanceReceipt([Number(props.id)])
+    await deleteFinanceReceipt([Number(currentId.value)])
     toast.success('删除成功')
     uni.$emit('erp:finance-receipt:reload')
     setTimeout(() => handleBack(), 500)
@@ -180,7 +158,7 @@ async function handleDelete() {
 
 /** 审批或反审批 */
 async function handleUpdateStatus(status: number) {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   const actionName = status === 20 ? '审批' : '反审批'
@@ -191,7 +169,7 @@ async function handleUpdateStatus(status: number) {
   }
   statusLoading.value = true
   try {
-    await updateFinanceReceiptStatus(Number(props.id), status)
+    await updateFinanceReceiptStatus(Number(currentId.value), status)
     toast.success(`${actionName}成功`)
     uni.$emit('erp:finance-receipt:reload')
     await getDetail()
@@ -207,5 +185,9 @@ onMounted(() => {
 
 onUnload(() => {
   uni.$off('erp:finance-receipt:reload', getDetail)
+})
+watch(currentId, () => {
+  formData.value = undefined
+  void getDetail()
 })
 </script>

@@ -5,7 +5,6 @@
 
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
-    <ExportAction module-key="finance-payment" :params="queryParams" />
 
     <!-- 付款单列表 -->
     <z-paging
@@ -90,7 +89,6 @@ import ListCardWrapper from '@/pages-erp/components/list-card-wrapper.vue'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import ExportAction from '@/pages-erp/components/export-action.vue'
 import SearchForm from './components/search-form.vue'
 import { formatMoney } from '@/pages-erp/utils'
 

@@ -43,8 +43,7 @@
           <wd-form-item title="其它费用" title-width="220rpx" prop="otherPrice" center>
             <wd-input-number v-model="formData.otherPrice" :min="0" :precision="2" />
           </wd-form-item>
-          <wd-form-item title="结算账户" title-width="220rpx" is-link :value="accountDisplayValue" placeholder="请选择结算账户" @click="pickerVisible.account = true" />
-          <wd-picker v-model:visible="pickerVisible.account" :model-value="formData.accountId" :columns="accountOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.accountId = value[0]" />
+          <ErpPicker v-model="formData.accountId" label="结算账户" label-width="220rpx" source="account" placeholder="请选择结算账户" />
           <wd-cell title="应付金额" :value="formatMoney(formData.totalPrice)" />
         </wd-cell-group>
       </wd-form>
@@ -72,6 +71,7 @@ import type { Supplier } from '@/api/erp/purchase/supplier'
 import type { Warehouse } from '@/api/erp/stock/warehouse'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { getAccountSimpleList } from '@/api/erp/finance/account'
 import { createPurchaseIn, getPurchaseIn, updatePurchaseIn } from '@/api/erp/purchase/in'
 import { getSupplierSimpleList } from '@/api/erp/purchase/supplier'
@@ -79,11 +79,14 @@ import { getWarehouseSimpleList } from '@/api/erp/stock/warehouse'
 import { navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
+import ErpPicker from '@/pages-erp/components/erp-picker.vue'
 import InItemEditor from '../components/in-item-editor.vue'
 import PurchaseOrderInSelector from '../components/purchase-order-in-selector.vue'
 import { formatMoney, roundPrice, toNumber } from '@/pages-erp/utils'
 
 const props = defineProps<{ id?: number | any }>()
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/purchase/in/form/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -93,7 +96,7 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => props.id ? '编辑采购入库' : '新增采购入库')
+const getTitle = computed(() => currentId.value ? '编辑采购入库' : '新增采购入库')
 const formLoading = ref(false)
 const formData = ref<PurchaseIn>({
   id: undefined,
@@ -116,9 +119,6 @@ const orderSelectorRef = ref<InstanceType<typeof PurchaseOrderInSelector>>()
 const accountOptions = ref<Account[]>([])
 const supplierOptions = ref<Supplier[]>([])
 const warehouseOptions = ref<Warehouse[]>([])
-const pickerVisible = reactive({
-  account: false,
-})
 const dateVisible = reactive({
   inTime: false,
 })
@@ -127,7 +127,6 @@ const formSchema = createFormSchema({
   inTime: [{ required: true, message: '入库时间不能为空' }],
 })
 const supplierDisplayValue = computed(() => getWotPickerFormValue(supplierOptions.value, formData.value.supplierId, { valueKey: 'id', labelKey: 'name' }))
-const accountDisplayValue = computed(() => getWotPickerFormValue(accountOptions.value, formData.value.accountId, { valueKey: 'id', labelKey: 'name' }))
 const preOtherPrice = computed(() => Number(formData.value.totalPrice || 0) - Number(formData.value.otherPrice || 0))
 
 /** 返回上一页 */
@@ -162,12 +161,12 @@ async function loadOptions() {
 
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   formData.value = {
     ...formData.value,
-    ...await getPurchaseIn(Number(props.id)),
+    ...await getPurchaseIn(Number(currentId.value)),
   }
   refreshAmount()
 }
@@ -208,7 +207,7 @@ async function handleSubmit() {
   refreshAmount()
   formLoading.value = true
   try {
-    if (props.id) {
+    if (currentId.value) {
       await updatePurchaseIn(formData.value)
       toast.success('修改成功')
     } else {

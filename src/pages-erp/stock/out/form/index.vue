@@ -10,8 +10,7 @@
           <wd-cell title="出库单号" :value="formData.no || '保存时自动生成'" />
           <wd-form-item title="出库时间" title-width="220rpx" prop="outTime" is-link :value="formatDate(formData.outTime) || ''" placeholder="请选择出库时间" @click="dateVisible.outTime = true" />
           <wd-datetime-picker v-model="formData.outTime" v-model:visible="dateVisible.outTime" title="请选择出库时间" type="date" />
-          <wd-form-item title="客户" title-width="220rpx" is-link :value="customerDisplayValue" placeholder="请选择客户" @click="pickerVisible.customer = true" />
-          <wd-picker v-model:visible="pickerVisible.customer" :model-value="formData.customerId" :columns="customerOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.customerId = value[0]" />
+          <ErpPicker v-model="formData.customerId" label="客户" label-width="220rpx" source="customer" placeholder="请选择客户" />
           <wd-form-item title="备注" title-width="220rpx" prop="remark">
             <wd-textarea v-model="formData.remark" placeholder="请输入备注" :maxlength="500" show-word-limit clearable />
           </wd-form-item>
@@ -56,22 +55,24 @@
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { Product } from '@/api/erp/product/product'
-import type { Customer } from '@/api/erp/sale/customer'
 import type { StockOut } from '@/api/erp/stock/out'
 import type { Warehouse } from '@/api/erp/stock/warehouse'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { getProductSimpleList } from '@/api/erp/product/product'
-import { getCustomerSimpleList } from '@/api/erp/sale/customer'
 import { createStockOut, getStockOut, updateStockOut } from '@/api/erp/stock/out'
 import { getWarehouseSimpleList } from '@/api/erp/stock/warehouse'
 import { navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
-import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
+import { createFormSchema } from '@/utils/wot'
+import ErpPicker from '@/pages-erp/components/erp-picker.vue'
 import OutItemEditor from '../components/out-item-editor.vue'
 import { formatCount, formatMoney, roundPrice, toNumber } from '@/pages-erp/utils'
 
 const props = defineProps<{ id?: number | any }>()
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/stock/out/form/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -81,7 +82,7 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => props.id ? '编辑其它出库' : '新增其它出库')
+const getTitle = computed(() => currentId.value ? '编辑其它出库' : '新增其它出库')
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<StockOut>({
   id: undefined,
@@ -96,12 +97,8 @@ const formData = ref<StockOut>({
 }) // 表单数据
 const formRef = ref<FormInstance>() // 表单组件引用
 const itemEditorRef = ref<InstanceType<typeof OutItemEditor>>() // 明细组件引用
-const customerOptions = ref<Customer[]>([]) // 客户选项
 const productOptions = ref<Product[]>([]) // 产品选项
 const warehouseOptions = ref<Warehouse[]>([]) // 仓库选项
-const pickerVisible = reactive({
-  customer: false,
-}) // 选择器状态
 const dateVisible = reactive({
   outTime: false,
 }) // 日期选择器状态
@@ -109,7 +106,6 @@ const formSchema = createFormSchema({
   customerId: [{ required: true, message: '客户不能为空' }],
   outTime: [{ required: true, message: '出库时间不能为空' }],
 })
-const customerDisplayValue = computed(() => getWotPickerFormValue(customerOptions.value, formData.value.customerId, { valueKey: 'id', labelKey: 'name' }))
 
 /** 返回上一页 */
 function handleBack() {
@@ -127,24 +123,22 @@ function refreshAmount() {
 
 /** 加载基础选项 */
 async function loadOptions() {
-  const [customers, products, warehouses] = await Promise.all([
-    getCustomerSimpleList(),
+  const [products, warehouses] = await Promise.all([
     getProductSimpleList(),
     getWarehouseSimpleList(),
   ])
-  customerOptions.value = customers || []
   productOptions.value = products || []
   warehouseOptions.value = warehouses || []
 }
 
 /** 加载其它出库详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   formData.value = {
     ...formData.value,
-    ...await getStockOut(Number(props.id)),
+    ...await getStockOut(Number(currentId.value)),
   }
   refreshAmount()
 }
@@ -158,7 +152,7 @@ async function handleSubmit() {
   refreshAmount()
   formLoading.value = true
   try {
-    if (props.id) {
+    if (currentId.value) {
       await updateStockOut(formData.value)
       toast.success('修改成功')
     } else {

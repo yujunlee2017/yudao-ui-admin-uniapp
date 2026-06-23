@@ -10,8 +10,7 @@
           <wd-cell title="入库单号" :value="formData.no || '保存时自动生成'" />
           <wd-form-item title="入库时间" title-width="220rpx" prop="inTime" is-link :value="formatDate(formData.inTime) || ''" placeholder="请选择入库时间" @click="dateVisible.inTime = true" />
           <wd-datetime-picker v-model="formData.inTime" v-model:visible="dateVisible.inTime" title="请选择入库时间" type="date" />
-          <wd-form-item title="供应商" title-width="220rpx" is-link :value="supplierDisplayValue" placeholder="请选择供应商" @click="pickerVisible.supplier = true" />
-          <wd-picker v-model:visible="pickerVisible.supplier" :model-value="formData.supplierId" :columns="supplierOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.supplierId = value[0]" />
+          <ErpPicker v-model="formData.supplierId" label="供应商" label-width="220rpx" source="supplier" placeholder="请选择供应商" />
           <wd-form-item title="备注" title-width="220rpx" prop="remark">
             <wd-textarea v-model="formData.remark" placeholder="请输入备注" :maxlength="500" show-word-limit clearable />
           </wd-form-item>
@@ -56,22 +55,24 @@
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { Product } from '@/api/erp/product/product'
-import type { Supplier } from '@/api/erp/purchase/supplier'
 import type { StockIn } from '@/api/erp/stock/in'
 import type { Warehouse } from '@/api/erp/stock/warehouse'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { getProductSimpleList } from '@/api/erp/product/product'
-import { getSupplierSimpleList } from '@/api/erp/purchase/supplier'
 import { createStockIn, getStockIn, updateStockIn } from '@/api/erp/stock/in'
 import { getWarehouseSimpleList } from '@/api/erp/stock/warehouse'
 import { navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
-import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
+import { createFormSchema } from '@/utils/wot'
+import ErpPicker from '@/pages-erp/components/erp-picker.vue'
 import InItemEditor from '../components/in-item-editor.vue'
 import { formatCount, formatMoney, roundPrice, toNumber } from '@/pages-erp/utils'
 
 const props = defineProps<{ id?: number | any }>()
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/stock/in/form/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -81,7 +82,7 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => props.id ? '编辑其它入库' : '新增其它入库')
+const getTitle = computed(() => currentId.value ? '编辑其它入库' : '新增其它入库')
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<StockIn>({
   id: undefined,
@@ -96,12 +97,8 @@ const formData = ref<StockIn>({
 }) // 表单数据
 const formRef = ref<FormInstance>() // 表单组件引用
 const itemEditorRef = ref<InstanceType<typeof InItemEditor>>() // 明细组件引用
-const supplierOptions = ref<Supplier[]>([]) // 供应商选项
 const productOptions = ref<Product[]>([]) // 产品选项
 const warehouseOptions = ref<Warehouse[]>([]) // 仓库选项
-const pickerVisible = reactive({
-  supplier: false,
-}) // 选择器状态
 const dateVisible = reactive({
   inTime: false,
 }) // 日期选择器状态
@@ -109,7 +106,6 @@ const formSchema = createFormSchema({
   supplierId: [{ required: true, message: '供应商不能为空' }],
   inTime: [{ required: true, message: '入库时间不能为空' }],
 })
-const supplierDisplayValue = computed(() => getWotPickerFormValue(supplierOptions.value, formData.value.supplierId, { valueKey: 'id', labelKey: 'name' }))
 
 /** 返回上一页 */
 function handleBack() {
@@ -127,24 +123,22 @@ function refreshAmount() {
 
 /** 加载基础选项 */
 async function loadOptions() {
-  const [suppliers, products, warehouses] = await Promise.all([
-    getSupplierSimpleList(),
+  const [products, warehouses] = await Promise.all([
     getProductSimpleList(),
     getWarehouseSimpleList(),
   ])
-  supplierOptions.value = suppliers || []
   productOptions.value = products || []
   warehouseOptions.value = warehouses || []
 }
 
 /** 加载其它入库详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   formData.value = {
     ...formData.value,
-    ...await getStockIn(Number(props.id)),
+    ...await getStockIn(Number(currentId.value)),
   }
   refreshAmount()
 }
@@ -158,7 +152,7 @@ async function handleSubmit() {
   refreshAmount()
   formLoading.value = true
   try {
-    if (props.id) {
+    if (currentId.value) {
       await updateStockIn(formData.value)
       toast.success('修改成功')
     } else {

@@ -5,7 +5,6 @@
 
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
-    <ExportAction module-key="stock-record" :params="queryParams" />
 
     <!-- 库存明细列表 -->
     <z-paging ref="pagingRef" v-model="list" :fixed="false" class="min-h-0 flex-1" :default-page-size="10" :refresher-enabled="true" :inside-more="true" :loading-more-default-as-loading="true" empty-view-text="暂无库存明细数据" @query="queryList">
@@ -68,7 +67,6 @@ import { getStockRecordPage } from '@/api/erp/stock/record'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import ExportAction from '@/pages-erp/components/export-action.vue'
 import SearchForm from './components/search-form.vue'
 import { formatCount } from '@/pages-erp/utils'
 

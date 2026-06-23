@@ -5,7 +5,6 @@
 
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
-    <ExportAction module-key="stock-in" :params="queryParams" />
 
     <!-- 其它入库列表 -->
     <z-paging ref="pagingRef" v-model="list" :fixed="false" class="min-h-0 flex-1" :default-page-size="10" :refresher-enabled="true" :inside-more="true" :loading-more-default-as-loading="true" empty-view-text="暂无其它入库数据" @query="queryList">
@@ -84,7 +83,6 @@ import { useBatchSelect } from '@/pages-erp/hooks/useBatchSelect'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import ExportAction from '@/pages-erp/components/export-action.vue'
 import ListCardWrapper from '@/pages-erp/components/list-card-wrapper.vue'
 import SearchForm from './components/search-form.vue'
 import { formatCount, formatMoney } from '@/pages-erp/utils'

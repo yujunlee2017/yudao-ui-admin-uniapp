@@ -9,7 +9,6 @@
 
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
-    <ExportAction module-key="sale-order" :params="queryParams" />
 
     <!-- 销售订单列表 -->
     <z-paging
@@ -111,7 +110,6 @@ import ListCardWrapper from '@/pages-erp/components/list-card-wrapper.vue'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import ExportAction from '@/pages-erp/components/export-action.vue'
 import SearchForm from './components/search-form.vue'
 import { formatCount, formatMoney } from '@/pages-erp/utils'
 

@@ -8,8 +8,15 @@
         </wd-button>
       </view>
 
-      <wd-form-item title="仓库" title-width="180rpx" is-link :value="getWarehouseDisplay(item.warehouseId)" placeholder="请选择仓库" @click="openWarehousePicker(index)" />
-      <wd-picker v-model:visible="warehousePickerVisible[index]" :model-value="item.warehouseId" :columns="warehouseOptions" label-key="name" value-key="id" @confirm="({ value }) => handleWarehouseConfirm(index, value[0])" />
+      <ErpPicker
+        v-model="item.warehouseId"
+        label="仓库"
+        label-width="180rpx"
+        source="warehouse"
+        placeholder="请选择仓库"
+        :disabled="disabled"
+        @confirm="option => handleWarehouseConfirm(index, option?.id)"
+      />
 
       <wd-cell title="产品" :value="item.productName || '-'" />
       <wd-cell title="库存" :value="formatCount(item.stockCount)" />
@@ -41,7 +48,7 @@
 import type { Warehouse } from '@/api/erp/stock/warehouse'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { ref, watch } from 'vue'
-import { getWotPickerFormValue } from '@/utils/wot'
+import ErpPicker from '@/pages-erp/components/erp-picker.vue'
 import { formatCount, formatMoney, refreshSingleItemAmount, setItemStockCount } from '@/pages-erp/utils'
 
 const props = defineProps<{
@@ -56,23 +63,12 @@ const emit = defineEmits<{
 
 const toast = useToast()
 const items = ref<Record<string, any>[]>([])
-const warehousePickerVisible = ref<Record<number, boolean>>({})
-
-function getWarehouseDisplay(warehouseId?: number) {
-  return getWotPickerFormValue(props.warehouseOptions, warehouseId, { valueKey: 'id', labelKey: 'name' })
-}
-
-function openWarehousePicker(index: number) {
-  if (!props.disabled) {
-    warehousePickerVisible.value[index] = true
-  }
-}
 
 function handleRemove(index: number) {
   items.value.splice(index, 1)
 }
 
-async function handleWarehouseConfirm(index: number, warehouseId?: number) {
+async function handleWarehouseConfirm(index: number, warehouseId?: number | string) {
   const item = items.value[index]
   if (!item) {
     return

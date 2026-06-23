@@ -21,8 +21,13 @@
         <view class="yd-search-form-label">
           产品
         </view>
-        <wd-form-item :value="getPickerDisplay(productOptions, formData.productId)" placeholder="请选择产品" is-link @click="pickerVisible.product = true" />
-        <wd-picker v-model:visible="pickerVisible.product" :model-value="formData.productId" :columns="productOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.productId = value[0]" />
+        <ErpPicker
+          v-model="formData.productId"
+          source="product"
+          form-item
+          placeholder="请选择产品"
+          @confirm="option => selectedNames.product = option?.name || ''"
+        />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
@@ -48,15 +53,25 @@
         <view class="yd-search-form-label">
           供应商
         </view>
-        <wd-form-item :value="getPickerDisplay(supplierOptions, formData.supplierId)" placeholder="请选择供应商" is-link @click="pickerVisible.supplier = true" />
-        <wd-picker v-model:visible="pickerVisible.supplier" :model-value="formData.supplierId" :columns="supplierOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.supplierId = value[0]" />
+        <ErpPicker
+          v-model="formData.supplierId"
+          source="supplier"
+          form-item
+          placeholder="请选择供应商"
+          @confirm="option => selectedNames.supplier = option?.name || ''"
+        />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           创建人
         </view>
-        <wd-form-item :value="getPickerDisplay(userOptions, formData.creator)" placeholder="请选择创建人" is-link @click="pickerVisible.creator = true" />
-        <wd-picker v-model:visible="pickerVisible.creator" :model-value="formData.creator" :columns="userOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.creator = value[0]" />
+        <ErpPicker
+          v-model="formData.creator"
+          source="user"
+          form-item
+          placeholder="请选择创建人"
+          @confirm="option => selectedNames.creator = option?.name || ''"
+        />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
@@ -128,18 +143,12 @@
 </template>
 
 <script lang="ts" setup>
-import type { Product } from '@/api/erp/product/product'
-import type { Supplier } from '@/api/erp/purchase/supplier'
-import type { User } from '@/api/system/user'
-import { computed, onMounted, reactive, ref } from 'vue'
-import { getProductSimpleList } from '@/api/erp/product/product'
-import { getSupplierSimpleList } from '@/api/erp/purchase/supplier'
-import { getSimpleUserList } from '@/api/system/user'
+import { computed, reactive, ref } from 'vue'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
+import ErpPicker from '@/pages-erp/components/erp-picker.vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
-import { getWotPickerFormValue } from '@/utils/wot'
 
 const emit = defineEmits<{
   search: [data: Record<string, any>]
@@ -147,17 +156,14 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false)
-const productOptions = ref<Product[]>([])
-const supplierOptions = ref<Supplier[]>([])
-const userOptions = ref<Array<User & { name: string }>>([])
-const pickerVisible = reactive({
-  creator: false,
-  product: false,
-  supplier: false,
-})
 const dateVisible = reactive({
   start: false,
   end: false,
+})
+const selectedNames = reactive({
+  creator: '',
+  product: '',
+  supplier: '',
 })
 const formData = reactive({
   no: undefined as string | undefined,
@@ -177,23 +183,19 @@ const placeholder = computed(() => {
     conditions.push(`单号:${formData.no}`)
   }
   if (formData.productId) {
-    conditions.push(`产品:${getPickerDisplay(productOptions.value, formData.productId)}`)
+    conditions.push(`产品:${selectedNames.product || formData.productId}`)
   }
   if (formData.orderTime[0] && formData.orderTime[1]) {
     conditions.push(`订单时间:${formatDate(formData.orderTime[0])}~${formatDate(formData.orderTime[1])}`)
   }
   if (formData.supplierId) {
-    conditions.push(`供应商:${getPickerDisplay(supplierOptions.value, formData.supplierId)}`)
+    conditions.push(`供应商:${selectedNames.supplier || formData.supplierId}`)
   }
   if (formData.status !== -1) {
     conditions.push(`状态:${getDictLabel(DICT_TYPE.ERP_AUDIT_STATUS, formData.status)}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索采购订单'
 })
-
-function getPickerDisplay(options: Record<string, any>[], value?: number) {
-  return getWotPickerFormValue(options, value, { valueKey: 'id', labelKey: 'name' })
-}
 
 function handleSearch() {
   visible.value = false
@@ -217,6 +219,9 @@ function handleReset() {
   formData.orderTime = ['', '']
   formData.supplierId = undefined
   formData.creator = undefined
+  selectedNames.product = ''
+  selectedNames.supplier = ''
+  selectedNames.creator = ''
   formData.status = -1
   formData.remark = undefined
   formData.inStatus = -1
@@ -224,15 +229,4 @@ function handleReset() {
   visible.value = false
   emit('reset')
 }
-
-onMounted(async () => {
-  const [products, suppliers, users] = await Promise.all([
-    getProductSimpleList(),
-    getSupplierSimpleList(),
-    getSimpleUserList(),
-  ])
-  productOptions.value = products || []
-  supplierOptions.value = suppliers || []
-  userOptions.value = (users || []).map(item => ({ ...item, name: item.nickname || item.username }))
-})
 </script>

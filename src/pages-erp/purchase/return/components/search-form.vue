@@ -21,8 +21,13 @@
         <view class="yd-search-form-label">
           产品
         </view>
-        <wd-form-item :value="getPickerDisplay(productOptions, formData.productId)" placeholder="请选择产品" is-link @click="pickerVisible.product = true" />
-        <wd-picker v-model:visible="pickerVisible.product" :model-value="formData.productId" :columns="productOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.productId = value[0]" />
+        <ErpPicker
+          v-model="formData.productId"
+          source="product"
+          form-item
+          placeholder="请选择产品"
+          @confirm="option => selectedNames.product = option?.name || ''"
+        />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
@@ -48,15 +53,25 @@
         <view class="yd-search-form-label">
           供应商
         </view>
-        <wd-form-item :value="getPickerDisplay(supplierOptions, formData.supplierId)" placeholder="请选择供应商" is-link @click="pickerVisible.supplier = true" />
-        <wd-picker v-model:visible="pickerVisible.supplier" :model-value="formData.supplierId" :columns="supplierOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.supplierId = value[0]" />
+        <ErpPicker
+          v-model="formData.supplierId"
+          source="supplier"
+          form-item
+          placeholder="请选择供应商"
+          @confirm="option => selectedNames.supplier = option?.name || ''"
+        />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           仓库
         </view>
-        <wd-form-item :value="getPickerDisplay(warehouseOptions, formData.warehouseId)" placeholder="请选择仓库" is-link @click="pickerVisible.warehouse = true" />
-        <wd-picker v-model:visible="pickerVisible.warehouse" :model-value="formData.warehouseId" :columns="warehouseOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.warehouseId = value[0]" />
+        <ErpPicker
+          v-model="formData.warehouseId"
+          source="warehouse"
+          form-item
+          placeholder="请选择仓库"
+          @confirm="option => selectedNames.warehouse = option?.name || ''"
+        />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
@@ -68,15 +83,25 @@
         <view class="yd-search-form-label">
           结算账户
         </view>
-        <wd-form-item :value="getPickerDisplay(accountOptions, formData.accountId)" placeholder="请选择结算账户" is-link @click="pickerVisible.account = true" />
-        <wd-picker v-model:visible="pickerVisible.account" :model-value="formData.accountId" :columns="accountOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.accountId = value[0]" />
+        <ErpPicker
+          v-model="formData.accountId"
+          source="account"
+          form-item
+          placeholder="请选择结算账户"
+          @confirm="option => selectedNames.account = option?.name || ''"
+        />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           创建人
         </view>
-        <wd-form-item :value="getPickerDisplay(userOptions, formData.creator)" placeholder="请选择创建人" is-link @click="pickerVisible.creator = true" />
-        <wd-picker v-model:visible="pickerVisible.creator" :model-value="formData.creator" :columns="userOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.creator = value[0]" />
+        <ErpPicker
+          v-model="formData.creator"
+          source="user"
+          form-item
+          placeholder="请选择创建人"
+          @confirm="option => selectedNames.creator = option?.name || ''"
+        />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
@@ -129,22 +154,12 @@
 </template>
 
 <script lang="ts" setup>
-import type { Account } from '@/api/erp/finance/account'
-import type { Product } from '@/api/erp/product/product'
-import type { Supplier } from '@/api/erp/purchase/supplier'
-import type { Warehouse } from '@/api/erp/stock/warehouse'
-import type { User } from '@/api/system/user'
-import { computed, onMounted, reactive, ref } from 'vue'
-import { getAccountSimpleList } from '@/api/erp/finance/account'
-import { getProductSimpleList } from '@/api/erp/product/product'
-import { getSupplierSimpleList } from '@/api/erp/purchase/supplier'
-import { getWarehouseSimpleList } from '@/api/erp/stock/warehouse'
-import { getSimpleUserList } from '@/api/system/user'
+import { computed, reactive, ref } from 'vue'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
+import ErpPicker from '@/pages-erp/components/erp-picker.vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
-import { getWotPickerFormValue } from '@/utils/wot'
 
 const emit = defineEmits<{
   search: [data: Record<string, any>]
@@ -152,21 +167,16 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false)
-const accountOptions = ref<Account[]>([])
-const productOptions = ref<Product[]>([])
-const supplierOptions = ref<Supplier[]>([])
-const warehouseOptions = ref<Warehouse[]>([])
-const userOptions = ref<Array<User & { name: string }>>([])
-const pickerVisible = reactive({
-  account: false,
-  creator: false,
-  product: false,
-  supplier: false,
-  warehouse: false,
-})
 const dateVisible = reactive({
   start: false,
   end: false,
+})
+const selectedNames = reactive({
+  account: '',
+  creator: '',
+  product: '',
+  supplier: '',
+  warehouse: '',
 })
 const formData = reactive({
   no: undefined as string | undefined,
@@ -188,26 +198,22 @@ const placeholder = computed(() => {
     conditions.push(`单号:${formData.no}`)
   }
   if (formData.productId) {
-    conditions.push(`产品:${getPickerDisplay(productOptions.value, formData.productId)}`)
+    conditions.push(`产品:${selectedNames.product || formData.productId}`)
   }
   if (formData.returnTime[0] && formData.returnTime[1]) {
     conditions.push(`退货时间:${formatDate(formData.returnTime[0])}~${formatDate(formData.returnTime[1])}`)
   }
   if (formData.supplierId) {
-    conditions.push(`供应商:${getPickerDisplay(supplierOptions.value, formData.supplierId)}`)
+    conditions.push(`供应商:${selectedNames.supplier || formData.supplierId}`)
   }
   if (formData.warehouseId) {
-    conditions.push(`仓库:${getPickerDisplay(warehouseOptions.value, formData.warehouseId)}`)
+    conditions.push(`仓库:${selectedNames.warehouse || formData.warehouseId}`)
   }
   if (formData.status !== -1) {
     conditions.push(`状态:${getDictLabel(DICT_TYPE.ERP_AUDIT_STATUS, formData.status)}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索采购退货'
 })
-
-function getPickerDisplay(options: Record<string, any>[], value?: number) {
-  return getWotPickerFormValue(options, value, { valueKey: 'id', labelKey: 'name' })
-}
 
 function handleSearch() {
   visible.value = false
@@ -236,25 +242,15 @@ function handleReset() {
   formData.orderNo = undefined
   formData.accountId = undefined
   formData.creator = undefined
+  selectedNames.product = ''
+  selectedNames.supplier = ''
+  selectedNames.warehouse = ''
+  selectedNames.account = ''
+  selectedNames.creator = ''
   formData.refundStatus = -1
   formData.status = -1
   formData.remark = undefined
   visible.value = false
   emit('reset')
 }
-
-onMounted(async () => {
-  const [accounts, products, suppliers, warehouses, users] = await Promise.all([
-    getAccountSimpleList(),
-    getProductSimpleList(),
-    getSupplierSimpleList(),
-    getWarehouseSimpleList(),
-    getSimpleUserList(),
-  ])
-  accountOptions.value = accounts || []
-  productOptions.value = products || []
-  supplierOptions.value = suppliers || []
-  warehouseOptions.value = warehouses || []
-  userOptions.value = (users || []).map(item => ({ ...item, name: item.nickname || item.username }))
-})
 </script>

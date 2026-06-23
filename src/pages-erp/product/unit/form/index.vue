@@ -48,12 +48,15 @@ import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { ProductUnit } from '@/api/erp/product/unit'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { createProductUnit, getProductUnit, updateProductUnit } from '@/api/erp/product/unit'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{ id?: number | any }>()
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/product/unit/form/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -63,7 +66,7 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => props.id ? '编辑产品单位' : '新增产品单位')
+const getTitle = computed(() => currentId.value ? '编辑产品单位' : '新增产品单位')
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<ProductUnit>({
   id: undefined,
@@ -83,10 +86,10 @@ function handleBack() {
 
 /** 加载产品单位详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
-  formData.value = await getProductUnit(Number(props.id))
+  formData.value = await getProductUnit(Number(currentId.value))
 }
 
 /** 提交表单 */
@@ -97,7 +100,7 @@ async function handleSubmit() {
   }
   formLoading.value = true
   try {
-    if (props.id) {
+    if (currentId.value) {
       await updateProductUnit(formData.value)
       toast.success('修改成功')
     } else {

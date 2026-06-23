@@ -47,7 +47,8 @@ export function useRouteQuery<T extends RouteProps>(props: T, pagePath: string) 
     if (value === undefined || value === '') {
       return undefined
     }
-    return Number(value)
+    const numberValue = Number(value)
+    return Number.isNaN(numberValue) ? undefined : numberValue
   }
 
   /** 监听 H5 hash 参数变化 */

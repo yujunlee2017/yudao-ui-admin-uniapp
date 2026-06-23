@@ -19,22 +19,13 @@
     </view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="hasFooter" class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button
-          v-if="hasAccessByCodes(['erp:product-unit:update'])"
-          class="flex-1" type="warning" @click="handleEdit"
-        >
-          编辑
-        </wd-button>
-        <wd-button
-          v-if="hasAccessByCodes(['erp:product-unit:delete'])"
-          class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
-        >
-          删除
-        </wd-button>
-      </view>
-    </view>
+    <ErpBasicActions
+      :can-update="canUpdate"
+      :can-delete="canDelete"
+      :deleting="deleting"
+      @edit="handleEdit"
+      @delete="handleDelete"
+    />
   </view>
 </template>
 
@@ -43,14 +34,18 @@ import type { ProductUnit } from '@/api/erp/product/unit'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { deleteProductUnit, getProductUnit } from '@/api/erp/product/unit'
 import { useAccess } from '@/hooks/useAccess'
+import ErpBasicActions from '@/pages-erp/components/erp-basic-actions.vue'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/product/unit/detail/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -64,7 +59,8 @@ const dialog = useDialog()
 const toast = useToast()
 const formData = ref<ProductUnit>() // 详情数据
 const deleting = ref(false) // 删除状态
-const hasFooter = computed(() => hasAccessByCodes(['erp:product-unit:update']) || hasAccessByCodes(['erp:product-unit:delete']))
+const canUpdate = computed(() => hasAccessByCodes(['erp:product-unit:update']))
+const canDelete = computed(() => hasAccessByCodes(['erp:product-unit:delete']))
 
 /** 返回上一页 */
 function handleBack() {
@@ -73,12 +69,12 @@ function handleBack() {
 
 /** 加载产品单位详情 */
 async function getDetail() {
-  if (!props.id || deleting.value) {
+  if (!currentId.value || deleting.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getProductUnit(Number(props.id))
+    formData.value = await getProductUnit(Number(currentId.value))
   } finally {
     toast.close()
   }
@@ -86,12 +82,12 @@ async function getDetail() {
 
 /** 编辑产品单位 */
 function handleEdit() {
-  uni.navigateTo({ url: `/pages-erp/product/unit/form/index?id=${props.id}` })
+  uni.navigateTo({ url: `/pages-erp/product/unit/form/index?id=${currentId.value}` })
 }
 
 /** 删除产品单位 */
 async function handleDelete() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   try {
@@ -104,7 +100,7 @@ async function handleDelete() {
   }
   deleting.value = true
   try {
-    await deleteProductUnit(Number(props.id))
+    await deleteProductUnit(Number(currentId.value))
     toast.success('删除成功')
     uni.$emit('erp:product-unit:reload')
     setTimeout(() => handleBack(), 500)
@@ -117,6 +113,11 @@ async function handleDelete() {
 onMounted(() => {
   getDetail()
   uni.$on('erp:product-unit:reload', getDetail)
+})
+
+watch(currentId, () => {
+  formData.value = undefined
+  void getDetail()
 })
 
 /** 卸载 */
