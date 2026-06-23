@@ -65,7 +65,7 @@
                 <template #sku="{ row }">
                   <view class="flex items-center gap-12rpx py-8rpx">
                     <text class="w-160rpx shrink-0 text-26rpx text-[#666]">秒杀价(元)</text>
-                    <wd-input-number v-model="row.seckillPrice" :min="0" :step="0.01" />
+                    <wd-input-number v-model="row.seckillPrice" :min="0" :step="0.01" :precision="2" />
                   </view>
                   <view class="flex items-center gap-12rpx py-8rpx">
                     <text class="w-160rpx shrink-0 text-26rpx text-[#666]">秒杀库存</text>

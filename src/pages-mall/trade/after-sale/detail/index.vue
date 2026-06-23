@@ -259,7 +259,7 @@ async function loadDetail() {
 
 /** 选择动作 */
 function handleSelectAction({ item }: { item: { value: ActionKey } }) {
-  // 拒绝售后 / 拒绝收货均需填写原因（后端 auditReason / refuseMemo 必填）
+  // 拒绝售后 / 拒绝收货均需填写原因
   if (item.value === 'disagree' || item.value === 'refuse') {
     rejectAction.value = item.value
     rejectVisible.value = true

@@ -149,7 +149,7 @@ import { formatDateTime } from '@/utils/date'
 import { fenToYuan } from '@/pages-mall/utils'
 import { connectKefuWebSocket, disconnectKefuWebSocket } from './composables/useKefuWebSocket'
 
-// 客服消息内容类型（对齐后端 KeFuMessageContentTypeEnum）：1 文本、2 图片、3 语音、4 视频、5 系统、10 商品、11 订单
+// 客服消息内容类型：1 文本、2 图片、3 语音、4 视频、5 系统、10 商品、11 订单
 const CONTENT_TYPE = { TEXT: 1, IMAGE: 2, VOICE: 3, VIDEO: 4, SYSTEM: 5, PRODUCT: 10, ORDER: 11 }
 // 发送者类型：1 会员、2 管理员（客服）
 const SENDER_ADMIN = 2
@@ -188,7 +188,7 @@ interface ParsedMessage {
   productCount?: number
 }
 
-/** 解析消息内容，按类型区分文本/图片/系统/商品/订单消息（按 createTime 升序渲染，最新在底部，对齐 PC 端） */
+/** 解析消息内容，按类型区分文本/图片/系统/商品/订单消息（按 createTime 升序渲染，最新在底部） */
 const parsedMessages = computed<ParsedMessage[]>(() => {
   return [...messages.value]
     .sort((a, b) => new Date(a.createTime || 0).getTime() - new Date(b.createTime || 0).getTime())
@@ -225,7 +225,7 @@ const parsedMessages = computed<ParsedMessage[]>(() => {
     })
 })
 
-/** 解析消息 content（PC 端文本/图片/商品/订单均为 JSON 结构） */
+/** 解析消息 content（文本/图片/商品/订单均为 JSON 结构） */
 function parseContent(content: any): Record<string, any> {
   if (typeof content !== 'string') {
     return content || {}
@@ -321,7 +321,7 @@ async function loadEarlier() {
   }
 }
 
-/** 发送消息：文本消息按 PC 端结构封装为 { text } */
+/** 发送消息：文本消息封装为 { text } */
 async function handleSend() {
   if (!currentConversation.value?.id || !messageContent.value.trim()) {
     return

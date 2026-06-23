@@ -57,7 +57,7 @@ const emit = defineEmits<{
 
 const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
-  status: -1, // 记录状态，-1=全部（后端 BargainRecordPageReqVO 支持 status/createTime）
+  status: -1, // 记录状态，-1=全部
   createTime: [undefined, undefined] as [number | undefined, number | undefined], // 创建时间范围
 }) // 搜索表单数据
 

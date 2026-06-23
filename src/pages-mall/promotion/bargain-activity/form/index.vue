@@ -24,16 +24,16 @@
               <wd-form-item title="结束时间" title-width="200rpx" prop="endTime" is-link placeholder="请选择结束时间" :value="formatDateTime(formData.endTime)" @click="pickerVisible.endTime = true" />
               <wd-datetime-picker v-model="formData.endTime" v-model:visible="pickerVisible.endTime" title="请选择结束时间" type="datetime" />
               <wd-form-item title="起始价(元)" title-width="200rpx" prop="bargainFirstPrice" center>
-                <wd-input-number v-model="formData.bargainFirstPrice" :min="0" :step="0.01" />
+                <wd-input-number v-model="formData.bargainFirstPrice" :min="0" :step="0.01" :precision="2" />
               </wd-form-item>
               <wd-form-item title="底价(元)" title-width="200rpx" prop="bargainMinPrice" center>
-                <wd-input-number v-model="formData.bargainMinPrice" :min="0" :step="0.01" />
+                <wd-input-number v-model="formData.bargainMinPrice" :min="0" :step="0.01" :precision="2" />
               </wd-form-item>
               <wd-form-item title="随机最小(元)" title-width="200rpx" prop="randomMinPrice" center>
-                <wd-input-number v-model="formData.randomMinPrice" :min="0" :step="0.01" />
+                <wd-input-number v-model="formData.randomMinPrice" :min="0" :step="0.01" :precision="2" />
               </wd-form-item>
               <wd-form-item title="随机最大(元)" title-width="200rpx" prop="randomMaxPrice" center>
-                <wd-input-number v-model="formData.randomMaxPrice" :min="0" :step="0.01" />
+                <wd-input-number v-model="formData.randomMaxPrice" :min="0" :step="0.01" :precision="2" />
               </wd-form-item>
               <wd-form-item title="库存" title-width="200rpx" prop="stock" center>
                 <wd-input-number v-model="formData.stock" :min="0" />

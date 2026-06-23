@@ -7,6 +7,8 @@
       @click-left="handleBack"
     />
 
+    <!-- TODO @AI：tabs 交互更好，避免太长了。 -->
+
     <!-- 表单区域 -->
     <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
       <wd-form ref="formRef" :model="formData" :schema="formSchema">
@@ -36,7 +38,7 @@
                 <wd-switch v-model="formData.deliveryExpressFreeEnabled" />
               </wd-form-item>
               <wd-form-item title="满额包邮(元)" title-width="200rpx" prop="deliveryExpressFreePrice" center>
-                <wd-input-number v-model="formData.deliveryExpressFreePrice" :min="0" :step="0.01" />
+                <wd-input-number v-model="formData.deliveryExpressFreePrice" :min="0" :step="0.01" :precision="2" />
               </wd-form-item>
               <wd-form-item title="启用门店自提" title-width="200rpx" prop="deliveryPickUpEnabled" center>
                 <wd-switch v-model="formData.deliveryPickUpEnabled" />
@@ -85,7 +87,7 @@
                 <wd-input-number v-model="formData.brokerageFrozenDays" :min="0" />
               </wd-form-item>
               <wd-form-item title="提现门槛(元)" title-width="200rpx" prop="brokerageWithdrawMinPrice" center>
-                <wd-input-number v-model="formData.brokerageWithdrawMinPrice" :min="0" :step="0.01" />
+                <wd-input-number v-model="formData.brokerageWithdrawMinPrice" :min="0" :step="0.01" :precision="2" />
               </wd-form-item>
               <wd-form-item title="提现手续费(%)" title-width="200rpx" prop="brokerageWithdrawFeePercent" center>
                 <wd-input-number v-model="formData.brokerageWithdrawFeePercent" :min="0" :max="100" />
@@ -188,6 +190,7 @@ const formSchema = createFormSchema({
 })
 
 /** 逗号文本转数组 */
+// TODO @AI：抽到全局的 utils 里？
 function textToArray(text: string) {
   return text.split(/[,，\n]/).map(item => item.trim()).filter(Boolean)
 }

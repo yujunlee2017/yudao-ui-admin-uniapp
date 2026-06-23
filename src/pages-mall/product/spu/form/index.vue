@@ -111,6 +111,7 @@
                 v-if="formData.deliveryTypes?.includes(1)"
                 title="运费模板"
                 title-width="200rpx"
+                prop="deliveryTemplateId"
                 is-link
                 :value="getOptionText(templateOptions, formData.deliveryTemplateId)"
                 placeholder="请选择运费模板"
@@ -248,6 +249,7 @@ const formSchema = createFormSchema({
   picUrl: [{ required: true, message: '商品封面不能为空' }],
   sliderPicUrls: [{ required: true, message: '轮播图不能为空' }],
   deliveryTypes: [{ required: true, message: '配送方式不能为空' }],
+  deliveryTemplateId: [{ required: true, message: '运费模板不能为空' }], // 运费模板字段仅快递配送时 v-if 渲染，等价于「选快递必填」
   specType: [{ required: true, message: '多规格不能为空' }],
   subCommissionType: [{ required: true, message: '单独分佣不能为空' }],
   description: [{ required: true, message: '商品详情不能为空' }],
@@ -265,6 +267,7 @@ const PROP_TAB: Record<string, number> = {
   specType: 1,
   subCommissionType: 1,
   deliveryTypes: 2,
+  deliveryTemplateId: 2,
   description: 3,
   sort: 4,
   status: 4,

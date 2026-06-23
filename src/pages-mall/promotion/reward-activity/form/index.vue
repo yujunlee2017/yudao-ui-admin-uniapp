@@ -73,7 +73,7 @@
               </view>
               <view class="flex items-center gap-12rpx py-6rpx">
                 <text class="w-180rpx shrink-0 text-26rpx text-[#666]">优惠金额(元)</text>
-                <wd-input-number v-model="rule.discountPrice" :min="0" :step="0.01" />
+                <wd-input-number v-model="rule.discountPrice" :min="0" :step="0.01" :precision="2" />
               </view>
               <view class="flex items-center gap-12rpx py-6rpx">
                 <text class="w-180rpx shrink-0 text-26rpx text-[#666]">赠送积分</text>
@@ -267,7 +267,7 @@ function handleBack() {
   navigateBackPlus('/pages-mall/promotion/reward-activity/index')
 }
 
-/** 加载优惠券模板（仅「后台指定发放」ADMIN=2 类型，作为赠券候选，对齐 PC） */
+/** 加载优惠券模板（仅「后台指定发放」ADMIN=2 类型，作为赠券候选） */
 async function loadCouponTemplates() {
   const data = await getPromotionCouponTemplatePage({ pageNo: 1, pageSize: 100, canTakeTypes: [2] })
   couponTemplates.value = data.list || []

@@ -55,7 +55,7 @@ const emit = defineEmits<{
 
 const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
-  status: -1, // 活动状态，-1=全部（后端 PointActivityPageReqVO 仅支持 status）
+  status: -1, // 活动状态，-1=全部
 }) // 搜索表单数据
 
 /** 搜索条件 placeholder 拼接 */

@@ -186,7 +186,7 @@
                   v-model="actionFormData[field.prop]"
                   :min="field.min ?? -999999"
                   :max="field.max"
-                  :step="0.01"
+                  :step="0.01" :precision="2"
                 />
                 <wd-textarea
                   v-else
@@ -236,6 +236,7 @@ import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 
+// TODO @AI：不封装这样的。对齐别的模块，类似 bpm 审批详情
 interface ActionField {
   prop: string
   label: string
@@ -246,6 +247,7 @@ interface ActionField {
   placeholder?: string
 }
 
+// TODO @AI：不封装这样的。对齐别的模块
 interface DetailAction {
   key: string
   label: string
@@ -256,9 +258,11 @@ interface DetailAction {
   handler: (data?: Record<string, any>) => Promise<unknown>
 }
 
+// TODO @AI：是不是全局已经有枚举了？看看 vue3 + ep；
 // 订单状态：0 待付款、10 待发货、20 待收货、30 已完成、40 已取消
 const ORDER_STATUS = { UNPAID: 0, UNDELIVERED: 10 }
 // 配送方式：1 快递、2 自提
+// TODO @AI：是不是全局已经有枚举了？看看 vue3 + ep；
 const DELIVERY_TYPE = { EXPRESS: 1, PICK_UP: 2 }
 
 definePage({
@@ -417,6 +421,7 @@ async function submitActionForm() {
   closeActionForm()
 }
 
+// TODO @AI：不封装这样的方法，每个地方自己写。
 /** 执行动作 */
 async function runAction(action: DetailAction, data?: Record<string, any>) {
   if (action.confirm) {
@@ -439,6 +444,7 @@ async function runAction(action: DetailAction, data?: Record<string, any>) {
 
 /** 初始化 */
 onMounted(async () => {
+  // TODO @AI：props id 来接收参数是不是可以？如果可以，看看有没其他类似的地方，可以优化掉的？
   const query = currRoute().query
   // #ifdef H5
   const hashQuery = new URLSearchParams(window.location.hash.split('?')[1] || '')

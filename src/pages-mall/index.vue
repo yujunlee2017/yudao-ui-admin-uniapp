@@ -114,10 +114,7 @@ const mallGroups = [ // 商城资源分组（指向逐模块显式页）
       { title: '品牌', route: '/pages-mall/product/brand/index', permission: 'product:brand:query', icon: 'shop' },
       { title: '分类', route: '/pages-mall/product/category/index', permission: 'product:category:query', icon: 'app' },
       { title: '属性', route: '/pages-mall/product/property/index', permission: 'product:property:query', icon: 'list' },
-      { title: '属性值', route: '/pages-mall/product/property-value/index', permission: 'product:property:query', icon: 'list' },
       { title: '评论', route: '/pages-mall/product/comment/index', permission: 'product:comment:query', icon: 'chat' },
-      { title: '收藏', route: '/pages-mall/product/favorite/index', permission: 'product:favorite:query', icon: 'star' },
-      { title: '浏览记录', route: '/pages-mall/product/browse-history/index', permission: 'product:browse-history:query', icon: 'time' },
     ],
   },
   {

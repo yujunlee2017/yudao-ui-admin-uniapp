@@ -33,7 +33,7 @@
             </wd-radio-group>
           </wd-form-item>
           <wd-form-item title="使用门槛(元)" title-width="200rpx" prop="usePrice" center>
-            <wd-input-number v-model="formData.usePrice" :min="0" :step="0.01" />
+            <wd-input-number v-model="formData.usePrice" :min="0" :step="0.01" :precision="2" />
           </wd-form-item>
 
           <!-- 商品范围 -->
@@ -67,14 +67,14 @@
             </wd-radio-group>
           </wd-form-item>
           <wd-form-item v-if="formData.discountType === 1" title="优惠金额(元)" title-width="200rpx" prop="discountPrice" center>
-            <wd-input-number v-model="formData.discountPrice" :min="0" :step="0.01" />
+            <wd-input-number v-model="formData.discountPrice" :min="0" :step="0.01" :precision="2" />
           </wd-form-item>
           <template v-else-if="formData.discountType === 2">
             <wd-form-item title="折扣百分比" title-width="200rpx" prop="discountPercent" center>
               <wd-input-number v-model="formData.discountPercent" :min="0" :max="100" />
             </wd-form-item>
             <wd-form-item title="最多优惠(元)" title-width="200rpx" prop="discountLimitPrice" center>
-              <wd-input-number v-model="formData.discountLimitPrice" :min="0" :step="0.01" />
+              <wd-input-number v-model="formData.discountLimitPrice" :min="0" :step="0.01" :precision="2" />
             </wd-form-item>
           </template>
 
@@ -216,7 +216,7 @@ async function handleSubmit() {
   if (!valid) {
     return
   }
-  // 固定日期有效期时，开始/结束时间必填（后端 @AssertTrue 校验）
+  // 固定日期有效期时，开始/结束时间必填
   if (formData.value.validityType === 1 && (!formData.value.validStartTime || !formData.value.validEndTime)) {
     toast.warning('请选择固定有效期的开始与结束时间')
     return

@@ -44,11 +44,11 @@
                 <template #sku="{ row }">
                   <view class="flex items-center gap-12rpx py-8rpx">
                     <text class="w-160rpx shrink-0 text-26rpx text-[#666]">优惠金额(元)</text>
-                    <wd-input-number v-model="row.discountPrice" :min="0" :step="0.01" />
+                    <wd-input-number v-model="row.discountPrice" :min="0" :step="0.01" :precision="2" />
                   </view>
                   <view class="flex items-center gap-12rpx py-8rpx">
                     <text class="w-160rpx shrink-0 text-26rpx text-[#666]">折扣百分比(%)</text>
-                    <wd-input-number v-model="row.discountPercent" :min="0" :max="100" :step="0.01" />
+                    <wd-input-number v-model="row.discountPercent" :min="0" :max="100" :step="0.01" :precision="2" />
                   </view>
                 </template>
               </SpuSkuEditor>

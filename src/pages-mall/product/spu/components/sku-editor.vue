@@ -46,15 +46,15 @@
       </view>
       <view class="flex items-center gap-12rpx py-6rpx">
         <text class="w-160rpx shrink-0 text-26rpx text-[#666]">销售价(元)</text>
-        <wd-input-number v-model="sku.price" :min="0" :step="0.01" @change="emitChange" />
+        <wd-input-number v-model="sku.price" :min="0" :step="0.01" :precision="2" @change="emitChange" />
       </view>
       <view class="flex items-center gap-12rpx py-6rpx">
         <text class="w-160rpx shrink-0 text-26rpx text-[#666]">市场价(元)</text>
-        <wd-input-number v-model="sku.marketPrice" :min="0" :step="0.01" @change="emitChange" />
+        <wd-input-number v-model="sku.marketPrice" :min="0" :step="0.01" :precision="2" @change="emitChange" />
       </view>
       <view class="flex items-center gap-12rpx py-6rpx">
         <text class="w-160rpx shrink-0 text-26rpx text-[#666]">成本价(元)</text>
-        <wd-input-number v-model="sku.costPrice" :min="0" :step="0.01" @change="emitChange" />
+        <wd-input-number v-model="sku.costPrice" :min="0" :step="0.01" :precision="2" @change="emitChange" />
       </view>
       <view class="flex items-center gap-12rpx py-6rpx">
         <text class="w-160rpx shrink-0 text-26rpx text-[#666]">库存</text>
@@ -66,11 +66,11 @@
       </view>
       <view class="flex items-center gap-12rpx py-6rpx">
         <text class="w-160rpx shrink-0 text-26rpx text-[#666]">重量(kg)</text>
-        <wd-input-number v-model="sku.weight" :min="0" :step="0.01" @change="emitChange" />
+        <wd-input-number v-model="sku.weight" :min="0" :step="0.01" :precision="2" @change="emitChange" />
       </view>
       <view class="flex items-center gap-12rpx py-6rpx">
         <text class="w-160rpx shrink-0 text-26rpx text-[#666]">体积(m³)</text>
-        <wd-input-number v-model="sku.volume" :min="0" :step="0.01" @change="emitChange" />
+        <wd-input-number v-model="sku.volume" :min="0" :step="0.01" :precision="2" @change="emitChange" />
       </view>
       <view class="flex items-start gap-12rpx py-6rpx">
         <text class="w-160rpx shrink-0 text-26rpx text-[#666]">图片</text>
@@ -80,11 +80,11 @@
       <template v-if="subCommissionType">
         <view class="flex items-center gap-12rpx py-6rpx">
           <text class="w-160rpx shrink-0 text-26rpx text-[#666]">一级佣金(元)</text>
-          <wd-input-number v-model="sku.firstBrokeragePrice" :min="0" :step="0.01" @change="emitChange" />
+          <wd-input-number v-model="sku.firstBrokeragePrice" :min="0" :step="0.01" :precision="2" @change="emitChange" />
         </view>
         <view class="flex items-center gap-12rpx py-6rpx">
           <text class="w-160rpx shrink-0 text-26rpx text-[#666]">二级佣金(元)</text>
-          <wd-input-number v-model="sku.secondBrokeragePrice" :min="0" :step="0.01" @change="emitChange" />
+          <wd-input-number v-model="sku.secondBrokeragePrice" :min="0" :step="0.01" :precision="2" @change="emitChange" />
         </view>
       </template>
     </view>

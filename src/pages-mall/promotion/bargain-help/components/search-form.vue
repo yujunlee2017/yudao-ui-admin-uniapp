@@ -43,7 +43,7 @@ const emit = defineEmits<{
 const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
   recordId: undefined as string | undefined,
-}) // 搜索表单数据（后端 BargainHelpPageReqVO 仅支持 recordId）
+}) // 搜索表单数据
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
