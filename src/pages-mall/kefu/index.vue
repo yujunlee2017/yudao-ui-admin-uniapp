@@ -243,7 +243,7 @@ function parseContent(content: any): Record<string, any> {
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-mall/index')
+  navigateBackPlus('/pages-statistics/mall/home/index')
 }
 
 /** 加载会话 */

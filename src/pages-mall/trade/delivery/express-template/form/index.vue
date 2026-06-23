@@ -124,10 +124,8 @@ async function getDetail() {
   }
   const data = await getDeliveryExpressTemplate(Number(props.id))
   formData.value = {
-    id: data.id,
-    name: data.name,
+    ...data,
     chargeMode: data.chargeMode ?? DeliveryExpressChargeModeEnum.COUNT,
-    sort: data.sort,
   }
   // 区域金额 分→元 回显
   charges.value = (data.charges || []).map(item => ({

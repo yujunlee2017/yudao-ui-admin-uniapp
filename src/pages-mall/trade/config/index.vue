@@ -219,7 +219,7 @@ const PROP_TAB: Record<string, number> = {
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-mall/index')
+  navigateBackPlus('/pages-statistics/mall/home/index')
 }
 
 /** 加载配置 */
@@ -229,6 +229,7 @@ async function loadConfig() {
     return
   }
   formData.value = {
+    ...data,
     afterSaleRefundReasons: data.afterSaleRefundReasons || [],
     afterSaleReturnReasons: data.afterSaleReturnReasons || [],
     deliveryExpressFreeEnabled: !!data.deliveryExpressFreeEnabled,

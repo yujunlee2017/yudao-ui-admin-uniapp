@@ -1638,9 +1638,9 @@ const menuGroupsData: MenuGroup[] = [
     menus: [
       {
         key: 'mallHome',
-        name: '商城工作台',
+        name: '商城首页',
         icon: 'dashboard',
-        url: '/pages-mall/index',
+        url: '/pages-statistics/mall/home/index',
         iconColor: '#1677ff',
       },
       {
