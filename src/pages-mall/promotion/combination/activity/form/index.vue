@@ -158,14 +158,7 @@ async function getDetail() {
   }
   const data = await getPromotionCombinationActivity(Number(props.id))
   formData.value = {
-    id: data.id,
-    name: data.name,
-    startTime: data.startTime,
-    endTime: data.endTime,
-    userSize: data.userSize,
-    limitDuration: data.limitDuration,
-    totalLimitCount: data.totalLimitCount,
-    singleLimitCount: data.singleLimitCount,
+    ...data,
     virtualGroup: !!data.virtualGroup,
   }
   if (data.products?.length) {

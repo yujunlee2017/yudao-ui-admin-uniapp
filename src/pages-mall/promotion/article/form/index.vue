@@ -11,6 +11,7 @@
     <view>
       <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
+          <!-- TODO @AI：分类那，封装一个组件，这里直接使用，是不是更好。 -->
           <wd-form-item
             title="文章分类"
             title-width="200rpx"
@@ -46,6 +47,7 @@
               </wd-radio>
             </wd-radio-group>
           </wd-form-item>
+          <!-- TODO @AI：能不能找个商品选择器 -->
           <wd-form-item
             title="关联商品"
             title-width="200rpx"

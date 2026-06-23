@@ -35,10 +35,13 @@
               {{ item.name || `活动 #${item.id}` }}
             </view>
             <view class="flex shrink-0 items-center gap-12rpx">
+              <!-- TODO @AI：不会为空的呀？！ -->
               <dict-tag v-if="item.status != null" :type="DICT_TYPE.COMMON_STATUS" :value="item.status" />
+              <!-- TODO @AI：貌似会为空？？？！！！分析下，是数据问题，还是就是这样的？ -->
               <text class="text-26rpx text-[#fa8c16]">{{ formatDisplayMoney(item.seckillPrice) }}</text>
             </view>
           </view>
+          <!-- TODO @AI：要不就开始时间、结束时间？不然会折行 -->
           <view class="flex items-center text-26rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">活动时间：</text>
             <text>{{ formatDateTime(item.startTime) || '-' }} ~ {{ formatDateTime(item.endTime) || '-' }}</text>

@@ -28,6 +28,8 @@
       <wd-cell title="结束时间" :value="formatDateTime(formData.endTime) || '-'" />
     </wd-cell-group>
 
+    <!-- TODO @AI：需要展示下商品信息么？ -->
+
     <!-- 底部操作按钮 -->
     <view v-if="hasAccessByCodes(['promotion:bargain-activity:update', 'promotion:bargain-activity:delete', 'promotion:bargain-activity:close'])" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">

@@ -38,6 +38,7 @@
       <view class="mb-16rpx text-28rpx text-[#999]">
         装修属性
       </view>
+      <!-- TODO @AI：貌似渲染不出来；ps：是不是直接 format ，不用愁一个 compute 方法 -->
       <view class="whitespace-pre-wrap break-all rounded-8rpx bg-[#f7f7f7] p-16rpx text-24rpx text-[#666]">
         {{ propertyText }}
       </view>

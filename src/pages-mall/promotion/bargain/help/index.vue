@@ -1,3 +1,4 @@
+<!-- TODO @AI：它是不是不用 search-form.vue？按照 vue3 + ep，它可以被访问，是不是就 ok 了哈？传递砍价记录？ -->
 <template>
   <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->

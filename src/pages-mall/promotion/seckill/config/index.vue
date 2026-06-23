@@ -34,8 +34,10 @@
             <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
               {{ item.name || `时段 #${item.id}` }}
             </view>
+            <!-- TODO @AI：不会为空的呀？！ -->
             <dict-tag v-if="item.status != null" :type="DICT_TYPE.COMMON_STATUS" :value="item.status" />
           </view>
+          <!-- TODO @AI：会折行，要不就开始时间、结束时间？ -->
           <view class="text-28rpx text-[#666]">
             {{ item.startTime || '-' }} ~ {{ item.endTime || '-' }}
           </view>

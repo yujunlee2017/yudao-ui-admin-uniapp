@@ -11,6 +11,7 @@
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
     <!-- 列表操作 -->
+    <!-- TODO @AI：pc 没有发送这个逻辑么把？！ -->
     <view v-if="hasAccessByCodes(['promotion:coupon:send'])" class="bg-white px-24rpx py-16rpx">
       <wd-button size="small" type="primary" @click="sendVisible = true">
         发送优惠券

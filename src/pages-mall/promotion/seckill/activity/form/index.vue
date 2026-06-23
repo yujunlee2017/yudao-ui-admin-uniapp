@@ -166,13 +166,7 @@ async function getDetail() {
   }
   const data = await getPromotionSeckillActivity(Number(props.id))
   formData.value = {
-    id: data.id,
-    name: data.name,
-    startTime: data.startTime,
-    endTime: data.endTime,
-    totalLimitCount: data.totalLimitCount,
-    singleLimitCount: data.singleLimitCount,
-    sort: data.sort,
+    ...data,
   }
   configIds.value = String(data.configIds || '').split(',').map(Number).filter(Boolean)
   if (data.products?.length) {

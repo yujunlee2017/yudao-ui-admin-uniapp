@@ -141,11 +141,7 @@ async function getDetail() {
   }
   const data = await getPromotionDiscountActivity(Number(props.id))
   formData.value = {
-    id: data.id,
-    name: data.name,
-    startTime: data.startTime,
-    endTime: data.endTime,
-    remark: data.remark,
+    ...data,
   }
   // 回显商品与每个 SKU 的优惠配置
   if (data.products?.length) {

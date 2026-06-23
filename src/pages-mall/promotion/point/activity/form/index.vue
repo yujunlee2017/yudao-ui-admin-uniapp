@@ -26,6 +26,7 @@
           </view>
 
           <!-- 积分商品 -->
+          <!-- TODO @AI：有没更好的展示？类似 sku、spu 界面？注意：实现的时候联系下拼团、砍价、秒杀活动的处理； -->
           <view class="mb-160rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
             <view class="border-b border-[#f0f0f0] px-24rpx py-18rpx text-30rpx text-[#333] font-semibold">
               积分商品
@@ -138,7 +139,7 @@ async function getDetail() {
     return
   }
   const data = await getPromotionPointActivity(Number(props.id))
-  formData.value = { id: data.id, sort: data.sort, remark: data.remark }
+  formData.value = { ...data }
   if (data.products?.length) {
     spuId.value = data.products[0].spuId
     await editorRef.value?.setFromDetail(data.products[0].spuId!, data.products)

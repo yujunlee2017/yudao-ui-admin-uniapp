@@ -16,11 +16,13 @@
           </wd-form-item>
           <wd-form-item title="发放数量" title-width="200rpx" prop="totalCount" center>
             <wd-input-number v-model="formData.totalCount" :min="-1" />
+            <!-- TODO @AI：能不能在尾部。 -->
             <text class="ml-12rpx text-24rpx text-[#999]">-1 不限</text>
           </wd-form-item>
           <wd-form-item title="每人限领" title-width="200rpx" prop="takeLimitCount" center>
             <wd-input-number v-model="formData.takeLimitCount" :min="-1" />
           </wd-form-item>
+          <!-- TODO @AI：select -->
           <wd-form-item title="领取方式" title-width="200rpx" prop="takeType" center>
             <wd-radio-group v-model="formData.takeType" type="button">
               <wd-radio
@@ -37,6 +39,8 @@
           </wd-form-item>
 
           <!-- 商品范围 -->
+          <!-- TODO @AI：select -->
+          <!-- TODO @AI：这个有数据字典么？ -->
           <wd-form-item title="商品范围" title-width="200rpx" prop="productScope" center>
             <wd-radio-group v-model="formData.productScope" type="button">
               <wd-radio :value="1">
@@ -50,6 +54,7 @@
               </wd-radio>
             </wd-radio-group>
           </wd-form-item>
+          <!-- TODO @AI：是不是应该使用枚举类 -->
           <wd-form-item v-if="formData.productScope !== 1" :title="formData.productScope === 3 ? '指定分类' : '指定商品'" title-width="200rpx">
             <ScopePicker v-model="formData.productScopeValues" :scope="formData.productScope!" />
           </wd-form-item>

@@ -150,18 +150,11 @@ async function getDetail() {
   }
   const data = await getPromotionBargainActivity(Number(props.id))
   formData.value = {
-    id: data.id,
-    name: data.name,
-    startTime: data.startTime,
-    endTime: data.endTime,
+    ...data,
     bargainFirstPrice: fenToYuan(data.bargainFirstPrice),
     bargainMinPrice: fenToYuan(data.bargainMinPrice),
     randomMinPrice: fenToYuan(data.randomMinPrice),
     randomMaxPrice: fenToYuan(data.randomMaxPrice),
-    stock: data.stock,
-    totalLimitCount: data.totalLimitCount,
-    helpMaxCount: data.helpMaxCount,
-    bargainCount: data.bargainCount,
   }
   if (data.spuId) {
     spuId.value = data.spuId

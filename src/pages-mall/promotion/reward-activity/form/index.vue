@@ -34,6 +34,7 @@
                   </wd-radio>
                 </wd-radio-group>
               </wd-form-item>
+              <!-- TODO @AI：下拉选择 -->
               <wd-form-item title="商品范围" title-width="200rpx" prop="productScope" center>
                 <wd-radio-group v-model="formData.productScope" type="button">
                   <wd-radio
@@ -45,6 +46,7 @@
                   </wd-radio>
                 </wd-radio-group>
               </wd-form-item>
+              <!-- TODO @AI：枚举； -->
               <wd-form-item v-if="formData.productScope !== 1" :title="formData.productScope === 3 ? '指定分类' : '指定商品'" title-width="200rpx">
                 <ScopePicker v-model="scopeValues" :scope="formData.productScope!" />
               </wd-form-item>
@@ -292,13 +294,9 @@ async function getDetail() {
   }
   const data = await getPromotionRewardActivity(Number(props.id))
   formData.value = {
-    id: data.id,
-    name: data.name,
-    startTime: data.startTime,
-    endTime: data.endTime,
+    ...data,
     conditionType: data.conditionType ?? 10,
     productScope: data.productScope ?? 1,
-    remark: data.remark,
   }
   scopeValues.value = data.productScopeValues || []
   if (data.rules?.length) {

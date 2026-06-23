@@ -1,3 +1,4 @@
+<!-- todo @AI：是不是要写下作用？类似别的 components -->
 <template>
   <view>
     <!-- 已选项 + 打开按钮 -->
@@ -11,6 +12,7 @@
       >
         {{ item.label }}
       </wd-tag>
+      <!-- TODO @AI：scopeLabel 的渲染不太对，没出具体的名字。 -->
       <wd-button size="small" variant="plain" @click="handleOpen">
         选择{{ scopeLabel }}
       </wd-button>
@@ -94,7 +96,9 @@ const filteredOptions = computed(() => { // 按关键字过滤
 })
 
 /** 加载范围选项（商品或分类） */
+// TODO @AI：是不是枚举没使用？？？
 async function loadOptions() {
+  // TODO @AI：如果按照 category、product spu，是不是直接 list 就好了？不用搞的太复杂？
   if (props.scope === 3) {
     const list = await getProductCategoryList()
     options.value = list.filter(item => item.id != null).map(item => ({ value: item.id as number, label: item.name }))
@@ -124,6 +128,7 @@ function handleRemove(value: number) {
   emit('update:modelValue', (props.modelValue || []).filter(item => item !== value))
 }
 
+// TODO @AI：/** */ 注释，更合适？
 // 范围切换时重置选项缓存（商品↔分类编号语义不同）
 watch(() => props.scope, () => {
   options.value = []

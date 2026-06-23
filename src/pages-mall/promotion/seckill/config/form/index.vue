@@ -20,6 +20,7 @@
           <wd-form-item title="结束时间" title-width="200rpx" prop="endTime">
             <wd-input v-model="formData.endTime" clearable placeholder="HH:mm，例如 12:00" />
           </wd-form-item>
+          <!-- TODO @AI：上传组件 -->
           <wd-form-item title="轮播图" title-width="200rpx" prop="sliderPicUrls">
             <wd-textarea v-model="sliderPicText" clearable placeholder="多个图片 URL 用英文逗号分隔" />
           </wd-form-item>
@@ -76,6 +77,7 @@ const getTitle = computed(() => props.id ? '编辑秒杀时段' : '新增秒杀�
 const formLoading = ref(false) // 表单提交状态
 const formRef = ref<FormInstance>() // 表单组件引用
 const sliderPicText = ref('') // 轮播图 URL 文本（逗号分隔）
+// TODO @AI：startTime、endTime 还不是应该选择下？
 const formData = ref<PromotionSeckillConfig>({
   id: undefined,
   name: '',

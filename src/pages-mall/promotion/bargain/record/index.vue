@@ -1,3 +1,4 @@
+<!-- TODO @AI：是不是要支持，跳转到砍价助力？ -->
 <template>
   <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->

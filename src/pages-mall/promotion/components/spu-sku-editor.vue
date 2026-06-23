@@ -1,3 +1,4 @@
+<!-- todo @AI：是不是要写下作用？类似别的 components -->
 <template>
   <view>
     <!-- 已选商品 -->

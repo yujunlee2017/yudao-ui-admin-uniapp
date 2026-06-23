@@ -14,7 +14,9 @@
           <wd-form-item title="模板名称" title-width="200rpx" prop="name">
             <wd-input v-model="formData.name" clearable placeholder="请输入模板名称" />
           </wd-form-item>
+          <!-- TODO @AI：upload 组件？？？ -->
           <wd-form-item title="预览图 URL" title-width="200rpx" prop="previewPicUrlsText">
+            <!-- TODO @AI：是不是不用 maxlength？？？ -->
             <wd-textarea
               v-model="formData.previewPicUrlsText"
               clearable
@@ -109,13 +111,12 @@ const formData = ref<DiyTemplateFormData>({
   name: '',
   remark: '',
   previewPicUrlsText: '',
-  propertyText: '{}',
+  propertyText: '{}', // TODO @AI：property 是不是就够了，不用这里抽一个IE出来？？？
 }) // 表单数据
 const previewUrls = computed(() => parseUrls(formData.value.previewPicUrlsText || ''))
 const formSchema = createFormSchema({
   name: [{ required: true, message: '模板名称不能为空' }],
-  // 装修属性仅编辑时显示，需为合法 JSON
-  propertyText: [{ validator: validateProperty }],
+  propertyText: [{ validator: validateProperty }], // 装修属性仅编辑时显示，需为合法 JSON
 })
 const formRef = ref<FormInstance>() // 表单组件引用
 
