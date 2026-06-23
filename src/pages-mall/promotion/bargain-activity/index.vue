@@ -37,8 +37,8 @@
             <dict-tag v-if="item.status != null" :type="DICT_TYPE.COMMON_STATUS" :value="item.status" />
           </view>
           <view class="flex items-center justify-between text-26rpx text-[#666]">
-            <text>起始价：{{ formatMallMoney(item.bargainFirstPrice) }}</text>
-            <text>底价：{{ formatMallMoney(item.bargainMinPrice) }}</text>
+            <text>起始价：{{ formatDisplayMoney(item.bargainFirstPrice) }}</text>
+            <text>底价：{{ formatDisplayMoney(item.bargainMinPrice) }}</text>
           </view>
         </view>
       </view>
@@ -61,7 +61,7 @@ import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { getPromotionBargainActivityPage } from '@/api/mall/promotion/bargain'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import SearchForm from './components/search-form.vue'

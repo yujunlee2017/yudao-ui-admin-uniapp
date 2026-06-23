@@ -33,7 +33,7 @@
               SKU 编号：{{ product.skuId }}
             </view>
             <view class="flex flex-wrap gap-24rpx text-26rpx text-[#666]">
-              <text>秒杀价：{{ formatMallMoney(product.seckillPrice) }}</text>
+              <text>秒杀价：{{ formatDisplayMoney(product.seckillPrice) }}</text>
               <text>库存：{{ product.stock ?? '-' }}</text>
             </view>
           </view>
@@ -70,7 +70,7 @@ import {
   getPromotionSeckillActivity,
 } from '@/api/mall/promotion/seckill'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 

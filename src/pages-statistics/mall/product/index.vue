@@ -41,8 +41,8 @@
 </template>
 
 <script lang="ts" setup>
-import type { SummaryItem } from '../components/summary-grid.vue'
-import type { StatisticsSection } from '../components/statistics'
+import type { SummaryItem } from '@/pages-statistics/components/card/summary-grid.vue'
+import type { StatisticsSection } from '@/pages-statistics/utils/statistics'
 import { computed, onMounted, reactive, ref } from 'vue'
 import {
   getProductStatisticsAnalyse,
@@ -52,9 +52,10 @@ import {
 import { navigateBackPlus } from '@/utils'
 import { formatDateRange } from '@/utils/date'
 import SearchForm from '../components/search-form.vue'
-import { fenToYuan, normalizeRows } from '../components/statistics'
-import StatisticsCard from '../components/statistics-card.vue'
-import SummaryGrid from '../components/summary-grid.vue'
+import { fenToYuan } from '@/utils/format'
+import { normalizeRows } from '@/pages-statistics/utils/statistics'
+import StatisticsCard from '@/pages-statistics/components/card/statistics-card.vue'
+import SummaryGrid from '@/pages-statistics/components/card/summary-grid.vue'
 
 definePage({
   style: {

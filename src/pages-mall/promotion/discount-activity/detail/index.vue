@@ -41,7 +41,8 @@
                   <dict-tag v-if="product.discountType != null" :type="DICT_TYPE.PROMOTION_DISCOUNT_TYPE" :value="product.discountType" />
                   <text v-else>-</text>
                 </view>
-                <text v-if="product.discountType === 1">优惠金额：{{ formatMallMoney(product.discountPrice) }}</text>
+                <!-- TODO @AI：没使用枚举 -->
+                <text v-if="product.discountType === 1">优惠金额：{{ formatDisplayMoney(product.discountPrice) }}</text>
                 <text v-if="product.discountType === 2">折扣：{{ product.discountPercent ?? '-' }}%</text>
               </view>
             </view>
@@ -79,7 +80,7 @@ import {
   getPromotionDiscountActivity,
 } from '@/api/mall/promotion/discount'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'

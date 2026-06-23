@@ -20,15 +20,16 @@
         <dict-tag v-if="formData.takeType != null" :type="DICT_TYPE.PROMOTION_COUPON_TAKE_TYPE" :value="formData.takeType" />
         <text v-else>-</text>
       </wd-cell>
-      <wd-cell title="使用门槛" :value="formatMallMoney(formData.usePrice)" />
+      <wd-cell title="使用门槛" :value="formatDisplayMoney(formData.usePrice)" />
       <wd-cell title="优惠类型">
         <dict-tag v-if="formData.discountType != null" :type="DICT_TYPE.PROMOTION_DISCOUNT_TYPE" :value="formData.discountType" />
         <text v-else>-</text>
       </wd-cell>
-      <wd-cell v-if="formData.discountType === 1" title="优惠金额" :value="formatMallMoney(formData.discountPrice)" />
+      <!-- TODO @AI：没有使用枚举 -->
+      <wd-cell v-if="formData.discountType === 1" title="优惠金额" :value="formatDisplayMoney(formData.discountPrice)" />
       <template v-else-if="formData.discountType === 2">
         <wd-cell title="折扣百分比" :value="formData.discountPercent != null ? `${formData.discountPercent}%` : '-'" />
-        <wd-cell title="最多优惠" :value="formatMallMoney(formData.discountLimitPrice)" />
+        <wd-cell title="最多优惠" :value="formatDisplayMoney(formData.discountLimitPrice)" />
       </template>
       <wd-cell title="有效期类型">
         <dict-tag v-if="formData.validityType != null" :type="DICT_TYPE.PROMOTION_COUPON_TEMPLATE_VALIDITY_TYPE" :value="formData.validityType" />
@@ -77,7 +78,7 @@ import {
   updatePromotionCouponTemplateStatus,
 } from '@/api/mall/promotion/coupon/coupon-template'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'

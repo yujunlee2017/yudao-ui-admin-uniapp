@@ -45,8 +45,8 @@
           </view>
 
           <view class="mb-12rpx flex items-center justify-between text-26rpx text-[#666]">
-            <text>门槛：{{ formatMallMoney(item.usePrice) }}</text>
-            <text>优惠：{{ formatMallMoney(item.discountPrice) }}</text>
+            <text>门槛：{{ formatDisplayMoney(item.usePrice) }}</text>
+            <text>优惠：{{ formatDisplayMoney(item.discountPrice) }}</text>
           </view>
           <view class="flex items-center text-26rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">用户编号：</text>
@@ -96,7 +96,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { getPromotionCouponPage, sendPromotionCoupon } from '@/api/mall/promotion/coupon/coupon'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import SearchForm from './components/search-form.vue'

@@ -36,7 +36,7 @@
             </view>
             <view class="flex shrink-0 items-center gap-12rpx">
               <dict-tag v-if="item.status != null" :type="DICT_TYPE.COMMON_STATUS" :value="item.status" />
-              <text class="text-26rpx text-[#fa8c16]">{{ formatMallMoney(item.seckillPrice) }}</text>
+              <text class="text-26rpx text-[#fa8c16]">{{ formatDisplayMoney(item.seckillPrice) }}</text>
             </view>
           </view>
           <view class="flex items-center text-26rpx text-[#666]">
@@ -64,7 +64,7 @@ import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { getPromotionSeckillActivityPage } from '@/api/mall/promotion/seckill'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'

@@ -4,13 +4,13 @@
       {{ label }}
     </view>
     <view class="yd-search-form-date-range-container">
-      <view class="flex-1" @click="visible[0] = true">
+      <view class="flex-1" @click="openPicker(0)">
         <view class="yd-search-form-date-range-picker">
           {{ formatDate(currentValue[0]) || '开始日期' }}
         </view>
       </view>
       -
-      <view class="flex-1" @click="visible[1] = true">
+      <view class="flex-1" @click="openPicker(1)">
         <view class="yd-search-form-date-range-picker">
           {{ formatDate(currentValue[1]) || '结束日期' }}
         </view>
@@ -53,6 +53,12 @@ const emit = defineEmits<{
 const visible = ref<[boolean, boolean]>([false, false]) // 日期选择器状态
 const currentValue = ref<[number | undefined, number | undefined]>([undefined, undefined]) // 日期范围值
 const tempValue = ref<[number, number]>([Date.now(), Date.now()]) // 临时日期值
+
+/** 打开日期选择器：临时值定位到当前值（支持默认值 / 已选值回显） */
+function openPicker(index: 0 | 1) {
+  tempValue.value[index] = currentValue.value[index] ?? Date.now()
+  visible.value[index] = true
+}
 
 /** 确认开始日期 */
 function handleStartConfirm() {

@@ -32,7 +32,7 @@
           </view>
           <view v-for="(rule, index) in formData.rules" :key="index" class="px-24rpx py-16rpx text-26rpx text-[#666]">
             <view>
-              <text>满 {{ formatLimit(rule.limit) }}，减 {{ formatMallMoney(rule.discountPrice) }}</text>
+              <text>满 {{ formatLimit(rule.limit) }}，减 {{ formatDisplayMoney(rule.discountPrice) }}</text>
               <text v-if="rule.freeDelivery">，包邮</text>
               <text v-if="rule.point">，送 {{ rule.point }} 积分</text>
             </view>
@@ -75,7 +75,7 @@ import {
   getPromotionRewardActivity,
 } from '@/api/mall/promotion/reward'
 import { useAccess } from '@/hooks/useAccess'
-import { fenToYuan, formatMallMoney } from '@/pages-mall/utils'
+import { fenToYuan, formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'

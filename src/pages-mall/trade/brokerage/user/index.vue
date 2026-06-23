@@ -62,11 +62,11 @@
           <view class="mb-12rpx flex items-center justify-between text-26rpx text-[#666]">
             <text>推广人数：{{ item.brokerageUserCount ?? 0 }}</text>
             <text>推广订单：{{ item.brokerageOrderCount ?? 0 }}</text>
-            <text>已提现：{{ formatMallMoney(item.withdrawPrice) }}</text>
+            <text>已提现：{{ formatDisplayMoney(item.withdrawPrice) }}</text>
           </view>
           <view class="flex items-center justify-between text-26rpx text-[#666]">
-            <text>可用佣金：{{ formatMallMoney(item.price) }}</text>
-            <text>冻结佣金：{{ formatMallMoney(item.frozenPrice) }}</text>
+            <text>可用佣金：{{ formatDisplayMoney(item.price) }}</text>
+            <text>冻结佣金：{{ formatDisplayMoney(item.frozenPrice) }}</text>
           </view>
         </view>
       </view>
@@ -91,7 +91,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { getTradeBrokerageUserPage, updateTradeBrokerageUserEnabled } from '@/api/mall/trade/brokerage/user'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import SearchForm from './components/search-form.vue'
 

@@ -63,7 +63,7 @@
 
 <script lang="ts" setup>
 import type { Dept } from '@/api/system/dept'
-import type { StatisticsColumn, StatisticsSection } from '../components/statistics'
+import type { StatisticsColumn, StatisticsSection } from '@/pages-statistics/utils/statistics'
 import { computed, onMounted, reactive, ref } from 'vue'
 import {
   getCustomerArea,
@@ -83,8 +83,8 @@ import {
   getFirstDeptId,
   normalizeRows,
   toNumber,
-} from '../components/statistics'
-import StatisticsCard from '../components/statistics-card.vue'
+} from '@/pages-statistics/utils/statistics'
+import StatisticsCard from '@/pages-statistics/components/card/statistics-card.vue'
 
 definePage({
   style: {

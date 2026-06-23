@@ -7,41 +7,7 @@
   <!-- 搜索弹窗 -->
   <wd-popup v-model="visible" position="top" :custom-style="getTopPopupStyle()" :modal-style="getTopPopupModalStyle()" @close="visible = false">
     <view class="yd-search-form-container">
-      <!-- TODO @AI：是不是使用 yd search 组件？ -->
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          开始日期
-        </view>
-        <wd-form-item
-          is-link
-          :value="formatDate(formData.startTime)"
-          placeholder="请选择开始日期"
-          @click="startVisible = true"
-        />
-        <wd-datetime-picker
-          v-model="formData.startTime"
-          v-model:visible="startVisible"
-          title="请选择开始日期"
-          type="date"
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          结束日期
-        </view>
-        <wd-form-item
-          is-link
-          :value="formatDate(formData.endTime)"
-          placeholder="请选择结束日期"
-          @click="endVisible = true"
-        />
-        <wd-datetime-picker
-          v-model="formData.endTime"
-          v-model:visible="endVisible"
-          title="请选择结束日期"
-          type="date"
-        />
-      </view>
+      <yd-search-date-range v-model="dateRange" label="统计时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -55,7 +21,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { formatDate } from '@/utils/date'
 
@@ -70,14 +36,9 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const startVisible = ref(false) // 开始日期选择器显隐
-const endVisible = ref(false) // 结束日期选择器显隐
-const formData = reactive({
-  startTime: props.initialStartTime,
-  endTime: props.initialEndTime,
-}) // 搜索表单数据
+const dateRange = ref<[number | undefined, number | undefined]>([props.initialStartTime, props.initialEndTime]) // 统计时间区间（默认值由父级传入）
 
-const placeholder = computed(() => `${formatDate(formData.startTime)} 至 ${formatDate(formData.endTime)}`) // 搜索入口展示文案
+const placeholder = computed(() => `${formatDate(dateRange.value[0])} 至 ${formatDate(dateRange.value[1])}`) // 搜索入口展示文案
 
 watch(
   () => [props.initialStartTime, props.initialEndTime],
@@ -85,21 +46,22 @@ watch(
     if (visible.value) {
       return
     }
-    formData.startTime = props.initialStartTime
-    formData.endTime = props.initialEndTime
+    dateRange.value = [props.initialStartTime, props.initialEndTime]
   },
 )
 
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  emit('search', { ...formData })
+  emit('search', {
+    startTime: dateRange.value[0] ?? props.initialStartTime,
+    endTime: dateRange.value[1] ?? props.initialEndTime,
+  })
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  formData.startTime = props.initialStartTime
-  formData.endTime = props.initialEndTime
+  dateRange.value = [props.initialStartTime, props.initialEndTime]
   visible.value = false
   emit('reset')
 }

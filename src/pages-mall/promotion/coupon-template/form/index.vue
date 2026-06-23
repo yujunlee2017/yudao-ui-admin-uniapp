@@ -141,7 +141,7 @@ import {
 } from '@/api/mall/promotion/coupon/coupon-template'
 import { getIntDictOptions } from '@/hooks/useDict'
 import ScopePicker from '@/pages-mall/promotion/components/scope-picker.vue'
-import { fenToYuan, yuanToFen } from '@/pages-mall/utils'
+import { fenToYuan, yuanToFen } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'

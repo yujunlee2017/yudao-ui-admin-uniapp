@@ -16,8 +16,8 @@
         <dict-tag v-if="props.discountType != null && props.discountType !== ''" :type="DICT_TYPE.PROMOTION_DISCOUNT_TYPE" :value="Number(props.discountType)" />
         <text v-else>-</text>
       </wd-cell>
-      <wd-cell title="使用门槛" :value="formatMallMoney(props.usePrice)" />
-      <wd-cell title="优惠金额" :value="formatMallMoney(props.discountPrice)" />
+      <wd-cell title="使用门槛" :value="formatDisplayMoney(props.usePrice)" />
+      <wd-cell title="优惠金额" :value="formatDisplayMoney(props.discountPrice)" />
       <wd-cell title="状态">
         <dict-tag v-if="props.status != null && props.status !== ''" :type="DICT_TYPE.PROMOTION_COUPON_STATUS" :value="Number(props.status)" />
         <text v-else>-</text>
@@ -41,7 +41,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, ref } from 'vue'
 import { deletePromotionCoupon } from '@/api/mall/promotion/coupon/coupon'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'

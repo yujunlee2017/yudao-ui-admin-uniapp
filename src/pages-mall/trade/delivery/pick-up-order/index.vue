@@ -46,7 +46,7 @@
 
           <view class="flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">实付金额：</text>
-            <text class="text-[#fa8c16] font-semibold">{{ formatMallMoney(item.payPrice) }}</text>
+            <text class="text-[#fa8c16] font-semibold">{{ formatDisplayMoney(item.payPrice) }}</text>
           </view>
           <view class="mt-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">核销码：</text>
@@ -95,7 +95,7 @@ import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { getDeliveryPickUpOrderPage } from '@/api/mall/trade/delivery/pick-up-order'
 import { pickUpTradeOrderByVerifyCode } from '@/api/mall/trade/order'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { useAccess } from '@/hooks/useAccess'
 import { DICT_TYPE } from '@/utils/constants'

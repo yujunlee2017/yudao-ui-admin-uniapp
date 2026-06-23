@@ -146,7 +146,7 @@ import {
 } from '@/api/mall/promotion/kefu/message'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
-import { fenToYuan } from '@/pages-mall/utils'
+import { fenToYuan } from '@/utils/format'
 import { connectKefuWebSocket, disconnectKefuWebSocket } from './composables/useKefuWebSocket'
 
 // 客服消息内容类型：1 文本、2 图片、3 语音、4 视频、5 系统、10 商品、11 订单

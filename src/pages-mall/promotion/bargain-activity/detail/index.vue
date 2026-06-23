@@ -16,10 +16,10 @@
       </wd-cell>
       <wd-cell title="商品编号" :value="formData.spuId != null ? String(formData.spuId) : '-'" />
       <wd-cell title="SKU 编号" :value="formData.skuId != null ? String(formData.skuId) : '-'" />
-      <wd-cell title="起始价" :value="formatMallMoney(formData.bargainFirstPrice)" />
-      <wd-cell title="底价" :value="formatMallMoney(formData.bargainMinPrice)" />
-      <wd-cell title="随机最小金额" :value="formatMallMoney(formData.randomMinPrice)" />
-      <wd-cell title="随机最大金额" :value="formatMallMoney(formData.randomMaxPrice)" />
+      <wd-cell title="起始价" :value="formatDisplayMoney(formData.bargainFirstPrice)" />
+      <wd-cell title="底价" :value="formatDisplayMoney(formData.bargainMinPrice)" />
+      <wd-cell title="随机最小金额" :value="formatDisplayMoney(formData.randomMinPrice)" />
+      <wd-cell title="随机最大金额" :value="formatDisplayMoney(formData.randomMaxPrice)" />
       <wd-cell title="库存" :value="formData.stock != null ? String(formData.stock) : '-'" />
       <wd-cell title="总限购" :value="formData.totalLimitCount != null ? String(formData.totalLimitCount) : '-'" />
       <wd-cell title="助力人数" :value="formData.helpMaxCount != null ? String(formData.helpMaxCount) : '-'" />
@@ -57,7 +57,7 @@ import {
   getPromotionBargainActivity,
 } from '@/api/mall/promotion/bargain'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'

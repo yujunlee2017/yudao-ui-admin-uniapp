@@ -26,11 +26,11 @@
       <wd-cell title="推广资格" :value="formData.brokerageEnabled ? '是' : '否'" />
       <wd-cell title="推广人数" :value="formData.brokerageUserCount != null ? String(formData.brokerageUserCount) : '-'" />
       <wd-cell title="推广订单数量" :value="formData.brokerageOrderCount != null ? String(formData.brokerageOrderCount) : '-'" />
-      <wd-cell title="推广订单金额" :value="formatMallMoney(formData.brokerageOrderPrice)" />
-      <wd-cell title="已提现金额" :value="formatMallMoney(formData.withdrawPrice)" />
+      <wd-cell title="推广订单金额" :value="formatDisplayMoney(formData.brokerageOrderPrice)" />
+      <wd-cell title="已提现金额" :value="formatDisplayMoney(formData.withdrawPrice)" />
       <wd-cell title="已提现次数" :value="formData.withdrawCount != null ? String(formData.withdrawCount) : '-'" />
-      <wd-cell title="可用佣金" :value="formatMallMoney(formData.price)" />
-      <wd-cell title="冻结佣金" :value="formatMallMoney(formData.frozenPrice)" />
+      <wd-cell title="可用佣金" :value="formatDisplayMoney(formData.price)" />
+      <wd-cell title="冻结佣金" :value="formatDisplayMoney(formData.frozenPrice)" />
     </wd-cell-group>
 
     <!-- 底部操作按钮 -->
@@ -86,7 +86,7 @@ import {
   updateTradeBrokerageUserEnabled,
 } from '@/api/mall/trade/brokerage/user'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 

@@ -7,7 +7,7 @@
       @click-left="handleBack"
     />
 
-    <!-- 统计分类（固定 tab，避免一页过长）-->
+    <!-- 统计分类（固定 tab，避免一页过长） -->
     <view class="bg-white">
       <wd-tabs v-model="tabIndex" slidable="always" @change="handleTabChange">
         <wd-tab v-for="section in sections" :key="section.title" :title="section.title" />
@@ -56,7 +56,7 @@
           </wd-button>
         </view>
 
-        <!-- 统计列表（当前分类）-->
+        <!-- 统计列表（当前分类） -->
         <StatisticsCard :section="activeSection" :rows="sectionData[activeSection.title] || []" />
       </view>
     </scroll-view>
@@ -65,7 +65,7 @@
 
 <script lang="ts" setup>
 import type { Dept } from '@/api/system/dept'
-import type { StatisticsSection } from '../components/statistics'
+import type { StatisticsSection } from '@/pages-statistics/utils/statistics'
 import { computed, onMounted, reactive, ref } from 'vue'
 import {
   getBusinessInversionRateSummaryByDate,
@@ -86,8 +86,8 @@ import {
   getDefaultDeptId,
   getFirstDeptId,
   normalizeRows,
-} from '../components/statistics'
-import StatisticsCard from '../components/statistics-card.vue'
+} from '@/pages-statistics/utils/statistics'
+import StatisticsCard from '@/pages-statistics/components/card/statistics-card.vue'
 
 definePage({
   style: {

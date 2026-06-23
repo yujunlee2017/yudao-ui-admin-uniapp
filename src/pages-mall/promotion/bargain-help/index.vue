@@ -31,7 +31,7 @@
         >
           <view class="mb-12rpx flex items-center justify-between gap-16rpx">
             <text class="text-30rpx text-[#333] font-semibold">助力记录 #{{ item.id }}</text>
-            <text class="text-30rpx text-[#fa8c16] font-semibold">{{ formatMallMoney(item.reducePrice) }}</text>
+            <text class="text-30rpx text-[#fa8c16] font-semibold">{{ formatDisplayMoney(item.reducePrice) }}</text>
           </view>
           <view class="flex items-center justify-between text-26rpx text-[#666]">
             <text>砍价记录：{{ item.record ?? '-' }}</text>
@@ -51,7 +51,7 @@ import type { PromotionBargainHelp } from '@/api/mall/promotion/bargain'
 import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { getPromotionBargainHelpPage } from '@/api/mall/promotion/bargain'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 import SearchForm from './components/search-form.vue'

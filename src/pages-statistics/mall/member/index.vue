@@ -51,8 +51,8 @@
 </template>
 
 <script lang="ts" setup>
-import type { SummaryItem } from '../components/summary-grid.vue'
-import type { StatisticsSection } from '../components/statistics'
+import type { SummaryItem } from '@/pages-statistics/components/card/summary-grid.vue'
+import type { StatisticsSection } from '@/pages-statistics/utils/statistics'
 import { computed, onMounted, reactive, ref } from 'vue'
 import {
   getMemberAnalyse,
@@ -67,9 +67,10 @@ import { DICT_TYPE } from '@/utils/constants'
 import { formatDateRange } from '@/utils/date'
 import YdChart from '../../components/yd-chart/yd-chart.vue'
 import SearchForm from '../components/search-form.vue'
-import { buildChartOption, fenToYuan, normalizeRows } from '../components/statistics'
-import StatisticsCard from '../components/statistics-card.vue'
-import SummaryGrid from '../components/summary-grid.vue'
+import { fenToYuan } from '@/utils/format'
+import { buildFunnelOption, normalizeRows } from '@/pages-statistics/utils/statistics'
+import StatisticsCard from '@/pages-statistics/components/card/statistics-card.vue'
+import SummaryGrid from '@/pages-statistics/components/card/summary-grid.vue'
 
 definePage({
   style: {
@@ -107,18 +108,12 @@ const funnelOption = computed(() => {
   if (!value || value.visitUserCount === undefined) {
     return undefined
   }
-  // 通用漏斗：访客→下单→成交
-  return buildChartOption({
-    title: '会员漏斗',
-    chart: {
-      type: 'funnel',
-      funnelData: [
-        { name: '访客', value: value.visitUserCount || 0 },
-        { name: '下单', value: value.orderUserCount || 0 },
-        { name: '成交', value: value.payUserCount || 0 },
-      ],
-    },
-  }, [])
+  // 访客→下单→成交
+  return buildFunnelOption([
+    { name: '访客', value: value.visitUserCount || 0 },
+    { name: '下单', value: value.orderUserCount || 0 },
+    { name: '成交', value: value.payUserCount || 0 },
+  ], '会员漏斗')
 }) // 会员漏斗图配置
 
 const terminalSection: StatisticsSection = {

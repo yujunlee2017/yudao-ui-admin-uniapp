@@ -38,8 +38,8 @@
             <text>商品：{{ item.spuId ?? '-' }}</text>
           </view>
           <view class="flex items-center justify-between text-26rpx text-[#666]">
-            <text>起始价：{{ formatMallMoney(item.bargainFirstPrice) }}</text>
-            <text>已砍至：{{ formatMallMoney(item.bargainPrice) }}</text>
+            <text>起始价：{{ formatDisplayMoney(item.bargainFirstPrice) }}</text>
+            <text>已砍至：{{ formatDisplayMoney(item.bargainPrice) }}</text>
           </view>
           <view class="mt-8rpx text-24rpx text-[#999]">
             结束时间：{{ formatDateTime(item.endTime) || '-' }}
@@ -55,7 +55,7 @@ import type { PromotionBargainRecord } from '@/api/mall/promotion/bargain'
 import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { getPromotionBargainRecordPage } from '@/api/mall/promotion/bargain'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'

@@ -34,7 +34,7 @@
             <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
               {{ item.name || `活动 #${item.id}` }}
             </view>
-            <text class="shrink-0 text-26rpx text-[#fa8c16]">{{ formatMallMoney(item.combinationPrice) }}</text>
+            <text class="shrink-0 text-26rpx text-[#fa8c16]">{{ formatDisplayMoney(item.combinationPrice) }}</text>
           </view>
           <view class="flex items-center justify-between text-26rpx text-[#666]">
             <text>成团人数：{{ item.userSize ?? '-' }}</text>
@@ -61,7 +61,7 @@ import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { getPromotionCombinationActivityPage } from '@/api/mall/promotion/combination'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 import SearchForm from './components/search-form.vue'

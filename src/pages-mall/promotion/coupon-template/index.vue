@@ -42,7 +42,7 @@
           </view>
           <view class="flex items-center justify-between text-26rpx text-[#666]">
             <text>发放：{{ item.totalCount === -1 ? '不限' : (item.totalCount ?? '-') }}</text>
-            <text>门槛：{{ formatMallMoney(item.usePrice) }}</text>
+            <text>门槛：{{ formatDisplayMoney(item.usePrice) }}</text>
           </view>
         </view>
       </view>
@@ -65,7 +65,7 @@ import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { getPromotionCouponTemplatePage } from '@/api/mall/promotion/coupon/coupon-template'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import SearchForm from './components/search-form.vue'

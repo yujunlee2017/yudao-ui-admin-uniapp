@@ -53,7 +53,7 @@
                 <dict-tag v-if="item.status != null" :type="DICT_TYPE.PRODUCT_SPU_STATUS" :value="item.status" />
               </view>
               <view class="mb-12rpx text-34rpx text-[#fa8c16] font-semibold">
-                {{ formatMallMoney(item.price) }}
+                {{ formatDisplayMoney(item.price) }}
               </view>
               <view class="flex items-center gap-24rpx text-26rpx text-[#666]">
                 <text>库存：{{ item.stock ?? '-' }}</text>
@@ -82,7 +82,7 @@ import { onUnload } from '@dcloudio/uni-app'
 import { computed, onMounted, ref } from 'vue'
 import { getProductSpuPage, getProductSpuTabsCount } from '@/api/mall/product/spu'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import SearchForm from './components/search-form.vue'

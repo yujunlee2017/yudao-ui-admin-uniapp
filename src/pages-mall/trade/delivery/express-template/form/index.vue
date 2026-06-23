@@ -79,7 +79,7 @@ import {
 import { getAreaTree } from '@/api/system/area'
 import RegionEditor from '@/pages-mall/trade/delivery/express-template/components/region-editor.vue'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { fenToYuan, yuanToFen } from '@/pages-mall/utils'
+import { fenToYuan, yuanToFen } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'

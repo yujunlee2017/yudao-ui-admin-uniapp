@@ -19,8 +19,8 @@
       <wd-cell title="标题" :value="formData.title || '-'" />
       <wd-cell title="说明" :value="formData.description || '-'" />
       <wd-cell title="来源用户" :value="formData.sourceUserNickname || '-'" />
-      <wd-cell title="佣金金额" :value="formatMallMoney(formData.price)" />
-      <wd-cell title="当前佣金" :value="formatMallMoney(formData.totalPrice)" />
+      <wd-cell title="佣金金额" :value="formatDisplayMoney(formData.price)" />
+      <wd-cell title="当前佣金" :value="formatDisplayMoney(formData.totalPrice)" />
       <wd-cell title="状态">
         <dict-tag v-if="formData.status != null" :type="DICT_TYPE.BROKERAGE_RECORD_STATUS" :value="formData.status" />
         <text v-else>-</text>
@@ -37,7 +37,7 @@ import type { TradeBrokerageRecord } from '@/api/mall/trade/brokerage/record'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
 import { getTradeBrokerageRecord } from '@/api/mall/trade/brokerage/record'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'

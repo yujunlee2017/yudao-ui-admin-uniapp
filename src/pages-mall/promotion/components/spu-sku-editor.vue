@@ -42,7 +42,7 @@
               {{ row.skuName || `SKU #${row.skuId}` }}
             </view>
             <view class="mt-4rpx text-24rpx text-[#999]">
-              原价 {{ formatMallMoney(row.marketPrice ?? row.price) }} / 库存 {{ row.stock ?? '-' }}
+              原价 {{ formatDisplayMoney(row.marketPrice ?? row.price) }} / 库存 {{ row.stock ?? '-' }}
             </view>
           </view>
         </view>
@@ -59,7 +59,7 @@
       custom-style="border-radius: 24rpx 24rpx 0 0; height: 70vh;"
       @close="pickerVisible = false"
     >
-      <view class="flex h-70vh flex-col p-24rpx">
+      <view class="h-70vh flex flex-col p-24rpx">
         <view class="mb-16rpx text-32rpx text-[#333] font-semibold">
           选择商品
         </view>
@@ -82,7 +82,7 @@
                 {{ item.name || `商品 #${item.id}` }}
               </view>
               <view class="mt-4rpx text-24rpx text-[#999]">
-                {{ formatMallMoney(item.price) }}
+                {{ formatDisplayMoney(item.price) }}
               </view>
             </view>
           </view>
@@ -100,7 +100,7 @@ import type { ProductSku, ProductSpu } from '@/api/mall/product/spu'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, ref } from 'vue'
 import { getProductSpu, getSimpleProductSpuList } from '@/api/mall/product/spu'
-import { fenToYuan, formatMallMoney } from '@/pages-mall/utils'
+import { fenToYuan, formatDisplayMoney } from '@/utils/format'
 
 /** SKU 行：合并 SKU 基础信息与活动配置，money 字段已转为元 */
 export interface SpuSkuRow extends Record<string, any> {

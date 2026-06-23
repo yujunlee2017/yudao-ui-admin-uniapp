@@ -38,7 +38,7 @@
           </view>
 
           <view class="mb-16rpx text-36rpx text-[#fa8c16] font-semibold">
-            {{ formatMallMoney(item.payPrice) }}
+            {{ formatDisplayMoney(item.payPrice) }}
           </view>
 
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
@@ -65,7 +65,7 @@ import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { getTradeOrderPage } from '@/api/mall/trade/order'
 import { getDictLabel } from '@/hooks/useDict'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'

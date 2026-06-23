@@ -34,7 +34,7 @@
               SKU 编号：{{ product.skuId }}
             </view>
             <view class="text-26rpx text-[#666]">
-              拼团价：{{ formatMallMoney(product.combinationPrice) }}
+              拼团价：{{ formatDisplayMoney(product.combinationPrice) }}
             </view>
           </view>
         </view>
@@ -70,7 +70,7 @@ import {
   getPromotionCombinationActivity,
 } from '@/api/mall/promotion/combination'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 

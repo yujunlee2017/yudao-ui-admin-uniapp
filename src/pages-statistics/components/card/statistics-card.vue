@@ -1,11 +1,10 @@
 <template>
-  <view class="mb-24rpx rounded-12rpx bg-white p-24rpx shadow-sm">
-    <view class="mb-20rpx flex items-center justify-between">
-      <text class="text-30rpx text-[#333] font-semibold">{{ section.title }}</text>
+  <Card class="mb-24rpx" :title="section.title">
+    <template #extra>
       <wd-tag type="primary" variant="plain">
         {{ rows.length }} 条
       </wd-tag>
-    </view>
+    </template>
 
     <!-- 统计图表 -->
     <YdChart
@@ -60,21 +59,25 @@
       </view>
     </view>
     <wd-empty v-else icon="content" tip="暂无统计数据" />
-  </view>
+  </Card>
 </template>
 
 <script lang="ts" setup>
-import type { StatisticsSection } from './statistics'
+import type { StatisticsSection } from '@/pages-statistics/utils/statistics'
 import { computed, ref, watch } from 'vue'
-import YdChart from '../../components/yd-chart/yd-chart.vue'
 import {
-  buildChartOption,
+  buildAxisOption,
+  buildFunnelOption,
+  buildPieOption,
   DEFAULT_VISIBLE_ROWS,
   formatColumnValue,
   formatEntries,
   getChartHeight,
   MAX_VISIBLE_ROWS,
-} from './statistics'
+  toNumber,
+} from '@/pages-statistics/utils/statistics'
+import YdChart from '@/pages-statistics/components/yd-chart/yd-chart.vue'
+import Card from './card.vue'
 
 const props = withDefaults(defineProps<{
   rank?: boolean
@@ -86,14 +89,32 @@ const props = withDefaults(defineProps<{
 })
 
 const expanded = ref(false) // 展开状态
-watch(() => props.section.title, () => {
-  expanded.value = false // 切换统计分类时重置展开状态，避免跨 tab 继承
+
+// 图表配置：按 chart.type 就地分发，不再走单独的 buildChartOption 包装
+const chartOption = computed(() => {
+  const chart = props.section.chart
+  if (!chart || props.rows.length === 0) {
+    return undefined
+  }
+  if (chart.type === 'pie') {
+    return buildPieOption(props.section, props.rows)
+  }
+  if (chart.type === 'funnel') {
+    // 漏斗各阶段 = columns（如客户数/商机数/赢单数），取值来自 rows[0]
+    const row = props.rows[0] || {}
+    return buildFunnelOption((props.section.columns || []).map(col => ({ name: col.label, value: toNumber(row[col.prop]) })))
+  }
+  return buildAxisOption(props.section, props.rows, { rank: props.rank })
 })
-const chartOption = computed(() => buildChartOption(props.section, props.rows, { rank: props.rank })) // 图表配置
+
 const visibleRows = computed(() => { // 当前可见数据
   if (expanded.value) {
     return props.rows.slice(0, MAX_VISIBLE_ROWS)
   }
   return props.rows.slice(0, DEFAULT_VISIBLE_ROWS)
+})
+
+watch(() => props.section.title, () => {
+  expanded.value = false // 切换统计分类时重置展开状态，避免跨 tab 继承
 })
 </script>

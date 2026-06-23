@@ -93,7 +93,7 @@ import {
   getWalletRechargePrice,
 } from '@/api/mall/statistics'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 
 definePage({
@@ -229,7 +229,7 @@ async function loadStatistics() {
   ])
 
   if (orderComparison.status === 'fulfilled') {
-    updateComparisonCard('payPrice', formatMallMoney(orderComparison.value.value?.orderPayPrice), formatMallMoney(orderComparison.value.reference?.orderPayPrice))
+    updateComparisonCard('payPrice', formatDisplayMoney(orderComparison.value.value?.orderPayPrice), formatDisplayMoney(orderComparison.value.reference?.orderPayPrice))
     updateComparisonCard('orderCount', orderComparison.value.value?.orderPayCount || 0, orderComparison.value.reference?.orderPayCount || 0)
   }
   if (userComparison.status === 'fulfilled') {
@@ -248,7 +248,7 @@ async function loadStatistics() {
     updateOperationCard('productAlertStock', productCount.value['3'] || 0)
   }
   if (paySummary.status === 'fulfilled') {
-    updateOperationCard('rechargePrice', formatMallMoney(paySummary.value.rechargePrice || 0))
+    updateOperationCard('rechargePrice', formatDisplayMoney(paySummary.value.rechargePrice || 0))
   }
 }
 

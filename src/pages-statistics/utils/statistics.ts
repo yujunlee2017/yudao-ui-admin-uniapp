@@ -1,11 +1,10 @@
-// 商城统计通用工具，改编自 crm/components/statistics.ts，金额以「分」为单位需自行转元
-// TODO @AI：是不是要把一些工具的方法，挪到 /Users/yunai/Java/yudao-ui-admin-uniapp-next-v4/src/pages-statistics/utils 里？和 crm 做一些合并？！
+import type { Dept } from '@/api/system/dept'
 import { getDictLabel } from '@/hooks/useDict'
 
 export const DEFAULT_VISIBLE_ROWS = 10 // 默认展示行数（折叠态）
 export const MAX_VISIBLE_ROWS = 50 // 展开后的最大展示行数，避免渲染超大列表
 
-// TODO @AI：全局有没可复用的方法？
+// TODO @AI：最好注释下。
 export interface StatisticsColumn {
   prop: string
   label: string
@@ -13,20 +12,20 @@ export interface StatisticsColumn {
   type?: 'money' | 'percent'
 }
 
-// TODO @AI：全局有没可复用的方法？
+// TODO @AI：最好注释下。
 export interface StatisticsChartSeries {
   name: string
   prop: string
   type?: 'bar' | 'line'
 }
 
-// TODO @AI：全局有没可复用的方法？
+// TODO @AI：最好注释下。
 export interface StatisticsFunnelItem {
   name: string
   value: number
 }
 
-// TODO @AI：全局有没可复用的方法？
+// TODO @AI：最好注释下。
 export interface StatisticsChart {
   type: 'line' | 'bar' | 'pie' | 'funnel'
   categoryProp?: string
@@ -36,7 +35,7 @@ export interface StatisticsChart {
   funnelData?: StatisticsFunnelItem[]
 }
 
-// TODO @AI：全局有没可复用的方法？
+// TODO @AI：最好注释下。
 export interface StatisticsSection {
   title: string
   columns?: StatisticsColumn[]
@@ -44,25 +43,8 @@ export interface StatisticsSection {
   load?: (params: Record<string, any>) => Promise<any>
 }
 
-// TODO @AI：全局有没可复用的方法？
-/** 分转元（金额以分存储，展示前转元） */
-export function fenToYuan(value: any) {
-  const amount = Number(value || 0)
-  return Number.isNaN(amount) ? 0 : amount / 100
-}
-
-// TODO @AI：全局有没可复用的方法？
-/** 计算环比增长率（百分比，整数） */
-export function calculateRelativeRate(value?: number, reference?: number) {
-  // 防止除 0
-  if (!reference) {
-    return 0
-  }
-  return Number(((100 * ((value || 0) - reference)) / reference).toFixed(0))
-}
-
-// TODO @AI：全局有没可复用的方法？
-/** 统一转换统计结果 */
+/** 统一转换统计结果（数组原样返回，对象包成单元素数组） */
+// TODO @AI：这种，貌似改到全局的某个 utils 更好？
 export function normalizeRows(data: any) {
   if (Array.isArray(data)) {
     return data
@@ -73,38 +55,28 @@ export function normalizeRows(data: any) {
   return [data]
 }
 
-// TODO @AI：全局有没可复用的方法？
-/** 构建图表配置 */
-export function buildChartOption(section: StatisticsSection, rows: Record<string, any>[], options: { rank?: boolean } = {}) {
-  if (!section.chart) {
-    return undefined
+/** 计算环比增长率（百分比，整数；参考值为 0 时返回 0 防除零） */
+export function calculateRelativeRate(value?: number, reference?: number) {
+  if (!reference) {
+    return 0
   }
-  if (section.chart.type === 'funnel') {
-    return buildFunnelOption(section.chart.funnelData || [])
-  }
-  if (rows.length === 0) {
-    return undefined
-  }
-  if (section.chart.type === 'pie') {
-    return buildPieOption(section, rows)
-  }
-  return buildAxisOption(section, rows, options)
+  return Number(((100 * ((value || 0) - reference)) / reference).toFixed(0))
 }
 
-// TODO @AI：全局有没可复用的方法？
 /** 获取图表高度 */
 export function getChartHeight(section: StatisticsSection, options: { rank?: boolean } = {}) {
+  // 漏斗
   if (options.rank || section.chart?.type === 'funnel') {
     return '480rpx'
   }
+  // 饼图
   if (section.chart?.type === 'pie') {
     return '420rpx'
   }
   return '460rpx'
 }
 
-// TODO @AI：全局有没可复用的方法？
-/** 格式化字段值 */
+/** 格式化字段值（字典/金额/百分比/普通） */
 export function formatColumnValue(row: Record<string, any>, column: StatisticsColumn) {
   const value = row[column.prop]
   if (value === undefined || value === null || value === '') {
@@ -124,22 +96,22 @@ export function formatColumnValue(row: Record<string, any>, column: StatisticsCo
 }
 
 /** 格式化未知结构 */
-// TODO @AI：全局有没可复用的方法？
 export function formatEntries(row: Record<string, any>) {
   return Object.entries(row)
     .filter(([, value]) => typeof value !== 'object')
+    // TODO @AI：看看全局有没判断空的。如果有，value === undefined || value === null || value === '' 可以简化下呀。
     .map(([label, value]) => ({ label, value: value === undefined || value === null || value === '' ? '-' : String(value) }))
 }
 
 /** 格式化金额数值 */
-// TODO @AI：全局有没可复用的方法？
+// TODO @AI：有没可能全局有方法，基础目录的 utils 下
 export function formatMoneyValue(value: any) {
   const numberValue = Number(value || 0)
   return Number.isNaN(numberValue) ? String(value ?? '-') : numberValue.toFixed(2)
 }
 
 /** 转换为数字 */
-// TODO @AI：全局有没可复用的方法？
+// TODO @AI：有没可能全局有方法，基础目录的 utils 下；改成 toNumberOrZero？
 export function toNumber(value: any) {
   const numberValue = Number(value || 0)
   return Number.isNaN(numberValue) ? 0 : numberValue
@@ -150,9 +122,17 @@ export function getChartColors() {
   return ['#1677ff', '#52c41a', '#fa8c16', '#eb2f96', '#722ed1', '#13c2c2', '#faad14', '#f5222d']
 }
 
-/** 构建坐标轴图表 */
-// TODO @AI：全局有没可复用的方法？
-function buildAxisOption(section: StatisticsSection, rows: Record<string, any>[], options: { rank?: boolean }) {
+/** 获取图表类目文案 */
+export function getChartCategory(section: StatisticsSection, row: Record<string, any>, prop?: string) {
+  if (!prop) {
+    return '-'
+  }
+  const column = section.columns?.find(item => item.prop === prop)
+  return formatColumnValue(row, column || { prop, label: prop })
+}
+
+/** 构建坐标轴图表（折线 / 柱状 / 排行） */
+export function buildAxisOption(section: StatisticsSection, rows: Record<string, any>[], options: { rank?: boolean }) {
   const chart = section.chart!
   const series = chart.series || []
   const displayRows = options.rank ? rows.slice(0, 10).reverse() : rows
@@ -211,7 +191,7 @@ function buildAxisOption(section: StatisticsSection, rows: Record<string, any>[]
 }
 
 /** 构建饼图 */
-function buildPieOption(section: StatisticsSection, rows: Record<string, any>[]) {
+export function buildPieOption(section: StatisticsSection, rows: Record<string, any>[]) {
   const chart = section.chart!
   const valueProp = chart.valueProp || 'count'
   return {
@@ -247,9 +227,8 @@ function buildPieOption(section: StatisticsSection, rows: Record<string, any>[])
   }
 }
 
-/** 构建漏斗图（接收带标签数据，区别于 crm 写死字段） */
-// TODO @AI：全局有没可复用的方法？
-function buildFunnelOption(items: StatisticsFunnelItem[]) {
+/** 构建漏斗图（通用：传入带标签的数据项；各域自行准备 items） */
+export function buildFunnelOption(items: StatisticsFunnelItem[], name = '转化漏斗') {
   return {
     color: getChartColors(),
     tooltip: {
@@ -259,7 +238,7 @@ function buildFunnelOption(items: StatisticsFunnelItem[]) {
     },
     series: [
       {
-        name: '转化漏斗',
+        name,
         type: 'funnel',
         left: '8%',
         right: '8%',
@@ -279,12 +258,22 @@ function buildFunnelOption(items: StatisticsFunnelItem[]) {
   }
 }
 
-/** 获取图表类目文案 */
-// TODO @AI：全局有没可复用的方法？
-function getChartCategory(section: StatisticsSection, row: Record<string, any>, prop?: string) {
-  if (!prop) {
-    return '-'
+/** 获取默认部门编号（统计页按部门过滤用） */
+export function getDefaultDeptId(userInfo: Record<string, any> | undefined) {
+  const deptId = Number(userInfo?.deptId)
+  return deptId > 0 ? deptId : undefined
+}
+
+/** 获取第一个可用部门编号 */
+export function getFirstDeptId(list: Dept[]): number | undefined {
+  for (const item of list) {
+    if (item.id) {
+      return item.id
+    }
+    const childId = getFirstDeptId(item.children || [])
+    if (childId) {
+      return childId
+    }
   }
-  const column = section.columns?.find(item => item.prop === prop)
-  return formatColumnValue(row, column || { prop, label: prop })
+  return undefined
 }

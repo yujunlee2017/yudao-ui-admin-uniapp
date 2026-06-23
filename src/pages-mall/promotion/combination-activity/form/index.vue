@@ -96,7 +96,7 @@ import {
   updatePromotionCombinationActivity,
 } from '@/api/mall/promotion/combination'
 import SpuSkuEditor from '@/pages-mall/promotion/components/spu-sku-editor.vue'
-import { fenToYuan, yuanToFen } from '@/pages-mall/utils'
+import { fenToYuan, yuanToFen } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'

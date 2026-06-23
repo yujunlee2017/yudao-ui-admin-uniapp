@@ -31,7 +31,7 @@
             </view>
             <view class="flex flex-wrap gap-24rpx text-26rpx text-[#666]">
               <text>积分：{{ product.point ?? '-' }}</text>
-              <text>金额：{{ formatMallMoney(product.price) }}</text>
+              <text>金额：{{ formatDisplayMoney(product.price) }}</text>
               <text>库存：{{ product.stock ?? '-' }}</text>
               <text>兑换上限：{{ product.count ?? '-' }}</text>
             </view>
@@ -69,7 +69,7 @@ import {
   getPromotionPointActivity,
 } from '@/api/mall/promotion/point'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 

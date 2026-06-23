@@ -19,7 +19,7 @@
               <dict-tag :type="DICT_TYPE.TRADE_ORDER_STATUS" :value="formData.status" />
             </wd-cell>
             <!-- 实付金额 -->
-            <wd-cell v-if="formData.payPrice != null" title="实付金额" :value="formatMallMoney(formData.payPrice)" />
+            <wd-cell v-if="formData.payPrice != null" title="实付金额" :value="formatDisplayMoney(formData.payPrice)" />
             <!-- 自提门店 -->
             <wd-cell v-if="formData.pickUpStoreId != null" title="自提门店" :value="String(formData.pickUpStoreId)" />
             <!-- 核销码 -->
@@ -48,7 +48,7 @@ import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
 import { pickUpTradeOrder } from '@/api/mall/trade/order'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { currRoute, navigateBackPlus } from '@/utils'
 import { useAccess } from '@/hooks/useAccess'
 import { DICT_TYPE } from '@/utils/constants'

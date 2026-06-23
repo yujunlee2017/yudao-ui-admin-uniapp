@@ -59,9 +59,9 @@
             <wd-cell title="商品规格" :value="formData.specType == null ? '-' : (formData.specType ? '多规格' : '单规格')" />
             <!-- 单规格：直接展示 SPU 价格 -->
             <template v-if="!formData.specType">
-              <wd-cell title="销售价" :value="formatMallMoney(formData.price)" />
-              <wd-cell title="市场价" :value="formatMallMoney(formData.marketPrice)" />
-              <wd-cell title="成本价" :value="formatMallMoney(formData.costPrice)" />
+              <wd-cell title="销售价" :value="formatDisplayMoney(formData.price)" />
+              <wd-cell title="市场价" :value="formatDisplayMoney(formData.marketPrice)" />
+              <wd-cell title="成本价" :value="formatDisplayMoney(formData.costPrice)" />
             </template>
             <wd-cell title="库存" :value="formData.stock != null ? String(formData.stock) : '-'" />
             <wd-cell title="销量" :value="formData.salesCount != null ? String(formData.salesCount) : '-'" />
@@ -88,9 +88,9 @@
                 </view>
               </view>
               <view class="flex flex-wrap gap-x-32rpx gap-y-8rpx text-26rpx text-[#666]">
-                <text>销售价：{{ formatMallMoney(sku.price) }}</text>
-                <text>市场价：{{ formatMallMoney(sku.marketPrice) }}</text>
-                <text>成本价：{{ formatMallMoney(sku.costPrice) }}</text>
+                <text>销售价：{{ formatDisplayMoney(sku.price) }}</text>
+                <text>市场价：{{ formatDisplayMoney(sku.marketPrice) }}</text>
+                <text>成本价：{{ formatDisplayMoney(sku.costPrice) }}</text>
                 <text>库存：{{ sku.stock ?? '-' }}</text>
                 <text>销量：{{ sku.salesCount ?? '-' }}</text>
                 <text v-if="sku.barCode">条码：{{ sku.barCode }}</text>
@@ -186,7 +186,7 @@ import { getProductCategoryList } from '@/api/mall/product/category'
 import { deleteProductSpu, getProductSpu, updateProductSpuStatus } from '@/api/mall/product/spu'
 import { getSimpleDeliveryExpressTemplateList } from '@/api/mall/trade/delivery/express-template'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE, ProductSpuStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
