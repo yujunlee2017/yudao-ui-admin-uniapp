@@ -5,7 +5,7 @@
     <Breadcrumb v-if="!hasQuery" ref="breadcrumbRef" v-model="currentParentId" />
     <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
       <view class="p-24rpx">
-        <wd-swipe-action v-for="item in currentList" :key="item.id" :disabled="!canDelete">
+        <wd-swipe-action v-for="item in currentList" :key="item.id" :disabled="!hasAccessByCodes(['mes:dv-machinery-type:delete'])">
           <view class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
             <view class="p-24rpx" @click="handleDetail(item)">
               <view class="flex items-start justify-between gap-16rpx">
@@ -29,7 +29,7 @@
               </view>
             </view>
           </view>
-          <template v-if="canDelete" #right>
+          <template v-if="hasAccessByCodes(['mes:dv-machinery-type:delete'])" #right>
             <view class="h-full flex items-center justify-center px-36rpx" style="background:linear-gradient(135deg,#f56c6c,#e85d5d)" @click.stop="handleSwipeDelete(item)">
               <wd-icon name="delete-outline" size="36rpx" custom-style="color:#fff" /><text class="ml-8rpx text-28rpx text-white">删除</text>
             </view>
@@ -69,7 +69,6 @@ const currentParentId = ref(0)
 const breadcrumbRef = ref<InstanceType<typeof Breadcrumb>>()
 const searchFormRef = ref<InstanceType<typeof SearchForm>>()
 const queryParams = ref<DvMachineryTypeQueryParams>({})
-const canDelete = computed(() => hasAccessByCodes(['mes:dv-machinery-type:delete']))
 const hasQuery = computed(() => Object.keys(queryParams.value).length > 0)
 const currentList = computed(() => hasQuery.value ? flatList.value : currentParentId.value === 0 ? list.value.filter(i => (i.parentId ?? 0) === 0) : findChildren(list.value, currentParentId.value))
 

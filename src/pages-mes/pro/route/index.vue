@@ -27,13 +27,13 @@
             </view>
           </view>
           <view class="flex border-t border-[#f3f4f6] text-26rpx">
-            <view v-if="canUpdate" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleStatusChange(item)">
+            <view v-if="hasAccessByCodes(['mes:pro-route:update'])" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleStatusChange(item)">
               {{ item.status === CommonStatusEnum.ENABLE ? '停用' : '启用' }}
             </view>
-            <view v-if="canUpdate" class="flex-1 py-18rpx text-center" :class="isRouteDisabled(item) ? 'text-[#e6a23c]' : 'text-[#bbb]'" @click="handleEdit(item)">
+            <view v-if="hasAccessByCodes(['mes:pro-route:update'])" class="flex-1 py-18rpx text-center" :class="isRouteDisabled(item) ? 'text-[#e6a23c]' : 'text-[#bbb]'" @click="handleEdit(item)">
               编辑
             </view>
-            <view v-if="canDelete" class="flex-1 py-18rpx text-center" :class="isRouteDisabled(item) ? 'text-[#f56c6c]' : 'text-[#bbb]'" @click="handleDelete(item)">
+            <view v-if="hasAccessByCodes(['mes:pro-route:delete'])" class="flex-1 py-18rpx text-center" :class="isRouteDisabled(item) ? 'text-[#f56c6c]' : 'text-[#bbb]'" @click="handleDelete(item)">
               删除
             </view>
           </view>
@@ -49,7 +49,7 @@ import type { ProRouteQueryParams, ProRouteVO } from '@/api/mes/pro/route'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { deleteRoute, getRoutePage, updateRouteStatus } from '@/api/mes/pro/route'
 import { downloadApiFile } from '@/utils/download'
 import { useAccess } from '@/hooks/useAccess'
@@ -73,8 +73,6 @@ const pagingRef = ref<ZPagingRef<ProRouteVO>>()
 const queryParams = ref<Partial<ProRouteQueryParams>>({})
 const searchFormRef = ref<InstanceType<typeof SearchForm>>()
 const exportLoading = ref(false)
-const canUpdate = computed(() => hasAccessByCodes(['mes:pro-route:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:pro-route:delete']))
 
 /** 返回上一页 */
 function handleBack() {

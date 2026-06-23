@@ -106,7 +106,7 @@
           <wd-button v-if="canEdit" class="flex-1" type="warning" @click="handleEdit">
             编辑
           </wd-button>
-          <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+          <wd-button v-if="hasAccessByCodes(['crm:business:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
             删除
           </wd-button>
           <wd-button v-if="moreActions.length" class="flex-1" type="info" @click="moreActionVisible = true">
@@ -199,11 +199,9 @@ const businessId = computed(() => Number(props.id))
 const totalProductPrice = computed(() => (Array.isArray(formData.value.products) ? formData.value.products : []).reduce((sum, row) => sum + Number(row.totalPrice || 0), 0)) // 产品总金额
 const activeTab = computed(() => tabs[tabIndex.value].key)
 const isPagingTab = computed(() => ['contacts', 'contracts', 'followup', 'log'].includes(activeTab.value)) // 关系列表/跟进 tab 用 z-paging 固定高布局
-const canUpdate = computed(() => hasAccessByCodes(['crm:business:update']))
-const canDelete = computed(() => hasAccessByCodes(['crm:business:delete']))
 const validateWrite = computed(() => teamRef.value?.validateWrite ?? false) // 读写权限（负责人或读写成员）
 const validateOwnerUser = computed(() => teamRef.value?.validateOwnerUser ?? false) // 负责人权限
-const canEdit = computed(() => canUpdate.value && validateWrite.value) // 可编辑（菜单权限 + 读写权限）
+const canEdit = computed(() => hasAccessByCodes(['crm:business:update']) && validateWrite.value) // 可编辑（菜单权限 + 读写权限）
 const moreActions = computed(() => {
   const data = formData.value
   if (!data?.id) {
@@ -223,7 +221,7 @@ const hasFooter = computed(() => {
     case 'log':
       return false
     case 'basic':
-      return canEdit.value || canDelete.value || moreActions.value.length > 0
+      return canEdit.value || hasAccessByCodes(['crm:business:delete']) || moreActions.value.length > 0
     case 'followup':
       return true
     case 'team':

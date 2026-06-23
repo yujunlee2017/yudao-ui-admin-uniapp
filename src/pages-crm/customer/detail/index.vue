@@ -80,7 +80,7 @@
           <wd-button v-if="canEdit" class="flex-1" type="warning" @click="handleEdit">
             编辑
           </wd-button>
-          <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+          <wd-button v-if="hasAccessByCodes(['crm:customer:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
             删除
           </wd-button>
           <wd-button v-if="moreActions.length" class="flex-1" type="info" @click="moreActionVisible = true">
@@ -98,7 +98,7 @@
             新增成员
           </wd-button>
         </template>
-        <wd-button v-else-if="canRelatedAdd" class="flex-1" type="primary" @click="listRef?.openAdd()">
+        <wd-button v-else-if="activeTabConfig.addPermission && hasAccessByCodes([activeTabConfig.addPermission])" class="flex-1" type="primary" @click="listRef?.openAdd()">
           {{ activeTabConfig.addLabel }}
         </wd-button>
       </view>
@@ -200,15 +200,9 @@ const customerId = computed(() => Number(props.id))
 const activeTabConfig = computed(() => tabs[tabIndex.value])
 const activeTab = computed(() => activeTabConfig.value.key)
 const isPagingTab = computed(() => ['contacts', 'businesses', 'contracts', 'plans', 'receivables', 'followup', 'log'].includes(activeTab.value)) // 关系列表/跟进 tab 用 z-paging 固定高布局
-const canUpdate = computed(() => hasAccessByCodes(['crm:customer:update']))
-const canDelete = computed(() => hasAccessByCodes(['crm:customer:delete']))
 const validateWrite = computed(() => teamRef.value?.validateWrite ?? false) // 读写权限（负责人或读写成员）
 const validateOwnerUser = computed(() => teamRef.value?.validateOwnerUser ?? false) // 负责人权限
-const canEdit = computed(() => canUpdate.value && validateWrite.value) // 可编辑（菜单权限 + 读写权限）
-const canRelatedAdd = computed(() => {
-  const permission = activeTabConfig.value.addPermission
-  return !!permission && hasAccessByCodes([permission])
-})
+const canEdit = computed(() => hasAccessByCodes(['crm:customer:update']) && validateWrite.value) // 可编辑（菜单权限 + 读写权限）
 const moreActions = computed(() => {
   const data = formData.value
   if (!data?.id) {
@@ -237,13 +231,13 @@ const hasFooter = computed(() => {
     case 'log':
       return false
     case 'basic':
-      return canEdit.value || canDelete.value || moreActions.value.length > 0
+      return canEdit.value || hasAccessByCodes(['crm:customer:delete']) || moreActions.value.length > 0
     case 'followup':
       return true
     case 'team':
       return teamCanQuit.value || validateOwnerUser.value
     default:
-      return canRelatedAdd.value
+      return !!activeTabConfig.value.addPermission && hasAccessByCodes([activeTabConfig.value.addPermission])
   }
 })
 

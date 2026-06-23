@@ -106,7 +106,7 @@
         <wd-button v-if="canUpdateStatus" class="flex-1" type="primary" :loading="statusLoading" @click="handleUpdateStatus(nextStatus)">
           {{ nextStatus === 20 ? '审批' : '反审批' }}
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['erp:sale-out:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -145,10 +145,9 @@ const statusLoading = ref(false) // 审批状态
 const items = computed(() => Array.isArray(formData.value?.items) ? formData.value.items : [])
 const unpaidPrice = computed(() => Number(formData.value?.totalPrice || 0) - Number(formData.value?.receiptPrice || 0))
 const canUpdate = computed(() => formData.value?.status !== 20 && hasAccessByCodes(['erp:sale-out:update']))
-const canDelete = computed(() => hasAccessByCodes(['erp:sale-out:delete']))
 const canUpdateStatus = computed(() => hasAccessByCodes(['erp:sale-out:update-status']) && (formData.value?.status === 10 || formData.value?.status === 20))
 const nextStatus = computed(() => formData.value?.status === 10 ? 20 : 10)
-const hasFooter = computed(() => canUpdate.value || canDelete.value || canUpdateStatus.value)
+const hasFooter = computed(() => canUpdate.value || hasAccessByCodes(['erp:sale-out:delete']) || canUpdateStatus.value)
 
 /** 返回上一页 */
 function handleBack() {

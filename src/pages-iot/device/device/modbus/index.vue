@@ -6,8 +6,12 @@
     <!-- 连接配置 -->
     <view class="p-24rpx pb-0">
       <view class="mb-16rpx flex items-center justify-between">
-        <view class="text-30rpx text-[#333] font-semibold">连接配置</view>
-        <wd-button v-if="canUpdate" size="small" plain @click="handleEditConfig">编辑</wd-button>
+        <view class="text-30rpx text-[#333] font-semibold">
+          连接配置
+        </view>
+        <wd-button v-if="hasAccessByCodes(['iot:device:update'])" size="small" plain @click="handleEditConfig">
+          编辑
+        </wd-button>
       </view>
       <wd-cell-group border>
         <wd-cell title="协议类型" :value="productData?.protocolType || '-'" />
@@ -19,10 +23,16 @@
         </template>
         <wd-cell title="从站地址" :value="String(modbusConfig?.slaveId || '-')" />
         <template v-if="isServer">
-          <wd-cell title="工作模式"><dict-tag :type="DICT_TYPE.IOT_MODBUS_MODE" :value="modbusConfig?.mode" /></wd-cell>
-          <wd-cell title="帧格式"><dict-tag :type="DICT_TYPE.IOT_MODBUS_FRAME_FORMAT" :value="modbusConfig?.frameFormat" /></wd-cell>
+          <wd-cell title="工作模式">
+            <dict-tag :type="DICT_TYPE.IOT_MODBUS_MODE" :value="modbusConfig?.mode" />
+          </wd-cell>
+          <wd-cell title="帧格式">
+            <dict-tag :type="DICT_TYPE.IOT_MODBUS_FRAME_FORMAT" :value="modbusConfig?.frameFormat" />
+          </wd-cell>
         </template>
-        <wd-cell title="状态"><dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="modbusConfig?.status" /></wd-cell>
+        <wd-cell title="状态">
+          <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="modbusConfig?.status" />
+        </wd-cell>
       </wd-cell-group>
     </view>
 
@@ -31,23 +41,33 @@
       <view class="flex-1" @click="visible = true">
         <wd-search :placeholder="placeholder" hide-cancel disabled />
       </view>
-      <wd-button v-if="canUpdate" size="small" type="primary" @click="handleCreatePoint">新增点位</wd-button>
+      <wd-button v-if="hasAccessByCodes(['iot:device:update'])" size="small" type="primary" @click="handleCreatePoint">
+        新增点位
+      </wd-button>
     </view>
 
     <!-- 搜索弹窗 -->
     <wd-popup v-model="visible" position="top" :custom-style="getTopPopupStyle()" :modal-style="getTopPopupModalStyle()" @close="visible = false">
       <view class="yd-search-form-container">
         <view class="yd-search-form-item">
-          <view class="yd-search-form-label">属性名称</view>
+          <view class="yd-search-form-label">
+            属性名称
+          </view>
           <wd-input v-model="formData.name" placeholder="请输入属性名称" clearable />
         </view>
         <view class="yd-search-form-item">
-          <view class="yd-search-form-label">标识符</view>
+          <view class="yd-search-form-label">
+            标识符
+          </view>
           <wd-input v-model="formData.identifier" placeholder="请输入标识符" clearable />
         </view>
         <view class="yd-search-form-actions">
-          <wd-button class="flex-1" variant="plain" @click="handleReset">重置</wd-button>
-          <wd-button class="flex-1" type="primary" @click="handleSearch">搜索</wd-button>
+          <wd-button class="flex-1" variant="plain" @click="handleReset">
+            重置
+          </wd-button>
+          <wd-button class="flex-1" type="primary" @click="handleSearch">
+            搜索
+          </wd-button>
         </view>
       </view>
     </wd-popup>
@@ -77,9 +97,13 @@
           <view class="mb-16rpx text-24rpx text-[#999]">
             轮询间隔：{{ item.pollInterval ? `${item.pollInterval} ms` : '-' }}
           </view>
-          <view v-if="canUpdate" class="flex justify-end gap-16rpx">
-            <wd-button size="small" plain @click="handleEditPoint(item)">编辑</wd-button>
-            <wd-button size="small" type="error" plain @click="handleDeletePoint(item)">删除</wd-button>
+          <view v-if="hasAccessByCodes(['iot:device:update'])" class="flex justify-end gap-16rpx">
+            <wd-button size="small" plain @click="handleEditPoint(item)">
+              编辑
+            </wd-button>
+            <wd-button size="small" type="error" plain @click="handleDeletePoint(item)">
+              删除
+            </wd-button>
           </view>
         </view>
       </view>
@@ -89,7 +113,9 @@
     <wd-popup v-model="configVisible" position="bottom" safe-area-inset-bottom custom-style="border-radius: 24rpx 24rpx 0 0;">
       <view class="bg-white pb-32rpx">
         <view class="flex items-center justify-between border-b border-[#f5f5f5] px-24rpx py-24rpx">
-          <view class="text-32rpx text-[#333] font-semibold">编辑连接配置</view>
+          <view class="text-32rpx text-[#333] font-semibold">
+            编辑连接配置
+          </view>
           <wd-icon name="close" size="36rpx" @click="configVisible = false" />
         </view>
         <scroll-view scroll-y class="max-h-60vh">
@@ -141,7 +167,9 @@
           </wd-form>
         </scroll-view>
         <view class="p-24rpx">
-          <wd-button type="primary" block :loading="configLoading" @click="handleConfigSubmit">保存</wd-button>
+          <wd-button type="primary" block :loading="configLoading" @click="handleConfigSubmit">
+            保存
+          </wd-button>
         </view>
       </view>
     </wd-popup>
@@ -150,7 +178,9 @@
     <wd-popup v-model="pointVisible" position="bottom" safe-area-inset-bottom custom-style="border-radius: 24rpx 24rpx 0 0;">
       <view class="bg-white pb-32rpx">
         <view class="flex items-center justify-between border-b border-[#f5f5f5] px-24rpx py-24rpx">
-          <view class="text-32rpx text-[#333] font-semibold">{{ pointTitle }}</view>
+          <view class="text-32rpx text-[#333] font-semibold">
+            {{ pointTitle }}
+          </view>
           <wd-icon name="close" size="36rpx" @click="pointVisible = false" />
         </view>
         <scroll-view scroll-y class="max-h-60vh">
@@ -203,7 +233,9 @@
           </wd-form>
         </scroll-view>
         <view class="p-24rpx">
-          <wd-button type="primary" block :loading="pointLoading" @click="handlePointSubmit">保存</wd-button>
+          <wd-button type="primary" block :loading="pointLoading" @click="handlePointSubmit">
+            保存
+          </wd-button>
         </view>
       </view>
     </wd-popup>
@@ -283,7 +315,6 @@ definePage({ style: { navigationBarTitleText: '', navigationStyle: 'custom' } })
 const toast = useToast()
 const dialog = useDialog()
 const { hasAccessByCodes } = useAccess()
-const canUpdate = computed(() => hasAccessByCodes(['iot:device:update'])) // 是否有写权限
 
 const deviceData = ref<Device>() // 设备数据
 const productData = ref<Product>() // 产品数据
@@ -298,8 +329,10 @@ const isClient = computed(() => productData.value?.protocolType === ProtocolType
 const isServer = computed(() => productData.value?.protocolType === ProtocolTypeEnum.MODBUS_TCP_SERVER) // Server 模式
 const placeholder = computed(() => {
   const conditions: string[] = []
-  if (formData.name) conditions.push(`属性:${formData.name}`)
-  if (formData.identifier) conditions.push(`标识符:${formData.identifier}`)
+  if (formData.name)
+    conditions.push(`属性:${formData.name}`)
+  if (formData.identifier)
+    conditions.push(`标识符:${formData.identifier}`)
   return conditions.length ? conditions.join(' | ') : '搜索 Modbus 点位'
 })
 

@@ -50,10 +50,10 @@
             </view>
           </view>
           <view class="flex border-t border-[#f3f4f6] text-26rpx">
-            <view v-if="isPrepare(item) && canUpdate" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
+            <view v-if="isPrepare(item) && hasAccessByCodes(['mes:cal-plan:update'])" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
               编辑
             </view>
-            <view v-if="isPrepare(item) && canDelete" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
+            <view v-if="isPrepare(item) && hasAccessByCodes(['mes:cal-plan:delete'])" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
               删除
             </view>
           </view>
@@ -71,7 +71,7 @@ import type { CalPlanQueryParams, CalPlanVO } from '@/api/mes/cal/plan'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { deletePlan, getPlanPage } from '@/api/mes/cal/plan'
 import { downloadApiFile } from '@/utils/download'
 import { useAccess } from '@/hooks/useAccess'
@@ -100,8 +100,6 @@ const pagingRef = ref<ZPagingRef<CalPlanVO>>() // 分页组件引用
 const queryParams = ref<Partial<CalPlanQueryParams>>({}) // 查询参数
 const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索组件引用
 const exportLoading = ref(false) // 导出状态
-const canUpdate = computed(() => hasAccessByCodes(['mes:cal-plan:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:cal-plan:delete']))
 
 /** 返回上一页 */
 function handleBack() {

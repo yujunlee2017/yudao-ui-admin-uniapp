@@ -65,21 +65,21 @@
             @click.stop
           >
             <view
-              v-if="canUpdate && item.status === MesProFeedbackStatusEnum.PREPARE"
+              v-if="hasAccessByCodes(['mes:pro-feedback:update']) && item.status === MesProFeedbackStatusEnum.PREPARE"
               class="flex-1 py-18rpx text-center text-[#1677ff]"
               @click="handleEdit(item)"
             >
               编辑
             </view>
             <view
-              v-if="canUpdate && item.status === MesProFeedbackStatusEnum.PREPARE"
+              v-if="hasAccessByCodes(['mes:pro-feedback:update']) && item.status === MesProFeedbackStatusEnum.PREPARE"
               class="flex-1 py-18rpx text-center text-[#52c41a]"
               @click="handleSubmitFeedback(item)"
             >
               提交
             </view>
             <view
-              v-if="canDelete && item.status === MesProFeedbackStatusEnum.PREPARE"
+              v-if="hasAccessByCodes(['mes:pro-feedback:delete']) && item.status === MesProFeedbackStatusEnum.PREPARE"
               class="flex-1 py-18rpx text-center text-[#f56c6c]"
               @click="handleDelete(item)"
             >
@@ -99,7 +99,7 @@
 
     <!-- 新增按钮 -->
     <wd-fab
-      v-if="canCreate"
+      v-if="hasAccessByCodes(['mes:pro-feedback:create'])"
       position="right-bottom"
       type="primary"
       :expandable="false"
@@ -144,10 +144,6 @@ const toast = useToast()
 const list = ref<ProFeedbackVO[]>([]) // 列表数据
 const pagingRef = ref() // 分页组件引用
 const queryParams = ref<Partial<ProFeedbackQueryParams>>({}) // 查询参数
-const canCreate = computed(() => hasAccessByCodes(['mes:pro-feedback:create']))
-const canUpdate = computed(() => hasAccessByCodes(['mes:pro-feedback:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:pro-feedback:delete']))
-const canApprove = computed(() => hasAccessByCodes(['mes:pro-feedback:approve']))
 const currentUserId = computed(() => userStore.userInfo?.userId)
 
 /** 返回上一页 */
@@ -171,12 +167,12 @@ async function queryList(pageNo: number, pageSize: number) {
 
 /** 是否有草稿操作 */
 function hasDraftActions(item: ProFeedbackVO) {
-  return item.status === MesProFeedbackStatusEnum.PREPARE && (canUpdate.value || canDelete.value)
+  return item.status === MesProFeedbackStatusEnum.PREPARE && (hasAccessByCodes(['mes:pro-feedback:update']) || hasAccessByCodes(['mes:pro-feedback:delete']))
 }
 
 /** 是否有审批操作 */
 function hasApproveAction(item: ProFeedbackVO) {
-  return canApprove.value
+  return hasAccessByCodes(['mes:pro-feedback:approve'])
     && item.status === MesProFeedbackStatusEnum.APPROVING
     && item.approveUserId === currentUserId.value
 }

@@ -18,10 +18,10 @@
     </scroll-view>
     <view v-if="hasFooter" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['mes:pro-process:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['mes:pro-process:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -60,9 +60,7 @@ const formData = ref<ProProcessVO>()
 const currentId = computed(() => getRouteQueryNumber('id')) // 当前工序编号
 const deleting = ref(false)
 const processId = computed(() => currentId.value)
-const canUpdate = computed(() => hasAccessByCodes(['mes:pro-process:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:pro-process:delete']))
-const hasFooter = computed(() => canUpdate.value || canDelete.value)
+const hasFooter = computed(() => hasAccessByCodes(['mes:pro-process:update']) || hasAccessByCodes(['mes:pro-process:delete']))
 
 /** 返回上一页 */
 function handleBack() {

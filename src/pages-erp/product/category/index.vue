@@ -20,7 +20,7 @@
         <wd-swipe-action
           v-for="item in currentList"
           :key="item.id"
-          :disabled="!canDelete"
+          :disabled="!hasAccessByCodes(['erp:product-category:delete'])"
         >
           <view class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
             <view class="p-24rpx" @click="handleDetail(item)">
@@ -56,7 +56,7 @@
           </view>
 
           <!-- 左滑删除按钮 -->
-          <template v-if="canDelete" #right>
+          <template v-if="hasAccessByCodes(['erp:product-category:delete'])" #right>
             <view class="h-full flex items-center justify-center px-36rpx" style="background: linear-gradient(135deg, #f56c6c, #e85d5d);" @click.stop="handleSwipeDelete(item)">
               <wd-icon name="delete-outline" size="36rpx" custom-style="color: #fff;" />
               <text class="ml-8rpx text-28rpx text-white">删除</text>
@@ -107,7 +107,6 @@ definePage({
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const canDelete = computed(() => hasAccessByCodes(['erp:product-category:delete']))
 const loading = ref(false) // 列表加载状态
 const flatList = ref<ProductCategory[]>([]) // 扁平分类列表
 const list = ref<ProductCategory[]>([]) // 树形分类列表
@@ -194,7 +193,7 @@ function handleDetail(item: ProductCategory) {
 
 /** 左滑删除 */
 async function handleSwipeDelete(item: ProductCategory) {
-  if (!item.id || !canDelete.value) {
+  if (!item.id || !hasAccessByCodes(['erp:product-category:delete'])) {
     return
   }
   try {

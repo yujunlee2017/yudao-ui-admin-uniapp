@@ -75,10 +75,10 @@
             </view>
           </view>
           <view v-if="hasRowActions(item)" class="flex border-t border-t-[#f0f0f0] text-28rpx" @click.stop>
-            <view v-if="canUpdatePrepare" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
+            <view v-if="hasAccessByCodes(['mes:dv-mainten-record:update'])" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
               编辑
             </view>
-            <view v-if="canDeletePrepare" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
+            <view v-if="hasAccessByCodes(['mes:dv-mainten-record:delete'])" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
               删除
             </view>
           </view>
@@ -102,7 +102,7 @@ import type { DvMaintenRecordQueryParams, DvMaintenRecordVO } from '@/api/mes/dv
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { deleteMaintenRecord, getMaintenRecordPage } from '@/api/mes/dv/maintenrecord'
 import { useAccess } from '@/hooks/useAccess'
 import { downloadApiFile } from '@/utils/download'
@@ -125,8 +125,6 @@ const list = ref<DvMaintenRecordVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<DvMaintenRecordVO>>() // 分页组件引用
 const queryParams = ref<DvMaintenRecordQueryParams>({}) // 查询参数
 const exportLoading = ref(false) // 导出状态
-const canUpdatePrepare = computed(() => hasAccessByCodes(['mes:dv-mainten-record:update']))
-const canDeletePrepare = computed(() => hasAccessByCodes(['mes:dv-mainten-record:delete']))
 
 /** 返回上一页 */
 function handleBack() {
@@ -200,7 +198,7 @@ function handleDetail(item: DvMaintenRecordVO) {
 
 /** 是否显示行操作 */
 function hasRowActions(item: DvMaintenRecordVO) {
-  return item.status === MesDvMaintenRecordStatusEnum.PREPARE && (canUpdatePrepare.value || canDeletePrepare.value)
+  return item.status === MesDvMaintenRecordStatusEnum.PREPARE && (hasAccessByCodes(['mes:dv-mainten-record:update']) || hasAccessByCodes(['mes:dv-mainten-record:delete']))
 }
 
 /** 编辑 */

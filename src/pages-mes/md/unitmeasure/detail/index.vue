@@ -40,11 +40,11 @@
     <!-- 底部操作按钮 -->
     <view v-if="hasFooter" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['mes:md-unit-measure:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
         <wd-button
-          v-if="canDelete"
+          v-if="hasAccessByCodes(['mes:md-unit-measure:delete'])"
           class="flex-1"
           type="danger"
           :loading="deleting"
@@ -87,9 +87,7 @@ const formData = ref<MdUnitMeasureVO>() // 详情数据
 const unitOptions = ref<MdUnitMeasureVO[]>([]) // 单位选项
 const currentId = computed(() => getRouteQueryNumber('id')) // 当前详情编号
 const deleting = ref(false) // 删除状态
-const canUpdate = computed(() => hasAccessByCodes(['mes:md-unit-measure:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:md-unit-measure:delete']))
-const hasFooter = computed(() => canUpdate.value || canDelete.value)
+const hasFooter = computed(() => hasAccessByCodes(['mes:md-unit-measure:update']) || hasAccessByCodes(['mes:md-unit-measure:delete']))
 const primaryUnitName = computed(() => {
   const primaryId = formData.value?.primaryId
   if (!primaryId) {

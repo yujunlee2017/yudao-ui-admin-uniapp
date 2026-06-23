@@ -5,7 +5,7 @@
 
     <!-- 搜索与导出 -->
     <SearchForm ref="searchFormRef" @search="handleQuery" @reset="handleReset" />
-    <view v-if="canExport" class="bg-white px-24rpx pb-16rpx">
+    <view v-if="hasAccessByCodes(['mes:qc-template:export'])" class="bg-white px-24rpx pb-16rpx">
       <wd-button block variant="plain" :loading="exportLoading" @click="handleExport">
         导出当前筛选数据
       </wd-button>
@@ -82,7 +82,7 @@
 import type { QcTemplatePageParam, QcTemplateVO } from '@/api/mes/qc/template'
 import { onUnload } from '@dcloudio/uni-app'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { getTemplatePage } from '@/api/mes/qc/template'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
@@ -105,7 +105,6 @@ const pagingRef = ref<ZPagingRef<QcTemplateVO>>() // 分页组件引用
 const queryParams = ref<Partial<QcTemplatePageParam>>({}) // 查询参数
 const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索组件引用
 const exportLoading = ref(false) // 导出状态
-const canExport = computed(() => hasAccessByCodes(['mes:qc-template:export']))
 
 /** 返回上一页 */
 function handleBack() {

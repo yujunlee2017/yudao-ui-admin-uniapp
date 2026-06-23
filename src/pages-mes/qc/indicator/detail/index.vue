@@ -28,7 +28,7 @@
     <view class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <wd-button
-          v-if="canUpdate"
+          v-if="hasAccessByCodes(['mes:qc-indicator:update'])"
           class="flex-1"
           type="warning"
           @click="handleEdit"
@@ -36,7 +36,7 @@
           编辑
         </wd-button>
         <wd-button
-          v-if="canDelete"
+          v-if="hasAccessByCodes(['mes:qc-indicator:delete'])"
           class="flex-1"
           type="danger"
           :loading="deleting"
@@ -85,8 +85,6 @@ const currentId = computed(() => getRouteQueryNumber('id')) // 当前详情编�
 const formData = ref<QcIndicatorVO>() // 详情数据
 const dictTypeList = ref<DictType[]>([]) // 系统字典类型列表
 const deleting = ref(false) // 删除状态
-const canUpdate = computed(() => hasAccessByCodes(['mes:qc-indicator:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:qc-indicator:delete']))
 
 /** 返回上一页 */
 function handleBack() {

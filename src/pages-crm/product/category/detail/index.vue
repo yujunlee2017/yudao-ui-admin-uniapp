@@ -25,10 +25,10 @@
     <view v-if="hasFooter" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <template v-if="activeTab === 'basic'">
-          <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+          <wd-button v-if="hasAccessByCodes(['crm:product-category:update'])" class="flex-1" type="warning" @click="handleEdit">
             编辑
           </wd-button>
-          <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+          <wd-button v-if="hasAccessByCodes(['crm:product-category:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
             删除
           </wd-button>
         </template>
@@ -68,8 +68,6 @@ const tabIndex = ref(0) // 当前详情分类下标
 const deleting = ref(false) // 删除状态
 const categoryId = computed(() => Number(props.id))
 const activeTab = computed(() => tabs[tabIndex.value].key)
-const canUpdate = computed(() => hasAccessByCodes(['crm:product-category:update']))
-const canDelete = computed(() => hasAccessByCodes(['crm:product-category:delete']))
 const formatParentId = computed(() => {
   if (formData.value.parentId === 0) {
     return '顶级分类'
@@ -78,7 +76,7 @@ const formatParentId = computed(() => {
 }) // 父级分类展示（顶级显示「顶级分类」，否则展示父级名称）
 const hasFooter = computed(() => {
   if (activeTab.value === 'basic') {
-    return canUpdate.value || canDelete.value
+    return hasAccessByCodes(['crm:product-category:update']) || hasAccessByCodes(['crm:product-category:delete'])
   }
   return false
 })

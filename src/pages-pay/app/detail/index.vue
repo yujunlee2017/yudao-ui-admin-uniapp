@@ -32,15 +32,15 @@
     </wd-cell-group>
 
     <!-- 底部操作按钮 -->
-    <view v-if="canConfigChannel || canUpdate || canDelete" class="yd-detail-footer">
+    <view v-if="canConfigChannel || hasAccessByCodes(['pay:app:update']) || hasAccessByCodes(['pay:app:delete'])" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <wd-button v-if="canConfigChannel" class="flex-1" type="primary" @click="handleChannelConfig">
           渠道配置
         </wd-button>
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['pay:app:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['pay:app:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -75,8 +75,6 @@ const toast = useToast()
 const formData = ref<PayApp>({}) // 详情数据
 const deleting = ref(false) // 删除状态
 const canConfigChannel = computed(() => !!props.id)
-const canUpdate = computed(() => hasAccessByCodes(['pay:app:update']))
-const canDelete = computed(() => hasAccessByCodes(['pay:app:delete']))
 
 /** 返回上一页 */
 function handleBack() {

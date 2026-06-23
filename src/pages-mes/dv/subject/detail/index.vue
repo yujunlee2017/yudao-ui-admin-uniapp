@@ -32,13 +32,13 @@
     <view v-if="hasFooter" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <wd-button
-          v-if="canUpdate"
+          v-if="hasAccessByCodes(['mes:dv-subject:update'])"
           class="flex-1" type="warning" @click="handleEdit"
         >
           编辑
         </wd-button>
         <wd-button
-          v-if="canDelete"
+          v-if="hasAccessByCodes(['mes:dv-subject:delete'])"
           class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
         >
           删除
@@ -79,9 +79,7 @@ const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/dv/subject/deta
 const currentId = computed(() => getRouteQueryNumber('id')) // 当前详情编号
 const formData = ref<DvSubjectVO>() // 详情数据
 const deleting = ref(false) // 删除状态
-const canUpdate = computed(() => hasAccessByCodes(['mes:dv-subject:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:dv-subject:delete']))
-const hasFooter = computed(() => canUpdate.value || canDelete.value)
+const hasFooter = computed(() => hasAccessByCodes(['mes:dv-subject:update']) || hasAccessByCodes(['mes:dv-subject:delete']))
 
 /** 返回上一页 */
 function handleBack() {

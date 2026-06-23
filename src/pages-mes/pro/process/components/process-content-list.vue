@@ -4,7 +4,7 @@
       <view class="text-30rpx text-[#333] font-semibold">
         操作步骤
       </view>
-      <wd-button v-if="canCreate" size="small" type="primary" variant="plain" @click="openForm('create')">
+      <wd-button v-if="hasAccessByCodes(['mes:pro-process:create'])" size="small" type="primary" variant="plain" @click="openForm('create')">
         添加步骤
       </wd-button>
     </view>
@@ -21,10 +21,10 @@
             步骤 {{ item.sort }}
           </view>
           <view class="flex shrink-0 gap-12rpx">
-            <text v-if="canUpdate" class="text-26rpx text-[#1677ff]" @click="openForm('update', item)">
+            <text v-if="hasAccessByCodes(['mes:pro-process:update'])" class="text-26rpx text-[#1677ff]" @click="openForm('update', item)">
               编辑
             </text>
-            <text v-if="canDelete" class="text-26rpx text-[#f56c6c]" @click="handleDelete(item)">
+            <text v-if="hasAccessByCodes(['mes:pro-process:delete'])" class="text-26rpx text-[#f56c6c]" @click="handleDelete(item)">
               删除
             </text>
           </view>
@@ -112,9 +112,6 @@ const formLoading = ref(false)
 const formType = ref<'create' | 'update'>('create')
 const formData = ref<Partial<ProProcessContentVO>>(createDefaultFormData(props.processId, 1))
 const formRef = ref<FormInstance>()
-const canCreate = computed(() => hasAccessByCodes(['mes:pro-process:create']))
-const canUpdate = computed(() => hasAccessByCodes(['mes:pro-process:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:pro-process:delete']))
 const formTitle = computed(() => formType.value === 'create' ? '添加操作步骤' : '编辑操作步骤')
 const formSchema = createFormSchema({
   sort: [

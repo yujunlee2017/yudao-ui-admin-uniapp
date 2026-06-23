@@ -23,10 +23,10 @@
     </scroll-view>
     <view v-if="hasFooter" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['mes:dv-machinery:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['mes:dv-machinery:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -64,9 +64,7 @@ const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/dv/machinery/de
 const currentId = computed(() => getRouteQueryNumber('id')) // 当前设备编号
 const formData = ref<DvMachineryVO>()
 const deleting = ref(false)
-const canUpdate = computed(() => hasAccessByCodes(['mes:dv-machinery:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:dv-machinery:delete']))
-const hasFooter = computed(() => canUpdate.value || canDelete.value)
+const hasFooter = computed(() => hasAccessByCodes(['mes:dv-machinery:update']) || hasAccessByCodes(['mes:dv-machinery:delete']))
 
 function handleBack() {
   navigateBackPlus('/pages-mes/dv/machinery/index')

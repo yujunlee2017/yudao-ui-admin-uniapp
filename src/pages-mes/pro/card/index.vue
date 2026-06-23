@@ -4,7 +4,7 @@
     <wd-navbar title="生产流转卡" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
 
     <!-- 导出入口 -->
-    <view v-if="canExport" class="bg-white px-24rpx py-16rpx">
+    <view v-if="hasAccessByCodes(['mes:pro-card:export'])" class="bg-white px-24rpx py-16rpx">
       <view class="h-64rpx flex items-center justify-center border-2rpx border-[#1677ff] rounded-8rpx text-26rpx text-[#1677ff]" :class="exportLoading ? 'opacity-60' : ''" @click="handleExport">
         {{ exportLoading ? '导出中...' : '导出当前筛选数据' }}
       </view>
@@ -37,19 +37,19 @@
             </view>
           </view>
           <view class="flex flex-wrap border-t border-[#f3f4f6] text-26rpx">
-            <view v-if="canUpdate && item.status === MesProCardStatusEnum.PREPARE" class="w-1/3 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
+            <view v-if="hasAccessByCodes(['mes:pro-card:update']) && item.status === MesProCardStatusEnum.PREPARE" class="w-1/3 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
               编辑
             </view>
-            <view v-if="canUpdate && item.status === MesProCardStatusEnum.PREPARE" class="w-1/3 py-18rpx text-center text-[#faad14]" @click="handleSubmitCard(item)">
+            <view v-if="hasAccessByCodes(['mes:pro-card:update']) && item.status === MesProCardStatusEnum.PREPARE" class="w-1/3 py-18rpx text-center text-[#faad14]" @click="handleSubmitCard(item)">
               提交
             </view>
-            <view v-if="canDelete && item.status === MesProCardStatusEnum.PREPARE" class="w-1/3 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
+            <view v-if="hasAccessByCodes(['mes:pro-card:delete']) && item.status === MesProCardStatusEnum.PREPARE" class="w-1/3 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
               删除
             </view>
-            <view v-if="canFinish && item.status === MesProCardStatusEnum.CONFIRMED" class="w-1/2 py-18rpx text-center text-[#52c41a]" @click="handleFinish(item)">
+            <view v-if="hasAccessByCodes(['mes:pro-card:finish']) && item.status === MesProCardStatusEnum.CONFIRMED" class="w-1/2 py-18rpx text-center text-[#52c41a]" @click="handleFinish(item)">
               完成
             </view>
-            <view v-if="canUpdate && item.status === MesProCardStatusEnum.CONFIRMED" class="w-1/2 py-18rpx text-center text-[#f56c6c]" @click="handleCancel(item)">
+            <view v-if="hasAccessByCodes(['mes:pro-card:update']) && item.status === MesProCardStatusEnum.CONFIRMED" class="w-1/2 py-18rpx text-center text-[#f56c6c]" @click="handleCancel(item)">
               取消
             </view>
             <view class="flex-1 py-18rpx text-center text-[#666]" @click="handleDetail(item)">
@@ -61,7 +61,7 @@
     </z-paging>
 
     <!-- 新增按钮 -->
-    <wd-fab v-if="canCreate" position="right-bottom" type="primary" :expandable="false" @click="handleAdd" />
+    <wd-fab v-if="hasAccessByCodes(['mes:pro-card:create'])" position="right-bottom" type="primary" :expandable="false" @click="handleAdd" />
   </view>
 </template>
 
@@ -70,7 +70,7 @@ import type { ProCardQueryParams, ProCardVO } from '@/api/mes/pro/card'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { cancelCard, deleteCard, finishCard, getCardPage, submitCard } from '@/api/mes/pro/card'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
@@ -97,11 +97,6 @@ const list = ref<ProCardVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<ProCardVO>>() // 分页组件引用
 const queryParams = ref<Partial<ProCardQueryParams>>({}) // 查询参数
 const exportLoading = ref(false) // 导出状态
-const canCreate = computed(() => hasAccessByCodes(['mes:pro-card:create']))
-const canUpdate = computed(() => hasAccessByCodes(['mes:pro-card:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:pro-card:delete']))
-const canFinish = computed(() => hasAccessByCodes(['mes:pro-card:finish']))
-const canExport = computed(() => hasAccessByCodes(['mes:pro-card:export']))
 
 /** 返回上一页 */
 function handleBack() {

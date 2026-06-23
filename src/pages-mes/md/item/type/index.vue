@@ -19,7 +19,7 @@
         <wd-swipe-action
           v-for="item in currentList"
           :key="item.id"
-          :disabled="!canDelete || item.parentId === 0"
+          :disabled="!hasAccessByCodes(['mes:md-item-type:delete']) || item.parentId === 0"
         >
           <view class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
             <view class="p-24rpx" @click="handleDetail(item)">
@@ -60,7 +60,7 @@
           </view>
 
           <!-- 左滑删除 -->
-          <template v-if="canDelete && item.parentId !== 0" #right>
+          <template v-if="hasAccessByCodes(['mes:md-item-type:delete']) && item.parentId !== 0" #right>
             <view class="h-full flex items-center justify-center px-36rpx" style="background: linear-gradient(135deg, #f56c6c, #e85d5d);" @click.stop="handleSwipeDelete(item)">
               <wd-icon name="delete-outline" size="36rpx" custom-style="color: #fff;" />
               <text class="ml-8rpx text-28rpx text-white">删除</text>
@@ -117,7 +117,6 @@ const currentParentId = ref(0) // 当前层级的父节点编号
 const breadcrumbRef = ref<InstanceType<typeof Breadcrumb>>() // 面包屑引用
 const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索组件引用
 const queryParams = ref<MdItemTypeQueryParams>({}) // 已生效搜索条件
-const canDelete = computed(() => hasAccessByCodes(['mes:md-item-type:delete']))
 const hasQuery = computed(() => Object.keys(queryParams.value).length > 0)
 const currentList = computed(() => {
   if (hasQuery.value) {
@@ -189,7 +188,7 @@ function handleDetail(item: MdItemTypeVO) {
 
 /** 左滑删除 */
 async function handleSwipeDelete(item: MdItemTypeVO) {
-  if (!item.id || !canDelete.value) {
+  if (!item.id || !hasAccessByCodes(['mes:md-item-type:delete'])) {
     return
   }
   try {

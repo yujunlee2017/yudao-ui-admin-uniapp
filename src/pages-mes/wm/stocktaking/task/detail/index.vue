@@ -119,15 +119,13 @@ const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/wm/stocktaking/
 const currentId = computed(() => getRouteQueryNumber('id')) // 当前详情编号
 const formData = ref<StockTakingTaskVO>() // 详情数据
 const deleting = ref(false) // 删除状态
-const canUpdatePermission = computed(() => hasAccessByCodes(['mes:wm-stock-taking-task:update']))
-const canDeletePermission = computed(() => hasAccessByCodes(['mes:wm-stock-taking-task:delete']))
 const isPrepare = computed(() => formData.value?.status === MesWmStockTakingTaskStatusEnum.PREPARE)
 const isApproving = computed(() => formData.value?.status === MesWmStockTakingTaskStatusEnum.APPROVING)
-const canUpdate = computed(() => canUpdatePermission.value && isPrepare.value)
-const canSubmit = computed(() => canUpdatePermission.value && isPrepare.value)
-const canExecute = computed(() => canUpdatePermission.value && isApproving.value)
-const canCancel = computed(() => canUpdatePermission.value && isApproving.value)
-const canDelete = computed(() => canDeletePermission.value && isPrepare.value)
+const canUpdate = computed(() => hasAccessByCodes(['mes:wm-stock-taking-task:update']) && isPrepare.value)
+const canSubmit = computed(() => hasAccessByCodes(['mes:wm-stock-taking-task:update']) && isPrepare.value)
+const canExecute = computed(() => hasAccessByCodes(['mes:wm-stock-taking-task:update']) && isApproving.value)
+const canCancel = computed(() => hasAccessByCodes(['mes:wm-stock-taking-task:update']) && isApproving.value)
+const canDelete = computed(() => hasAccessByCodes(['mes:wm-stock-taking-task:delete']) && isPrepare.value)
 const hasFooterActions = computed(() => {
   return canUpdate.value || canSubmit.value || canExecute.value || canCancel.value || canDelete.value
 })

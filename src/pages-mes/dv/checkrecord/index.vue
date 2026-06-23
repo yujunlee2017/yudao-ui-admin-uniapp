@@ -75,10 +75,10 @@
             </view>
           </view>
           <view v-if="hasRowActions(item)" class="flex border-t border-t-[#f0f0f0] text-28rpx" @click.stop>
-            <view v-if="canUpdateDraft" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
+            <view v-if="hasAccessByCodes(['mes:dv-check-record:update'])" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
               编辑
             </view>
-            <view v-if="canDeleteDraft" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
+            <view v-if="hasAccessByCodes(['mes:dv-check-record:delete'])" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
               删除
             </view>
           </view>
@@ -102,7 +102,7 @@ import type { DvCheckRecordQueryParams, DvCheckRecordVO } from '@/api/mes/dv/che
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { deleteCheckRecord, getCheckRecordPage } from '@/api/mes/dv/checkrecord'
 import { useAccess } from '@/hooks/useAccess'
 import { downloadApiFile } from '@/utils/download'
@@ -125,8 +125,6 @@ const list = ref<DvCheckRecordVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<DvCheckRecordVO>>() // 分页组件引用
 const queryParams = ref<DvCheckRecordQueryParams>({}) // 查询参数
 const exportLoading = ref(false) // 导出状态
-const canUpdateDraft = computed(() => hasAccessByCodes(['mes:dv-check-record:update']))
-const canDeleteDraft = computed(() => hasAccessByCodes(['mes:dv-check-record:delete']))
 
 /** 返回上一页 */
 function handleBack() {
@@ -200,7 +198,7 @@ function handleDetail(item: DvCheckRecordVO) {
 
 /** 是否显示行操作 */
 function hasRowActions(item: DvCheckRecordVO) {
-  return item.status === MesDvCheckRecordStatusEnum.DRAFT && (canUpdateDraft.value || canDeleteDraft.value)
+  return item.status === MesDvCheckRecordStatusEnum.DRAFT && (hasAccessByCodes(['mes:dv-check-record:update']) || hasAccessByCodes(['mes:dv-check-record:delete']))
 }
 
 /** 编辑 */

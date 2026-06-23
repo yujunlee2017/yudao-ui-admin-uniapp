@@ -38,10 +38,10 @@
     </scroll-view>
     <view v-if="hasFooter" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['mes:md-vendor:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['mes:md-vendor:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -72,9 +72,7 @@ const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/md/vendor/detai
 const formData = ref<MdVendorVO>()
 const currentId = computed(() => getRouteQueryNumber('id'))
 const deleting = ref(false)
-const canUpdate = computed(() => hasAccessByCodes(['mes:md-vendor:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:md-vendor:delete']))
-const hasFooter = computed(() => canUpdate.value || canDelete.value)
+const hasFooter = computed(() => hasAccessByCodes(['mes:md-vendor:update']) || hasAccessByCodes(['mes:md-vendor:delete']))
 
 function handleBack() {
   navigateBackPlus('/pages-mes/md/vendor/index')

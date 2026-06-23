@@ -38,10 +38,10 @@
     <view v-if="hasFooter" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <template v-if="activeTab === 'basic'">
-          <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+          <wd-button v-if="hasAccessByCodes(['crm:product:update'])" class="flex-1" type="warning" @click="handleEdit">
             编辑
           </wd-button>
-          <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+          <wd-button v-if="hasAccessByCodes(['crm:product:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
             删除
           </wd-button>
         </template>
@@ -85,14 +85,12 @@ const deleting = ref(false) // 删除状态
 const productId = computed(() => Number(props.id))
 const activeTab = computed(() => tabs[tabIndex.value].key)
 const isPagingTab = computed(() => activeTab.value === 'log') // 操作日志 tab 用 z-paging 固定高布局
-const canUpdate = computed(() => hasAccessByCodes(['crm:product:update']))
-const canDelete = computed(() => hasAccessByCodes(['crm:product:delete']))
 const hasFooter = computed(() => {
   switch (activeTab.value) {
     case 'log':
       return false
     case 'basic':
-      return canUpdate.value || canDelete.value
+      return hasAccessByCodes(['crm:product:update']) || hasAccessByCodes(['crm:product:delete'])
     default:
       return false
   }

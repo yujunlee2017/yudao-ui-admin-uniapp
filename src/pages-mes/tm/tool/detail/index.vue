@@ -25,10 +25,10 @@
     </scroll-view>
     <view v-if="hasFooter" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['mes:tm-tool:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['mes:tm-tool:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -69,9 +69,7 @@ const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/tm/tool/detail/
 const currentId = computed(() => getRouteQueryNumber('id'))
 const formData = ref<TmToolVO>()
 const deleting = ref(false)
-const canUpdate = computed(() => hasAccessByCodes(['mes:tm-tool:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:tm-tool:delete']))
-const hasFooter = computed(() => canUpdate.value || canDelete.value)
+const hasFooter = computed(() => hasAccessByCodes(['mes:tm-tool:update']) || hasAccessByCodes(['mes:tm-tool:delete']))
 
 function handleBack() {
   navigateBackPlus('/pages-mes/tm/tool/index')

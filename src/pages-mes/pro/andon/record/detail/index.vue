@@ -46,7 +46,7 @@
     <view v-if="hasActiveActions" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <wd-button
-          v-if="canUpdate"
+          v-if="hasAccessByCodes(['mes:pro-andon-record:update'])"
           class="flex-1"
           type="success"
           @click="handleDispose"
@@ -54,7 +54,7 @@
           处置
         </wd-button>
         <wd-button
-          v-if="canDelete"
+          v-if="hasAccessByCodes(['mes:pro-andon-record:delete'])"
           class="flex-1"
           type="danger"
           :loading="deleting"
@@ -102,10 +102,8 @@ const formData = ref<ProAndonRecordVO>() // 详情数据
 const deleting = ref(false) // 删除状态
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/pro/andon/record/detail/index')
 const currentId = computed(() => getRouteQueryNumber('id'))
-const canUpdate = computed(() => hasAccessByCodes(['mes:pro-andon-record:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:pro-andon-record:delete']))
 const hasActiveActions = computed(() => {
-  return formData.value?.status === MesProAndonStatusEnum.ACTIVE && (canUpdate.value || canDelete.value)
+  return formData.value?.status === MesProAndonStatusEnum.ACTIVE && (hasAccessByCodes(['mes:pro-andon-record:update']) || hasAccessByCodes(['mes:pro-andon-record:delete']))
 })
 
 /** 返回上一页 */

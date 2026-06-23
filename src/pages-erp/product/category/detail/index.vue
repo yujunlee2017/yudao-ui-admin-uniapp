@@ -28,13 +28,13 @@
     <view v-if="hasFooter" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <wd-button
-          v-if="canUpdate"
+          v-if="hasAccessByCodes(['erp:product-category:update'])"
           class="flex-1" type="warning" @click="handleEdit"
         >
           编辑
         </wd-button>
         <wd-button
-          v-if="canDelete"
+          v-if="hasAccessByCodes(['erp:product-category:delete'])"
           class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
         >
           删除
@@ -69,9 +69,7 @@ const dialog = useDialog()
 const toast = useToast()
 const formData = ref<ProductCategory>() // 详情数据
 const deleting = ref(false) // 删除状态
-const canUpdate = computed(() => hasAccessByCodes(['erp:product-category:update']))
-const canDelete = computed(() => hasAccessByCodes(['erp:product-category:delete']))
-const hasFooter = computed(() => canUpdate.value || canDelete.value)
+const hasFooter = computed(() => hasAccessByCodes(['erp:product-category:update']) || hasAccessByCodes(['erp:product-category:delete']))
 
 /** 返回上一页 */
 function handleBack() {

@@ -70,14 +70,14 @@
             </view>
           </view>
           <view
-            v-if="canUpdate || canDelete"
+            v-if="hasAccessByCodes(['mes:pro-andon-config:update']) || hasAccessByCodes(['mes:pro-andon-config:delete'])"
             class="flex border-t border-[#f0f0f0] text-28rpx"
             @click.stop
           >
-            <view v-if="canUpdate" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
+            <view v-if="hasAccessByCodes(['mes:pro-andon-config:update'])" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
               编辑
             </view>
-            <view v-if="canDelete" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
+            <view v-if="hasAccessByCodes(['mes:pro-andon-config:delete'])" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
               删除
             </view>
           </view>
@@ -86,7 +86,7 @@
     </z-paging>
 
     <!-- 新增按钮 -->
-    <wd-fab v-if="canCreate" position="right-bottom" type="primary" :expandable="false" @click="handleAdd" />
+    <wd-fab v-if="hasAccessByCodes(['mes:pro-andon-config:create'])" position="right-bottom" type="primary" :expandable="false" @click="handleAdd" />
 
     <!-- 新增编辑弹层 -->
     <wd-popup
@@ -232,9 +232,6 @@ const roleOptions = ref<Role[]>([]) // 角色列表
 const selectedRole = ref<Role>() // 当前选择角色
 const selectedUser = ref<User>() // 当前选择用户
 const formData = ref<AndonConfigFormData>(getDefaultFormData()) // 表单数据
-const canCreate = computed(() => hasAccessByCodes(['mes:pro-andon-config:create']))
-const canUpdate = computed(() => hasAccessByCodes(['mes:pro-andon-config:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:pro-andon-config:delete']))
 const levelOptions = computed(() => getIntDictOptions(DICT_TYPE.MES_PRO_ANDON_LEVEL))
 const selectedRoleName = computed(() => selectedRole.value?.name || formData.value.handlerRoleName || '')
 const rolePickerValue = computed(() => formData.value.handlerRoleId)

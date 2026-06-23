@@ -9,7 +9,7 @@
 
     <!-- 搜索与导出 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
-    <view v-if="canExport" class="bg-white px-24rpx pb-16rpx">
+    <view v-if="hasAccessByCodes(['mes:md-unit-measure:export'])" class="bg-white px-24rpx pb-16rpx">
       <wd-button block variant="plain" :loading="exportLoading" @click="handleExport">
         导出当前筛选数据
       </wd-button>
@@ -79,7 +79,7 @@ import type { MdUnitMeasurePageParam, MdUnitMeasureVO } from '@/api/mes/md/unitm
 import type { ZPagingRef } from 'z-paging'
 import { onUnload } from '@dcloudio/uni-app'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { getUnitMeasurePage } from '@/api/mes/md/unitmeasure'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
@@ -101,7 +101,6 @@ const list = ref<MdUnitMeasureVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<MdUnitMeasureVO>>() // 分页组件引用
 const queryParams = ref<MdUnitMeasurePageParam>({}) // 查询参数
 const exportLoading = ref(false) // 导出状态
-const canExport = computed(() => hasAccessByCodes(['mes:md-unit-measure:export']))
 
 /** 返回上一页 */
 function handleBack() {

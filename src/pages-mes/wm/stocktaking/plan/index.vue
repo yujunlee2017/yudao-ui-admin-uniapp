@@ -79,7 +79,7 @@
               编辑
             </view>
             <view
-              v-if="canUpdateStatus"
+              v-if="hasAccessByCodes(['mes:wm-stock-taking-plan:update'])"
               class="flex-1 py-18rpx text-center text-[#52c41a]"
               @click="handleStatusChange(item)"
             >
@@ -114,7 +114,7 @@ import type { ZPagingInstance } from 'z-paging'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import {
   deleteStockTakingPlan,
   getStockTakingPlanPage,
@@ -141,7 +141,6 @@ const list = ref<StockTakingPlanVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingInstance<StockTakingPlanVO>>() // 分页组件引用
 const queryParams = ref<Partial<StockTakingPlanQueryParams>>({}) // 查询参数
 const exportLoading = ref(false) // 导出状态
-const canUpdateStatus = computed(() => hasAccessByCodes(['mes:wm-stock-taking-plan:update']))
 
 /** 返回上一页 */
 function handleBack() {

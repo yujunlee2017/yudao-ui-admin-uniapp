@@ -114,7 +114,7 @@
           {{ nextStatus === 20 ? '审批' : '反审批' }}
         </wd-button>
         <wd-button
-          v-if="canDelete"
+          v-if="hasAccessByCodes(['erp:sale-order:delete'])"
           class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
         >
           删除
@@ -154,10 +154,9 @@ const deleting = ref(false) // 删除状态
 const statusLoading = ref(false) // 审批状态
 const items = computed(() => Array.isArray(formData.value?.items) ? formData.value.items : [])
 const canUpdate = computed(() => formData.value?.status !== 20 && hasAccessByCodes(['erp:sale-order:update']))
-const canDelete = computed(() => hasAccessByCodes(['erp:sale-order:delete']))
 const canUpdateStatus = computed(() => hasAccessByCodes(['erp:sale-order:update-status']) && (formData.value?.status === 10 || formData.value?.status === 20))
 const nextStatus = computed(() => formData.value?.status === 10 ? 20 : 10)
-const hasFooter = computed(() => canUpdate.value || canDelete.value || canUpdateStatus.value)
+const hasFooter = computed(() => canUpdate.value || hasAccessByCodes(['erp:sale-order:delete']) || canUpdateStatus.value)
 
 /** 返回上一页 */
 function handleBack() {

@@ -18,10 +18,10 @@
     </scroll-view>
     <view v-if="hasFooter" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['mes:dv-machinery-type:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['mes:dv-machinery-type:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -53,9 +53,7 @@ const currentId = computed(() => getRouteQueryNumber('id'))
 const formData = ref<DvMachineryTypeVO>()
 const parentName = ref('')
 const deleting = ref(false)
-const canUpdate = computed(() => hasAccessByCodes(['mes:dv-machinery-type:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:dv-machinery-type:delete']))
-const hasFooter = computed(() => canUpdate.value || canDelete.value)
+const hasFooter = computed(() => hasAccessByCodes(['mes:dv-machinery-type:update']) || hasAccessByCodes(['mes:dv-machinery-type:delete']))
 
 function handleBack() {
   navigateBackPlus('/pages-mes/dv/machinery/type/index')

@@ -78,16 +78,16 @@
             </view>
           </view>
           <view v-if="hasRowActions(item)" class="flex border-t border-t-[#f0f0f0] text-28rpx" @click.stop>
-            <view v-if="canUpdate && item.status === MesDvCheckPlanStatusEnum.PREPARE" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
+            <view v-if="hasAccessByCodes(['mes:dv-check-plan:update']) && item.status === MesDvCheckPlanStatusEnum.PREPARE" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
               编辑
             </view>
-            <view v-if="canDelete && item.status === MesDvCheckPlanStatusEnum.PREPARE" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
+            <view v-if="hasAccessByCodes(['mes:dv-check-plan:delete']) && item.status === MesDvCheckPlanStatusEnum.PREPARE" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
               删除
             </view>
-            <view v-if="canUpdate && item.status === MesDvCheckPlanStatusEnum.PREPARE" class="flex-1 py-18rpx text-center text-[#52c41a]" @click="handleEnable(item)">
+            <view v-if="hasAccessByCodes(['mes:dv-check-plan:update']) && item.status === MesDvCheckPlanStatusEnum.PREPARE" class="flex-1 py-18rpx text-center text-[#52c41a]" @click="handleEnable(item)">
               启用
             </view>
-            <view v-if="canUpdate && item.status === MesDvCheckPlanStatusEnum.ENABLED" class="flex-1 py-18rpx text-center text-[#faad14]" @click="handleDisable(item)">
+            <view v-if="hasAccessByCodes(['mes:dv-check-plan:update']) && item.status === MesDvCheckPlanStatusEnum.ENABLED" class="flex-1 py-18rpx text-center text-[#faad14]" @click="handleDisable(item)">
               停用
             </view>
           </view>
@@ -111,7 +111,7 @@ import type { DvCheckPlanQueryParams, DvCheckPlanVO } from '@/api/mes/dv/checkpl
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { deleteCheckPlan, disableCheckPlan, enableCheckPlan, getCheckPlanPage } from '@/api/mes/dv/checkplan'
 import { useAccess } from '@/hooks/useAccess'
 import { downloadApiFile } from '@/utils/download'
@@ -134,8 +134,6 @@ const list = ref<DvCheckPlanVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<DvCheckPlanVO>>() // 分页组件引用
 const queryParams = ref<DvCheckPlanQueryParams>({}) // 查询参数
 const exportLoading = ref(false) // 导出状态
-const canUpdate = computed(() => hasAccessByCodes(['mes:dv-check-plan:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:dv-check-plan:delete']))
 
 /** 返回上一页 */
 function handleBack() {
@@ -210,11 +208,11 @@ function handleDetail(item: DvCheckPlanVO) {
 /** 是否显示行操作 */
 function hasRowActions(item: DvCheckPlanVO) {
   return (
-    canUpdate.value && item.status === MesDvCheckPlanStatusEnum.PREPARE
+    hasAccessByCodes(['mes:dv-check-plan:update']) && item.status === MesDvCheckPlanStatusEnum.PREPARE
   ) || (
-    canDelete.value && item.status === MesDvCheckPlanStatusEnum.PREPARE
+    hasAccessByCodes(['mes:dv-check-plan:delete']) && item.status === MesDvCheckPlanStatusEnum.PREPARE
   ) || (
-    canUpdate.value && item.status === MesDvCheckPlanStatusEnum.ENABLED
+    hasAccessByCodes(['mes:dv-check-plan:update']) && item.status === MesDvCheckPlanStatusEnum.ENABLED
   )
 }
 

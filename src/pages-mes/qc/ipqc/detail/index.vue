@@ -77,13 +77,13 @@
     <!-- 底部操作按钮 -->
     <view v-if="formData && isDraft" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['mes:qc-ipqc:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canUpdate" class="flex-1" type="success" :loading="finishing" @click="handleFinish">
+        <wd-button v-if="hasAccessByCodes(['mes:qc-ipqc:update'])" class="flex-1" type="success" :loading="finishing" @click="handleFinish">
           完成
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['mes:qc-ipqc:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -130,8 +130,6 @@ const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/qc/ipqc/detail/
 const formData = ref<QcIpqcVO>() // 详情数据
 const deleting = ref(false) // 删除状态
 const finishing = ref(false) // 完成状态
-const canUpdate = computed(() => hasAccessByCodes(['mes:qc-ipqc:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:qc-ipqc:delete']))
 const isDraft = computed(() => formData.value?.status === MesQcStatusEnum.DRAFT)
 const currentId = computed(() => getRouteQueryNumber('id'))
 

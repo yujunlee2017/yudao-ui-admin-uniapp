@@ -76,7 +76,7 @@
           <wd-button v-if="canEdit" class="flex-1" type="warning" @click="handleEdit">
             编辑
           </wd-button>
-          <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+          <wd-button v-if="hasAccessByCodes(['crm:clue:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
             删除
           </wd-button>
           <wd-button v-if="moreActions.length" class="flex-1" type="info" @click="moreActionVisible = true">
@@ -151,11 +151,9 @@ const transferFormRef = ref<InstanceType<typeof CrmTransferForm>>() // 转移表
 const clueId = computed(() => Number(props.id))
 const activeTab = computed(() => tabs[tabIndex.value].key)
 const isPagingTab = computed(() => ['followup', 'log'].includes(activeTab.value)) // 跟进/操作日志 tab 用 z-paging 固定高布局
-const canUpdate = computed(() => hasAccessByCodes(['crm:clue:update']))
-const canDelete = computed(() => hasAccessByCodes(['crm:clue:delete']))
 const validateWrite = computed(() => teamRef.value?.validateWrite ?? false) // 读写权限（负责人或读写成员）
 const validateOwnerUser = computed(() => teamRef.value?.validateOwnerUser ?? false) // 负责人权限
-const canEdit = computed(() => canUpdate.value && validateWrite.value) // 可编辑（菜单权限 + 读写权限）
+const canEdit = computed(() => hasAccessByCodes(['crm:clue:update']) && validateWrite.value) // 可编辑（菜单权限 + 读写权限）
 const moreActions = computed(() => {
   const data = formData.value
   if (!data?.id) {
@@ -176,7 +174,7 @@ const hasFooter = computed(() => {
     case 'log':
       return false
     case 'basic':
-      return canEdit.value || canDelete.value || moreActions.value.length > 0
+      return canEdit.value || hasAccessByCodes(['crm:clue:delete']) || moreActions.value.length > 0
     case 'followup':
       return true
     case 'team':

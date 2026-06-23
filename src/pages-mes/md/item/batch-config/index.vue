@@ -148,7 +148,7 @@
     </scroll-view>
 
     <!-- 保存按钮（仅 edit 模式） -->
-    <view v-if="isEdit && canUpdate" class="yd-detail-footer">
+    <view v-if="isEdit && hasAccessByCodes(['mes:md-item:update'])" class="yd-detail-footer">
       <wd-button type="primary" block :loading="saving" @click="handleSave">
         保存批次属性
       </wd-button>
@@ -174,7 +174,6 @@ definePage({
 
 const { hasAccessByCodes } = useAccess()
 const isEdit = computed(() => props.mode === 'edit')
-const canUpdate = computed(() => hasAccessByCodes(['mes:md-item:update']))
 const item = ref<MdItemVO>()
 const itemOrProduct = computed(() => String(item.value?.itemOrProduct || '').toUpperCase())
 const isItem = computed(() => itemOrProduct.value === 'ITEM')

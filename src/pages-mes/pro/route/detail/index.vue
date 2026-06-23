@@ -42,13 +42,13 @@
 
     <view v-if="hasFooter" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="primary" variant="plain" @click="handleStatusChange">
+        <wd-button v-if="hasAccessByCodes(['mes:pro-route:update'])" class="flex-1" type="primary" variant="plain" @click="handleStatusChange">
           {{ formData?.status === CommonStatusEnum.ENABLE ? '停用' : '启用' }}
         </wd-button>
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" :disabled="!isDisabled" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['mes:pro-route:update'])" class="flex-1" type="warning" :disabled="!isDisabled" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" :disabled="!isDisabled" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['mes:pro-route:delete'])" class="flex-1" type="danger" :loading="deleting" :disabled="!isDisabled" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -93,9 +93,7 @@ const routeProductCount = ref(0)
 const routeBomCount = ref(0)
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/pro/route/detail/index')
 const routeId = computed(() => getRouteQueryNumber('id'))
-const canUpdate = computed(() => hasAccessByCodes(['mes:pro-route:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:pro-route:delete']))
-const hasFooter = computed(() => canUpdate.value || canDelete.value)
+const hasFooter = computed(() => hasAccessByCodes(['mes:pro-route:update']) || hasAccessByCodes(['mes:pro-route:delete']))
 const isDisabled = computed(() => formData.value?.status === CommonStatusEnum.DISABLE)
 
 /** 返回上一页 */

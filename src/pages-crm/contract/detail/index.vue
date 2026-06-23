@@ -116,7 +116,7 @@
           <wd-button v-if="canEdit" class="flex-1" type="warning" @click="handleEdit">
             编辑
           </wd-button>
-          <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+          <wd-button v-if="hasAccessByCodes(['crm:contract:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
             删除
           </wd-button>
           <wd-button v-if="moreActions.length" class="flex-1" type="info" @click="moreActionVisible = true">
@@ -134,10 +134,10 @@
             新增成员
           </wd-button>
         </template>
-        <wd-button v-else-if="activeTab === 'plans' && canCreatePlan" class="flex-1" type="primary" @click="listRef?.openAdd()">
+        <wd-button v-else-if="activeTab === 'plans' && hasAccessByCodes(['crm:receivable-plan:create'])" class="flex-1" type="primary" @click="listRef?.openAdd()">
           新增回款计划
         </wd-button>
-        <wd-button v-else-if="activeTab === 'receivables' && canCreateReceivable" class="flex-1" type="primary" @click="listRef?.openAdd()">
+        <wd-button v-else-if="activeTab === 'receivables' && hasAccessByCodes(['crm:receivable:create'])" class="flex-1" type="primary" @click="listRef?.openAdd()">
           新增回款
         </wd-button>
       </view>
@@ -207,14 +207,10 @@ const products = computed<Record<string, any>[]>(() => Array.isArray(formData.va
 const totalProductPrice = computed(() => products.value.reduce((sum, row) => sum + Number(row.totalPrice || 0), 0)) // 产品总金额
 const activeTab = computed(() => tabs[tabIndex.value].key)
 const isPagingTab = computed(() => ['plans', 'receivables', 'followup', 'log'].includes(activeTab.value)) // 关系列表/跟进 tab 用 z-paging 固定高布局
-const canUpdate = computed(() => hasAccessByCodes(['crm:contract:update']))
-const canDelete = computed(() => hasAccessByCodes(['crm:contract:delete']))
 const isDraft = computed(() => Number(formData.value.auditStatus) === CrmAuditStatusEnum.DRAFT) // 未提交（草稿）
 const validateWrite = computed(() => teamRef.value?.validateWrite ?? false) // 读写权限（负责人或读写成员）
 const validateOwnerUser = computed(() => teamRef.value?.validateOwnerUser ?? false) // 负责人权限
-const canEdit = computed(() => canUpdate.value && isDraft.value && validateWrite.value) // 可编辑（草稿 + 菜单权限 + 读写权限）
-const canCreatePlan = computed(() => hasAccessByCodes(['crm:receivable-plan:create']))
-const canCreateReceivable = computed(() => hasAccessByCodes(['crm:receivable:create']))
+const canEdit = computed(() => hasAccessByCodes(['crm:contract:update']) && isDraft.value && validateWrite.value) // 可编辑（草稿 + 菜单权限 + 读写权限）
 const moreActions = computed(() => {
   const data = formData.value
   if (!data?.id) {
@@ -224,7 +220,7 @@ const moreActions = computed(() => {
   if (validateOwnerUser.value) {
     actions.push({ name: '转移', value: 'transfer' })
   }
-  if (canUpdate.value) {
+  if (hasAccessByCodes(['crm:contract:update'])) {
     if (isDraft.value) {
       actions.push({ name: '提交审核', value: 'submit' })
     } else {
@@ -238,15 +234,15 @@ const hasFooter = computed(() => {
     case 'log':
       return false
     case 'basic':
-      return canEdit.value || canDelete.value || moreActions.value.length > 0
+      return canEdit.value || hasAccessByCodes(['crm:contract:delete']) || moreActions.value.length > 0
     case 'followup':
       return true
     case 'team':
       return teamCanQuit.value || validateOwnerUser.value
     case 'plans':
-      return canCreatePlan.value
+      return hasAccessByCodes(['crm:receivable-plan:create'])
     case 'receivables':
-      return canCreateReceivable.value
+      return hasAccessByCodes(['crm:receivable:create'])
     default:
       return false
   }

@@ -5,7 +5,7 @@
 
     <!-- 搜索与导出 -->
     <SearchForm ref="searchFormRef" @search="handleQuery" @reset="handleReset" />
-    <view v-if="canExport" class="bg-white px-24rpx pb-16rpx">
+    <view v-if="hasAccessByCodes(['mes:qc-oqc:export'])" class="bg-white px-24rpx pb-16rpx">
       <wd-button block variant="plain" :loading="exportLoading" @click="handleExport">
         导出当前筛选数据
       </wd-button>
@@ -80,11 +80,11 @@
             <text class="mr-8rpx text-[#999]">检测人员：</text>{{ item.inspectorNickname }}
           </view>
 
-          <view v-if="isDraft(item) && (canUpdate || canDelete)" class="flex justify-end gap-16rpx border-t border-t-[#f0f0f0] pt-20rpx" @click.stop>
-            <wd-button v-if="canUpdate" size="small" type="warning" @click="handleEdit(item)">
+          <view v-if="isDraft(item) && (hasAccessByCodes(['mes:qc-oqc:update']) || hasAccessByCodes(['mes:qc-oqc:delete']))" class="flex justify-end gap-16rpx border-t border-t-[#f0f0f0] pt-20rpx" @click.stop>
+            <wd-button v-if="hasAccessByCodes(['mes:qc-oqc:update'])" size="small" type="warning" @click="handleEdit(item)">
               编辑
             </wd-button>
-            <wd-button v-if="canDelete" size="small" type="danger" @click="handleDelete(item)">
+            <wd-button v-if="hasAccessByCodes(['mes:qc-oqc:delete'])" size="small" type="danger" @click="handleDelete(item)">
               删除
             </wd-button>
           </view>
@@ -108,7 +108,7 @@ import type { QcOqcPageParam, QcOqcVO } from '@/api/mes/qc/oqc'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { deleteOqc, getOqcPage } from '@/api/mes/qc/oqc'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
@@ -136,9 +136,6 @@ const pagingRef = ref<ZPagingRef<QcOqcVO>>() // 分页组件引用
 const queryParams = ref<Partial<QcOqcPageParam>>({}) // 查询参数
 const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索组件引用
 const exportLoading = ref(false) // 导出状态
-const canExport = computed(() => hasAccessByCodes(['mes:qc-oqc:export']))
-const canUpdate = computed(() => hasAccessByCodes(['mes:qc-oqc:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:qc-oqc:delete']))
 
 /** 返回上一页 */
 function handleBack() {
