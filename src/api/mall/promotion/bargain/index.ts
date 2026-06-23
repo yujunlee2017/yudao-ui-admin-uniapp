@@ -48,40 +48,40 @@ export interface PromotionBargainHelp {
 
 /** 获取砍价活动分页列表 */
 export function getPromotionBargainActivityPage(params: PageParam) {
-  return http.get<PageResult<PromotionBargainActivity>>('/promotion/bargain/activity/page', params)
+  return http.get<PageResult<PromotionBargainActivity>>('/promotion/bargain-activity/page', params)
 }
 
 /** 获取砍价活动详情 */
 export function getPromotionBargainActivity(id: number) {
-  return http.get<PromotionBargainActivity>(`/promotion/bargain/activity/get?id=${id}`)
+  return http.get<PromotionBargainActivity>(`/promotion/bargain-activity/get?id=${id}`)
 }
 
 /** 创建砍价活动 */
 export function createPromotionBargainActivity(data: PromotionBargainActivity) {
-  return http.post<number>('/promotion/bargain/activity/create', data as Record<string, any>)
+  return http.post<number>('/promotion/bargain-activity/create', data as Record<string, any>)
 }
 
 /** 更新砍价活动 */
 export function updatePromotionBargainActivity(data: PromotionBargainActivity) {
-  return http.put<boolean>('/promotion/bargain/activity/update', data as Record<string, any>)
+  return http.put<boolean>('/promotion/bargain-activity/update', data as Record<string, any>)
 }
 
 /** 关闭砍价活动 */
 export function closePromotionBargainActivity(id: number) {
-  return http.put<boolean>(`/promotion/bargain/activity/close?id=${id}`)
+  return http.put<boolean>(`/promotion/bargain-activity/close?id=${id}`)
 }
 
 /** 删除砍价活动 */
 export function deletePromotionBargainActivity(id: number) {
-  return http.delete<boolean>(`/promotion/bargain/activity/delete?id=${id}`)
+  return http.delete<boolean>(`/promotion/bargain-activity/delete?id=${id}`)
 }
 
 /** 获取砍价记录分页列表 */
 export function getPromotionBargainRecordPage(params: PageParam) {
-  return http.get<PageResult<PromotionBargainRecord>>('/promotion/bargain/record/page', params)
+  return http.get<PageResult<PromotionBargainRecord>>('/promotion/bargain-record/page', params)
 }
 
 /** 获取砍价助力分页列表 */
 export function getPromotionBargainHelpPage(params: PageParam) {
-  return http.get<PageResult<PromotionBargainHelp>>('/promotion/bargain/help/page', params)
+  return http.get<PageResult<PromotionBargainHelp>>('/promotion/bargain-help/page', params)
 }

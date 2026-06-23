@@ -27,15 +27,7 @@
             <wd-input v-model="formData.author" clearable placeholder="请输入文章作者" />
           </wd-form-item>
           <wd-form-item title="文章封面" title-width="200rpx" prop="picUrl">
-            <view class="w-full">
-              <image
-                v-if="formData.picUrl"
-                :src="formData.picUrl"
-                class="mb-12rpx h-140rpx w-140rpx rounded-8rpx bg-[#f5f5f5]"
-                mode="aspectFill"
-              />
-              <wd-input v-model="formData.picUrl" clearable placeholder="请输入文章封面 URL" />
-            </view>
+            <yd-upload-img v-model="formData.picUrl" />
           </wd-form-item>
           <wd-form-item title="文章简介" title-width="200rpx" prop="introduction">
             <wd-textarea v-model="formData.introduction" clearable :maxlength="500" placeholder="请输入文章简介" />

@@ -15,15 +15,7 @@
             <wd-input v-model="formData.name" clearable placeholder="请输入分类名称" />
           </wd-form-item>
           <wd-form-item title="分类图片" title-width="200rpx" prop="picUrl">
-            <view class="w-full">
-              <image
-                v-if="formData.picUrl"
-                :src="formData.picUrl"
-                class="mb-12rpx h-140rpx w-140rpx rounded-8rpx bg-[#f5f5f5]"
-                mode="aspectFill"
-              />
-              <wd-input v-model="formData.picUrl" clearable placeholder="请输入分类图片 URL" />
-            </view>
+            <yd-upload-img v-model="formData.picUrl" />
           </wd-form-item>
           <wd-form-item title="排序" title-width="200rpx" prop="sort" center>
             <wd-input-number v-model="formData.sort" :min="0" />

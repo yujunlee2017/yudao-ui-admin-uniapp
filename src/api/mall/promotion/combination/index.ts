@@ -49,45 +49,45 @@ export interface PromotionCombinationRecord {
 
 /** 获取拼团活动分页列表 */
 export function getPromotionCombinationActivityPage(params: PageParam) {
-  return http.get<PageResult<PromotionCombinationActivity>>('/promotion/combination/activity/page', params)
+  return http.get<PageResult<PromotionCombinationActivity>>('/promotion/combination-activity/page', params)
 }
 
 /** 获取拼团活动详情 */
 export function getPromotionCombinationActivity(id: number) {
-  return http.get<PromotionCombinationActivity>(`/promotion/combination/activity/get?id=${id}`)
+  return http.get<PromotionCombinationActivity>(`/promotion/combination-activity/get?id=${id}`)
 }
 
 /** 创建拼团活动 */
 export function createPromotionCombinationActivity(data: PromotionCombinationActivity) {
-  return http.post<number>('/promotion/combination/activity/create', data as Record<string, any>)
+  return http.post<number>('/promotion/combination-activity/create', data as Record<string, any>)
 }
 
 /** 更新拼团活动 */
 export function updatePromotionCombinationActivity(data: PromotionCombinationActivity) {
-  return http.put<boolean>('/promotion/combination/activity/update', data as Record<string, any>)
+  return http.put<boolean>('/promotion/combination-activity/update', data as Record<string, any>)
 }
 
 /** 关闭拼团活动 */
 export function closePromotionCombinationActivity(id: number) {
-  return http.put<boolean>(`/promotion/combination/activity/close?id=${id}`)
+  return http.put<boolean>(`/promotion/combination-activity/close?id=${id}`)
 }
 
 /** 删除拼团活动 */
 export function deletePromotionCombinationActivity(id: number) {
-  return http.delete<boolean>(`/promotion/combination/activity/delete?id=${id}`)
+  return http.delete<boolean>(`/promotion/combination-activity/delete?id=${id}`)
 }
 
 /** 获取拼团活动列表 */
 export function getPromotionCombinationActivityListByIds(ids: number[]) {
-  return http.get<PromotionCombinationActivity[]>(`/promotion/combination/activity/list-by-ids?ids=${ids.join(',')}`)
+  return http.get<PromotionCombinationActivity[]>(`/promotion/combination-activity/list-by-ids?ids=${ids.join(',')}`)
 }
 
 /** 获取拼团记录分页列表 */
 export function getPromotionCombinationRecordPage(params: PageParam) {
-  return http.get<PageResult<PromotionCombinationRecord>>('/promotion/combination/record/page', params)
+  return http.get<PageResult<PromotionCombinationRecord>>('/promotion/combination-record/page', params)
 }
 
 /** 获取拼团记录概要 */
 export function getPromotionCombinationRecordSummary() {
-  return http.get<Record<string, any>>('/promotion/combination/record/get-summary')
+  return http.get<Record<string, any>>('/promotion/combination-record/get-summary')
 }
