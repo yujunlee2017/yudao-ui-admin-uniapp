@@ -25,7 +25,7 @@
             <text class="mr-8rpx text-[#999]">编号：</text>{{ item.no }}
           </view>
           <view v-if="item.totalPrice != null" class="text-28rpx text-[#666]">
-            <text class="mr-8rpx text-[#999]">金额：</text>{{ Number(item.totalPrice).toFixed(2) }}
+            <text class="mr-8rpx text-[#999]">金额：</text>{{ formatMoney(item.totalPrice) }}
           </view>
         </view>
       </view>
@@ -37,6 +37,7 @@
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { getContractPageByBusiness, getContractPageByCustomer } from '@/api/crm/contract'
 import { DICT_TYPE } from '@/utils/constants'
+import { formatMoney } from '@/utils/format'
 
 const props = defineProps<{ customerId?: number, businessId?: number }>()
 const list = ref<Record<string, any>[]>([]) // 合同列表

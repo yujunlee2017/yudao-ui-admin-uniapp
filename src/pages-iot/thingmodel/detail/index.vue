@@ -11,11 +11,40 @@
         <wd-cell title="功能类型"><dict-tag :type="DICT_TYPE.IOT_THING_MODEL_TYPE" :value="formData?.type" /></wd-cell>
         <wd-cell title="功能名称" :value="formData?.name || '-'" />
         <wd-cell title="标识符" :value="formData?.identifier || '-'" />
-        <wd-cell title="数据类型" :value="getDataTypeOptionsLabel(formData?.dataType) || '-'" />
         <wd-cell title="功能描述" :value="formData?.description || '-'" />
         <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime) || '-'" />
       </wd-cell-group>
-      <view class="m-24rpx rounded-12rpx bg-white p-24rpx"><view class="mb-16rpx text-28rpx text-[#333] font-semibold">功能定义</view><text class="break-all text-24rpx text-[#666]">{{ definitionJson }}</text></view>
+
+      <!-- 功能定义 -->
+      <view class="mt-20rpx">
+        <wd-cell-group border>
+          <!-- 属性 -->
+          <template v-if="isProperty">
+            <wd-cell title="数据类型" :value="getDataTypeOptionsLabel(property?.dataType) || '-'" />
+            <wd-cell title="读写类型" :value="optionLabel(accessModeOptions, property?.accessMode)" />
+            <template v-if="isNumberType">
+              <wd-cell title="取值范围" :value="`${property?.dataSpecs?.min ?? '-'} ~ ${property?.dataSpecs?.max ?? '-'}`" />
+              <wd-cell title="步长" :value="String(property?.dataSpecs?.step ?? '-')" />
+              <wd-cell title="单位" :value="property?.dataSpecs?.unitName || '-'" />
+            </template>
+            <wd-cell v-else-if="isTextType" title="数据长度" :value="String(property?.dataSpecs?.length ?? '-')" />
+            <template v-else-if="isEnumOrBool">
+              <wd-cell v-for="item in property?.dataSpecsList" :key="item.value" :title="`${isBoolType ? '布尔值' : '枚举值'} ${item.value}`" :value="item.name || '-'" />
+            </template>
+          </template>
+          <!-- 服务 -->
+          <template v-else-if="isService">
+            <wd-cell title="调用方式" :value="optionLabel(callTypeOptions, service?.callType)" />
+            <wd-cell title="输入参数" :value="paramsText(service?.inputParams)" />
+            <wd-cell title="输出参数" :value="paramsText(service?.outputParams)" />
+          </template>
+          <!-- 事件 -->
+          <template v-else-if="isEvent">
+            <wd-cell title="事件类型" :value="optionLabel(eventTypeOptions, event?.type)" />
+            <wd-cell title="输出参数" :value="paramsText(event?.outputParams)" />
+          </template>
+        </wd-cell-group>
+      </view>
     </view>
 
     <!-- 底部操作按钮 -->
@@ -31,7 +60,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, ref } from 'vue'
 import { deleteThingModel, getThingModel } from '@/api/iot/thingmodel'
 import { useAccess } from '@/hooks/useAccess'
-import { getDataTypeOptionsLabel } from '@/pages-iot/utils/constants'
+import { getDataTypeOptionsLabel, IoTDataSpecsDataTypeEnum, IoTThingModelAccessModeEnum, IoTThingModelEventTypeEnum, IoTThingModelServiceCallTypeEnum, IoTThingModelTypeEnum } from '@/pages-iot/utils/constants'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
@@ -43,19 +72,60 @@ const toast = useToast()
 const dialog = useDialog()
 const formData = ref<ThingModelData>() // 详情数据
 const deleting = ref(false) // 删除状态
-const definitionJson = computed(() => JSON.stringify(formData.value?.property || formData.value?.service || formData.value?.event || {}, null, 2))
+
+const accessModeOptions = Object.values(IoTThingModelAccessModeEnum) // 读写类型选项
+const callTypeOptions = Object.values(IoTThingModelServiceCallTypeEnum) // 调用方式选项
+const eventTypeOptions = Object.values(IoTThingModelEventTypeEnum) // 事件类型选项
+const property = computed(() => formData.value?.property) // 属性定义
+const service = computed(() => formData.value?.service) // 服务定义
+const event = computed(() => formData.value?.event) // 事件定义
+const isProperty = computed(() => formData.value?.type === IoTThingModelTypeEnum.PROPERTY)
+const isService = computed(() => formData.value?.type === IoTThingModelTypeEnum.SERVICE)
+const isEvent = computed(() => formData.value?.type === IoTThingModelTypeEnum.EVENT)
+const isNumberType = computed(() => [IoTDataSpecsDataTypeEnum.INT, IoTDataSpecsDataTypeEnum.FLOAT, IoTDataSpecsDataTypeEnum.DOUBLE].includes(property.value?.dataType as any))
+const isTextType = computed(() => property.value?.dataType === IoTDataSpecsDataTypeEnum.TEXT)
+const isBoolType = computed(() => property.value?.dataType === IoTDataSpecsDataTypeEnum.BOOL)
+const isEnumOrBool = computed(() => [IoTDataSpecsDataTypeEnum.ENUM, IoTDataSpecsDataTypeEnum.BOOL].includes(property.value?.dataType as any))
+
+/** 选项 label 反查 */
+function optionLabel(options: { label: string, value: string }[], value?: string) {
+  return options.find(item => item.value === value)?.label || value || '-'
+}
+
+/** 参数列表文案 */
+function paramsText(list?: any[]) {
+  return list?.length ? list.map(item => `${item.name || item.identifier}(${item.dataType})`).join('、') : '-'
+}
 
 /** 返回上一页 */
-function handleBack() { navigateBackPlus('/pages-iot/thingmodel/index' + (formData.value?.productId ? '?productId=' + formData.value.productId : '')) }
+function handleBack() {
+  navigateBackPlus(`/pages-iot/thingmodel/index${formData.value?.productId ? `?productId=${formData.value.productId}` : ''}`)
+}
 
 /** 加载物模型详情 */
-async function getDetail() { if (props.id && !deleting.value) formData.value = await getThingModel(Number(props.id)) }
+async function getDetail() {
+  if (props.id && !deleting.value) formData.value = await getThingModel(Number(props.id))
+}
 
 /** 编辑物模型 */
-function handleEdit() { uni.navigateTo({ url: '/pages-iot/thingmodel/form/index?id=' + props.id }) }
+function handleEdit() {
+  uni.navigateTo({ url: `/pages-iot/thingmodel/form/index?id=${props.id}` })
+}
 
 /** 删除物模型 */
-async function handleDelete() { if (!props.id) return; try { await dialog.confirm({ title: '提示', msg: '确定要删除该物模型吗？' }) } catch { return } deleting.value = true; try { await deleteThingModel(Number(props.id)); toast.success('删除成功'); uni.$emit('iot:thingmodel:reload'); setTimeout(() => handleBack(), 500) } finally { deleting.value = false } }
+async function handleDelete() {
+  if (!props.id) return
+  try { await dialog.confirm({ title: '提示', msg: '确定要删除该物模型吗？' }) } catch { return }
+  deleting.value = true
+  try {
+    await deleteThingModel(Number(props.id))
+    toast.success('删除成功')
+    uni.$emit('iot:thingmodel:reload')
+    setTimeout(() => handleBack(), 500)
+  } finally {
+    deleting.value = false
+  }
+}
 
 /** 初始化 */
 onShow(() => { getDetail() })

@@ -51,6 +51,20 @@ export enum CrmAuditStatusEnum {
   CANCEL = 40, // 已取消
 }
 
+/** CRM 归属场景枚举（列表「我负责的/我参与的/下属负责的」） */
+export enum CrmSceneTypeEnum {
+  OWNER = 1, // 我负责的
+  INVOLVED = 2, // 我参与的
+  SUBORDINATE = 3, // 下属负责的
+}
+
+/** CRM 归属场景选项（列表归属 tab 与待办筛选共用） */
+export const CRM_SCENE_TYPES: { label: string, value: number }[] = [
+  { label: '我负责的', value: CrmSceneTypeEnum.OWNER },
+  { label: '我参与的', value: CrmSceneTypeEnum.INVOLVED },
+  { label: '下属负责的', value: CrmSceneTypeEnum.SUBORDINATE },
+]
+
 /** 获得数据权限列表 */
 export function getPermissionList(params: Record<string, any>) {
   return http.get<Permission[]>('/crm/permission/list', params)

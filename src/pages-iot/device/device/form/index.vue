@@ -7,7 +7,7 @@
     <view>
       <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
-          <EntityPicker v-model="formData.productId" label="所属产品" prop="productId" :columns="productOptions" placeholder="请选择产品" label-width="220rpx" />
+          <EntityPicker v-model="formData.productId" label="所属产品" prop="productId" :columns="productOptions" placeholder="请选择产品" label-width="220rpx" :disabled="!!props.id" />
           <wd-form-item title="DeviceName" title-width="220rpx" prop="deviceName">
             <wd-input v-model="formData.deviceName" placeholder="请输入 DeviceName" :disabled="!!props.id" clearable />
           </wd-form-item>
@@ -26,9 +26,6 @@
           </wd-form-item>
           <wd-form-item title="设备地址" title-width="220rpx" prop="address">
             <wd-textarea v-model="formData.address" placeholder="请输入设备地址" :maxlength="200" show-word-limit />
-          </wd-form-item>
-          <wd-form-item title="设备配置" title-width="220rpx" prop="config">
-            <wd-textarea v-model="formData.config" placeholder="请输入设备配置" :maxlength="2000" show-word-limit />
           </wd-form-item>
         </wd-cell-group>
       </wd-form>
@@ -83,6 +80,9 @@ const formSchema = createFormSchema({
     { required: true, message: 'DeviceName 不能为空' },
     { pattern: /^[a-zA-Z0-9_.\-:@]{4,32}$/, message: 'DeviceName 长度 4~32，支持字母、数字和 _-.:@' },
   ],
+  nickname: [{ pattern: /^.{2,64}$/, message: '备注名称长度为 2~64 个字符' }],
+  longitude: [{ validator: value => Number(value) >= -180 && Number(value) <= 180, message: '经度需在 -180 ~ 180 之间' }],
+  latitude: [{ validator: value => Number(value) >= -90 && Number(value) <= 90, message: '纬度需在 -90 ~ 90 之间' }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用
 

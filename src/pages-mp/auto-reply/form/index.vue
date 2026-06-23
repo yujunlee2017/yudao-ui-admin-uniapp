@@ -74,26 +74,38 @@
               v-if="canPickMaterial"
               title="素材库"
               is-link
-              value="选择素材"
+              :value="formData.responseMessageType === 'music' ? '选择缩略图' : '选择素材'"
               @click="materialPickerVisible = true"
             />
-            <wd-form-item title="素材 MediaID" title-width="220rpx" prop="responseMediaId">
-              <wd-input v-model="formData.responseMediaId" clearable placeholder="请输入素材 MediaID" />
-            </wd-form-item>
-            <wd-form-item title="素材 URL" title-width="220rpx" prop="responseMediaUrl">
-              <wd-input v-model="formData.responseMediaUrl" clearable placeholder="请输入素材 URL" />
-            </wd-form-item>
+            <!-- 图片/语音/视频：素材媒体；音乐不使用 responseMediaId/Url -->
+            <template v-if="formData.responseMessageType !== 'music'">
+              <wd-form-item title="素材 MediaID" title-width="220rpx" prop="responseMediaId">
+                <wd-input v-model="formData.responseMediaId" clearable placeholder="请输入素材 MediaID" />
+              </wd-form-item>
+              <wd-form-item title="素材 URL" title-width="220rpx" prop="responseMediaUrl">
+                <wd-input v-model="formData.responseMediaUrl" clearable placeholder="请输入素材 URL" />
+              </wd-form-item>
+            </template>
+            <!-- 音乐：缩略图（选图片素材回填）+ 音乐链接 -->
+            <template v-if="formData.responseMessageType === 'music'">
+              <wd-form-item title="缩略图 MediaID" title-width="220rpx" prop="responseThumbMediaId">
+                <wd-input v-model="formData.responseThumbMediaId" clearable placeholder="请选择图片素材作为缩略图" />
+              </wd-form-item>
+              <wd-form-item title="缩略图 URL" title-width="220rpx" prop="responseThumbMediaUrl">
+                <wd-input v-model="formData.responseThumbMediaUrl" clearable placeholder="请选择图片素材作为缩略图" />
+              </wd-form-item>
+              <wd-form-item title="音乐链接" title-width="220rpx" prop="responseMusicUrl">
+                <wd-input v-model="formData.responseMusicUrl" clearable placeholder="请输入音乐链接" />
+              </wd-form-item>
+              <wd-form-item title="高质量链接" title-width="220rpx" prop="responseHqMusicUrl">
+                <wd-input v-model="formData.responseHqMusicUrl" clearable placeholder="请输入高质量音乐链接" />
+              </wd-form-item>
+            </template>
             <wd-form-item title="标题" title-width="220rpx" prop="responseTitle">
               <wd-input v-model="formData.responseTitle" clearable placeholder="请输入标题" />
             </wd-form-item>
             <wd-form-item title="描述" title-width="220rpx" prop="responseDescription">
               <wd-textarea v-model="formData.responseDescription" clearable placeholder="请输入描述" />
-            </wd-form-item>
-            <wd-form-item v-if="formData.responseMessageType === 'music'" title="音乐链接" title-width="220rpx" prop="responseMusicUrl">
-              <wd-input v-model="formData.responseMusicUrl" clearable placeholder="请输入音乐链接" />
-            </wd-form-item>
-            <wd-form-item v-if="formData.responseMessageType === 'music'" title="高质量链接" title-width="220rpx" prop="responseHqMusicUrl">
-              <wd-input v-model="formData.responseHqMusicUrl" clearable placeholder="请输入高质量音乐链接" />
             </wd-form-item>
             <wd-form-item v-if="formData.responseMessageType === 'news'" title="图文 JSON" title-width="220rpx" prop="responseArticlesText">
               <wd-textarea v-model="responseArticlesText" clearable placeholder="请输入图文数组 JSON" />
@@ -174,12 +186,19 @@ const formSchema = createFormSchema({
   requestMessageType: [{ required: () => formData.value.type === AutoReplyType.Message, message: '消息类型不能为空' }],
   responseMessageType: [{ required: true, message: '回复类型不能为空' }],
   responseContent: [{ required: () => formData.value.responseMessageType === 'text', message: '回复内容不能为空' }],
+  responseMediaId: [{ required: () => ['image', 'voice', 'video'].includes(String(formData.value.responseMessageType)), message: '素材 MediaID 不能为空' }],
+  responseMediaUrl: [{ required: () => ['image', 'voice', 'video'].includes(String(formData.value.responseMessageType)), message: '素材 URL 不能为空' }],
+  responseTitle: [{ required: () => formData.value.responseMessageType === 'video', message: '视频标题不能为空' }],
+  responseDescription: [{ required: () => formData.value.responseMessageType === 'video', message: '视频描述不能为空' }],
+  responseThumbMediaId: [{ required: () => formData.value.responseMessageType === 'music', message: '请选择音乐缩略图' }],
+  responseMusicUrl: [{ required: () => formData.value.responseMessageType === 'music', message: '音乐链接不能为空' }],
+  responseHqMusicUrl: [{ required: () => formData.value.responseMessageType === 'music', message: '高质量音乐链接不能为空' }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用
 
 const requestMessageOptions = computed(() => getStrDictOptions(DICT_TYPE.MP_MESSAGE_TYPE).filter(item => requestMessageTypes.includes(String(item.value))))
 const responseMessageOptions = computed(() => getStrDictOptions(DICT_TYPE.MP_MESSAGE_TYPE).filter(item => ['text', 'image', 'voice', 'video', 'news', 'music'].includes(String(item.value))))
-const canPickMaterial = computed(() => ['image', 'voice', 'video', 'news'].includes(String(formData.value.responseMessageType)))
+const canPickMaterial = computed(() => ['image', 'voice', 'video', 'news', 'music'].includes(String(formData.value.responseMessageType)))
 const materialPickerType = computed(() => {
   if (formData.value.responseMessageType === 'news') {
     return 'news'
@@ -217,6 +236,12 @@ function handleMaterialSelect(item: any) {
     const articles = item.content?.newsItem || item.articles || []
     formData.value.responseArticles = articles
     responseArticlesText.value = JSON.stringify(articles)
+    return
+  }
+  // 音乐：选图片素材作为缩略图
+  if (formData.value.responseMessageType === 'music') {
+    formData.value.responseThumbMediaId = item.mediaId || ''
+    formData.value.responseThumbMediaUrl = item.url || ''
     return
   }
   formData.value.responseMediaId = item.mediaId || ''

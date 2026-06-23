@@ -64,6 +64,7 @@ import type { Customer } from '@/api/crm/customer'
 import { onUnload } from '@dcloudio/uni-app'
 import { computed, onMounted, ref } from 'vue'
 import { getCustomerPage } from '@/api/crm/customer'
+import { CRM_SCENE_TYPES } from '@/api/crm/permission'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -77,11 +78,7 @@ definePage({
   },
 })
 
-const sceneTabs = [
-  { label: '我负责的', value: 1 },
-  { label: '我参与的', value: 2 },
-  { label: '下属负责的', value: 3 },
-]
+const sceneTabs = CRM_SCENE_TYPES
 
 const { hasAccessByCodes } = useAccess()
 const list = ref<Customer[]>([]) // 列表数据

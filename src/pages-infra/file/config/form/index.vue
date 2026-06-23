@@ -18,20 +18,13 @@
               placeholder="请输入配置名"
             />
           </wd-form-item>
-          <wd-form-item
-            title="存储器"
-            title-width="200rpx"
+          <yd-form-picker
+            v-model="formData.storage"
+            label="存储器"
             prop="storage"
-            :is-link="!formData.id"
-            :value="getWotPickerFormValue(getIntDictOptions(DICT_TYPE.INFRA_FILE_STORAGE), formData.storage)"
+            :dict-type="DICT_TYPE.INFRA_FILE_STORAGE"
             placeholder="请选择存储器"
-            @click="!formData.id && (pickerVisible.storage = true)"
-          />
-          <wd-picker
-            v-model:visible="pickerVisible.storage"
-            :model-value="formData.storage"
-            :columns="getIntDictOptions(DICT_TYPE.INFRA_FILE_STORAGE)"
-            @confirm="({ value }) => formData.storage = value[0]"
+            :disabled="!!formData.id"
           />
           <wd-form-item title="备注" title-width="200rpx" prop="remark">
             <wd-textarea
@@ -188,10 +181,9 @@ import type { FileConfig } from '@/api/infra/file/config'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createFileConfig, getFileConfig, updateFileConfig } from '@/api/infra/file/config'
-import { getIntDictOptions } from '@/hooks/useDict'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
-import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   id?: number | any
@@ -234,7 +226,6 @@ const formSchema = createFormSchema({
   storage: [{ required: true, message: '存储器不能为空' }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用
-const pickerVisible = ref<Record<string, boolean>>({})
 
 /** 返回上一页 */
 function handleBack() {

@@ -11,6 +11,7 @@ node_modules
 .DS_Store
 dist
 tmp/
+.playwright-cli/
 *.local
 private.key
 private.*.key

@@ -9,6 +9,7 @@ export interface TradeBrokerageWithdraw {
   feePrice?: number
   totalPrice?: number
   type?: number
+  userNickname?: string
   userName?: string
   userAccount?: string
   bankName?: string

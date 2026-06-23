@@ -3,7 +3,7 @@
     :title="label"
     :title-width="labelWidth"
     :prop="prop || undefined"
-    is-link
+    :is-link="!disabled"
     :value="selectedLabel"
     :placeholder="placeholder"
     @click="openPicker"
@@ -48,6 +48,7 @@ const props = withDefaults(defineProps<{
   valueKey?: string
   labelWidth?: string
   type?: 'checkbox' | 'radio'
+  disabled?: boolean
 }>(), {
   placeholder: '请选择',
   prop: '',
@@ -55,6 +56,7 @@ const props = withDefaults(defineProps<{
   valueKey: 'id',
   labelWidth: '200rpx',
   type: 'radio',
+  disabled: false,
 })
 
 const emit = defineEmits<{
@@ -102,6 +104,7 @@ function findLabel(value: any) {
 
 /** 打开选择弹窗 */
 function openPicker() {
+  if (props.disabled) return
   draftValue.value = Array.isArray(innerValue.value) ? [...innerValue.value] : innerValue.value
   keyword.value = ''
   visible.value = true

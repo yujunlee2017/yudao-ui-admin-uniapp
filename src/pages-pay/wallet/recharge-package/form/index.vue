@@ -107,7 +107,7 @@ const formRef = ref<FormInstance>() // 表单组件引用
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-pay/index')
+  navigateBackPlus('/pages-pay/wallet/recharge-package/index')
 }
 
 /** 加载详情 */

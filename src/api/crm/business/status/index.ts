@@ -6,6 +6,7 @@ export interface BusinessStatusType {
   id?: number
   name: string
   deptIds?: number[]
+  deptNames?: string[]
   statuses?: BusinessStatus[]
 }
 

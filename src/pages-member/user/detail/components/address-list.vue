@@ -18,7 +18,7 @@
           {{ item.mobile || '-' }}
         </view>
         <view class="mb-12rpx text-26rpx text-[#666]">
-          {{ item.areaName || item.areaId || '-' }} {{ item.detailAddress || '' }}
+          {{ item.areaName || '-' }} {{ item.detailAddress || '' }}
         </view>
         <view class="text-24rpx text-[#999]">
           {{ formatDateTime(item.createTime) || '-' }}

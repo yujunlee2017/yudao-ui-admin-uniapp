@@ -26,7 +26,7 @@
           </wd-radio-group>
         </wd-form-item>
         <wd-form-item title="变动余额" title-width="210rpx" prop="changeBalance">
-          <wd-input-number v-model="formData.changeBalance" :min="0" :step="0.01" />
+          <wd-input-number v-model="formData.changeBalance" :min="0" :step="0.01" :precision="2" />
         </wd-form-item>
         <wd-form-item title="变动后余额" title-width="210rpx">
           <text>{{ formatAmount(balanceResult) }}</text>

@@ -22,6 +22,7 @@
             <wd-input
               v-model="formData.email"
               clearable
+              :maxlength="50"
               placeholder="请输入邮箱"
             />
           </wd-form-item>
@@ -86,8 +87,8 @@
             placeholder="请选择所在地"
             title="请选择所在地"
           />
-          <MemberTagPicker v-model="formData.tagIds" label="用户标签" prop="tagIds" />
-          <MemberGroupPicker v-model="formData.groupId" label="用户分组" prop="groupId" />
+          <TagPicker v-model="formData.tagIds" label="用户标签" prop="tagIds" />
+          <GroupPicker v-model="formData.groupId" label="用户分组" prop="groupId" />
           <wd-form-item title="会员备注" title-width="180rpx" prop="mark">
             <wd-textarea
               v-model="formData.mark"
@@ -124,8 +125,8 @@ import { onMounted, ref } from 'vue'
 import { getMemberUser, updateMemberUser } from '@/api/member/user'
 import { getAreaTree } from '@/api/system/area'
 import { getIntDictOptions } from '@/hooks/useDict'
-import MemberGroupPicker from '@/pages-member/components/member-group-picker.vue'
-import MemberTagPicker from '@/pages-member/components/member-tag-picker.vue'
+import GroupPicker from '@/pages-member/group/components/group-picker.vue'
+import TagPicker from '@/pages-member/tag/components/tag-picker.vue'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
@@ -220,6 +221,3 @@ onMounted(async () => {
   ])
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

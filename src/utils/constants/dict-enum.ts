@@ -174,6 +174,7 @@ const MALL_DICT = {
   TRADE_ORDER_STATUS: 'trade_order_status', // 订单状态
   TRADE_ORDER_ITEM_AFTER_SALE_STATUS: 'trade_order_item_after_sale_status', // 订单项售后状态
   TRADE_DELIVERY_TYPE: 'trade_delivery_type', // 配送方式
+  EXPRESS_CHARGE_MODE: 'trade_delivery_express_charge_mode', // 快递的计费方式
   BROKERAGE_ENABLED_CONDITION: 'brokerage_enabled_condition', // 分佣模式
   BROKERAGE_BIND_MODE: 'brokerage_bind_mode', // 分销关系绑定模式
   BROKERAGE_BANK_NAME: 'brokerage_bank_name', // 佣金提现银行
@@ -186,6 +187,10 @@ const MALL_DICT = {
   PROMOTION_COUPON_TEMPLATE_VALIDITY_TYPE: 'promotion_coupon_template_validity_type', // 优惠券模板有效期类型
   PROMOTION_COUPON_STATUS: 'promotion_coupon_status', // 优惠券状态
   PROMOTION_COUPON_TAKE_TYPE: 'promotion_coupon_take_type', // 优惠券领取方式
+  PROMOTION_BARGAIN_RECORD_STATUS: 'promotion_bargain_record_status', // 砍价记录的状态
+  PROMOTION_COMBINATION_RECORD_STATUS: 'promotion_combination_record_status', // 拼团记录的状态
+  PROMOTION_CONDITION_TYPE: 'promotion_condition_type', // 营销的条件类型枚举
+  PROMOTION_PRODUCT_SCOPE: 'promotion_product_scope', // 营销的商品范围
 } as const
 
 /** ========== MP - 公众号模块 ========== */
@@ -244,10 +249,9 @@ const WMS_DICT = {
 
 /** ========== IM - 即时通讯模块 ========== */
 const IM_DICT = {
-  IM_MESSAGE_TYPE: 'im_message_type', // IM 消息类型
-  IM_PRIVATE_MESSAGE_STATUS: 'im_private_message_status', // IM 私聊消息状态
-  IM_GROUP_MESSAGE_STATUS: 'im_group_message_status', // IM 群聊消息状态
-  IM_GROUP_MESSAGE_RECEIPT_STATUS: 'im_group_message_receipt_status', // IM 群消息回执状态
+  IM_CONTENT_TYPE: 'im_content_type', // IM 消息内容类型
+  IM_MESSAGE_STATUS: 'im_message_status', // IM 消息状态（私聊 / 群聊共用）
+  IM_MESSAGE_RECEIPT_STATUS: 'im_message_receipt_status', // IM 消息回执状态（私聊 / 群聊共用）
   IM_FRIEND_STATUS: 'im_friend_status', // IM 好友状态
   IM_FRIEND_ADD_SOURCE: 'im_friend_add_source', // IM 好友添加来源
   IM_FRIEND_REQUEST_HANDLE_RESULT: 'im_friend_request_handle_result', // IM 好友申请处理结果

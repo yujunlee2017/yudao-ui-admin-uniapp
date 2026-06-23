@@ -19,13 +19,11 @@
           </wd-form-item>
           <UserPicker v-model="formData.ownerUserId" type="radio" label="负责人" prop="ownerUserId" :disabled="!!props.id" placeholder="请选择负责人" />
           <CrmPicker v-model="formData.categoryId" source="productCategory" label="产品分类" prop="categoryId" placeholder="请选择产品分类" />
-          <wd-form-item title="产品单位" title-width="200rpx" prop="unit" is-link placeholder="请选择产品单位" :value="getDictLabel(DICT_TYPE.CRM_PRODUCT_UNIT, formData.unit)" @click="pickerVisible.unit = true" />
-          <wd-picker v-model:visible="pickerVisible.unit" :model-value="formData.unit" :columns="getIntDictOptions(DICT_TYPE.CRM_PRODUCT_UNIT)" label-key="label" value-key="value" @confirm="({ value }) => formData.unit = value[0]" />
+          <yd-form-picker v-model="formData.unit" label="产品单位" prop="unit" :dict-type="DICT_TYPE.CRM_PRODUCT_UNIT" placeholder="请选择产品单位" />
           <wd-form-item title="价格" title-width="200rpx" prop="price">
-            <wd-input v-model.number="formData.price" type="number" placeholder="请输入价格" clearable />
+            <wd-input-number v-model="formData.price" :min="0" :precision="2" input-type="number" allow-null placeholder="请输入价格" />
           </wd-form-item>
-          <wd-form-item title="上架状态" title-width="200rpx" prop="status" is-link placeholder="请选择上架状态" :value="getDictLabel(DICT_TYPE.CRM_PRODUCT_STATUS, formData.status)" @click="pickerVisible.status = true" />
-          <wd-picker v-model:visible="pickerVisible.status" :model-value="formData.status" :columns="getIntDictOptions(DICT_TYPE.CRM_PRODUCT_STATUS)" label-key="label" value-key="value" @confirm="({ value }) => formData.status = value[0]" />
+          <yd-form-picker v-model="formData.status" label="上架状态" prop="status" :dict-type="DICT_TYPE.CRM_PRODUCT_STATUS" placeholder="请选择上架状态" />
           <wd-form-item title="产品描述" title-width="200rpx" prop="description">
             <wd-textarea v-model="formData.description" placeholder="请输入产品描述" :maxlength="200" show-word-limit clearable />
           </wd-form-item>
@@ -49,7 +47,6 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createProduct, getProduct, updateProduct } from '@/api/crm/product'
 import UserPicker from '@/components/system-select/user-picker.vue'
-import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { useUserStore } from '@/store/user'
 import { currRoute, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -80,7 +77,6 @@ const formData = ref<Product>({
   description: '',
 }) // 表单数据
 const formRef = ref<FormInstance>() // 表单组件引用
-const pickerVisible = ref<Record<string, boolean>>({}) // 选择器显示状态
 const formSchema = createFormSchema({
   name: [{ required: true, message: '产品名称不能为空' }],
   no: [{ required: true, message: '产品编码不能为空' }],

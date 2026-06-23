@@ -119,7 +119,7 @@ function handleDetail(item: TradeOrder) {
     return
   }
   uni.navigateTo({
-    url: `/pages-mall/resource/detail/index?resource=tradeOrder&id=${item.id}`,
+    url: `/pages-mall/trade/order/detail/index?id=${item.id}`,
   })
 }
 

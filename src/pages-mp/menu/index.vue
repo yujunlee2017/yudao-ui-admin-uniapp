@@ -183,7 +183,7 @@
                     v-if="canPickReplyMaterial"
                     title="素材库"
                     is-link
-                    value="选择素材"
+                    :value="activeMenu.reply?.type === 'music' ? '选择缩略图' : '选择素材'"
                     @click="materialPickerVisible = true"
                   />
                   <wd-form-item title="回复内容" title-width="220rpx">
@@ -201,6 +201,21 @@
                   <wd-form-item title="描述" title-width="220rpx">
                     <wd-textarea v-model="activeMenu.reply.description" clearable placeholder="请输入描述" />
                   </wd-form-item>
+                  <!-- 音乐：缩略图（选图片素材回填）+ 音乐链接 -->
+                  <template v-if="activeMenu.reply?.type === 'music'">
+                    <wd-form-item title="缩略图 MediaID" title-width="220rpx">
+                      <wd-input v-model="activeMenu.reply.thumbMediaId" clearable placeholder="请选择图片素材作为缩略图" />
+                    </wd-form-item>
+                    <wd-form-item title="缩略图 URL" title-width="220rpx">
+                      <wd-input v-model="activeMenu.reply.thumbMediaUrl" clearable placeholder="请选择图片素材作为缩略图" />
+                    </wd-form-item>
+                    <wd-form-item title="音乐链接" title-width="220rpx">
+                      <wd-input v-model="activeMenu.reply.musicUrl" clearable placeholder="请输入音乐链接" />
+                    </wd-form-item>
+                    <wd-form-item title="高质量链接" title-width="220rpx">
+                      <wd-input v-model="activeMenu.reply.hqMusicUrl" clearable placeholder="请输入高质量音乐链接" />
+                    </wd-form-item>
+                  </template>
                 </template>
               </template>
             </wd-cell-group>
@@ -288,7 +303,7 @@ const materialPickerVisible = ref(false) // 素材选择弹窗
 const replyArticlesText = ref('') // 图文 JSON
 
 const isLeafMenu = computed(() => !(activeMenu.value.children && activeMenu.value.children.length > 0))
-const canPickReplyMaterial = computed(() => ['image', 'voice', 'video', 'news'].includes(String(activeMenu.value.reply?.type)))
+const canPickReplyMaterial = computed(() => ['image', 'voice', 'video', 'news', 'music'].includes(String(activeMenu.value.reply?.type)))
 const materialPickerType = computed(() => {
   if (activeMenu.value.type === 'article_view_limited' || activeMenu.value.reply?.type === 'news') {
     return 'news'
@@ -362,6 +377,8 @@ function menuToFrontend(item: MpMenu): MpMenu {
 /** 前端菜单转后端菜单 */
 function menuToBackend(menu: MpMenu): MpMenu {
   const reply = menu.reply || {}
+  // article_view_limited 的图文存于顶层 replyArticles；click/scancode 回复图文存于 reply.articles
+  const replyArticles = menu.type === 'article_view_limited' ? menu.replyArticles : reply.articles
   return {
     ...menu,
     children: undefined,
@@ -374,7 +391,7 @@ function menuToBackend(menu: MpMenu): MpMenu {
     replyDescription: reply.description,
     replyThumbMediaId: reply.thumbMediaId,
     replyThumbMediaUrl: reply.thumbMediaUrl,
-    replyArticles: reply.articles,
+    replyArticles,
     replyMusicUrl: reply.musicUrl,
     replyHqMusicUrl: reply.hqMusicUrl,
   }
@@ -515,23 +532,46 @@ function handleTypeConfirm({ value }: { value: string[] }) {
 
 /** 回复类型选择 */
 function handleReplyTypeConfirm({ value }: { value: string[] }) {
-  activeMenu.value.reply = activeMenu.value.reply || {}
-  activeMenu.value.reply.type = value[0]
+  // 切换回复类型时重置为仅含类型的回复，避免跨类型字段残留
+  activeMenu.value.reply = {
+    type: value[0],
+    accountId: accountId.value,
+  }
+  replyArticlesText.value = ''
+}
+
+/** 图文素材转后端 Article 结构（title/description/picUrl/url） */
+function toReplyArticles(articles: any[]) {
+  return articles.map(article => ({
+    title: article.title,
+    description: article.description || article.digest,
+    picUrl: article.picUrl || article.thumbUrl,
+    url: article.url || article.contentSourceUrl,
+  }))
 }
 
 /** 选择素材 */
 function handleMaterialSelect(item: any) {
   const articles = item.content?.newsItem || item.articles || []
   if (activeMenu.value.type === 'article_view_limited') {
-    activeMenu.value.articleId = item.articleId || item.mediaId
-    activeMenu.value.replyArticles = articles
-    replyArticlesText.value = JSON.stringify(articles)
+    if (articles.length > 1) {
+      toast.show('选择的是多图文，将默认跳转第一篇')
+    }
+    activeMenu.value.articleId = item.articleId
+    activeMenu.value.replyArticles = toReplyArticles(articles)
+    replyArticlesText.value = JSON.stringify(activeMenu.value.replyArticles)
     return
   }
   activeMenu.value.reply = activeMenu.value.reply || {}
   if (activeMenu.value.reply.type === 'news') {
-    activeMenu.value.reply.articles = articles
-    replyArticlesText.value = JSON.stringify(articles)
+    activeMenu.value.reply.articles = toReplyArticles(articles)
+    replyArticlesText.value = JSON.stringify(activeMenu.value.reply.articles)
+    return
+  }
+  // 音乐：选图片素材作为缩略图
+  if (activeMenu.value.reply.type === 'music') {
+    activeMenu.value.reply.thumbMediaId = item.mediaId || ''
+    activeMenu.value.reply.thumbMediaUrl = item.url || ''
     return
   }
   activeMenu.value.reply.mediaId = item.mediaId || ''

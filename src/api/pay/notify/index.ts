@@ -25,6 +25,7 @@ export interface PayNotifyLog {
   id?: number
   taskId?: number
   status?: number
+  notifyTimes?: number
   request?: string
   response?: string
   createTime?: string

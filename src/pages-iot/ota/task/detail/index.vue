@@ -89,7 +89,7 @@ async function getDetail() {
 
 /** 查看升级记录 */
 function handleRecords() {
-  uni.navigateTo({ url: '/pages-iot/ota/record/index?taskId=' + props.id })
+  uni.navigateTo({ url: `/pages-iot/ota/record/index?taskId=${props.id}` })
 }
 
 /** 取消任务 */

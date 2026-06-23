@@ -92,7 +92,7 @@ function handleBack() {
 
 /** 获取标签名称 */
 function getTagName(tagId: number) {
-  const tag = tagList.value.find(item => item.tagId === tagId || item.id === tagId)
+  const tag = tagList.value.find(item => item.tagId === tagId)
   return tag?.name || tagId
 }
 

@@ -57,26 +57,7 @@
           </wd-radio>
         </wd-radio-group>
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          邮箱账号
-        </view>
-        <view
-          class="flex items-center justify-between rounded-12rpx bg-[#f7f8fa] p-24rpx"
-          @click="pickerVisible.accountId = true"
-        >
-          <text class="text-28rpx text-[#333]">
-            {{ getWotPickerDisplay(accountOptions, formData.accountId, { placeholder: '请选择邮箱账号' }) }}
-          </text>
-          <wd-icon name="arrow-down" size="32rpx" color="#666" />
-        </view>
-        <wd-picker
-          v-model:visible="pickerVisible.accountId"
-          :model-value="formData.accountId"
-          :columns="accountOptions"
-          @confirm="({ value }) => formData.accountId = value[0]"
-        />
-      </view>
+      <yd-search-picker v-model="formData.accountId" label="邮箱账号" :columns="accountOptions" placeholder="请选择邮箱账号" />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           模板编号
@@ -87,42 +68,7 @@
           clearable
         />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          发送时间
-        </view>
-        <view class="yd-search-form-date-range-container">
-          <view class="flex-1" @click="visibleSendTime[0] = true">
-            <view class="yd-search-form-date-range-picker">
-              {{ formatDate(formData.sendTime?.[0]) || '开始日期' }}
-            </view>
-          </view>
-          -
-          <view class="flex-1" @click="visibleSendTime[1] = true">
-            <view class="yd-search-form-date-range-picker">
-              {{ formatDate(formData.sendTime?.[1]) || '结束日期' }}
-            </view>
-          </view>
-        </view>
-        <wd-datetime-picker-view v-if="visibleSendTime[0]" v-model="tempSendTime[0]" type="date" />
-        <view v-if="visibleSendTime[0]" class="yd-search-form-date-range-actions">
-          <wd-button size="small" variant="plain" @click="visibleSendTime[0] = false">
-            取消
-          </wd-button>
-          <wd-button size="small" type="primary" @click="handleSendTime0Confirm">
-            确定
-          </wd-button>
-        </view>
-        <wd-datetime-picker-view v-if="visibleSendTime[1]" v-model="tempSendTime[1]" type="date" />
-        <view v-if="visibleSendTime[1]" class="yd-search-form-date-range-actions">
-          <wd-button size="small" variant="plain" @click="visibleSendTime[1] = false">
-            取消
-          </wd-button>
-          <wd-button size="small" type="primary" @click="handleSendTime1Confirm">
-            确定
-          </wd-button>
-        </view>
-      </view>
+      <yd-search-date-range v-model="formData.sendTime" label="发送时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -142,7 +88,6 @@ import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
-import { getWotPickerDisplay } from '@/utils/wot'
 
 const emit = defineEmits<{
   search: [data: Record<string, any>]
@@ -158,7 +103,6 @@ const formData = reactive({
   templateId: undefined as number | undefined,
 }) // 搜索表单数据
 const visible = ref(false) // 搜索弹窗显示状态
-const pickerVisible = ref<Record<string, boolean>>({})
 
 /** 邮箱账号列表 */
 const accountList = ref<{ id?: number, mail: string }[]>([])
@@ -199,21 +143,6 @@ const placeholder = computed(() => {
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索邮件日志'
 })
-
-const visibleSendTime = ref<[boolean, boolean]>([false, false]) // 发送时间选择器状态
-const tempSendTime = ref<[number, number]>([Date.now(), Date.now()]) // 发送时间临时值
-
-/** 确认发送时间开始日期 */
-function handleSendTime0Confirm() {
-  formData.sendTime = [tempSendTime.value[0], formData.sendTime?.[1]]
-  visibleSendTime.value[0] = false
-}
-
-/** 确认发送时间结束日期 */
-function handleSendTime1Confirm() {
-  formData.sendTime = [formData.sendTime?.[0], tempSendTime.value[1]]
-  visibleSendTime.value[1] = false
-}
 
 /** 搜索按钮操作 */
 function handleSearch() {

@@ -12,7 +12,7 @@
         <wd-form-item title="用户昵称" title-width="180rpx" prop="nickname">
           <wd-input v-model="formData.nickname" disabled />
         </wd-form-item>
-        <MemberLevelPicker v-model="formData.levelId" label="用户等级" prop="levelId" />
+        <LevelPicker v-model="formData.levelId" label="用户等级" prop="levelId" clearable />
         <wd-form-item title="修改原因" title-width="180rpx" prop="reason">
           <wd-textarea
             v-model="formData.reason"
@@ -35,7 +35,7 @@ import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, ref, watch } from 'vue'
 import { getMemberUser, updateMemberUserLevel } from '@/api/member/user'
-import MemberLevelPicker from '@/pages-member/components/member-level-picker.vue'
+import LevelPicker from '@/pages-member/level/components/level-picker.vue'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
@@ -45,7 +45,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
-  success: []
+  'success': []
 }>()
 
 const toast = useToast()
@@ -61,7 +61,6 @@ const formData = ref({
   reason: undefined as string | undefined,
 }) // 表单数据
 const formSchema = createFormSchema({
-  levelId: [{ required: true, message: '用户等级不能为空' }],
   reason: [{ required: true, message: '修改原因不能为空' }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用

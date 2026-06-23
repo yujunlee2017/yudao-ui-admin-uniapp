@@ -53,7 +53,7 @@
     </view>
 
     <!-- 底部保存按钮 -->
-    <view class="yd-detail-footer">
+    <view v-if="canUpdate" class="yd-detail-footer">
       <wd-button
         type="primary"
         block
@@ -70,8 +70,9 @@
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { CustomerPoolConfig } from '@/api/crm/customer/poolConfig'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { getCustomerPoolConfig, saveCustomerPoolConfig } from '@/api/crm/customer/poolConfig'
+import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 
@@ -83,6 +84,8 @@ definePage({
 })
 
 const toast = useToast()
+const { hasAccessByCodes } = useAccess()
+const canUpdate = computed(() => hasAccessByCodes(['crm:customer-pool-config:update'])) // 保存权限
 const formLoading = ref(false) // 表单提交状态
 const formRef = ref<FormInstance>() // 表单组件引用
 const formData = ref<CustomerPoolConfig>({

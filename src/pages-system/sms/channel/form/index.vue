@@ -18,20 +18,13 @@
               placeholder="请输入短信签名"
             />
           </wd-form-item>
-          <wd-form-item
-            title="渠道编码"
-            title-width="200rpx"
+          <yd-form-picker
+            v-model="formData.code"
+            label="渠道编码"
             prop="code"
-            is-link
-            :value="getWotPickerFormValue(getStrDictOptions(DICT_TYPE.SYSTEM_SMS_CHANNEL_CODE), formData.code)"
+            :dict-type="DICT_TYPE.SYSTEM_SMS_CHANNEL_CODE"
+            dict-kind="str"
             placeholder="请选择渠道编码"
-            @click="pickerVisible.code = true"
-          />
-          <wd-picker
-            v-model:visible="pickerVisible.code"
-            :model-value="formData.code"
-            :columns="getStrDictOptions(DICT_TYPE.SYSTEM_SMS_CHANNEL_CODE)"
-            @confirm="({ value }) => formData.code = value[0]"
           />
           <wd-form-item title="启用状态" title-width="200rpx" prop="status" center>
             <wd-radio-group v-model="formData.status" type="button">
@@ -96,10 +89,10 @@ import type { SmsChannel } from '@/api/system/sms/channel'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createSmsChannel, getSmsChannel, updateSmsChannel } from '@/api/system/sms/channel'
-import { getIntDictOptions, getStrDictOptions } from '@/hooks/useDict'
+import { getIntDictOptions } from '@/hooks/useDict'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
-import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   id?: number | any
@@ -132,7 +125,6 @@ const formSchema = createFormSchema({
   apiKey: [{ required: true, message: 'API 账号不能为空' }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用
-const pickerVisible = ref<Record<string, boolean>>({})
 
 /** 返回上一页 */
 function handleBack() {

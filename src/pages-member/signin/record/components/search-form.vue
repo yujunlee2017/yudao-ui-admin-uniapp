@@ -13,7 +13,7 @@
     @close="visible = false"
   >
     <view class="yd-search-form-container">
-      <view class="yd-search-form-item">
+      <view v-if="!hideUser" class="yd-search-form-item">
         <view class="yd-search-form-label">
           签到用户
         </view>
@@ -25,7 +25,7 @@
         </view>
         <wd-input v-model.number="formData.day" type="number" placeholder="请输入签到天数" clearable />
       </view>
-      <DateRangeField v-model="formData.createTime" label="签到时间" />
+      <yd-search-date-range v-model="formData.createTime" label="签到时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -40,9 +40,12 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
-import DateRangeField from '@/pages-member/components/date-range-field.vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { formatDate, formatDateRange } from '@/utils/date'
+
+defineProps<{
+  hideUser?: boolean // 嵌入会员详情时隐藏「签到用户」筛选：用户已固定，再按昵称过滤会很奇怪
+}>()
 
 const emit = defineEmits<{
   search: [data: Record<string, any>]

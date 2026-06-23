@@ -8,7 +8,7 @@
     />
 
     <!-- 表单区域 -->
-    <view class="p-24rpx">
+    <view>
       <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
           <wd-form-item title="敏感词" prop="word">
@@ -86,7 +86,7 @@ const getTitle = computed(() => props.id ? '编辑敏感词' : '新增敏感词'
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-im/manager/list/index?kind=sensitiveWord')
+  navigateBackPlus('/pages-im/manager/sensitive-word/index')
 }
 
 /** 加载详情 */

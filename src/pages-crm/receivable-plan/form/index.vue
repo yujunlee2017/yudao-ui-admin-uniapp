@@ -29,15 +29,14 @@
           />
           <wd-form-item v-if="props.id" title="期数" title-width="200rpx" :value="formData.period !== undefined && formData.period !== null ? String(formData.period) : '-'" />
           <wd-form-item title="计划回款金额" title-width="200rpx" prop="price">
-            <wd-input v-model.number="formData.price" type="number" placeholder="请输入计划回款金额" clearable />
+            <wd-input-number v-model="formData.price" :min="0.01" :precision="2" input-type="number" allow-null placeholder="请输入计划回款金额" />
           </wd-form-item>
           <wd-form-item title="计划回款日期" title-width="200rpx" prop="returnTime" is-link placeholder="请选择计划回款日期" :value="formatDate(formData.returnTime)" @click="pickerVisible.returnTime = true" />
           <wd-datetime-picker v-model="formData.returnTime" v-model:visible="pickerVisible.returnTime" title="请选择计划回款日期" type="date" />
           <wd-form-item title="提前提醒天数" title-width="200rpx" prop="remindDays">
             <wd-input v-model.number="formData.remindDays" type="number" placeholder="请输入提前提醒天数" clearable />
           </wd-form-item>
-          <wd-form-item title="回款方式" title-width="200rpx" prop="returnType" is-link placeholder="请选择回款方式" :value="getDictLabel(DICT_TYPE.CRM_RECEIVABLE_RETURN_TYPE, formData.returnType)" @click="pickerVisible.returnType = true" />
-          <wd-picker v-model:visible="pickerVisible.returnType" :model-value="formData.returnType" :columns="getIntDictOptions(DICT_TYPE.CRM_RECEIVABLE_RETURN_TYPE)" label-key="label" value-key="value" @confirm="({ value }) => formData.returnType = value[0]" />
+          <yd-form-picker v-model="formData.returnType" label="回款方式" prop="returnType" :dict-type="DICT_TYPE.CRM_RECEIVABLE_RETURN_TYPE" placeholder="请选择回款方式" />
           <UserPicker v-model="formData.ownerUserId" type="radio" label="负责人" prop="ownerUserId" :disabled="!!props.id" placeholder="请选择负责人" />
           <wd-form-item title="备注" title-width="200rpx" prop="remark">
             <wd-textarea v-model="formData.remark" placeholder="请输入备注" :maxlength="200" show-word-limit clearable />
@@ -62,7 +61,6 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createReceivablePlan, getReceivablePlan, updateReceivablePlan } from '@/api/crm/receivable/plan'
 import UserPicker from '@/components/system-select/user-picker.vue'
-import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { useUserStore } from '@/store/user'
 import { currRoute, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'

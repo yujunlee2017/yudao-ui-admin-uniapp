@@ -59,20 +59,13 @@
               </wd-radio>
             </wd-radio-group>
           </wd-form-item>
-          <wd-form-item
-            title="颜色类型"
-            title-width="200rpx"
+          <yd-form-picker
+            v-model="formData.colorType"
+            label="颜色类型"
             prop="colorType"
-            is-link
-            :value="getWotPickerFormValue(getStrDictOptions(DICT_TYPE.SYSTEM_DICT_COLOR_TYPE), formData.colorType)"
+            :dict-type="DICT_TYPE.SYSTEM_DICT_COLOR_TYPE"
+            dict-kind="str"
             placeholder="请选择颜色类型"
-            @click="pickerVisible.colorType = true"
-          />
-          <wd-picker
-            v-model:visible="pickerVisible.colorType"
-            :model-value="formData.colorType"
-            :columns="getStrDictOptions(DICT_TYPE.SYSTEM_DICT_COLOR_TYPE)"
-            @confirm="({ value }) => formData.colorType = value[0]"
           />
           <wd-form-item title="CSS Class" title-width="200rpx" prop="cssClass">
             <wd-input
@@ -113,7 +106,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createDictData, getDictData, updateDictData } from '@/api/system/dict/data'
 import { getSimpleDictTypeList } from '@/api/system/dict/type'
-import { getIntDictOptions, getStrDictOptions } from '@/hooks/useDict'
+import { getIntDictOptions } from '@/hooks/useDict'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'

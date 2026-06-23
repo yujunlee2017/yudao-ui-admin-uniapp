@@ -25,7 +25,7 @@
             </view>
           </view>
           <view v-if="item.price != null" class="mb-12rpx text-28rpx text-[#666]">
-            <text class="mr-8rpx text-[#999]">金额：</text>{{ Number(item.price).toFixed(2) }}
+            <text class="mr-8rpx text-[#999]">金额：</text>{{ formatMoney(item.price) }}
           </view>
           <view v-if="item.returnTime" class="text-28rpx text-[#666]">
             <text class="mr-8rpx text-[#999]">日期：</text>{{ formatDate(item.returnTime) }}
@@ -41,6 +41,7 @@ import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { getReceivablePageByCustomer } from '@/api/crm/receivable'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
+import { formatMoney } from '@/utils/format'
 
 const props = defineProps<{ customerId?: number, contractId?: number }>()
 const list = ref<Record<string, any>[]>([]) // 回款列表

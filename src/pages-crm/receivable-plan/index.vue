@@ -7,6 +7,9 @@
       @click-left="handleBack"
     />
 
+    <!-- 搜索组件 -->
+    <SearchForm @search="handleQuery" @reset="handleReset" />
+
     <!-- 归属场景 -->
     <view class="bg-white">
       <wd-tabs v-model="sceneTabIndex" shrink @change="handleSceneChange">
@@ -44,7 +47,7 @@
             <text class="mr-8rpx text-[#999]">期数：</text>{{ item.period }}
           </view>
           <view v-if="item.price !== undefined && item.price !== null" class="mb-12rpx text-28rpx text-[#666]">
-            <text class="mr-8rpx text-[#999]">金额：</text>{{ Number(item.price).toFixed(2) }}
+            <text class="mr-8rpx text-[#999]">金额：</text>{{ formatMoney(item.price) }}
           </view>
           <view v-if="item.returnTime" class="text-28rpx text-[#666]">
             <text class="mr-8rpx text-[#999]">日期：</text>{{ formatDate(item.returnTime) }}
@@ -63,10 +66,13 @@ import type { ReceivablePlan } from '@/api/crm/receivable/plan'
 import { onUnload } from '@dcloudio/uni-app'
 import { computed, onMounted, ref } from 'vue'
 import { getReceivablePlanPage } from '@/api/crm/receivable/plan'
+import { CRM_SCENE_TYPES, CrmSceneTypeEnum } from '@/api/crm/permission'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
+import { formatMoney } from '@/utils/format'
+import SearchForm from './components/search-form.vue'
 
 definePage({
   style: {
@@ -75,10 +81,7 @@ definePage({
   },
 })
 
-const sceneTabs = [
-  { label: '我负责的', value: 1 },
-  { label: '下属负责的', value: 3 },
-]
+const sceneTabs = CRM_SCENE_TYPES.filter(item => item.value !== CrmSceneTypeEnum.INVOLVED)
 
 const { hasAccessByCodes } = useAccess()
 const list = ref<ReceivablePlan[]>([]) // 列表数据
@@ -106,6 +109,17 @@ async function queryList(pageNo: number, pageSize: number) {
 function handleSceneChange({ index }: { index: number }) {
   sceneTabIndex.value = index
   reload()
+}
+
+/** 搜索按钮操作 */
+function handleQuery(data?: Record<string, any>) {
+  queryParams.value = { ...data }
+  reload()
+}
+
+/** 重置按钮操作 */
+function handleReset() {
+  handleQuery()
 }
 
 /** 重新加载 */

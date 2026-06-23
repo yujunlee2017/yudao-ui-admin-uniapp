@@ -18,20 +18,12 @@
               placeholder="请输入应用名"
             />
           </wd-form-item>
-          <wd-form-item
-            title="社交平台"
-            title-width="200rpx"
+          <yd-form-picker
+            v-model="formData.socialType"
+            label="社交平台"
             prop="socialType"
-            is-link
-            :value="getWotPickerFormValue(getIntDictOptions(DICT_TYPE.SYSTEM_SOCIAL_TYPE), formData.socialType)"
+            :dict-type="DICT_TYPE.SYSTEM_SOCIAL_TYPE"
             placeholder="请选择社交平台"
-            @click="pickerVisible.socialType = true"
-          />
-          <wd-picker
-            v-model:visible="pickerVisible.socialType"
-            :model-value="formData.socialType"
-            :columns="getIntDictOptions(DICT_TYPE.SYSTEM_SOCIAL_TYPE)"
-            @confirm="({ value }) => formData.socialType = value[0]"
           />
           <wd-form-item title="用户类型" title-width="200rpx" prop="userType" center>
             <wd-radio-group v-model="formData.userType" type="button">
@@ -112,7 +104,7 @@ import { createSocialClient, getSocialClient, updateSocialClient } from '@/api/s
 import { getIntDictOptions } from '@/hooks/useDict'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
-import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   id?: number | any
@@ -147,7 +139,6 @@ const formSchema = createFormSchema({
   clientSecret: [{ required: true, message: '应用密钥不能为空' }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用
-const pickerVisible = ref<Record<string, boolean>>({})
 
 /** 返回上一页 */
 function handleBack() {

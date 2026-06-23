@@ -19,8 +19,15 @@ export interface Material {
   createTime?: Date
 }
 
+/** 公众号素材分页查询参数 */
+export interface MaterialPageParam extends PageParam {
+  accountId: number
+  type?: string
+  permanent?: boolean
+}
+
 /** 获取公众号素材分页 */
-export function getMaterialPage(params: PageParam) {
+export function getMaterialPage(params: MaterialPageParam) {
   return http.get<PageResult<Material>>(`${baseUrl}/page`, params)
 }
 

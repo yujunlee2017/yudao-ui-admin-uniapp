@@ -1,3 +1,5 @@
+<!-- TODO @AI：看看整体，能不能在优化下？！ -->
+<!-- TODO @AI：可以手动添加规格么？ -->
 <template>
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
@@ -31,18 +33,16 @@
               <wd-form-item
                 title="商品品牌"
                 title-width="200rpx"
+                prop="brandId"
                 is-link
                 :value="getOptionText(brandOptions, formData.brandId)"
                 placeholder="请选择商品品牌"
                 @click="pickerVisible.brand = true"
               />
-              <wd-form-item title="关键字" title-width="200rpx">
+              <wd-form-item title="关键字" title-width="200rpx" prop="keyword">
                 <wd-input v-model="formData.keyword" clearable placeholder="请输入关键字" />
               </wd-form-item>
-              <wd-form-item title="单位编号" title-width="200rpx">
-                <wd-input-number v-model="formData.unit" :min="0" />
-              </wd-form-item>
-              <wd-form-item title="商品简介" title-width="200rpx">
+              <wd-form-item title="商品简介" title-width="200rpx" prop="introduction">
                 <wd-textarea v-model="formData.introduction" clearable :maxlength="500" placeholder="请输入商品简介" />
               </wd-form-item>
             </wd-cell-group>
@@ -54,23 +54,24 @@
             </view>
             <wd-cell-group border>
               <wd-form-item title="商品封面" title-width="200rpx" prop="picUrl">
-                <view class="w-full">
-                  <image
-                    v-if="formData.picUrl"
-                    :src="formData.picUrl"
-                    class="mb-12rpx h-140rpx w-140rpx rounded-8rpx bg-[#f5f5f5]"
-                    mode="aspectFill"
-                  />
-                  <wd-input v-model="formData.picUrl" clearable placeholder="请输入商品封面 URL" />
-                </view>
+                <yd-upload-img v-model="formData.picUrl" directory="mall/spu" />
               </wd-form-item>
-              <wd-form-item title="轮播图" title-width="200rpx" prop="sliderPicUrlsText">
-                <wd-textarea v-model="formData.sliderPicUrlsText" clearable :maxlength="2000" placeholder="多个 URL 用逗号或换行分隔" />
+              <wd-form-item title="轮播图" title-width="200rpx" prop="sliderPicUrls">
+                <yd-upload-imgs v-model="formData.sliderPicUrls" directory="mall/spu" :limit="9" />
               </wd-form-item>
-              <wd-form-item title="配送方式" title-width="200rpx" prop="deliveryTypesText">
-                <wd-textarea v-model="formData.deliveryTypesText" clearable :maxlength="100" placeholder="配送方式编号，多个用逗号分隔，例如 1,2" />
+              <wd-form-item title="配送方式" title-width="200rpx" prop="deliveryTypes" center>
+                <wd-checkbox-group v-model="formData.deliveryTypes" type="button">
+                  <wd-checkbox
+                    v-for="dict in getIntDictOptions(DICT_TYPE.TRADE_DELIVERY_TYPE)"
+                    :key="dict.value"
+                    :name="dict.value"
+                  >
+                    {{ dict.label }}
+                  </wd-checkbox>
+                </wd-checkbox-group>
               </wd-form-item>
               <wd-form-item
+                v-if="formData.deliveryTypes?.includes(1)"
                 title="运费模板"
                 title-width="200rpx"
                 is-link
@@ -106,15 +107,17 @@
                   </wd-radio>
                 </wd-radio-group>
               </wd-form-item>
-              <wd-form-item title="SKU JSON" title-width="200rpx" prop="skusText">
-                <view class="w-full">
-                  <wd-textarea v-model="formData.skusText" clearable :maxlength="8000" placeholder="请输入 SKU JSON，价格单位为元" />
-                  <wd-button class="mt-12rpx" size="small" variant="plain" @click="handleFillDefaultSku">
-                    生成默认 SKU
-                  </wd-button>
-                </view>
-              </wd-form-item>
             </wd-cell-group>
+            <view class="px-24rpx py-20rpx">
+              <view class="mb-16rpx text-28rpx text-[#333] font-medium">
+                SKU 规格与价格
+              </view>
+              <SkuEditor
+                v-model="skus"
+                :spec-type="formData.specType"
+                :sub-commission-type="formData.subCommissionType"
+              />
+            </view>
           </view>
 
           <view class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
@@ -199,15 +202,9 @@ import { getProductCategoryList } from '@/api/mall/product/category'
 import { getSimpleDeliveryExpressTemplateList } from '@/api/mall/trade/delivery/express-template'
 import { currRoute, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
-import { formatMallMoney, getMallResourceListUrl, getMallResourceReloadEvent, parseMallArray, parseMallJson } from '@/pages-mall/resource/utils'
+import SkuEditor from '@/pages-mall/product/spu/components/sku-editor.vue'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { createFormSchema } from '@/utils/wot'
-
-interface SpuFormData extends ProductSpu {
-  sliderPicUrlsText?: string
-  deliveryTypesText?: string
-  skusText?: string
-}
 
 definePage({
   style: {
@@ -226,35 +223,36 @@ const brandOptions = ref<{ label: string, value: number }[]>([]) // 品牌选项
 const templateOptions = ref<{ label: string, value: number }[]>([]) // 运费模板选项
 const statusOptions = getIntDictOptions(DICT_TYPE.PRODUCT_SPU_STATUS)
 const getTitle = computed(() => `${formId.value ? '编辑' : '新增'}商品`)
-const formData = ref<SpuFormData>({
+const formData = ref<ProductSpu>({
   name: '',
   categoryId: undefined,
   keyword: '',
-  unit: undefined,
   picUrl: '',
-  sliderPicUrlsText: '',
+  sliderPicUrls: [],
   introduction: '',
-  deliveryTypesText: '1',
+  deliveryTypes: [1],
   deliveryTemplateId: undefined,
   brandId: undefined,
   specType: false,
   subCommissionType: false,
-  skusText: '',
   description: '',
   sort: 0,
   giveIntegral: 0,
   virtualSalesCount: 0,
   status: 0,
 })
+const skus = ref<ProductSku[]>([]) // SKU 列表（金额单位元）
 const formSchema = createFormSchema({
   name: [{ required: true, message: '商品名称不能为空' }],
   categoryId: [{ required: true, message: '商品分类不能为空' }],
+  brandId: [{ required: true, message: '商品品牌不能为空' }],
+  keyword: [{ required: true, message: '商品关键字不能为空' }],
+  introduction: [{ required: true, message: '商品简介不能为空' }],
   picUrl: [{ required: true, message: '商品封面不能为空' }],
-  sliderPicUrlsText: [{ required: true, message: '轮播图不能为空' }],
-  deliveryTypesText: [{ required: true, message: '配送方式不能为空' }],
+  sliderPicUrls: [{ required: true, message: '轮播图不能为空' }],
+  deliveryTypes: [{ required: true, message: '配送方式不能为空' }],
   specType: [{ required: true, message: '多规格不能为空' }],
   subCommissionType: [{ required: true, message: '单独分佣不能为空' }],
-  skusText: [{ required: true, message: 'SKU JSON 不能为空' }],
   description: [{ required: true, message: '商品详情不能为空' }],
   sort: [{ required: true, message: '排序不能为空' }],
   status: [{ required: true, message: '商品状态不能为空' }],
@@ -262,7 +260,7 @@ const formSchema = createFormSchema({
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus(getMallResourceListUrl('productSpu'))
+  navigateBackPlus('/pages-mall/product/spu/index')
 }
 
 /** 获取选项文本 */
@@ -289,47 +287,35 @@ function yuanToCent(value: any) {
   return Math.round(Number(value) * 100)
 }
 
-/** 转换 SKU 到表单 JSON */
-function toSkuText(skus: ProductSku[] = []) {
-  const list = skus.map(item => ({
-    ...item,
-    price: centToYuan(item.price),
-    marketPrice: centToYuan(item.marketPrice),
-    costPrice: centToYuan(item.costPrice),
-    firstBrokeragePrice: centToYuan(item.firstBrokeragePrice),
-    secondBrokeragePrice: centToYuan(item.secondBrokeragePrice),
-  }))
-  return JSON.stringify(list, null, 2)
-}
-
-/** 转换 SKU 到提交数据 */
-function toSubmitSkus(value: any) {
-  const list = parseMallJson(value)
-  if (!Array.isArray(list)) {
-    return []
+/** SKU 分→元 */
+function toYuanSku(sku: ProductSku): ProductSku {
+  return {
+    ...sku,
+    price: centToYuan(sku.price),
+    marketPrice: centToYuan(sku.marketPrice),
+    costPrice: centToYuan(sku.costPrice),
+    firstBrokeragePrice: centToYuan(sku.firstBrokeragePrice),
+    secondBrokeragePrice: centToYuan(sku.secondBrokeragePrice),
   }
-  return list.map(item => ({
-    ...item,
-    price: yuanToCent(item.price),
-    marketPrice: yuanToCent(item.marketPrice),
-    costPrice: yuanToCent(item.costPrice),
-    firstBrokeragePrice: yuanToCent(item.firstBrokeragePrice),
-    secondBrokeragePrice: yuanToCent(item.secondBrokeragePrice),
-  }))
 }
 
-/** 生成默认 SKU */
-function handleFillDefaultSku() {
-  formData.value.skusText = JSON.stringify([{
-    name: formData.value.name || '默认规格',
-    price: 0.01,
-    marketPrice: 0.01,
-    costPrice: 0,
-    stock: 999,
-    weight: 0,
-    volume: 0,
-    properties: [],
-  }], null, 2)
+/** SKU 元→分 */
+function toCentSku(sku: ProductSku): ProductSku {
+  return {
+    ...sku,
+    name: sku.name || formData.value.name, // SKU 名称取商品名称（对齐 PC，后端 @NotEmpty）
+    picUrl: sku.picUrl || formData.value.picUrl || '', // SKU 图片默认取商品封面（后端 @NotNull）
+    price: yuanToCent(sku.price),
+    marketPrice: yuanToCent(sku.marketPrice),
+    costPrice: yuanToCent(sku.costPrice),
+    firstBrokeragePrice: yuanToCent(sku.firstBrokeragePrice),
+    secondBrokeragePrice: yuanToCent(sku.secondBrokeragePrice),
+  }
+}
+
+/** 默认单规格 SKU（元） */
+function createDefaultSku(): ProductSku {
+  return { price: 0, marketPrice: 0, costPrice: 0, stock: 0, barCode: '', weight: 0, volume: 0, picUrl: '', properties: [] }
 }
 
 /** 加载选项 */
@@ -347,16 +333,16 @@ async function loadOptions() {
 /** 加载详情 */
 async function loadDetail() {
   if (!formId.value) {
-    handleFillDefaultSku()
+    skus.value = [createDefaultSku()]
     return
   }
   const data = await getProductSpu(formId.value)
   formData.value = {
     ...data,
-    sliderPicUrlsText: (data.sliderPicUrls || []).join('\n'),
-    deliveryTypesText: (data.deliveryTypes || []).join(','),
-    skusText: toSkuText(data.skus || []),
+    sliderPicUrls: data.sliderPicUrls || [],
+    deliveryTypes: data.deliveryTypes || [],
   }
+  skus.value = (data.skus || []).map(toYuanSku)
 }
 
 /** 构造提交数据 */
@@ -365,9 +351,9 @@ function buildSubmitData(): ProductSpu {
   return {
     ...data,
     id: formId.value,
-    sliderPicUrls: parseMallArray(data.sliderPicUrlsText || ''),
-    deliveryTypes: parseMallArray(data.deliveryTypesText || '', 'number') as number[],
-    skus: toSubmitSkus(data.skusText),
+    sliderPicUrls: data.sliderPicUrls || [],
+    deliveryTypes: data.deliveryTypes || [],
+    skus: skus.value.map(toCentSku),
   }
 }
 
@@ -379,7 +365,7 @@ async function handleSubmit() {
   }
   const data = buildSubmitData()
   if (!data.skus?.length) {
-    toast.warning('SKU JSON 至少需要一条数据')
+    toast.warning(formData.value.specType ? '请添加规格并生成 SKU' : '请完善 SKU 价格库存')
     return
   }
   formLoading.value = true
@@ -391,7 +377,7 @@ async function handleSubmit() {
       await createProductSpu(data)
       toast.success('新增成功')
     }
-    uni.$emit(getMallResourceReloadEvent('productSpu'))
+    uni.$emit('mall:product-spu:reload')
     setTimeout(() => handleBack(), 500)
   } finally {
     formLoading.value = false

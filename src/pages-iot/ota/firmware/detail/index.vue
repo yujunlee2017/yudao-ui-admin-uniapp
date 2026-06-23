@@ -24,9 +24,9 @@ function handleBack() { navigateBackPlus('/pages-iot/ota/firmware/index') }
 /** 加载固件详情 */
 async function getDetail() { if (props.id && !deleting.value) formData.value = await getOtaFirmware(Number(props.id)) }
 /** 编辑固件 */
-function handleEdit() { uni.navigateTo({ url: '/pages-iot/ota/firmware/form/index?id=' + props.id }) }
+function handleEdit() { uni.navigateTo({ url: `/pages-iot/ota/firmware/form/index?id=${props.id}` }) }
 /** 创建升级任务 */
-function handleCreateTask() { uni.navigateTo({ url: '/pages-iot/ota/task/form/index?firmwareId=' + props.id }) }
+function handleCreateTask() { uni.navigateTo({ url: `/pages-iot/ota/task/form/index?firmwareId=${props.id}` }) }
 /** 删除固件 */
 async function handleDelete() { if (!props.id) return; try { await dialog.confirm({ title: '提示', msg: '确定要删除该固件吗？' }) } catch { return } deleting.value = true; try { await deleteOtaFirmware(Number(props.id)); toast.success('删除成功'); uni.$emit('iot:ota-firmware:reload'); setTimeout(() => handleBack(), 500) } finally { deleting.value = false } }
 /** 初始化 */

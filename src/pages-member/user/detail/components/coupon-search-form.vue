@@ -27,7 +27,7 @@
           @confirm="({ value }) => formData.status = value[0]"
         />
       </view>
-      <DateRangeField v-model="formData.createTime" label="领取时间" />
+      <yd-search-date-range v-model="formData.createTime" label="领取时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -43,7 +43,6 @@
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
-import DateRangeField from '@/pages-member/components/date-range-field.vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'

@@ -19,6 +19,7 @@
             source="customer"
             label="客户名称"
             prop="customerId"
+            :disabled="customerLocked"
             placeholder="请选择客户名称"
           />
           <UserPicker v-model="formData.ownerUserId" type="radio" label="负责人" prop="ownerUserId" :disabled="!!props.id" placeholder="请选择负责人" />
@@ -43,7 +44,7 @@
           <wd-form-item title="预计成交日期" title-width="200rpx" prop="dealTime" is-link placeholder="请选择预计成交日期" :value="formatDate(formData.dealTime)" @click="pickerVisible.dealTime = true" />
           <wd-datetime-picker v-model="formData.dealTime" v-model:visible="pickerVisible.dealTime" title="请选择预计成交日期" type="date" />
           <wd-form-item title="整单折扣(%)" title-width="200rpx" prop="discountPercent">
-            <wd-input v-model.number="formData.discountPercent" type="number" placeholder="请输入整单折扣(%)" clearable />
+            <wd-input-number v-model="formData.discountPercent" :min="0" :max="100" :precision="2" input-type="number" placeholder="请输入整单折扣(%)" />
           </wd-form-item>
           <wd-form-item title="备注" title-width="200rpx" prop="remark">
             <wd-textarea v-model="formData.remark" placeholder="请输入备注" :maxlength="200" show-word-limit clearable />
@@ -53,6 +54,7 @@
 
       <!-- 产品清单 -->
       <CrmProductLines
+        ref="productLinesRef"
         v-model="formData.products"
         price-prop="businessPrice"
         :discount-percent="Number(formData.discountPercent || 0)"
@@ -95,10 +97,12 @@ const toast = useToast()
 const userStore = useUserStore()
 const getTitle = computed(() => props.id ? '编辑商机' : '新增商机')
 const formLoading = ref(false) // 表单提交状态
+const customerLocked = ref(false) // 客户是否锁定（从客户/联系人详情带入时不可改，避免改客户产生跨客户关联）
 const formData = ref<Business & Record<string, any>>({
   id: undefined,
   name: '',
   customerId: undefined,
+  contactId: undefined,
   ownerUserId: undefined,
   statusTypeId: undefined,
   statusId: undefined,
@@ -110,6 +114,7 @@ const formData = ref<Business & Record<string, any>>({
   products: [],
 }) // 表单数据
 const formRef = ref<FormInstance>() // 表单组件引用
+const productLinesRef = ref<{ validate: (options?: { requireAtLeastOne?: boolean }) => string | null }>() // 产品清单组件引用
 const pickerVisible = ref<Record<string, boolean>>({}) // 选择器显示状态
 const formSchema = createFormSchema({
   name: [{ required: true, message: '商机名称不能为空' }],
@@ -136,6 +141,12 @@ function applyQueryDefaults() {
   const query = currRoute().query
   if (query.customerId) {
     formData.value.customerId = Number(query.customerId)
+    customerLocked.value = true // 带入客户后锁定，避免改客户
+  }
+  // 从联系人详情「新增商机」进入时透传 contactId，提交时后端自动关联联系人；同时锁定客户避免跨客户关联
+  if (query.contactId) {
+    formData.value.contactId = Number(query.contactId)
+    customerLocked.value = true
   }
 }
 
@@ -159,8 +170,9 @@ async function handleSubmit() {
   if (!valid) {
     return
   }
-  if (!formData.value.products || formData.value.products.length === 0) {
-    toast.show('请至少添加一个产品')
+  const productError = productLinesRef.value?.validate({ requireAtLeastOne: true })
+  if (productError) {
+    toast.show(productError)
     return
   }
   formLoading.value = true

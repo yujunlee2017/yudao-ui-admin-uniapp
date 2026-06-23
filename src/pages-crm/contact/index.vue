@@ -65,6 +65,7 @@ import type { Contact } from '@/api/crm/contact'
 import { onUnload } from '@dcloudio/uni-app'
 import { computed, onMounted, ref } from 'vue'
 import { getContactPage } from '@/api/crm/contact'
+import { CRM_SCENE_TYPES } from '@/api/crm/permission'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import SearchForm from './components/search-form.vue'
@@ -76,11 +77,7 @@ definePage({
   },
 })
 
-const sceneTabs = [
-  { label: '我负责的', value: 1 },
-  { label: '我参与的', value: 2 },
-  { label: '下属负责的', value: 3 },
-]
+const sceneTabs = CRM_SCENE_TYPES
 
 const { hasAccessByCodes } = useAccess()
 const list = ref<Contact[]>([]) // 列表数据

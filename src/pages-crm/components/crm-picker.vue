@@ -157,11 +157,13 @@ async function resolveOptions() {
       return loadContractOptions()
     case 'product':
       return mapOptions(await getProductSimpleList())
-    case 'productCategory':
-      return [
-        { id: 0, name: '顶级分类' },
-        ...flattenCategoryOptions(await getProductCategoryList()),
-      ]
+    case 'productCategory': {
+      // 产品归类场景（不传 params）取全部分类、无「顶级分类」；父级分类场景传 { parentId: 0 } 仅取顶级分类并提供「顶级分类」（对齐 PC 两级结构）
+      const categoryOptions = flattenCategoryOptions(await getProductCategoryList(props.params || {}))
+      return props.params?.parentId === 0
+        ? [{ id: 0, name: '顶级分类' }, ...categoryOptions]
+        : categoryOptions
+    }
     case 'businessStatusType':
       return mapOptions(await getBusinessStatusTypeSimpleList())
     case 'businessStatus':

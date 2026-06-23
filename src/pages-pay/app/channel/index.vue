@@ -120,7 +120,7 @@ const channelMap = computed(() => {
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-pay/index?tab=app')
+  navigateBackPlus('/pages-pay/app/index')
 }
 
 /** 获取渠道配置 */

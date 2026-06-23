@@ -32,7 +32,7 @@ export function deleteFreePublish(accountId: number, articleId: string) {
   return http.delete<boolean>(`/mp/free-publish/delete?accountId=${accountId}&articleId=${articleId}`)
 }
 
-/** 发布公众号草稿 */
+/** 发布公众号草稿（返回发布任务 publishId） */
 export function submitFreePublish(accountId: number, mediaId: string) {
-  return http.post<boolean>(`/mp/free-publish/submit?accountId=${accountId}&mediaId=${mediaId}`)
+  return http.post<string>(`/mp/free-publish/submit?accountId=${accountId}&mediaId=${mediaId}`)
 }

@@ -112,6 +112,7 @@ async function handleDelete() {
   try {
     await deleteMemberSignInConfig(Number(props.id))
     toast.success('删除成功')
+    uni.$emit('member:signin-config:reload')
     setTimeout(() => {
       handleBack()
     }, 500)
@@ -125,6 +126,3 @@ onMounted(() => {
   getDetail()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

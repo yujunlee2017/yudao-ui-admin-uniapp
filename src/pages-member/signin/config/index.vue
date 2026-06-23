@@ -70,7 +70,8 @@
 
 <script lang="ts" setup>
 import type { MemberSignInConfig } from '@/api/member/signin/config'
-import { ref } from 'vue'
+import { onUnload } from '@dcloudio/uni-app'
+import { onMounted, ref } from 'vue'
 import { getMemberSignInConfigList } from '@/api/member/signin/config'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
@@ -115,7 +116,19 @@ function handleDetail(item: MemberSignInConfig) {
     url: `/pages-member/signin/config/detail/index?id=${item.id}`,
   })
 }
-</script>
 
-<style lang="scss" scoped>
-</style>
+/** 重新加载 */
+function reload() {
+  pagingRef.value?.reload()
+}
+
+/** 初始化 */
+onMounted(() => {
+  uni.$on('member:signin-config:reload', reload)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('member:signin-config:reload', reload)
+})
+</script>

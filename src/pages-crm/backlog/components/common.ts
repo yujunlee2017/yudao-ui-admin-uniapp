@@ -1,3 +1,5 @@
+import { CRM_SCENE_TYPES } from '@/api/crm/permission'
+
 /** 待办筛选选项（与 vue3 backlog/components/common.ts 对齐） */
 export interface BacklogFilterOption {
   label: string
@@ -10,12 +12,8 @@ export interface BacklogFilter {
   options: BacklogFilterOption[]
 }
 
-/** 归属范围 */
-export const SCENE_TYPES: BacklogFilterOption[] = [
-  { label: '我负责的', value: 1 },
-  { label: '我参与的', value: 2 },
-  { label: '下属负责的', value: 3 },
-]
+/** 归属范围（复用全局 CRM 归属场景选项） */
+export const SCENE_TYPES: BacklogFilterOption[] = CRM_SCENE_TYPES
 
 /** 联系状态 */
 export const CONTACT_STATUS: BacklogFilterOption[] = [

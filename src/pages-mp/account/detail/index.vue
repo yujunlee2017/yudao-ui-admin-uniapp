@@ -96,7 +96,7 @@ const deleting = ref(false) // 删除状态
 const moreActionVisible = ref(false) // 更多操作菜单
 const moreActions = computed(() => {
   const actions = []
-  if (hasAccessByCodes(['mp:account:qr-code'])) {
+  if (hasAccessByCodes(['mp:account:qr-code']) && !formData.value?.qrCodeUrl) {
     actions.push({ name: '生成二维码', value: 'qrCode' })
   }
   if (hasAccessByCodes(['mp:account:clear-quota'])) {

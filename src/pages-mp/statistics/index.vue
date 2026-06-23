@@ -96,7 +96,7 @@ import {
   getUserSummary,
 } from '@/api/mp/statistics'
 import { navigateBackPlus } from '@/utils'
-import { formatDate } from '@/utils/date'
+import { formatDate, formatDateTime } from '@/utils/date'
 import AccountPicker from '../components/account-picker.vue'
 
 definePage({
@@ -191,7 +191,7 @@ async function getSummary() {
   try {
     const params = {
       accountId: accountId.value,
-      date: [formatDate(dateRange.value[0]), formatDate(dateRange.value[1])],
+      date: [formatDateTime(dateRange.value[0]), formatDateTime(dateRange.value[1])],
     }
     const [userSummary, userCumulate, upstreamMessage, interfaceSummary] = await Promise.all([
       getUserSummary(params),

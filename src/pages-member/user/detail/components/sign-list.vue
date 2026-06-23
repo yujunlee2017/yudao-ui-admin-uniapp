@@ -1,6 +1,6 @@
 <template>
   <view>
-    <SearchForm @search="handleQuery" @reset="handleReset" />
+    <SearchForm hide-user @search="handleQuery" @reset="handleReset" />
     <scroll-view scroll-y class="min-h-520rpx">
       <view class="p-24rpx">
         <view
@@ -12,7 +12,7 @@
             <view class="text-30rpx text-[#333] font-semibold">
               第 {{ item.day || 0 }} 天
             </view>
-            <wd-tag :type="(item.point || 0) >= 0 ? 'success' : 'danger'" variant="plain">
+            <wd-tag :type="(item.point || 0) > 0 ? 'success' : 'danger'" variant="plain">
               {{ (item.point || 0) > 0 ? `+${item.point}` : item.point }}
             </wd-tag>
           </view>
@@ -22,7 +22,7 @@
         </view>
         <wd-empty v-if="!loading && list.length === 0" icon="content" tip="暂无签到记录" />
         <view v-if="hasMore" class="pb-24rpx">
-          <wd-button block plain :loading="loading" @click="loadMore">
+          <wd-button plain block :loading="loading" @click="loadMore">
             加载更多
           </wd-button>
         </view>

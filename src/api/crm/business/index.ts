@@ -22,6 +22,7 @@ export interface Business {
   name: string
   customerId?: number
   customerName?: string
+  contactId?: number // 在【联系人详情】新增商机时传递，用于后端自动关联两者
   followUpStatus?: boolean
   contactLastTime?: Date | string | number
   contactNextTime?: Date | string | number
@@ -54,6 +55,11 @@ export function getBusinessPage(params: PageParam) {
 /** 查询指定客户下的商机分页列表 */
 export function getBusinessPageByCustomer(params: PageParam) {
   return http.get<PageResult<Business>>('/crm/business/page-by-customer', params)
+}
+
+/** 查询指定客户下的商机列表（不分页） */
+export function getBusinessListByCustomer(customerId: number) {
+  return http.get<Business[]>(`/crm/business/list-by-customer?customerId=${customerId}`)
 }
 
 /** 查询商机详情 */
@@ -94,6 +100,11 @@ export function exportBusiness(params: Record<string, any>) {
 /** 查询指定联系人下的商机分页列表 */
 export function getBusinessPageByContact(params: PageParam) {
   return http.get<PageResult<Business>>('/crm/business/page-by-contact', params)
+}
+
+/** 查询指定联系人下的商机列表（不分页） */
+export function getBusinessListByContact(contactId: number) {
+  return http.get<Business[]>(`/crm/business/list-by-contact?contactId=${contactId}`)
 }
 
 /** 商机转移 */

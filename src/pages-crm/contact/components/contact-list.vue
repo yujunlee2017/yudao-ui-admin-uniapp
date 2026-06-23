@@ -1,6 +1,20 @@
 <template>
   <!-- 联系人列表（按客户/商机加载，卡片样式对齐联系人列表页） -->
   <view class="min-h-0 flex flex-1 flex-col">
+    <!-- 关联联系人 -->
+    <view v-if="props.businessId && canAddBusinessContact" class="flex justify-end bg-white px-24rpx py-16rpx">
+      <CrmPicker
+        source="contact"
+        :params="{ customerId: props.customerId }"
+        use-default-slot
+        @confirm="handleAddBusinessContact"
+      >
+        <wd-button size="small" type="primary">
+          关联联系人
+        </wd-button>
+      </CrmPicker>
+    </view>
+
     <z-paging
       ref="pagingRef"
       v-model="list"
@@ -29,6 +43,16 @@
           <view v-if="item.ownerUserName" class="text-28rpx text-[#666]">
             <text class="mr-8rpx text-[#999]">负责人：</text>{{ item.ownerUserName }}
           </view>
+          <view v-if="props.businessId && canRemoveBusinessContact" class="mt-16rpx flex justify-end">
+            <wd-button
+              size="small"
+              type="danger"
+              variant="plain"
+              @click.stop="handleRemoveBusinessContact(item)"
+            >
+              解除关联
+            </wd-button>
+          </view>
         </view>
       </view>
     </z-paging>
@@ -36,12 +60,27 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref, watch } from 'vue'
-import { getContactPageByBusiness, getContactPageByCustomer } from '@/api/crm/contact'
+import { useDialog } from '@wot-ui/ui/components/wd-dialog'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { createContactBusinessList2, deleteContactBusinessList2, getContactPageByBusiness, getContactPageByCustomer } from '@/api/crm/contact'
+import { useAccess } from '@/hooks/useAccess'
+import CrmPicker from '@/pages-crm/components/crm-picker.vue'
+
+interface PickerOption {
+  id: number | string
+  name: string
+  raw?: Record<string, any>
+}
 
 const props = defineProps<{ customerId?: number, businessId?: number }>()
+const { hasAccessByCodes } = useAccess()
+const dialog = useDialog()
+const toast = useToast()
 const list = ref<Record<string, any>[]>([]) // 联系人列表
 const pagingRef = ref<any>() // 分页组件引用
+const canAddBusinessContact = computed(() => !!props.businessId && hasAccessByCodes(['crm:contact:create-business'])) // 关联联系人权限
+const canRemoveBusinessContact = computed(() => !!props.businessId && hasAccessByCodes(['crm:contact:delete-business'])) // 解除联系人权限
 
 /** 查询列表 */
 async function queryList(pageNo: number, pageSize: number) {
@@ -80,13 +119,53 @@ function handleDetail(item: Record<string, any>) {
 
 /** 新增联系人 */
 function openAdd() {
-  const query = props.customerId ? `?customerId=${props.customerId}` : ''
+  const params = [
+    props.customerId ? `customerId=${props.customerId}` : '',
+    props.businessId ? `businessId=${props.businessId}` : '',
+  ].filter(Boolean).join('&')
+  const query = params ? `?${params}` : ''
   uni.navigateTo({ url: `/pages-crm/contact/form/index${query}` })
+}
+
+/** 关联既有联系人 */
+async function handleAddBusinessContact(option?: PickerOption) {
+  const businessId = props.businessId
+  const contactId = Number(option?.id)
+  if (!businessId || !contactId) {
+    return
+  }
+  if (list.value.some(item => Number(item.id) === contactId)) {
+    toast.show('该联系人已关联')
+    return
+  }
+  await createContactBusinessList2({ businessId, contactIds: [contactId] })
+  toast.success('关联成功')
+  reload()
+}
+
+/** 解除联系人关联 */
+async function handleRemoveBusinessContact(item: Record<string, any>) {
+  const businessId = props.businessId
+  if (!businessId || !item.id) {
+    return
+  }
+  try {
+    await dialog.confirm({ title: '提示', msg: `确定解除与联系人【${item.name || ''}】的关联吗？` })
+  } catch {
+    return
+  }
+  await deleteContactBusinessList2({ businessId, contactIds: [Number(item.id)] })
+  toast.success('解除成功')
+  reload()
 }
 
 watch(() => [props.customerId, props.businessId], () => reload())
 
-defineExpose({ reload, getList: reload, openAdd })
+defineExpose({
+  reload,
+  getList: reload,
+  openAdd,
+})
 
 /** 初始化 */
 onMounted(() => {

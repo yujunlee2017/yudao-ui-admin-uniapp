@@ -23,8 +23,8 @@ export interface DeliveryExpressTemplate {
   name?: string
   chargeMode?: number
   sort?: number
-  templateCharge?: DeliveryExpressTemplateCharge[]
-  templateFree?: DeliveryExpressTemplateFree[]
+  charges?: DeliveryExpressTemplateCharge[]
+  frees?: DeliveryExpressTemplateFree[]
   createTime?: string
 }
 

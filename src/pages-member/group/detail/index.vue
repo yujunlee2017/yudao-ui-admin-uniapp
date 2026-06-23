@@ -110,6 +110,7 @@ async function handleDelete() {
   try {
     await deleteMemberGroup(Number(props.id))
     toast.success('删除成功')
+    uni.$emit('member:group:reload')
     setTimeout(() => {
       handleBack()
     }, 500)
@@ -123,6 +124,3 @@ onMounted(() => {
   getDetail()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

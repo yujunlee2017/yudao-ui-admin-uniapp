@@ -32,18 +32,22 @@
       <wd-cell title="产品单位" title-width="220rpx" :value="getDictLabel(DICT_TYPE.CRM_PRODUCT_UNIT, row.productUnit) || '-'" />
       <wd-cell title="产品单价" title-width="220rpx" :value="formatMoney(row.productPrice)" />
       <wd-form-item :title="priceLabel" title-width="220rpx">
-        <wd-input
-          v-model.number="row[priceProp]"
-          type="number"
-          clearable
+        <wd-input-number
+          v-model="row[priceProp]"
+          :min="0.001"
+          :precision="2"
+          input-type="number"
+          allow-null
           :placeholder="`请输入${priceLabel}`"
         />
       </wd-form-item>
       <wd-form-item title="数量" title-width="220rpx">
-        <wd-input
-          v-model.number="row.count"
-          type="number"
-          clearable
+        <wd-input-number
+          v-model="row.count"
+          :min="0.001"
+          :precision="3"
+          input-type="number"
+          allow-null
           placeholder="请输入数量"
         />
       </wd-form-item>
@@ -67,6 +71,7 @@
 import { computed, watch } from 'vue'
 import { getDictLabel } from '@/hooks/useDict'
 import { DICT_TYPE } from '@/utils/constants'
+import { formatMoney } from '@/utils/format'
 import CrmPicker from './crm-picker.vue'
 
 interface ProductLine {
@@ -132,6 +137,28 @@ watch(
   },
 )
 
+/** 校验产品行：每行需选产品、价格与数量大于 0；requireAtLeastOne 时还要求至少一行。返回错误文案，无误返回 null */
+function validate(options?: { requireAtLeastOne?: boolean }): string | null {
+  if (products.value.length === 0) {
+    return options?.requireAtLeastOne ? '请至少添加一个产品' : null
+  }
+  for (let i = 0; i < products.value.length; i++) {
+    const row = products.value[i]
+    if (!row.productId) {
+      return `请选择第 ${i + 1} 个产品`
+    }
+    if (!(Number(row[props.priceProp]) > 0)) {
+      return `请填写第 ${i + 1} 个产品的${priceLabel.value}`
+    }
+    if (!(Number(row.count) > 0)) {
+      return `请填写第 ${i + 1} 个产品的数量`
+    }
+  }
+  return null
+}
+
+defineExpose({ validate })
+
 /** 添加产品 */
 function handleAdd() {
   products.value.push({
@@ -156,11 +183,5 @@ function handleProductConfirm(row: ProductLine, option?: PickerOption) {
   row.productUnit = product.unit
   row.productPrice = Number(product.price || 0)
   row[props.priceProp] = Number(product.price || 0)
-}
-
-/** 格式化金额 */
-function formatMoney(value: any) {
-  const amount = Number(value)
-  return Number.isNaN(amount) ? '-' : amount.toFixed(2)
 }
 </script>

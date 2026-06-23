@@ -18,7 +18,7 @@
               placeholder="请输入状态组名"
             />
           </wd-form-item>
-          <YdTreeSelect
+          <yd-tree-select
             v-model="formData.deptIds"
             :data="deptTree"
             multiple
@@ -60,10 +60,13 @@
             clearable
             placeholder="请输入阶段名称"
           />
-          <wd-input
-            v-model.number="status.percent"
-            type="number"
-            clearable
+          <wd-input-number
+            v-model="status.percent"
+            :min="0"
+            :max="100"
+            :precision="2"
+            input-type="number"
+            allow-null
             placeholder="请输入赢单率（0-100）"
           />
         </view>
@@ -111,7 +114,6 @@ import {
   updateBusinessStatus,
 } from '@/api/crm/business/status'
 import { getSimpleDeptList } from '@/api/system/dept'
-import YdTreeSelect from '@/components/yudao-ui/yd-tree-select/yd-tree-select.vue'
 import { navigateBackPlus } from '@/utils'
 import { handleTree } from '@/utils/tree'
 import { createFormSchema } from '@/utils/wot'
@@ -175,11 +177,10 @@ function validateStatuses() {
     return false
   }
   const invalid = statuses.some((item) => {
-    const percent = Number(item.percent)
-    return !item.name || Number.isNaN(percent) || percent < 0 || percent > 100
+    return !item.name || Number.isNaN(Number(item.percent))
   })
   if (invalid) {
-    toast.show('请完整填写阶段名称和 0-100 的赢单率')
+    toast.show('请完整填写阶段名称和赢单率')
     return false
   }
   return true
@@ -203,7 +204,6 @@ async function handleSubmit() {
   if (!valid || !validateStatuses()) {
     return
   }
-
   formLoading.value = true
   try {
     if (props.id) {

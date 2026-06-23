@@ -1,3 +1,4 @@
+<!-- TODO @AI：是不是要做到 /Users/yunai/Java/yudao-ui-admin-uniapp-next-v4/src/pages-statistics 里；因为需要使用到 echart；ps：尽量按照 vue3 + ep 的功能来做； -->
 <template>
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
@@ -38,7 +39,7 @@
               v-for="item in operationCards"
               :key="item.key"
               class="rounded-8rpx bg-[#f7f8fa] px-20rpx py-18rpx"
-              @click="handleOpenResource(item.resource)"
+              @click="handleOpen(item.route)"
             >
               <view class="text-24rpx text-[#999]">
                 {{ item.label }}
@@ -61,14 +62,14 @@
           </view>
           <wd-grid :column="3" clickable :border="false">
             <wd-grid-item
-              v-for="resource in group.resources"
-              :key="resource.key"
-              :text="resource.title"
-              @click="handleOpenResource(resource.key)"
+              v-for="item in group.items"
+              :key="item.route"
+              :text="item.title"
+              @click="handleOpen(item.route)"
             >
               <template #icon>
                 <view class="h-72rpx w-72rpx flex items-center justify-center rounded-16rpx bg-[#e6f4ff]">
-                  <wd-icon :name="getResourceIcon(resource.key)" size="44rpx" color="#1677ff" />
+                  <wd-icon :name="item.icon" size="44rpx" color="#1677ff" />
                 </view>
               </template>
             </wd-grid-item>
@@ -92,9 +93,8 @@ import {
   getWalletRechargePrice,
 } from '@/api/mall/statistics'
 import { useAccess } from '@/hooks/useAccess'
+import { formatMallMoney } from '@/pages-mall/utils'
 import { navigateBackPlus } from '@/utils'
-import { getMallGroupResources, mallResourceGroups } from './resource/config'
-import { formatMallMoney, getMallResourceListUrl } from './resource/utils'
 
 definePage({
   style: {
@@ -104,6 +104,64 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
+
+const mallGroups = [ // 商城资源分组（指向逐模块显式页）
+  {
+    key: 'product',
+    name: '商品中心',
+    items: [
+      { title: '商品', route: '/pages-mall/product/spu/index', permission: 'product:spu:query', icon: 'goods' },
+      { title: '品牌', route: '/pages-mall/product/brand/index', permission: 'product:brand:query', icon: 'shop' },
+      { title: '分类', route: '/pages-mall/product/category/index', permission: 'product:category:query', icon: 'app' },
+      { title: '属性', route: '/pages-mall/product/property/index', permission: 'product:property:query', icon: 'list' },
+      { title: '属性值', route: '/pages-mall/product/property-value/index', permission: 'product:property:query', icon: 'list' },
+      { title: '评论', route: '/pages-mall/product/comment/index', permission: 'product:comment:query', icon: 'chat' },
+      { title: '收藏', route: '/pages-mall/product/favorite/index', permission: 'product:favorite:query', icon: 'star' },
+      { title: '浏览记录', route: '/pages-mall/product/browse-history/index', permission: 'product:browse-history:query', icon: 'time' },
+    ],
+  },
+  {
+    key: 'trade',
+    name: '交易中心',
+    items: [
+      { title: '订单', route: '/pages-mall/trade/order/index', permission: 'trade:order:query', icon: 'list' },
+      { title: '售后', route: '/pages-mall/trade/after-sale/index', permission: 'trade:after-sale:query', icon: 'refresh' },
+      { title: '快递公司', route: '/pages-mall/trade/delivery/express/index', permission: 'trade:delivery:express:query', icon: 'send' },
+      { title: '运费模板', route: '/pages-mall/trade/delivery/express-template/index', permission: 'trade:delivery:express-template:query', icon: 'file' },
+      { title: '自提门店', route: '/pages-mall/trade/delivery/pick-up-store/index', permission: 'trade:delivery:pick-up-store:query', icon: 'shop' },
+      { title: '核销订单', route: '/pages-mall/trade/delivery/pick-up-order/index', permission: 'trade:order:query', icon: 'scan' },
+      { title: '交易配置', route: '/pages-mall/trade/config/index', permission: 'trade:config:query', icon: 'setting' },
+      { title: '分销用户', route: '/pages-mall/trade/brokerage/user/index', permission: 'trade:brokerage-user:query', icon: 'user' },
+      { title: '佣金记录', route: '/pages-mall/trade/brokerage/record/index', permission: 'trade:brokerage-record:query', icon: 'list' },
+      { title: '佣金提现', route: '/pages-mall/trade/brokerage/withdraw/index', permission: 'trade:brokerage-withdraw:query', icon: 'wallet' },
+    ],
+  },
+  {
+    key: 'promotion',
+    name: '营销中心',
+    items: [
+      { title: 'Banner', route: '/pages-mall/promotion/banner/index', permission: 'promotion:banner:query', icon: 'picture' },
+      { title: '文章', route: '/pages-mall/promotion/article/index', permission: 'promotion:article:query', icon: 'edit' },
+      { title: '文章分类', route: '/pages-mall/promotion/article-category/index', permission: 'promotion:article-category:query', icon: 'folder' },
+      { title: '优惠券模板', route: '/pages-mall/promotion/coupon-template/index', permission: 'promotion:coupon-template:query', icon: 'coupon' },
+      { title: '优惠券', route: '/pages-mall/promotion/coupon/index', permission: 'promotion:coupon:query', icon: 'coupon' },
+      { title: '限时折扣', route: '/pages-mall/promotion/discount-activity/index', permission: 'promotion:discount-activity:query', icon: 'tag' },
+      { title: '满减送', route: '/pages-mall/promotion/reward-activity/index', permission: 'promotion:reward-activity:query', icon: 'gift' },
+      { title: '秒杀活动', route: '/pages-mall/promotion/seckill-activity/index', permission: 'promotion:seckill-activity:query', icon: 'clock' },
+      { title: '秒杀时段', route: '/pages-mall/promotion/seckill-config/index', permission: 'promotion:seckill-config:query', icon: 'setting' },
+      { title: '拼团活动', route: '/pages-mall/promotion/combination-activity/index', permission: 'promotion:combination-activity:query', icon: 'usergroup' },
+      { title: '拼团记录', route: '/pages-mall/promotion/combination-record/index', permission: 'promotion:combination-record:query', icon: 'list' },
+      { title: '砍价活动', route: '/pages-mall/promotion/bargain-activity/index', permission: 'promotion:bargain-activity:query', icon: 'scissors' },
+      { title: '砍价记录', route: '/pages-mall/promotion/bargain-record/index', permission: 'promotion:bargain-record:query', icon: 'list' },
+      { title: '砍价助力', route: '/pages-mall/promotion/bargain-help/index', permission: 'promotion:bargain-help:query', icon: 'usergroup' },
+      { title: '积分商城', route: '/pages-mall/promotion/point-activity/index', permission: 'promotion:point-activity:query', icon: 'star' },
+      { title: '装修页面', route: '/pages-mall/promotion/diy-page/index', permission: 'promotion:diy-page:query', icon: 'view-list' },
+      { title: '装修模板', route: '/pages-mall/promotion/diy-template/index', permission: 'promotion:diy-template:query', icon: 'copy' },
+      { title: '客服会话', route: '/pages-mall/kefu/index', permission: 'promotion:kefu-conversation:query', icon: 'chat' },
+    ],
+  },
+]
+
 const comparisonCards = ref([
   { key: 'payPrice', label: '今日销售额', value: '-', reference: '-' },
   { key: 'visitUser', label: '用户访问量', value: '-', reference: '-' },
@@ -111,24 +169,24 @@ const comparisonCards = ref([
   { key: 'registerUser', label: '新增用户', value: '-', reference: '-' },
 ]) // 核心数据
 const operationCards = ref([
-  { key: 'undelivered', label: '待发货订单', value: '-', resource: 'tradeOrder' },
-  { key: 'afterSaleApply', label: '退款中订单', value: '-', resource: 'tradeAfterSale' },
-  { key: 'pickUp', label: '待核销订单', value: '-', resource: 'tradeOrder' },
-  { key: 'productForSale', label: '上架商品', value: '-', resource: 'productSpu' },
-  { key: 'productWarehouse', label: '仓库商品', value: '-', resource: 'productSpu' },
-  { key: 'productAlertStock', label: '库存预警', value: '-', resource: 'productSpu' },
-  { key: 'withdrawAuditing', label: '提现待审核', value: '-', resource: 'brokerageWithdraw' },
-  { key: 'rechargePrice', label: '账户充值', value: '-', resource: 'tradeOrder' },
+  { key: 'undelivered', label: '待发货订单', value: '-', route: '/pages-mall/trade/order/index' },
+  { key: 'afterSaleApply', label: '退款中订单', value: '-', route: '/pages-mall/trade/after-sale/index' },
+  { key: 'pickUp', label: '待核销订单', value: '-', route: '/pages-mall/trade/delivery/pick-up-order/index' },
+  { key: 'productForSale', label: '上架商品', value: '-', route: '/pages-mall/product/spu/index' },
+  { key: 'productWarehouse', label: '仓库商品', value: '-', route: '/pages-mall/product/spu/index' },
+  { key: 'productAlertStock', label: '库存预警', value: '-', route: '/pages-mall/product/spu/index' },
+  { key: 'withdrawAuditing', label: '提现待审核', value: '-', route: '/pages-mall/trade/brokerage/withdraw/index' },
+  { key: 'rechargePrice', label: '账户充值', value: '-', route: '/pages-mall/trade/order/index' },
 ]) // 运营数据
 
-/** 可见资源分组 */
+/** 可见资源分组（按权限过滤） */
 const visibleGroups = computed(() => {
-  return mallResourceGroups
+  return mallGroups
     .map(group => ({
       ...group,
-      resources: getMallGroupResources(group).filter(resource => hasPermission(resource.permissions?.query)),
+      items: group.items.filter(item => hasPermission(item.permission)),
     }))
-    .filter(group => group.resources.length > 0)
+    .filter(group => group.items.length > 0)
 })
 
 /** 返回上一页 */
@@ -142,51 +200,8 @@ function hasPermission(code?: string) {
 }
 
 /** 打开资源列表 */
-function handleOpenResource(resource: string) {
-  uni.navigateTo({
-    url: getMallResourceListUrl(resource),
-  })
-}
-
-/** 获取资源图标 */
-function getResourceIcon(resource: string) {
-  const iconMap: Record<string, string> = {
-    productSpu: 'goods',
-    productBrand: 'shop',
-    productCategory: 'app',
-    productProperty: 'list',
-    productComment: 'chat',
-    productPropertyValue: 'list',
-    productFavorite: 'star',
-    productBrowseHistory: 'history',
-    tradeOrder: 'orders',
-    tradeAfterSale: 'refresh',
-    deliveryExpress: 'send',
-    deliveryExpressTemplate: 'file',
-    deliveryPickUpStore: 'shop',
-    deliveryPickUpOrder: 'scan',
-    brokerageUser: 'user',
-    brokerageRecord: 'list',
-    brokerageWithdraw: 'money-circle',
-    promotionBanner: 'picture',
-    promotionArticle: 'edit',
-    promotionArticleCategory: 'folder',
-    promotionCouponTemplate: 'coupon',
-    promotionCoupon: 'coupon',
-    promotionDiscountActivity: 'discount',
-    promotionRewardActivity: 'gift',
-    promotionSeckillActivity: 'clock',
-    promotionSeckillConfig: 'setting',
-    promotionCombinationActivity: 'friends',
-    promotionCombinationRecord: 'list',
-    promotionBargainActivity: 'cut',
-    promotionBargainRecord: 'list',
-    promotionBargainHelp: 'usergroup',
-    promotionPointActivity: 'points',
-    promotionDiyPage: 'layout',
-    promotionDiyTemplate: 'copy',
-  }
-  return iconMap[resource] || 'app'
+function handleOpen(route: string) {
+  uni.navigateTo({ url: route })
 }
 
 /** 更新核心数据 */

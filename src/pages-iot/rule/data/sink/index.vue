@@ -73,7 +73,7 @@ function reload() { pagingRef.value?.reload() }
 function handleAdd() { uni.navigateTo({ url: '/pages-iot/rule/data/sink/form/index' }) }
 
 /** 查看详情 */
-function handleDetail(item: DataSink) { uni.navigateTo({ url: '/pages-iot/rule/data/sink/detail/index?id=' + item.id }) }
+function handleDetail(item: DataSink) { uni.navigateTo({ url: `/pages-iot/rule/data/sink/detail/index?id=${item.id}` }) }
 
 /** 初始化 */
 onMounted(() => { uni.$on('iot:data-sink:reload', reload) })

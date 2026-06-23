@@ -13,26 +13,7 @@
     @close="visible = false"
   >
     <view class="yd-search-form-container">
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          字典类型
-        </view>
-        <view
-          class="flex items-center justify-between rounded-12rpx bg-[#f7f8fa] p-24rpx"
-          @click="pickerVisible.dictType = true"
-        >
-          <text class="text-28rpx text-[#333]">
-            {{ getWotPickerDisplay(dictTypeOptions, formData.dictType, { placeholder: '请选择字典类型' }) }}
-          </text>
-          <wd-icon name="arrow-down" size="32rpx" color="#666" />
-        </view>
-        <wd-picker
-          v-model:visible="pickerVisible.dictType"
-          :model-value="formData.dictType"
-          :columns="dictTypeOptions"
-          @confirm="({ value }) => formData.dictType = value[0]"
-        />
-      </view>
+      <yd-search-picker v-model="formData.dictType" label="字典类型" :columns="dictTypeOptions" placeholder="请选择字典类型" />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           字典标签
@@ -78,7 +59,6 @@ import { getSimpleDictTypeList } from '@/api/system/dict/type'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
-import { getWotPickerDisplay } from '@/utils/wot'
 
 const props = defineProps<{
   dictType?: string
@@ -95,7 +75,6 @@ const formData = reactive({
   status: -1,
 }) // 搜索表单数据
 const visible = ref(false) // 搜索弹窗显示状态
-const pickerVisible = ref<Record<string, boolean>>({})
 
 /** 字典类型选项 */
 const dictTypeOptions = ref<{ label: string, value: string }[]>([])

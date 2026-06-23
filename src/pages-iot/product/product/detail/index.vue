@@ -9,6 +9,7 @@
         <wd-cell title="产品编号" :value="String(formData?.id || '-')" />
         <wd-cell title="产品名称" :value="formData?.name || '-'" />
         <wd-cell title="ProductKey" :value="formData?.productKey || '-'" />
+        <wd-cell title="产品密钥" :value="formData?.productSecret || '-'" />
         <wd-cell title="产品分类" :value="formData?.categoryName || '-'" />
         <wd-cell title="设备类型"><dict-tag :type="DICT_TYPE.IOT_PRODUCT_DEVICE_TYPE" :value="formData?.deviceType" /></wd-cell>
         <wd-cell title="联网方式"><dict-tag :type="DICT_TYPE.IOT_NET_TYPE" :value="formData?.netType" /></wd-cell>
@@ -26,7 +27,8 @@
     <view class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <wd-button class="flex-1" type="info" @click="handleThingModel">物模型</wd-button>
-        <wd-button v-if="hasAccessByCodes(['iot:product:update'])" class="flex-1" type="warning" @click="handleEdit">编辑</wd-button>
+        <wd-button v-if="hasAccessByCodes(['iot:product:update'])" class="flex-1" :type="isPublished ? 'warning' : 'success'" @click="handleToggleStatus">{{ isPublished ? '撤销发布' : '发布' }}</wd-button>
+        <wd-button v-if="hasAccessByCodes(['iot:product:update'])" class="flex-1" type="warning" :disabled="isPublished" @click="handleEdit">编辑</wd-button>
         <wd-button v-if="hasAccessByCodes(['iot:product:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">删除</wd-button>
       </view>
     </view>
@@ -38,9 +40,10 @@ import type { Product } from '@/api/iot/product/product'
 import { onShow } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { ref } from 'vue'
-import { deleteProduct, getProduct } from '@/api/iot/product/product'
+import { computed, ref } from 'vue'
+import { deleteProduct, getProduct, updateProductStatus } from '@/api/iot/product/product'
 import { useAccess } from '@/hooks/useAccess'
+import { ProductStatusEnum } from '@/pages-iot/utils/constants'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
@@ -54,6 +57,7 @@ const toast = useToast()
 const dialog = useDialog()
 const formData = ref<Product>() // 详情数据
 const deleting = ref(false) // 删除状态
+const isPublished = computed(() => formData.value?.status === ProductStatusEnum.PUBLISHED) // 是否已发布
 
 /** 返回上一页 */
 function handleBack() { navigateBackPlus('/pages-iot/product/product/index') }
@@ -65,10 +69,20 @@ async function getDetail() {
 }
 
 /** 编辑产品 */
-function handleEdit() { uni.navigateTo({ url: '/pages-iot/product/product/form/index?id=' + props.id }) }
+function handleEdit() { uni.navigateTo({ url: `/pages-iot/product/product/form/index?id=${props.id}` }) }
 
 /** 查看物模型 */
-function handleThingModel() { uni.navigateTo({ url: '/pages-iot/thingmodel/index?productId=' + props.id }) }
+function handleThingModel() { uni.navigateTo({ url: `/pages-iot/thingmodel/index?productId=${props.id}` }) }
+
+/** 发布 / 撤销发布 */
+async function handleToggleStatus() {
+  if (!props.id) return
+  const nextStatus = isPublished.value ? ProductStatusEnum.UNPUBLISHED : ProductStatusEnum.PUBLISHED
+  await updateProductStatus(Number(props.id), nextStatus)
+  toast.success('操作成功')
+  uni.$emit('iot:product:reload')
+  getDetail()
+}
 
 /** 删除产品 */
 async function handleDelete() {

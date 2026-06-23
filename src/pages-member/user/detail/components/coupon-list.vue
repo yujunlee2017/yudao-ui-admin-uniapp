@@ -55,7 +55,7 @@
 <script lang="ts" setup>
 import type { PromotionCoupon } from '@/api/mall/promotion/coupon/coupon'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { deletePromotionCoupon, getPromotionCouponPage } from '@/api/mall/promotion/coupon/coupon'
 import { useAccess } from '@/hooks/useAccess'
 import { DICT_TYPE } from '@/utils/constants'
@@ -142,5 +142,11 @@ watch(
 /** 初始化 */
 onMounted(() => {
   getList()
+  uni.$on('member:user:reload', getList)
+})
+
+/** 卸载 */
+onUnmounted(() => {
+  uni.$off('member:user:reload', getList)
 })
 </script>

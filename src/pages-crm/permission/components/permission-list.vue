@@ -7,7 +7,7 @@
         <wd-button v-if="canQuitTeam" size="small" type="danger" variant="plain" @click="handleQuit">
           退出
         </wd-button>
-        <wd-button v-if="showAction" size="small" type="primary" @click="handleAdd">
+        <wd-button v-if="showAction && validateOwnerUser" size="small" type="primary" @click="handleAdd">
           新增
         </wd-button>
       </view>
@@ -33,7 +33,7 @@
         <view class="mb-16rpx text-26rpx text-[#999]">
           加入时间：{{ formatDateTime(item.createTime) || '-' }}
         </view>
-        <view v-if="showAction && item.level !== PermissionLevelEnum.OWNER" class="flex justify-end gap-12rpx">
+        <view v-if="showAction && validateOwnerUser && item.level !== PermissionLevelEnum.OWNER" class="flex justify-end gap-12rpx">
           <wd-button size="small" type="primary" variant="plain" @click="handleEdit(item)">
             编辑
           </wd-button>
@@ -186,6 +186,17 @@ const canQuitTeam = computed(() => {
   const currentUserId = userStore.userInfo.userId
   return list.value.some(item => item.userId === currentUserId && item.level !== PermissionLevelEnum.OWNER)
 })
+const isPool = computed(() => !list.value.some(item => item.level === PermissionLevelEnum.OWNER)) // 是否公海数据
+const validateOwnerUser = computed(() => {
+  const currentUserId = userStore.userInfo.userId
+  return list.value.some(item => item.userId === currentUserId && item.level === PermissionLevelEnum.OWNER)
+}) // 负责人权限
+const validateWrite = computed(() => {
+  const currentUserId = userStore.userInfo.userId
+  return list.value.some((item) => {
+    return item.userId === currentUserId && [PermissionLevelEnum.OWNER, PermissionLevelEnum.WRITE].includes(item.level)
+  })
+}) // 编辑权限
 const formSchema = createFormSchema({
   userId: [{ required: () => formMode.value === 'create', message: '人员不能为空' }],
   level: [{ required: true, message: '权限级别不能为空' }],
@@ -209,6 +220,10 @@ async function getList() {
 
 /** 新增团队成员 */
 function handleAdd() {
+  if (!validateOwnerUser.value) {
+    toast.show('暂无操作权限')
+    return
+  }
   formMode.value = 'create'
   formData.value = {
     bizId: props.bizId,
@@ -222,6 +237,10 @@ function handleAdd() {
 
 /** 编辑团队成员 */
 function handleEdit(item: Permission) {
+  if (!validateOwnerUser.value) {
+    toast.show('暂无操作权限')
+    return
+  }
   formMode.value = 'update'
   formData.value = {
     ...item,
@@ -232,6 +251,10 @@ function handleEdit(item: Permission) {
 
 /** 移除团队成员 */
 async function handleDelete(item: Permission) {
+  if (!validateOwnerUser.value) {
+    toast.show('暂无操作权限')
+    return
+  }
   if (!item.id) {
     return
   }
@@ -287,6 +310,7 @@ async function handleSubmit() {
     } else {
       await updatePermission({
         ids: formData.value.ids,
+        bizId: props.bizId,
         bizType: props.bizType,
         level: formData.value.level,
       })
@@ -313,6 +337,9 @@ defineExpose({
   getList,
   openAdd: handleAdd,
   quit: handleQuit,
+  isPool,
+  validateOwnerUser,
+  validateWrite,
 })
 
 /** 初始化 */

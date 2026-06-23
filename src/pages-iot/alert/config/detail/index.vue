@@ -50,7 +50,7 @@ function handleBack() { navigateBackPlus('/pages-iot/alert/config/index') }
 async function getDetail() { if (props.id && !deleting.value) formData.value = await getAlertConfig(Number(props.id)) }
 
 /** 编辑告警配置 */
-function handleEdit() { uni.navigateTo({ url: '/pages-iot/alert/config/form/index?id=' + props.id }) }
+function handleEdit() { uni.navigateTo({ url: `/pages-iot/alert/config/form/index?id=${props.id}` }) }
 
 /** 删除告警配置 */
 async function handleDelete() {

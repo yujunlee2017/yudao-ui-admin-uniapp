@@ -28,7 +28,7 @@
             <text class="mr-8rpx text-[#999]">期数：</text>{{ item.period }}
           </view>
           <view v-if="item.price != null" class="mb-12rpx text-28rpx text-[#666]">
-            <text class="mr-8rpx text-[#999]">金额：</text>{{ Number(item.price).toFixed(2) }}
+            <text class="mr-8rpx text-[#999]">金额：</text>{{ formatMoney(item.price) }}
           </view>
           <view v-if="item.returnTime" class="text-28rpx text-[#666]">
             <text class="mr-8rpx text-[#999]">日期：</text>{{ formatDate(item.returnTime) }}
@@ -44,6 +44,7 @@ import { ref } from 'vue'
 import { getReceivablePlanPage } from '@/api/crm/receivable/plan'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
+import { formatMoney } from '@/utils/format'
 import BacklogFilter from './backlog-filter.vue'
 import { buildDefaultFilters, RECEIVABLE_REMIND_TYPE } from './common'
 

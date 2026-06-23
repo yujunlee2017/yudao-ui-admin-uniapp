@@ -23,64 +23,15 @@
           clearable
         />
       </view>
-      <view v-if="processDefinitionList.length > 0" class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          所属流程
-        </view>
-        <view
-          class="flex items-center justify-between rounded-12rpx bg-[#f7f8fa] p-24rpx"
-          @click="pickerVisible.processDefinitionId = true"
-        >
-          <text class="text-28rpx text-[#333]">
-            {{ getWotPickerDisplay(processDefinitionList, formData.processDefinitionId, { valueKey: 'id', labelKey: 'name', placeholder: '请选择' }) }}
-          </text>
-          <wd-icon name="arrow-down" size="32rpx" color="#666" />
-        </view>
-        <wd-picker
-          v-model:visible="pickerVisible.processDefinitionId"
-          :model-value="formData.processDefinitionId"
-          :columns="processDefinitionList"
-          label-key="name"
-          value-key="id"
-          @confirm="({ value }) => formData.processDefinitionId = value[0]"
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          发起时间
-        </view>
-        <view class="yd-search-form-date-range-container">
-          <view class="flex-1" @click="visibleCreateTime[0] = true">
-            <view class="yd-search-form-date-range-picker">
-              {{ formatDate(formData.createTime?.[0]) || '开始日期' }}
-            </view>
-          </view>
-          -
-          <view class="flex-1" @click="visibleCreateTime[1] = true">
-            <view class="yd-search-form-date-range-picker">
-              {{ formatDate(formData.createTime?.[1]) || '结束日期' }}
-            </view>
-          </view>
-        </view>
-        <wd-datetime-picker-view v-if="visibleCreateTime[0]" v-model="tempCreateTime[0]" type="date" />
-        <view v-if="visibleCreateTime[0]" class="yd-search-form-date-range-actions">
-          <wd-button size="small" variant="plain" @click="visibleCreateTime[0] = false">
-            取消
-          </wd-button>
-          <wd-button size="small" type="primary" @click="handleCreateTime0Confirm">
-            确定
-          </wd-button>
-        </view>
-        <wd-datetime-picker-view v-if="visibleCreateTime[1]" v-model="tempCreateTime[1]" type="date" />
-        <view v-if="visibleCreateTime[1]" class="yd-search-form-date-range-actions">
-          <wd-button size="small" variant="plain" @click="visibleCreateTime[1] = false">
-            取消
-          </wd-button>
-          <wd-button size="small" type="primary" @click="handleCreateTime1Confirm">
-            确定
-          </wd-button>
-        </view>
-      </view>
+      <yd-search-picker
+        v-if="processDefinitionList.length > 0"
+        v-model="formData.processDefinitionId"
+        label="所属流程"
+        :columns="processDefinitionList"
+        value-key="id"
+        label-key="name"
+      />
+      <yd-search-date-range v-model="formData.createTime" label="发起时间" />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           流程状态
@@ -94,28 +45,14 @@
           </wd-radio>
         </wd-radio-group>
       </view>
-      <view v-if="categoryList.length > 0" class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          流程分类
-        </view>
-        <view
-          class="flex items-center justify-between rounded-12rpx bg-[#f7f8fa] p-24rpx"
-          @click="pickerVisible.categoryId = true"
-        >
-          <text class="text-28rpx text-[#333]">
-            {{ getWotPickerDisplay(categoryList, formData.categoryId, { valueKey: 'code', labelKey: 'name', placeholder: '请选择' }) }}
-          </text>
-          <wd-icon name="arrow-down" size="32rpx" color="#666" />
-        </view>
-        <wd-picker
-          v-model:visible="pickerVisible.categoryId"
-          :model-value="formData.categoryId"
-          :columns="categoryList"
-          label-key="name"
-          value-key="code"
-          @confirm="({ value }) => formData.categoryId = value[0]"
-        />
-      </view>
+      <yd-search-picker
+        v-if="categoryList.length > 0"
+        v-model="formData.categoryId"
+        label="流程分类"
+        :columns="categoryList"
+        value-key="code"
+        label-key="name"
+      />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -138,7 +75,6 @@ import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
-import { getWotPickerDisplay } from '@/utils/wot'
 
 const emit = defineEmits<{
   search: [data: Record<string, any>]
@@ -153,7 +89,6 @@ const formData = reactive({
   categoryId: undefined as string | undefined,
 }) // 搜索表单数据
 const visible = ref(false) // 搜索弹窗显示状态
-const pickerVisible = ref<Record<string, boolean>>({}) // 下拉选择器显示状态
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
@@ -172,21 +107,6 @@ const placeholder = computed(() => {
 
 const categoryList = ref<Category[]>([]) // 流程分类选项
 const processDefinitionList = ref<ProcessDefinition[]>([]) // 流程定义选项
-
-const visibleCreateTime = ref<[boolean, boolean]>([false, false]) // 发起时间选择器状态
-const tempCreateTime = ref<[number, number]>([Date.now(), Date.now()]) // 发起时间临时值
-
-/** 确认发起时间开始日期 */
-function handleCreateTime0Confirm() {
-  formData.createTime = [tempCreateTime.value[0], formData.createTime?.[1]]
-  visibleCreateTime.value[0] = false
-}
-
-/** 确认发起时间结束日期 */
-function handleCreateTime1Confirm() {
-  formData.createTime = [formData.createTime?.[0], tempCreateTime.value[1]]
-  visibleCreateTime.value[1] = false
-}
 
 /** 获取流程分类列表 */
 async function getCategoryList() {

@@ -32,11 +32,11 @@
           <view class="text-26rpx text-[#999]">
             {{ periodText }}
           </view>
-          <wd-button size="small" type="primary" variant="plain" :loading="loading" @click="loadData">
+          <wd-button size="small" type="primary" variant="plain" :loading="!!loadingMap[activeSection.title]" @click="loadData">
             刷新
           </wd-button>
         </view>
-        <StatisticsCard rank :section="activeSection" :rows="rows" />
+        <StatisticsCard rank :section="activeSection" :rows="sectionData[activeSection.title] || []" />
       </view>
     </scroll-view>
   </view>
@@ -44,7 +44,7 @@
 
 <script lang="ts" setup>
 import type { Dept } from '@/api/system/dept'
-import type { StatisticsSection } from '../components/statistics'
+import type { StatisticsColumn, StatisticsSection } from '../components/statistics'
 import { computed, onMounted, reactive, ref } from 'vue'
 import {
   getContactsCountRank,
@@ -87,8 +87,8 @@ const filters = reactive({
   deptId: defaultDeptId.value,
 }) // 筛选条件
 const deptTree = ref<Dept[]>([]) // 部门树形结构
-const loading = ref(false) // 统计加载状态
-const rows = ref<Record<string, any>[]>([]) // 当前排行数据
+const loadingMap = ref<Record<string, boolean>>({}) // 各分类加载状态（每个 tab 自己的 loading）
+const sectionData = ref<Record<string, any[]>>({}) // 各分类数据缓存（每个 tab 自己的 rows）
 const tabIndex = ref(0) // 当前排行分类下标
 
 const rankColumns = [
@@ -96,9 +96,14 @@ const rankColumns = [
   { prop: 'deptName', label: '部门' },
   { prop: 'count', label: '数值' },
 ]
+const rankMoneyColumns: StatisticsColumn[] = [
+  { prop: 'nickname', label: '员工' },
+  { prop: 'deptName', label: '部门' },
+  { prop: 'count', label: '金额(元)', type: 'money' },
+] // 金额类排行用金额格式化（保留两位小数，对齐 PC erpPriceTableColumnFormatter）
 const sections = [
-  { title: '合同金额排行', columns: rankColumns, load: getContractPriceRank, chart: rankChart(true) },
-  { title: '回款金额排行', columns: rankColumns, load: getReceivablePriceRank, chart: rankChart(true) },
+  { title: '合同金额排行', columns: rankMoneyColumns, load: getContractPriceRank, chart: rankChart(true) },
+  { title: '回款金额排行', columns: rankMoneyColumns, load: getReceivablePriceRank, chart: rankChart(true) },
   { title: '签约合同排行', columns: rankColumns, load: getContractCountRank, chart: rankChart() },
   { title: '产品销量排行', columns: rankColumns, load: getProductSalesRank, chart: rankChart() },
   { title: '新增客户排行', columns: rankColumns, load: getCustomerCountRank, chart: rankChart() },
@@ -121,16 +126,23 @@ function handleBack() {
   navigateBackPlus()
 }
 
-/** 加载统计数据 */
-async function loadData() {
-  loading.value = true
+/** 加载当前分类数据：写入各自缓存槽，捕获 section 防止快速切 tab 时旧响应覆盖 */
+async function loadActive() {
+  const section = activeSection.value
+  loadingMap.value[section.title] = true
   try {
-    rows.value = normalizeRows(await activeSection.value.load(queryParams.value))
+    sectionData.value[section.title] = normalizeRows(await section.load(queryParams.value))
   } catch {
-    rows.value = []
+    sectionData.value[section.title] = []
   } finally {
-    loading.value = false
+    loadingMap.value[section.title] = false
   }
+}
+
+/** 筛选 / 刷新：清空各分类缓存并重新加载当前分类 */
+function loadData() {
+  sectionData.value = {}
+  loadActive()
 }
 
 /** 搜索按钮操作 */
@@ -149,10 +161,12 @@ function handleReset() {
   loadData()
 }
 
-/** 排行分类切换 */
+/** 排行分类切换：已加载过则直接用缓存，未加载才请求 */
 function handleTabChange({ index }: { index: number }) {
   tabIndex.value = index
-  loadData()
+  if (sectionData.value[activeSection.value.title] === undefined) {
+    loadActive()
+  }
 }
 
 /** 排行榜图表配置 */

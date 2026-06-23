@@ -133,6 +133,7 @@ import { setConfAndFields2 } from '@/pages-bpm/utils'
 import { getEnvBaseUrl, navigateBackPlus } from '@/utils'
 import { BpmCandidateStrategyEnum } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
+import { isEmptyValue } from '@/utils/is'
 
 const props = defineProps<{
   processInstanceId?: string
@@ -251,10 +252,11 @@ async function loadNextApproveNodes() {
   approveUserSelectAssignees.value = {}
   if (data && data.length > 0) {
     nextAssigneesActivityNode.value = data
-    // 获取审批人自选的任务
+    // 获取审批人自选的任务（已返回 candidateUsers，则无需自选）
     approveUserSelectTasks.value = data.filter(
       (node: ApprovalNodeInfo) =>
-        BpmCandidateStrategyEnum.APPROVE_USER_SELECT === node.candidateStrategy,
+        BpmCandidateStrategyEnum.APPROVE_USER_SELECT === node.candidateStrategy
+        && isEmptyValue(node.candidateUsers),
     ) || []
   }
 }

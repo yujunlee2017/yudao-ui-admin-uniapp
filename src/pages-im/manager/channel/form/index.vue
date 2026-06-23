@@ -114,7 +114,7 @@ const getTitle = computed(() => props.id ? '编辑频道' : '新增频道')
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-im/manager/list/index?kind=channel')
+  navigateBackPlus('/pages-im/manager/channel/index')
 }
 
 /** 加载详情 */
@@ -141,6 +141,7 @@ async function handleSubmit() {
       await createManagerChannel(data)
       toast.success('新增成功')
     }
+    uni.$emit('im:manager:channel:reload')
     setTimeout(handleBack, 500)
   } finally {
     formLoading.value = false

@@ -10,6 +10,7 @@
     <!-- 基本信息 -->
     <wd-cell-group border>
       <wd-cell title="状态组名" :value="formData.name || '-'" />
+      <wd-cell title="应用部门" :value="formData.deptNames?.length ? formData.deptNames.join('、') : '全公司'" />
     </wd-cell-group>
 
     <!-- 阶段设置（只读） -->

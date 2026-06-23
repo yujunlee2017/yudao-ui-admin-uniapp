@@ -1,5 +1,6 @@
 import type { FormSchema, FormSchemaIssue } from '@wot-ui/ui/components/wd-form/types'
 import { isEmail, isMobile } from '@/utils/validator'
+import { isEmptyValue } from '@/utils/is'
 
 // ==================== 表单校验 ====================
 
@@ -10,7 +11,9 @@ type WotFormRuleValidatorResult = boolean | string | undefined | void
 export interface WotFormRule {
   required?: WotFormRuleRequired // 是否必填，支持函数处理新增/编辑等动态场景
   message?: WotFormRuleMessage // 错误提示
-  type?: 'email' | 'mobile' // 内置类型校验
+  type?: 'email' | 'mobile' | 'number' // 内置类型校验（'number' 可省，运行时即 number 会自动按数值范围）
+  min?: number // 最小值：数字值为数值下界，字符串/数组为长度下界（对齐 Element Plus）
+  max?: number // 最大值：数字值为数值上界，字符串/数组为长度上界
   pattern?: RegExp // 正则校验
   validator?: (value: unknown, model: Record<string, any>) => Promise<WotFormRuleValidatorResult> | WotFormRuleValidatorResult // 自定义校验，返回 false 或错误文案表示校验不通过
 }
@@ -41,6 +44,13 @@ export function createFormSchema(rules: WotFormRulesGetter): FormSchema {
             issues.push(createFormIssue(path, getRuleMessage(rule, model, '请输入正确的手机号码')))
             break
           }
+          if (rule.min != null || rule.max != null) {
+            const rangeError = getRangeError(rule, value)
+            if (rangeError) {
+              issues.push(createFormIssue(path, getRuleMessage(rule, model, rangeError)))
+              break
+            }
+          }
           if (rule.pattern && !rule.pattern.test(String(value))) {
             issues.push(createFormIssue(path, getRuleMessage(rule, model, '格式不正确')))
             break
@@ -63,6 +73,32 @@ export function createFormSchema(rules: WotFormRulesGetter): FormSchema {
   }
 }
 
+/** 校验 min/max：数字值（显式 type:'number' 或运行时即为 number）走数值范围，否则按字符串/数组长度 */
+function getRangeError(rule: WotFormRule, value: unknown): string | undefined {
+  const { min, max } = rule
+  if (rule.type === 'number' || typeof value === 'number') {
+    const num = Number(value)
+    if (Number.isNaN(num)) {
+      return '请输入有效数字'
+    }
+    if (min != null && num < min) {
+      return `不能小于 ${min}`
+    }
+    if (max != null && num > max) {
+      return `不能大于 ${max}`
+    }
+    return undefined
+  }
+  const length = typeof value === 'string' || Array.isArray(value) ? value.length : String(value).length
+  if (min != null && length < min) {
+    return `长度不能少于 ${min}`
+  }
+  if (max != null && length > max) {
+    return `长度不能超过 ${max}`
+  }
+  return undefined
+}
+
 /** 创建 Wot FormSchema 的错误项 */
 export function createFormIssue(path: string, message: string): FormSchemaIssue {
   return { path: path.split('.'), message }
@@ -70,11 +106,6 @@ export function createFormIssue(path: string, message: string): FormSchemaIssue 
 
 function getValueByPath(model: Record<string, any>, path: string) {
   return path.split('.').reduce((value, key) => value?.[key], model)
-}
-
-/** 判断表单值是否为空，用于 Wot FormSchema 校验 */
-export function isEmptyValue(value: unknown) {
-  return value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)
 }
 
 function normalizeFormRules(rules?: WotFormRule | readonly WotFormRule[]): readonly WotFormRule[] {

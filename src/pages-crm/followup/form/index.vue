@@ -55,8 +55,8 @@ import type { Contact } from '@/api/crm/contact'
 import type { FollowUpRecord } from '@/api/crm/followup'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { getBusinessPageByCustomer } from '@/api/crm/business'
-import { getContactPageByCustomer } from '@/api/crm/contact'
+import { getBusinessListByCustomer } from '@/api/crm/business'
+import { getContactListByCustomer } from '@/api/crm/contact'
 import { createFollowUpRecord } from '@/api/crm/followup'
 import { BizTypeEnum } from '@/api/crm/permission'
 import { getIntDictOptions } from '@/hooks/useDict'
@@ -138,12 +138,12 @@ async function loadRelatedOptions() {
   if (!canSelectRelated.value || !bizId.value) {
     return
   }
-  const [contactData, businessData] = await Promise.all([
-    getContactPageByCustomer({ pageNo: 1, pageSize: 100, customerId: bizId.value }),
-    getBusinessPageByCustomer({ pageNo: 1, pageSize: 100, customerId: bizId.value }),
+  const [contactList, businessList] = await Promise.all([
+    getContactListByCustomer(bizId.value),
+    getBusinessListByCustomer(bizId.value),
   ])
-  contactOptions.value = contactData.list
-  businessOptions.value = businessData.list
+  contactOptions.value = contactList
+  businessOptions.value = businessList
 }
 
 /** 格式化已选关联数据 */

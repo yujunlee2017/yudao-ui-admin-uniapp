@@ -14,7 +14,7 @@
           <wd-form-item title="分类名称" title-width="200rpx" prop="name">
             <wd-input v-model="formData.name" placeholder="请输入分类名称" clearable />
           </wd-form-item>
-          <CrmPicker v-model="formData.parentId" source="productCategory" label="父级分类" prop="parentId" placeholder="请选择父级分类" />
+          <CrmPicker v-model="formData.parentId" source="productCategory" label="父级分类" prop="parentId" placeholder="请选择父级分类" :params="{ parentId: 0 }" />
         </wd-cell-group>
       </wd-form>
     </view>

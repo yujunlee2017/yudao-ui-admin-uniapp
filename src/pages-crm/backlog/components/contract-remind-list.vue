@@ -44,11 +44,11 @@ import { formatDate } from '@/utils/date'
 import BacklogFilter from './backlog-filter.vue'
 import { buildDefaultFilters, CONTRACT_EXPIRY_TYPE } from './common'
 
+const list = ref<Record<string, any>[]>([]) // 列表数据
+const pagingRef = ref<any>() // 分页组件引用
 const filters = [
   { prop: 'expiryType', label: '到期状态', options: CONTRACT_EXPIRY_TYPE },
 ]
-const list = ref<Record<string, any>[]>([]) // 列表数据
-const pagingRef = ref<any>() // 分页组件引用
 const filterValues = ref<Record<string, any>>(buildDefaultFilters(filters)) // 筛选值
 
 /** 查询列表 */

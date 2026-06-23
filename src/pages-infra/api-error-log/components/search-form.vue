@@ -51,42 +51,7 @@
           </wd-radio>
         </wd-radio-group>
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          异常时间
-        </view>
-        <view class="yd-search-form-date-range-container">
-          <view class="flex-1" @click="visibleExceptionTime[0] = true">
-            <view class="yd-search-form-date-range-picker">
-              {{ formatDate(formData.exceptionTime?.[0]) || '开始日期' }}
-            </view>
-          </view>
-          -
-          <view class="flex-1" @click="visibleExceptionTime[1] = true">
-            <view class="yd-search-form-date-range-picker">
-              {{ formatDate(formData.exceptionTime?.[1]) || '结束日期' }}
-            </view>
-          </view>
-        </view>
-        <wd-datetime-picker-view v-if="visibleExceptionTime[0]" v-model="tempExceptionTime[0]" type="date" />
-        <view v-if="visibleExceptionTime[0]" class="yd-search-form-date-range-actions">
-          <wd-button size="small" variant="plain" @click="visibleExceptionTime[0] = false">
-            取消
-          </wd-button>
-          <wd-button size="small" type="primary" @click="handleExceptionTime0Confirm">
-            确定
-          </wd-button>
-        </view>
-        <wd-datetime-picker-view v-if="visibleExceptionTime[1]" v-model="tempExceptionTime[1]" type="date" />
-        <view v-if="visibleExceptionTime[1]" class="yd-search-form-date-range-actions">
-          <wd-button size="small" variant="plain" @click="visibleExceptionTime[1] = false">
-            取消
-          </wd-button>
-          <wd-button size="small" type="primary" @click="handleExceptionTime1Confirm">
-            确定
-          </wd-button>
-        </view>
-      </view>
+      <yd-search-date-range v-model="formData.exceptionTime" label="异常时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -135,21 +100,6 @@ const placeholder = computed(() => {
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索日志'
 })
-
-const visibleExceptionTime = ref<[boolean, boolean]>([false, false]) // 异常时间选择器状态
-const tempExceptionTime = ref<[number, number]>([Date.now(), Date.now()]) // 异常时间临时值
-
-/** 确认异常时间开始日期 */
-function handleExceptionTime0Confirm() {
-  formData.exceptionTime = [tempExceptionTime.value[0], formData.exceptionTime?.[1]]
-  visibleExceptionTime.value[0] = false
-}
-
-/** 确认异常时间结束日期 */
-function handleExceptionTime1Confirm() {
-  formData.exceptionTime = [formData.exceptionTime?.[0], tempExceptionTime.value[1]]
-  visibleExceptionTime.value[1] = false
-}
 
 /** 搜索按钮操作 */
 function handleSearch() {

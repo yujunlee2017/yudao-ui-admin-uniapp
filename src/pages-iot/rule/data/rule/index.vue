@@ -70,7 +70,7 @@ function reload() { pagingRef.value?.reload() }
 function handleAdd() { uni.navigateTo({ url: '/pages-iot/rule/data/rule/form/index' }) }
 
 /** 查看详情 */
-function handleDetail(item: DataRule) { uni.navigateTo({ url: '/pages-iot/rule/data/rule/detail/index?id=' + item.id }) }
+function handleDetail(item: DataRule) { uni.navigateTo({ url: `/pages-iot/rule/data/rule/detail/index?id=${item.id}` }) }
 
 /** 初始化 */
 onMounted(() => { uni.$on('iot:data-rule:reload', reload) })

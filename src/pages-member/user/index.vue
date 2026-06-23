@@ -13,9 +13,10 @@
     <!-- 批量操作 -->
     <view v-if="hasCouponSendAccess" class="bg-white px-24rpx py-16rpx">
       <view class="flex items-center justify-between gap-16rpx">
-        <text class="text-26rpx text-[#666]">
-          {{ selectMode ? `已选 ${selectedIds.length} 人` : '批量发送优惠券' }}
+        <text v-if="selectMode" class="text-26rpx text-[#666]">
+          已选 {{ selectedIds.length }} 人
         </text>
+        <view v-else></view>
         <wd-button size="small" type="primary" plain @click="handleToggleSelectMode">
           {{ selectMode ? '退出选择' : '批量发券' }}
         </wd-button>
@@ -47,7 +48,7 @@
               <view class="min-w-0 flex flex-1 items-center gap-16rpx">
                 <view
                   v-if="selectMode"
-                  class="h-44rpx w-44rpx shrink-0 flex items-center justify-center rounded-full border border-[#dcdfe6] text-24rpx"
+                  class="h-44rpx w-44rpx flex shrink-0 items-center justify-center border border-[#dcdfe6] rounded-full text-24rpx"
                   :class="isSelected(item) ? 'border-[#1890ff] bg-[#1890ff] text-white' : 'bg-white text-transparent'"
                   @click.stop="toggleSelect(item)"
                 >
@@ -63,7 +64,7 @@
                 />
                 <view
                   v-else
-                  class="h-88rpx w-88rpx shrink-0 flex items-center justify-center rounded-full bg-[#1890ff] text-34rpx text-white"
+                  class="h-88rpx w-88rpx flex shrink-0 items-center justify-center rounded-full bg-[#1890ff] text-34rpx text-white"
                 >
                   {{ (item.nickname || item.mobile || '会').charAt(0) }}
                 </view>
@@ -278,6 +279,3 @@ onUnload(() => {
   uni.$off('member:user:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

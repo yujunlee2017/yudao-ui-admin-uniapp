@@ -50,42 +50,7 @@
           </wd-radio>
         </wd-radio-group>
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          开始时间
-        </view>
-        <view class="yd-search-form-date-range-container">
-          <view class="flex-1" @click="visibleBeginTime[0] = true">
-            <view class="yd-search-form-date-range-picker">
-              {{ formatDate(formData.beginTime?.[0]) || '开始日期' }}
-            </view>
-          </view>
-          -
-          <view class="flex-1" @click="visibleBeginTime[1] = true">
-            <view class="yd-search-form-date-range-picker">
-              {{ formatDate(formData.beginTime?.[1]) || '结束日期' }}
-            </view>
-          </view>
-        </view>
-        <wd-datetime-picker-view v-if="visibleBeginTime[0]" v-model="tempBeginTime[0]" type="date" />
-        <view v-if="visibleBeginTime[0]" class="yd-search-form-date-range-actions">
-          <wd-button size="small" variant="plain" @click="visibleBeginTime[0] = false">
-            取消
-          </wd-button>
-          <wd-button size="small" type="primary" @click="handleBeginTime0Confirm">
-            确定
-          </wd-button>
-        </view>
-        <wd-datetime-picker-view v-if="visibleBeginTime[1]" v-model="tempBeginTime[1]" type="date" />
-        <view v-if="visibleBeginTime[1]" class="yd-search-form-date-range-actions">
-          <wd-button size="small" variant="plain" @click="visibleBeginTime[1] = false">
-            取消
-          </wd-button>
-          <wd-button size="small" type="primary" @click="handleBeginTime1Confirm">
-            确定
-          </wd-button>
-        </view>
-      </view>
+      <yd-search-date-range v-model="formData.beginTime" label="开始时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -139,21 +104,6 @@ const placeholder = computed(() => {
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索调度日志'
 })
-
-const visibleBeginTime = ref<[boolean, boolean]>([false, false]) // 开始时间选择器状态
-const tempBeginTime = ref<[number, number]>([Date.now(), Date.now()]) // 开始时间临时值
-
-/** 确认开始时间开始日期 */
-function handleBeginTime0Confirm() {
-  formData.beginTime = [tempBeginTime.value[0], formData.beginTime?.[1]]
-  visibleBeginTime.value[0] = false
-}
-
-/** 确认开始时间结束日期 */
-function handleBeginTime1Confirm() {
-  formData.beginTime = [formData.beginTime?.[0], tempBeginTime.value[1]]
-  visibleBeginTime.value[1] = false
-}
 
 /** 搜索按钮操作 */
 function handleSearch() {

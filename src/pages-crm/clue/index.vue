@@ -64,6 +64,7 @@ import type { Clue } from '@/api/crm/clue'
 import { onUnload } from '@dcloudio/uni-app'
 import { computed, onMounted, ref } from 'vue'
 import { getCluePage } from '@/api/crm/clue'
+import { CRM_SCENE_TYPES } from '@/api/crm/permission'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -77,16 +78,12 @@ definePage({
   },
 })
 
-const sceneTabs = [
-  { label: '我负责的', value: 1 },
-  { label: '我参与的', value: 2 },
-  { label: '下属负责的', value: 3 },
-]
+const sceneTabs = CRM_SCENE_TYPES
 
 const { hasAccessByCodes } = useAccess()
 const list = ref<Clue[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const queryParams = ref<Record<string, any>>({ transformStatus: false }) // 查询参数
 const sceneTabIndex = ref(0) // 当前归属场景下标
 const sceneType = computed(() => sceneTabs[sceneTabIndex.value].value)
 
@@ -112,7 +109,7 @@ function handleSceneChange({ index }: { index: number }) {
 }
 
 /** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) {
+function handleQuery(data: Record<string, any> = { transformStatus: false }) {
   queryParams.value = { ...data }
   reload()
 }

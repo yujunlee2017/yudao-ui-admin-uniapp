@@ -1,5 +1,5 @@
 <template>
-  <view class="yd-page-container">
+  <view class="yd-page-container" :class="{ 'yd-page-container-paging': isPagingTab }">
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="线索详情"
@@ -41,25 +41,39 @@
       <wd-cell title="最后跟进时间" :value="formatDateTime(formData.contactLastTime) || '-'" />
       <wd-cell title="最后跟进内容" :value="formData.contactLastContent || '-'" />
       <wd-cell title="备注" :value="formData.remark || '-'" />
+      <wd-cell title="创建人" :value="formData.creatorName || '-'" />
       <wd-cell title="创建时间" :value="formatDateTime(formData.createTime) || '-'" />
-      <wd-cell title="转化状态" :value="formData.transformStatus ? '是' : '否'" />
+      <wd-cell title="更新时间" :value="formatDateTime(formData.updateTime) || '-'" />
+      <wd-cell title="转化状态">
+        <dict-tag v-if="formData.transformStatus != null && formData.transformStatus !== ''" :type="DICT_TYPE.INFRA_BOOLEAN_STRING" :value="formData.transformStatus" />
+        <text v-else>-</text>
+      </wd-cell>
       <wd-cell title="转化客户" :value="formData.customerName || '-'" />
     </wd-cell-group>
 
     <!-- 跟进记录 -->
-    <CrmFollowupRecords v-else-if="activeTab === 'followup' && clueId" ref="followupRef" embedded :biz-id="clueId" :biz-type="bizType" />
-
-    <!-- 团队成员 -->
-    <CrmPermissionTeam v-else-if="activeTab === 'team' && clueId" ref="teamRef" embedded :biz-id="clueId" :biz-type="bizType" @quit-team="handleQuitTeam" @can-quit-change="(v: boolean) => teamCanQuit = v" />
+    <CrmFollowupRecords v-else-if="activeTab === 'followup' && clueId" ref="followupRef" class="min-h-0 flex-1" embedded :biz-id="clueId" :biz-type="bizType" />
 
     <!-- 操作日志 -->
-    <CrmOperateLogs v-else-if="activeTab === 'log' && clueId" :biz-id="clueId" :biz-type="bizType" />
+    <CrmOperateLogs v-else-if="activeTab === 'log' && clueId" class="min-h-0 flex-1" :biz-id="clueId" :biz-type="bizType" />
+
+    <!-- 团队成员（常驻挂载：底部业务操作需读取其权限校验） -->
+    <CrmPermissionTeam
+      v-if="clueId"
+      v-show="activeTab === 'team'"
+      ref="teamRef"
+      embedded
+      :biz-id="clueId"
+      :biz-type="bizType"
+      @quit-team="handleQuitTeam"
+      @can-quit-change="(v: boolean) => teamCanQuit = v"
+    />
 
     <!-- 底部操作（按 tab 区分，只放当前模块的操作） -->
     <view v-if="hasFooter" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <template v-if="activeTab === 'basic'">
-          <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+          <wd-button v-if="canEdit" class="flex-1" type="warning" @click="handleEdit">
             编辑
           </wd-button>
           <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
@@ -76,7 +90,7 @@
           <wd-button v-if="teamCanQuit" class="flex-1" type="danger" variant="plain" @click="teamRef?.quit()">
             退出团队
           </wd-button>
-          <wd-button class="flex-1" type="primary" @click="teamRef?.openAdd()">
+          <wd-button v-if="validateOwnerUser" class="flex-1" type="primary" @click="teamRef?.openAdd()">
             新增成员
           </wd-button>
         </template>
@@ -132,22 +146,27 @@ const actionLoading = ref(false) // 业务操作状态
 const moreActionVisible = ref(false) // 业务操作菜单显示状态
 const teamCanQuit = ref(false) // 是否可退出团队
 const followupRef = ref<{ openAdd: () => void }>() // 跟进记录引用
-const teamRef = ref<{ openAdd: () => void, quit: () => void }>() // 团队成员引用
+const teamRef = ref<{ openAdd: () => void, quit: () => void, validateWrite: boolean, validateOwnerUser: boolean }>() // 团队成员引用（含权限校验）
 const transferFormRef = ref<InstanceType<typeof CrmTransferForm>>() // 转移表单引用
 const clueId = computed(() => Number(props.id))
 const activeTab = computed(() => tabs[tabIndex.value].key)
+const isPagingTab = computed(() => ['followup', 'log'].includes(activeTab.value)) // 跟进/操作日志 tab 用 z-paging 固定高布局
 const canUpdate = computed(() => hasAccessByCodes(['crm:clue:update']))
 const canDelete = computed(() => hasAccessByCodes(['crm:clue:delete']))
+const validateWrite = computed(() => teamRef.value?.validateWrite ?? false) // 读写权限（负责人或读写成员）
+const validateOwnerUser = computed(() => teamRef.value?.validateOwnerUser ?? false) // 负责人权限
+const canEdit = computed(() => canUpdate.value && validateWrite.value) // 可编辑（菜单权限 + 读写权限）
 const moreActions = computed(() => {
   const data = formData.value
   if (!data?.id) {
     return []
   }
-  const actions = [
-    { name: '转移', value: 'transfer' },
-  ]
+  const actions: { name: string, value: string }[] = []
+  if (validateOwnerUser.value) {
+    actions.push({ name: '转移', value: 'transfer' })
+  }
   // 已转化的线索不再展示「转化为客户」
-  if (!data.transformStatus) {
+  if (validateOwnerUser.value && !data.transformStatus) {
     actions.push({ name: '转化为客户', value: 'transform' })
   }
   return actions
@@ -157,11 +176,11 @@ const hasFooter = computed(() => {
     case 'log':
       return false
     case 'basic':
-      return canUpdate.value || canDelete.value || moreActions.value.length > 0
+      return canEdit.value || canDelete.value || moreActions.value.length > 0
     case 'followup':
       return true
     case 'team':
-      return true
+      return teamCanQuit.value || validateOwnerUser.value
     default:
       return false
   }

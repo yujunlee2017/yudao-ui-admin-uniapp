@@ -72,8 +72,8 @@ import type { Device } from '@/api/iot/device/device'
 import type { OtaFirmware } from '@/api/iot/ota/firmware'
 import type { OtaTask } from '@/api/iot/ota/task'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
-import { getSimpleDeviceList } from '@/api/iot/device/device'
+import { onMounted, ref, watch } from 'vue'
+import { getDeviceListByProductId } from '@/api/iot/device/device'
 import { getOtaFirmwarePage } from '@/api/iot/ota/firmware'
 import { createOtaTask } from '@/api/iot/ota/task'
 import { getIntDictOptions } from '@/hooks/useDict'
@@ -113,6 +113,18 @@ const formSchema = createFormSchema({
 })
 const formRef = ref<FormInstance>() // 表单组件引用
 
+// 切换升级固件时，按固件所属产品重新加载可选设备并清空已选
+watch(() => formData.value.firmwareId, (firmwareId) => {
+  formData.value.deviceIds = []
+  loadDevicesByFirmware(firmwareId)
+})
+
+/** 按所选固件的所属产品加载设备 */
+async function loadDevicesByFirmware(firmwareId?: number) {
+  const firmware = firmwareOptions.value.find(item => String(item.id) === String(firmwareId))
+  deviceOptions.value = firmware?.productId ? await getDeviceListByProductId(firmware.productId) : []
+}
+
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-iot/ota/task/index')
@@ -139,6 +151,6 @@ async function handleSubmit() {
 onMounted(async () => {
   const firmwarePage = await getOtaFirmwarePage({ pageNo: 1, pageSize: 100 })
   firmwareOptions.value = firmwarePage.list
-  deviceOptions.value = await getSimpleDeviceList()
+  if (formData.value.firmwareId) loadDevicesByFirmware(formData.value.firmwareId)
 })
 </script>

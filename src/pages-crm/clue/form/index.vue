@@ -14,8 +14,7 @@
           <wd-form-item title="线索名称" title-width="200rpx" prop="name">
             <wd-input v-model="formData.name" placeholder="请输入线索名称" clearable />
           </wd-form-item>
-          <wd-form-item title="客户来源" title-width="200rpx" prop="source" is-link placeholder="请选择客户来源" :value="getDictLabel(DICT_TYPE.CRM_CUSTOMER_SOURCE, formData.source)" @click="pickerVisible.source = true" />
-          <wd-picker v-model:visible="pickerVisible.source" :model-value="formData.source" :columns="getIntDictOptions(DICT_TYPE.CRM_CUSTOMER_SOURCE)" label-key="label" value-key="value" @confirm="({ value }) => formData.source = value[0]" />
+          <yd-form-picker v-model="formData.source" label="客户来源" prop="source" :dict-type="DICT_TYPE.CRM_CUSTOMER_SOURCE" placeholder="请选择客户来源" />
           <wd-form-item title="手机" title-width="200rpx" prop="mobile">
             <wd-input v-model="formData.mobile" placeholder="请输入手机" clearable />
           </wd-form-item>
@@ -32,11 +31,9 @@
           <wd-form-item title="QQ" title-width="200rpx" prop="qq">
             <wd-input v-model="formData.qq" placeholder="请输入 QQ" clearable />
           </wd-form-item>
-          <wd-form-item title="客户行业" title-width="200rpx" prop="industryId" is-link placeholder="请选择客户行业" :value="getDictLabel(DICT_TYPE.CRM_CUSTOMER_INDUSTRY, formData.industryId)" @click="pickerVisible.industryId = true" />
-          <wd-picker v-model:visible="pickerVisible.industryId" :model-value="formData.industryId" :columns="getIntDictOptions(DICT_TYPE.CRM_CUSTOMER_INDUSTRY)" label-key="label" value-key="value" @confirm="({ value }) => formData.industryId = value[0]" />
-          <wd-form-item title="客户级别" title-width="200rpx" prop="level" is-link placeholder="请选择客户级别" :value="getDictLabel(DICT_TYPE.CRM_CUSTOMER_LEVEL, formData.level)" @click="pickerVisible.level = true" />
-          <wd-picker v-model:visible="pickerVisible.level" :model-value="formData.level" :columns="getIntDictOptions(DICT_TYPE.CRM_CUSTOMER_LEVEL)" label-key="label" value-key="value" @confirm="({ value }) => formData.level = value[0]" />
-          <YdTreeSelect v-model="formData.areaId" :data="areaTree" label="地区" prop="areaId" label-width="200rpx" placeholder="请选择地区" />
+          <yd-form-picker v-model="formData.industryId" label="客户行业" prop="industryId" :dict-type="DICT_TYPE.CRM_CUSTOMER_INDUSTRY" placeholder="请选择客户行业" />
+          <yd-form-picker v-model="formData.level" label="客户级别" prop="level" :dict-type="DICT_TYPE.CRM_CUSTOMER_LEVEL" placeholder="请选择客户级别" />
+          <yd-tree-select v-model="formData.areaId" :data="areaTree" label="地区" prop="areaId" label-width="200rpx" placeholder="请选择地区" />
           <wd-form-item title="详细地址" title-width="200rpx" prop="detailAddress">
             <wd-input v-model="formData.detailAddress" placeholder="请输入详细地址" clearable />
           </wd-form-item>
@@ -66,8 +63,6 @@ import { computed, onMounted, ref } from 'vue'
 import { createClue, getClue, updateClue } from '@/api/crm/clue'
 import { getAreaTree } from '@/api/system/area'
 import UserPicker from '@/components/system-select/user-picker.vue'
-import YdTreeSelect from '@/components/yudao-ui/yd-tree-select/yd-tree-select.vue'
-import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { useUserStore } from '@/store/user'
 import { currRoute, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'

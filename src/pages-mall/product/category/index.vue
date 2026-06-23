@@ -1,0 +1,174 @@
+<template>
+  <view class="yd-page-container yd-page-container-paging">
+    <!-- 顶部导航栏 -->
+    <wd-navbar
+      title="商品分类"
+      left-arrow placeholder safe-area-inset-top fixed
+      @click-left="handleBack"
+    />
+
+    <!-- 搜索组件 -->
+    <!--  -->
+    <SearchForm @search="handleQuery" @reset="handleReset" />
+
+    <!-- 分页列表 -->
+    <!-- TODO @AI：是不是应该树形结构？ -->
+    <z-paging
+      ref="pagingRef"
+      v-model="list"
+      :fixed="false"
+      class="min-h-0 flex-1"
+      :default-page-size="10"
+      :refresher-enabled="true"
+      :inside-more="true"
+      :loading-more-default-as-loading="true"
+      empty-view-text="暂无分类数据"
+      @query="queryList"
+    >
+      <view class="p-24rpx">
+        <view
+          v-for="item in list"
+          :key="item.id"
+          class="mb-24rpx overflow-hidden rounded-12rpx bg-white p-24rpx shadow-sm"
+          @click="handleDetail(item)"
+        >
+          <view class="flex items-start gap-20rpx">
+            <image
+              v-if="item.picUrl"
+              :src="item.picUrl"
+              class="h-112rpx w-112rpx shrink-0 rounded-8rpx bg-[#f5f5f5]"
+              mode="aspectFill"
+            />
+            <view class="min-w-0 flex-1">
+              <view class="mb-12rpx flex items-start justify-between gap-16rpx">
+                <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
+                  {{ item.name || '-' }}
+                </view>
+                <dict-tag v-if="item.status != null" :type="DICT_TYPE.COMMON_STATUS" :value="item.status" />
+              </view>
+              <view class="mb-8rpx flex items-center text-26rpx text-[#666]">
+                <text class="mr-8rpx shrink-0 text-[#999]">上级分类：</text>
+                <text class="truncate">{{ getParentName(item.parentId) }}</text>
+              </view>
+              <view class="mb-8rpx flex items-center text-26rpx text-[#666]">
+                <text class="mr-8rpx shrink-0 text-[#999]">排序：</text>
+                <text>{{ item.sort ?? '-' }}</text>
+              </view>
+              <!-- TODO @AI：是不是看看别的样式？目前有哪些解决方案，我们可以讨论下； -->
+              <view class="flex items-center" @click.stop="handleViewSpu(item)">
+                <text class="text-26rpx text-[#1890ff]">查看商品</text>
+                <wd-icon name="arrow-right" size="12px" color="#1890ff" />
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </z-paging>
+
+    <!-- 新增按钮 -->
+    <wd-fab
+      v-if="hasAccessByCodes(['product:category:create'])"
+      position="right-bottom"
+      type="primary"
+      :expandable="false"
+      @click="handleAdd"
+    />
+  </view>
+</template>
+
+<script lang="ts" setup>
+import type { ProductCategory } from '@/api/mall/product/category'
+import { onUnload } from '@dcloudio/uni-app'
+import { onMounted, ref } from 'vue'
+import { getProductCategoryList } from '@/api/mall/product/category'
+import { useAccess } from '@/hooks/useAccess'
+import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
+
+definePage({
+  style: {
+    navigationBarTitleText: '',
+    navigationStyle: 'custom',
+  },
+})
+
+const { hasAccessByCodes } = useAccess()
+const list = ref<ProductCategory[]>([]) // 列表数据
+const pagingRef = ref<any>() // 分页组件引用
+const queryParams = ref<Record<string, any>>({}) // 查询参数
+const categoryNameMap = ref<Record<number, string>>({}) // 分类编号到名称映射，用于回显上级分类名
+
+/** 返回上一页 */
+function handleBack() {
+  navigateBackPlus()
+}
+
+/** 获取上级分类名称 */
+function getParentName(parentId?: number) {
+  if (parentId == null || parentId === 0) {
+    return '顶级分类'
+  }
+  return categoryNameMap.value[parentId] || `分类 #${parentId}`
+}
+
+/** 查询分类列表 */
+async function queryList(pageNo: number, pageSize: number) {
+  try {
+    // 分类接口返回完整列表，前端做名称映射与本地分页
+    const all = await getProductCategoryList({ ...queryParams.value })
+    const map: Record<number, string> = {}
+    all.forEach((item) => {
+      if (item.id != null) {
+        map[item.id] = item.name
+      }
+    })
+    categoryNameMap.value = map
+    const sorted = [...all].sort((a, b) => (a.sort || 0) - (b.sort || 0))
+    const start = (pageNo - 1) * pageSize
+    pagingRef.value?.completeByTotal(sorted.slice(start, start + pageSize), sorted.length)
+  } catch {
+    pagingRef.value?.complete(false)
+  }
+}
+
+/** 搜索按钮操作 */
+function handleQuery(data?: Record<string, any>) {
+  queryParams.value = { ...data }
+  reload()
+}
+
+/** 重置按钮操作 */
+function handleReset() {
+  handleQuery()
+}
+
+/** 重新加载 */
+function reload() {
+  pagingRef.value?.reload()
+}
+
+/** 新增分类 */
+function handleAdd() {
+  uni.navigateTo({ url: '/pages-mall/product/category/form/index' })
+}
+
+/** 查看详情 */
+function handleDetail(item: ProductCategory) {
+  uni.navigateTo({ url: `/pages-mall/product/category/detail/index?id=${item.id}` })
+}
+
+/** 查看该分类下的商品 */
+function handleViewSpu(item: ProductCategory) {
+  uni.navigateTo({ url: `/pages-mall/product/spu/index?categoryId=${item.id}` })
+}
+
+/** 初始化 */
+onMounted(() => {
+  uni.$on('mall:product-category:reload', reload)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('mall:product-category:reload', reload)
+})
+</script>

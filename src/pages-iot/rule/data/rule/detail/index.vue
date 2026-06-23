@@ -58,7 +58,7 @@ async function getDetail() {
 }
 
 /** 编辑数据规则 */
-function handleEdit() { uni.navigateTo({ url: '/pages-iot/rule/data/rule/form/index?id=' + props.id }) }
+function handleEdit() { uni.navigateTo({ url: `/pages-iot/rule/data/rule/form/index?id=${props.id}` }) }
 
 /** 删除数据规则 */
 async function handleDelete() {

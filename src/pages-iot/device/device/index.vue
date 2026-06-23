@@ -4,7 +4,7 @@
     <wd-navbar title="设备管理" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
 
     <!-- 搜索组件 -->
-    <SearchForm @search="handleQuery" @reset="handleReset" />
+    <SearchForm :default-product-id="props.productId" @search="handleQuery" @reset="handleReset" />
 
     <!-- 设备列表 -->
     <z-paging ref="pagingRef" v-model="list" :fixed="false" class="min-h-0 flex-1" :default-page-size="10" :refresher-enabled="true" :inside-more="true" :loading-more-default-as-loading="true" empty-view-text="暂无设备数据" @query="queryList">
@@ -17,7 +17,7 @@
             </view>
             <dict-tag :type="DICT_TYPE.IOT_DEVICE_STATE" :value="item.state" />
           </view>
-          <view class="mb-12rpx flex items-center text-28rpx text-[#666]"><text class="mr-8rpx text-[#999]">所属产品：</text>{{ item.productName || item.productId || '-' }}</view>
+          <view class="mb-12rpx flex items-center text-28rpx text-[#666]"><text class="mr-8rpx text-[#999]">所属产品：</text>{{ productLabel(item) }}</view>
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]"><text class="mr-8rpx text-[#999]">设备类型：</text><dict-tag :type="DICT_TYPE.IOT_PRODUCT_DEVICE_TYPE" :value="item.deviceType" /></view>
           <view class="mb-12rpx text-28rpx text-[#666]"><text class="mr-8rpx text-[#999]">固件版本：</text>{{ item.firmwareVersion || '-' }}</view>
           <view class="text-24rpx text-[#999]">创建时间：{{ formatDateTime(item.createTime) || '-' }}</view>
@@ -35,6 +35,7 @@ import type { Device } from '@/api/iot/device/device'
 import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { getDevicePage } from '@/api/iot/device/device'
+import { getSimpleProductList } from '@/api/iot/product/product'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -43,10 +44,12 @@ import SearchForm from './components/search-form.vue'
 
 definePage({ style: { navigationBarTitleText: '', navigationStyle: 'custom' } })
 
+const props = defineProps<{ productId?: number | any }>()
 const { hasAccessByCodes } = useAccess()
 const list = ref<Device[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const queryParams = ref<Record<string, any>>({ productId: props.productId ? Number(props.productId) : undefined }) // 查询参数
+const productMap = ref<Record<string, string>>({}) // 产品 ID→名称
 
 /** 返回上一页 */
 function handleBack() { navigateBackPlus() }
@@ -73,11 +76,18 @@ function reload() { pagingRef.value?.reload() }
 /** 新增设备 */
 function handleAdd() { uni.navigateTo({ url: '/pages-iot/device/device/form/index' }) }
 
+/** 产品名称（列表接口不返回 productName，本地解析） */
+function productLabel(item: Device) { return item.productId != null ? productMap.value[String(item.productId)] || String(item.productId) : '-' }
+
 /** 查看详情 */
-function handleDetail(item: Device) { uni.navigateTo({ url: '/pages-iot/device/device/detail/index?id=' + item.id }) }
+function handleDetail(item: Device) { uni.navigateTo({ url: `/pages-iot/device/device/detail/index?id=${item.id}` }) }
 
 /** 初始化 */
-onMounted(() => { uni.$on('iot:device:reload', reload) })
+onMounted(async () => {
+  uni.$on('iot:device:reload', reload)
+  const products = await getSimpleProductList()
+  productMap.value = Object.fromEntries(products.map(item => [String(item.id), item.name || '']))
+})
 
 /** 卸载 */
 onUnload(() => { uni.$off('iot:device:reload', reload) })

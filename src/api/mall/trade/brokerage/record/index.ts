@@ -6,14 +6,18 @@ export interface TradeBrokerageRecord {
   id?: number
   userId?: number
   bizType?: number
-  bizId?: number
+  bizId?: string
   title?: string
   price?: number
   totalPrice?: number
+  description?: string // 说明
   status?: number
   frozenDays?: number
   unfreezeTime?: string
   createTime?: string
+  userNickname?: string // 用户昵称
+  userAvatar?: string // 用户头像
+  sourceUserNickname?: string // 来源用户昵称
 }
 
 /** 获取佣金记录分页列表 */

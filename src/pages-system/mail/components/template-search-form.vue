@@ -50,62 +50,8 @@
           </wd-radio>
         </wd-radio-group>
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          邮箱账号
-        </view>
-        <view
-          class="flex items-center justify-between rounded-12rpx bg-[#f7f8fa] p-24rpx"
-          @click="pickerVisible.accountId = true"
-        >
-          <text class="text-28rpx text-[#333]">
-            {{ getWotPickerDisplay(accountOptions, formData.accountId, { placeholder: '请选择邮箱账号' }) }}
-          </text>
-          <wd-icon name="arrow-down" size="32rpx" color="#666" />
-        </view>
-        <wd-picker
-          v-model:visible="pickerVisible.accountId"
-          :model-value="formData.accountId"
-          :columns="accountOptions"
-          @confirm="({ value }) => formData.accountId = value[0]"
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          创建时间
-        </view>
-        <view class="yd-search-form-date-range-container">
-          <view class="flex-1" @click="visibleCreateTime[0] = true">
-            <view class="yd-search-form-date-range-picker">
-              {{ formatDate(formData.createTime?.[0]) || '开始日期' }}
-            </view>
-          </view>
-          -
-          <view class="flex-1" @click="visibleCreateTime[1] = true">
-            <view class="yd-search-form-date-range-picker">
-              {{ formatDate(formData.createTime?.[1]) || '结束日期' }}
-            </view>
-          </view>
-        </view>
-        <wd-datetime-picker-view v-if="visibleCreateTime[0]" v-model="tempCreateTime[0]" type="date" />
-        <view v-if="visibleCreateTime[0]" class="yd-search-form-date-range-actions">
-          <wd-button size="small" variant="plain" @click="visibleCreateTime[0] = false">
-            取消
-          </wd-button>
-          <wd-button size="small" type="primary" @click="handleCreateTime0Confirm">
-            确定
-          </wd-button>
-        </view>
-        <wd-datetime-picker-view v-if="visibleCreateTime[1]" v-model="tempCreateTime[1]" type="date" />
-        <view v-if="visibleCreateTime[1]" class="yd-search-form-date-range-actions">
-          <wd-button size="small" variant="plain" @click="visibleCreateTime[1] = false">
-            取消
-          </wd-button>
-          <wd-button size="small" type="primary" @click="handleCreateTime1Confirm">
-            确定
-          </wd-button>
-        </view>
-      </view>
+      <yd-search-picker v-model="formData.accountId" label="邮箱账号" :columns="accountOptions" placeholder="请选择邮箱账号" />
+      <yd-search-date-range v-model="formData.createTime" label="创建时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -125,7 +71,6 @@ import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
-import { getWotPickerDisplay } from '@/utils/wot'
 
 const emit = defineEmits<{
   search: [data: Record<string, any>]
@@ -140,7 +85,6 @@ const formData = reactive({
   createTime: [undefined, undefined] as [number | undefined, number | undefined],
 }) // 搜索表单数据
 const visible = ref(false) // 搜索弹窗显示状态
-const pickerVisible = ref<Record<string, boolean>>({})
 
 /** 邮箱账号列表 */
 const accountList = ref<{ id?: number, mail: string }[]>([])
@@ -178,21 +122,6 @@ const placeholder = computed(() => {
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索邮件模板'
 })
-
-const visibleCreateTime = ref<[boolean, boolean]>([false, false]) // 创建时间选择器状态
-const tempCreateTime = ref<[number, number]>([Date.now(), Date.now()]) // 创建时间临时值
-
-/** 确认创建时间开始日期 */
-function handleCreateTime0Confirm() {
-  formData.createTime = [tempCreateTime.value[0], formData.createTime?.[1]]
-  visibleCreateTime.value[0] = false
-}
-
-/** 确认创建时间结束日期 */
-function handleCreateTime1Confirm() {
-  formData.createTime = [formData.createTime?.[0], tempCreateTime.value[1]]
-  visibleCreateTime.value[1] = false
-}
 
 /** 搜索按钮操作 */
 function handleSearch() {

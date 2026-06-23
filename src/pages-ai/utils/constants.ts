@@ -45,7 +45,7 @@ export enum AiWriteTypeEnum {
 
 /** AI 写作表单默认选项 */
 export const AiWriteDefaultOptions = {
-  length: 2,
+  length: 1,
   format: 1,
   tone: 1,
   language: 1,

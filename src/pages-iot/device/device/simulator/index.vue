@@ -157,7 +157,7 @@ const showPropertyPanel = computed(() => {
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-iot/device/device/detail/index?id=' + props.deviceId)
+  navigateBackPlus(`/pages-iot/device/device/detail/index?id=${props.deviceId}`)
 }
 
 /** Tab 切换 */

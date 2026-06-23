@@ -67,7 +67,7 @@ async function getDetail() {
 
 /** 编辑产品分类 */
 function handleEdit() {
-  uni.navigateTo({ url: '/pages-iot/product/category/form/index?id=' + props.id })
+  uni.navigateTo({ url: `/pages-iot/product/category/form/index?id=${props.id}` })
 }
 
 /** 删除产品分类 */

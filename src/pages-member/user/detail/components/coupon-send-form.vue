@@ -17,6 +17,7 @@
               {{ item.name || `优惠券 ${item.id}` }}
             </view>
             <wd-button
+              v-if="hasAccessByCodes(['promotion:coupon:send'])"
               size="small"
               type="primary"
               :loading="sendingId === item.id"
@@ -37,7 +38,7 @@
         </view>
         <wd-empty v-if="!loading && list.length === 0" icon="content" tip="暂无可发送优惠券" />
         <view v-if="hasMore" class="pb-24rpx">
-          <wd-button block plain :loading="loading" @click="loadMore">
+          <wd-button plain block :loading="loading" @click="loadMore">
             加载更多
           </wd-button>
         </view>
@@ -52,6 +53,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, ref, watch } from 'vue'
 import { sendPromotionCoupon } from '@/api/mall/promotion/coupon/coupon'
 import { getPromotionCouponTemplatePage } from '@/api/mall/promotion/coupon/coupon-template'
+import { useAccess } from '@/hooks/useAccess'
 
 const props = defineProps<{
   modelValue: boolean
@@ -61,10 +63,11 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
-  success: []
+  'success': []
 }>()
 
 const toast = useToast()
+const { hasAccessByCodes } = useAccess()
 const visible = computed({
   get: () => props.modelValue,
   set: val => emit('update:modelValue', val),

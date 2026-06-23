@@ -11,6 +11,7 @@ export interface OperateLog {
   action?: string
   userId?: number
   userName?: string
+  userType?: number
   createTime?: Date | string
 }
 

@@ -85,7 +85,7 @@ function reload() { pagingRef.value?.reload() }
 function handleAdd() { uni.navigateTo({ url: '/pages-iot/product/product/form/index' }) }
 
 /** 查看详情 */
-function handleDetail(item: Product) { uni.navigateTo({ url: '/pages-iot/product/product/detail/index?id=' + item.id }) }
+function handleDetail(item: Product) { uni.navigateTo({ url: `/pages-iot/product/product/detail/index?id=${item.id}` }) }
 
 /** 初始化 */
 onMounted(() => { uni.$on('iot:product:reload', reload) })

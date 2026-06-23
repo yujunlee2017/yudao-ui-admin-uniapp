@@ -98,7 +98,7 @@ function handleAdd() {
 
 /** 查看详情 */
 function handleDetail(item: ProductCategory) {
-  uni.navigateTo({ url: '/pages-iot/product/category/detail/index?id=' + item.id })
+  uni.navigateTo({ url: `/pages-iot/product/category/detail/index?id=${item.id}` })
 }
 
 /** 初始化 */
