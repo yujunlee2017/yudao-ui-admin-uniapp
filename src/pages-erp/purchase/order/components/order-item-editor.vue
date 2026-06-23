@@ -8,8 +8,15 @@
         </wd-button>
       </view>
 
-      <wd-form-item title="产品" title-width="180rpx" is-link :value="getProductDisplay(item.productId)" placeholder="请选择产品" @click="openProductPicker(index)" />
-      <wd-picker v-model:visible="productPickerVisible[index]" :model-value="item.productId" :columns="productOptions" label-key="name" value-key="id" @confirm="({ value }) => handleProductConfirm(index, value[0])" />
+      <ErpPicker
+        v-model="item.productId"
+        label="产品"
+        label-width="180rpx"
+        source="product"
+        placeholder="请选择产品"
+        :disabled="disabled"
+        @confirm="option => handleProductConfirm(index, option?.id)"
+      />
 
       <wd-cell title="库存" :value="formatCount(item.stockCount)" />
       <wd-cell title="条码" :value="item.productBarCode || '-'" />
@@ -43,7 +50,7 @@ import type { Product } from '@/api/erp/product/product'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref, watch } from 'vue'
 import { getStockCount } from '@/api/erp/stock/stock'
-import { getWotPickerFormValue } from '@/utils/wot'
+import ErpPicker from '@/pages-erp/components/erp-picker.vue'
 import { formatCount, formatMoney, roundPrice, toNumber } from '@/pages-erp/utils'
 
 const props = defineProps<{
@@ -58,17 +65,6 @@ const emit = defineEmits<{
 
 const toast = useToast()
 const items = ref<Record<string, any>[]>([])
-const productPickerVisible = ref<Record<number, boolean>>({})
-
-function getProductDisplay(productId?: number) {
-  return getWotPickerFormValue(props.productOptions, productId, { valueKey: 'id', labelKey: 'name' })
-}
-
-function openProductPicker(index: number) {
-  if (!props.disabled) {
-    productPickerVisible.value[index] = true
-  }
-}
 
 function createDefaultItem() {
   return {
@@ -97,7 +93,7 @@ function handleRemove(index: number) {
   items.value.splice(index, 1)
 }
 
-async function handleProductConfirm(index: number, productId?: number) {
+async function handleProductConfirm(index: number, productId?: number | string) {
   const item = items.value[index]
   if (!item) {
     return

@@ -25,8 +25,7 @@
             label-width="220rpx"
             placeholder="请选择分类"
           />
-          <wd-form-item title="单位" title-width="220rpx" prop="unitId" is-link placeholder="请选择单位" :value="unitDisplayValue" @click="unitPickerVisible = true" />
-          <wd-picker v-model:visible="unitPickerVisible" :model-value="formData.unitId" :columns="unitOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.unitId = value[0]" />
+          <ErpPicker v-model="formData.unitId" label="单位" label-width="220rpx" prop="unitId" source="unit" placeholder="请选择单位" />
           <wd-form-item title="状态" title-width="220rpx" prop="status" center>
             <wd-switch
               v-model="formData.status"
@@ -75,19 +74,21 @@
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { ProductCategory } from '@/api/erp/product/category'
 import type { Product } from '@/api/erp/product/product'
-import type { ProductUnit } from '@/api/erp/product/unit'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { getProductCategorySimpleList } from '@/api/erp/product/category'
 import { createProduct, getProduct, updateProduct } from '@/api/erp/product/product'
-import { getProductUnitSimpleList } from '@/api/erp/product/unit'
 import YdTreeSelect from '@/components/yudao-ui/yd-tree-select/yd-tree-select.vue'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum } from '@/utils/constants'
 import { handleTree } from '@/utils/tree'
-import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
+import { createFormSchema } from '@/utils/wot'
+import ErpPicker from '@/pages-erp/components/erp-picker.vue'
 
 const props = defineProps<{ id?: number | any }>()
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/product/product/form/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -97,7 +98,7 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => props.id ? '编辑产品' : '新增产品')
+const getTitle = computed(() => currentId.value ? '编辑产品' : '新增产品')
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<Product>({
   id: undefined,
@@ -116,9 +117,6 @@ const formData = ref<Product>({
 }) // 表单数据
 const formRef = ref<FormInstance>() // 表单组件引用
 const categoryTree = ref<ProductCategory[]>([]) // 产品分类树
-const unitOptions = ref<ProductUnit[]>([]) // 产品单位选项
-const unitPickerVisible = ref(false) // 单位选择器状态
-const unitDisplayValue = computed(() => getWotPickerFormValue(unitOptions.value, formData.value.unitId, { valueKey: 'id', labelKey: 'name' }))
 const formSchema = createFormSchema({
   name: [{ required: true, message: '产品名称不能为空' }],
   barCode: [{ required: true, message: '产品条码不能为空' }],
@@ -134,22 +132,18 @@ function handleBack() {
 
 /** 加载基础选项 */
 async function loadOptions() {
-  const [categoryList, unitList] = await Promise.all([
-    getProductCategorySimpleList(),
-    getProductUnitSimpleList(),
-  ])
+  const categoryList = await getProductCategorySimpleList()
   categoryTree.value = handleTree(categoryList)
-  unitOptions.value = unitList || []
 }
 
 /** 加载产品详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   formData.value = {
     ...formData.value,
-    ...await getProduct(Number(props.id)),
+    ...await getProduct(Number(currentId.value)),
   }
 }
 
@@ -161,7 +155,7 @@ async function handleSubmit() {
   }
   formLoading.value = true
   try {
-    if (props.id) {
+    if (currentId.value) {
       await updateProduct(formData.value)
       toast.success('修改成功')
     } else {

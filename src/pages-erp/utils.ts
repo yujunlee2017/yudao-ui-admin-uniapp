@@ -77,6 +77,7 @@ export function openErpFile(url?: string) {
 
 /** 补全 ERP 单据详情的关联名称和明细金额 */
 export async function enrichErpDocumentDetail(data: Record<string, any>, moduleKey: string) {
+  const detail = data || {}
   const optionKeys: ErpOptionKey[] = ['customer', 'supplier', 'account', 'user', 'warehouse', 'product']
   const entries = await Promise.all(optionKeys.map(async (key) => {
     try {
@@ -99,21 +100,21 @@ export async function enrichErpDocumentDetail(data: Record<string, any>, moduleK
     }
     return optionsMap.product?.find(item => String(item.id) === String(productId))
   }
-  const productOption = getProductOption(data.productId)
+  const productOption = getProductOption(detail.productId)
   const result = {
-    ...data,
-    customerName: data.customerName || getOptionLabel('customer', data.customerId),
-    supplierName: data.supplierName || getOptionLabel('supplier', data.supplierId),
-    accountName: data.accountName || getOptionLabel('account', data.accountId),
-    creatorName: data.creatorName || getOptionLabel('user', data.creator),
-    saleUserName: data.saleUserName || getOptionLabel('user', data.saleUserId),
-    financeUserName: data.financeUserName || getOptionLabel('user', data.financeUserId),
-    productName: data.productName || getOptionLabel('product', data.productId),
-    categoryName: data.categoryName || productOption?.categoryName,
-    unitName: data.unitName || productOption?.unitName,
-    warehouseName: data.warehouseName || getOptionLabel('warehouse', data.warehouseId),
-    items: Array.isArray(data.items)
-      ? data.items.map(item => ({
+    ...detail,
+    customerName: detail.customerName || getOptionLabel('customer', detail.customerId),
+    supplierName: detail.supplierName || getOptionLabel('supplier', detail.supplierId),
+    accountName: detail.accountName || getOptionLabel('account', detail.accountId),
+    creatorName: detail.creatorName || getOptionLabel('user', detail.creator),
+    saleUserName: detail.saleUserName || getOptionLabel('user', detail.saleUserId),
+    financeUserName: detail.financeUserName || getOptionLabel('user', detail.financeUserId),
+    productName: detail.productName || getOptionLabel('product', detail.productId),
+    categoryName: detail.categoryName || productOption?.categoryName,
+    unitName: detail.unitName || productOption?.unitName,
+    warehouseName: detail.warehouseName || getOptionLabel('warehouse', detail.warehouseId),
+    items: Array.isArray(detail.items)
+      ? detail.items.map(item => ({
           ...item,
           warehouseName: item.warehouseName || getOptionLabel('warehouse', item.warehouseId),
           fromWarehouseName: item.fromWarehouseName || getOptionLabel('warehouse', item.fromWarehouseId),

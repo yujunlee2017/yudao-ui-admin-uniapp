@@ -5,7 +5,6 @@
 
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
-    <ExportAction module-key="sale-return" :params="queryParams" />
 
     <!-- 销售退货列表 -->
     <z-paging ref="pagingRef" v-model="list" :fixed="false" class="min-h-0 flex-1" :default-page-size="10" :refresher-enabled="true" :inside-more="true" :loading-more-default-as-loading="true" empty-view-text="暂无销售退货数据" @query="queryList">
@@ -93,7 +92,6 @@ import ListCardWrapper from '@/pages-erp/components/list-card-wrapper.vue'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import ExportAction from '@/pages-erp/components/export-action.vue'
 import SearchForm from './components/search-form.vue'
 import { formatCount, formatMoney } from '@/pages-erp/utils'
 

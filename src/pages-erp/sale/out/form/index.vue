@@ -16,10 +16,8 @@
             is-link
             @click="openOrderSelector"
           />
-          <wd-form-item title="客户" title-width="220rpx" prop="customerId" is-link :value="customerDisplayValue" placeholder="请选择客户" @click="pickerVisible.customer = true" />
-          <wd-picker v-model:visible="pickerVisible.customer" :model-value="formData.customerId" :columns="customerOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.customerId = value[0]" />
-          <wd-form-item title="销售人员" title-width="220rpx" is-link :value="saleUserDisplayValue" placeholder="请选择销售人员" @click="pickerVisible.saleUser = true" />
-          <wd-picker v-model:visible="pickerVisible.saleUser" :model-value="formData.saleUserId" :columns="userOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.saleUserId = value[0]" />
+          <ErpPicker v-model="formData.customerId" label="客户" label-width="220rpx" prop="customerId" source="customer" placeholder="请选择客户" />
+          <ErpPicker v-model="formData.saleUserId" label="销售人员" label-width="220rpx" source="user" placeholder="请选择销售人员" />
           <wd-form-item title="备注" title-width="220rpx" prop="remark">
             <wd-textarea v-model="formData.remark" placeholder="请输入备注" :maxlength="500" show-word-limit clearable />
           </wd-form-item>
@@ -51,8 +49,7 @@
           <wd-form-item title="其它费用" title-width="220rpx" prop="otherPrice" center>
             <wd-input-number v-model="formData.otherPrice" :min="0" :precision="2" />
           </wd-form-item>
-          <wd-form-item title="结算账户" title-width="220rpx" is-link :value="accountDisplayValue" placeholder="请选择结算账户" @click="pickerVisible.account = true" />
-          <wd-picker v-model:visible="pickerVisible.account" :model-value="formData.accountId" :columns="accountOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.accountId = value[0]" />
+          <ErpPicker v-model="formData.accountId" label="结算账户" label-width="220rpx" source="account" placeholder="请选择结算账户" />
           <wd-cell title="应收金额" :value="formatMoney(formData.totalPrice)" />
         </wd-cell-group>
       </wd-form>
@@ -77,27 +74,27 @@
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { Account } from '@/api/erp/finance/account'
 import type { Product } from '@/api/erp/product/product'
-import type { Customer } from '@/api/erp/sale/customer'
 import type { SaleOrder } from '@/api/erp/sale/order'
 import type { SaleOut } from '@/api/erp/sale/out'
 import type { Warehouse } from '@/api/erp/stock/warehouse'
-import type { User } from '@/api/system/user'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { getAccountSimpleList } from '@/api/erp/finance/account'
 import { getProductSimpleList } from '@/api/erp/product/product'
-import { getCustomerSimpleList } from '@/api/erp/sale/customer'
 import { createSaleOut, getSaleOut, updateSaleOut } from '@/api/erp/sale/out'
 import { getWarehouseSimpleList } from '@/api/erp/stock/warehouse'
-import { getSimpleUserList } from '@/api/system/user'
 import { navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
-import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
+import { createFormSchema } from '@/utils/wot'
+import ErpPicker from '@/pages-erp/components/erp-picker.vue'
 import OutItemEditor from '../components/out-item-editor.vue'
 import SaleOrderOutSelector from '../components/sale-order-out-selector.vue'
 import { formatMoney, roundPrice, toNumber } from '@/pages-erp/utils'
 
 const props = defineProps<{ id?: number | any }>()
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/sale/out/form/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -107,7 +104,7 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => props.id ? '编辑销售出库' : '新增销售出库')
+const getTitle = computed(() => currentId.value ? '编辑销售出库' : '新增销售出库')
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<SaleOut>({
   id: undefined,
@@ -129,15 +126,8 @@ const formRef = ref<FormInstance>() // 表单组件引用
 const itemEditorRef = ref<InstanceType<typeof OutItemEditor>>() // 明细组件引用
 const orderSelectorRef = ref<InstanceType<typeof SaleOrderOutSelector>>() // 可出库订单选择器引用
 const accountOptions = ref<Account[]>([]) // 账户选项
-const customerOptions = ref<Customer[]>([]) // 客户选项
 const productOptions = ref<Product[]>([]) // 产品选项
 const warehouseOptions = ref<Warehouse[]>([]) // 仓库选项
-const userOptions = ref<Array<User & { name: string }>>([]) // 用户选项
-const pickerVisible = reactive({
-  account: false,
-  customer: false,
-  saleUser: false,
-}) // 选择器状态
 const dateVisible = reactive({
   outTime: false,
 }) // 日期选择器状态
@@ -145,9 +135,6 @@ const formSchema = createFormSchema({
   customerId: [{ required: true, message: '客户不能为空' }],
   outTime: [{ required: true, message: '出库时间不能为空' }],
 })
-const customerDisplayValue = computed(() => getWotPickerFormValue(customerOptions.value, formData.value.customerId, { valueKey: 'id', labelKey: 'name' }))
-const saleUserDisplayValue = computed(() => getWotPickerFormValue(userOptions.value, formData.value.saleUserId, { valueKey: 'id', labelKey: 'name' }))
-const accountDisplayValue = computed(() => getWotPickerFormValue(accountOptions.value, formData.value.accountId, { valueKey: 'id', labelKey: 'name' }))
 const preOtherPrice = computed(() => Number(formData.value.totalPrice || 0) - Number(formData.value.otherPrice || 0))
 
 /** 返回上一页 */
@@ -168,18 +155,14 @@ function refreshAmount() {
 
 /** 加载基础选项 */
 async function loadOptions() {
-  const [accounts, customers, products, warehouses, users] = await Promise.all([
+  const [accounts, products, warehouses] = await Promise.all([
     getAccountSimpleList(),
-    getCustomerSimpleList(),
     getProductSimpleList(),
     getWarehouseSimpleList(),
-    getSimpleUserList(),
   ])
   accountOptions.value = accounts || []
-  customerOptions.value = customers || []
   productOptions.value = products || []
   warehouseOptions.value = warehouses || []
-  userOptions.value = (users || []).map(item => ({ ...item, name: item.nickname || item.username }))
   const defaultAccount = accountOptions.value.find(item => item.defaultStatus)
   if (!formData.value.accountId && defaultAccount?.id) {
     formData.value.accountId = defaultAccount.id
@@ -188,12 +171,12 @@ async function loadOptions() {
 
 /** 加载销售出库详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   formData.value = {
     ...formData.value,
-    ...await getSaleOut(Number(props.id)),
+    ...await getSaleOut(Number(currentId.value)),
   }
   refreshAmount()
 }
@@ -237,7 +220,7 @@ async function handleSubmit() {
   refreshAmount()
   formLoading.value = true
   try {
-    if (props.id) {
+    if (currentId.value) {
       await updateSaleOut(formData.value)
       toast.success('修改成功')
     } else {

@@ -58,6 +58,7 @@ import type { StockCheck } from '@/api/erp/stock/check'
 import type { Warehouse } from '@/api/erp/stock/warehouse'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { getProductSimpleList } from '@/api/erp/product/product'
 import { createStockCheck, getStockCheck, updateStockCheck } from '@/api/erp/stock/check'
 import { getWarehouseSimpleList } from '@/api/erp/stock/warehouse'
@@ -68,6 +69,8 @@ import CheckItemEditor from '../components/check-item-editor.vue'
 import { formatCount, formatMoney, roundPrice, toNumber } from '@/pages-erp/utils'
 
 const props = defineProps<{ id?: number | any }>()
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/stock/check/form/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -77,7 +80,7 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => props.id ? '编辑库存盘点' : '新增库存盘点')
+const getTitle = computed(() => currentId.value ? '编辑库存盘点' : '新增库存盘点')
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<StockCheck>({
   id: undefined,
@@ -126,12 +129,12 @@ async function loadOptions() {
 
 /** 加载库存盘点详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   formData.value = {
     ...formData.value,
-    ...await getStockCheck(Number(props.id)),
+    ...await getStockCheck(Number(currentId.value)),
   }
   refreshAmount()
 }
@@ -145,7 +148,7 @@ async function handleSubmit() {
   refreshAmount()
   formLoading.value = true
   try {
-    if (props.id) {
+    if (currentId.value) {
       await updateStockCheck(formData.value)
       toast.success('修改成功')
     } else {

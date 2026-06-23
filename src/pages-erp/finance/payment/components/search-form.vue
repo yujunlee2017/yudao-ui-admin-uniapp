@@ -41,29 +41,49 @@
         <view class="yd-search-form-label">
           供应商
         </view>
-        <wd-form-item :value="getPickerDisplay(supplierOptions, formData.supplierId)" placeholder="请选择供应商" is-link @click="pickerVisible.supplier = true" />
-        <wd-picker v-model:visible="pickerVisible.supplier" :model-value="formData.supplierId" :columns="supplierOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.supplierId = value[0]" />
+        <ErpPicker
+          v-model="formData.supplierId"
+          source="supplier"
+          form-item
+          placeholder="请选择供应商"
+          @confirm="option => selectedNames.supplier = option?.name || ''"
+        />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           创建人
         </view>
-        <wd-form-item :value="getPickerDisplay(userOptions, formData.creator)" placeholder="请选择创建人" is-link @click="pickerVisible.creator = true" />
-        <wd-picker v-model:visible="pickerVisible.creator" :model-value="formData.creator" :columns="userOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.creator = value[0]" />
+        <ErpPicker
+          v-model="formData.creator"
+          source="user"
+          form-item
+          placeholder="请选择创建人"
+          @confirm="option => selectedNames.creator = option?.name || ''"
+        />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           财务人员
         </view>
-        <wd-form-item :value="getPickerDisplay(userOptions, formData.financeUserId)" placeholder="请选择财务人员" is-link @click="pickerVisible.financeUser = true" />
-        <wd-picker v-model:visible="pickerVisible.financeUser" :model-value="formData.financeUserId" :columns="userOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.financeUserId = value[0]" />
+        <ErpPicker
+          v-model="formData.financeUserId"
+          source="user"
+          form-item
+          placeholder="请选择财务人员"
+          @confirm="option => selectedNames.financeUser = option?.name || ''"
+        />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           付款账户
         </view>
-        <wd-form-item :value="getPickerDisplay(accountOptions, formData.accountId)" placeholder="请选择付款账户" is-link @click="pickerVisible.account = true" />
-        <wd-picker v-model:visible="pickerVisible.account" :model-value="formData.accountId" :columns="accountOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.accountId = value[0]" />
+        <ErpPicker
+          v-model="formData.accountId"
+          source="account"
+          form-item
+          placeholder="请选择付款账户"
+          @confirm="option => selectedNames.account = option?.name || ''"
+        />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
@@ -103,18 +123,12 @@
 </template>
 
 <script lang="ts" setup>
-import type { Account } from '@/api/erp/finance/account'
-import type { Supplier } from '@/api/erp/purchase/supplier'
-import type { User } from '@/api/system/user'
-import { computed, onMounted, reactive, ref } from 'vue'
-import { getAccountSimpleList } from '@/api/erp/finance/account'
-import { getSupplierSimpleList } from '@/api/erp/purchase/supplier'
-import { getSimpleUserList } from '@/api/system/user'
+import { computed, reactive, ref } from 'vue'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
+import ErpPicker from '@/pages-erp/components/erp-picker.vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
-import { getWotPickerFormValue } from '@/utils/wot'
 
 const emit = defineEmits<{
   search: [data: Record<string, any>]
@@ -122,18 +136,15 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false)
-const accountOptions = ref<Account[]>([])
-const supplierOptions = ref<Supplier[]>([])
-const userOptions = ref<Array<User & { name: string }>>([])
-const pickerVisible = reactive({
-  account: false,
-  creator: false,
-  financeUser: false,
-  supplier: false,
-})
 const dateVisible = reactive({
   start: false,
   end: false,
+})
+const selectedNames = reactive({
+  account: '',
+  creator: '',
+  financeUser: '',
+  supplier: '',
 })
 const formData = reactive({
   no: undefined as string | undefined,
@@ -156,20 +167,16 @@ const placeholder = computed(() => {
     conditions.push(`付款时间:${formatDate(formData.paymentTime[0])}~${formatDate(formData.paymentTime[1])}`)
   }
   if (formData.supplierId) {
-    conditions.push(`供应商:${getPickerDisplay(supplierOptions.value, formData.supplierId)}`)
+    conditions.push(`供应商:${selectedNames.supplier || formData.supplierId}`)
   }
   if (formData.accountId) {
-    conditions.push(`账户:${getPickerDisplay(accountOptions.value, formData.accountId)}`)
+    conditions.push(`账户:${selectedNames.account || formData.accountId}`)
   }
   if (formData.status !== -1) {
     conditions.push(`状态:${getDictLabel(DICT_TYPE.ERP_AUDIT_STATUS, formData.status)}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索付款单'
 })
-
-function getPickerDisplay(options: Record<string, any>[], value?: number) {
-  return getWotPickerFormValue(options, value, { valueKey: 'id', labelKey: 'name' })
-}
 
 function handleSearch() {
   visible.value = false
@@ -194,21 +201,14 @@ function handleReset() {
   formData.creator = undefined
   formData.financeUserId = undefined
   formData.accountId = undefined
+  selectedNames.supplier = ''
+  selectedNames.creator = ''
+  selectedNames.financeUser = ''
+  selectedNames.account = ''
   formData.status = -1
   formData.remark = undefined
   formData.bizNo = undefined
   visible.value = false
   emit('reset')
 }
-
-onMounted(async () => {
-  const [accounts, suppliers, users] = await Promise.all([
-    getAccountSimpleList(),
-    getSupplierSimpleList(),
-    getSimpleUserList(),
-  ])
-  accountOptions.value = accounts || []
-  supplierOptions.value = suppliers || []
-  userOptions.value = (users || []).map(item => ({ ...item, name: item.nickname || item.username }))
-})
 </script>

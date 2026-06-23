@@ -43,7 +43,8 @@ import type { Account } from '@/api/erp/finance/account'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { deleteAccount, getAccount, updateAccountDefaultStatus } from '@/api/erp/finance/account'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
@@ -51,6 +52,8 @@ import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/finance/account/detail/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -77,12 +80,12 @@ function handleBack() {
 
 /** 加载结算账户详情 */
 async function getDetail() {
-  if (!props.id || deleting.value) {
+  if (!currentId.value || deleting.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getAccount(Number(props.id))
+    formData.value = await getAccount(Number(currentId.value))
   } finally {
     toast.close()
   }
@@ -90,12 +93,12 @@ async function getDetail() {
 
 /** 编辑结算账户 */
 function handleEdit() {
-  uni.navigateTo({ url: `/pages-erp/finance/account/form/index?id=${props.id}` })
+  uni.navigateTo({ url: `/pages-erp/finance/account/form/index?id=${currentId.value}` })
 }
 
 /** 删除结算账户 */
 async function handleDelete() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   try {
@@ -105,7 +108,7 @@ async function handleDelete() {
   }
   deleting.value = true
   try {
-    await deleteAccount(Number(props.id))
+    await deleteAccount(Number(currentId.value))
     toast.success('删除成功')
     uni.$emit('erp:account:reload')
     setTimeout(() => handleBack(), 500)
@@ -116,7 +119,7 @@ async function handleDelete() {
 
 /** 设为默认 */
 async function handleSetDefault() {
-  if (!props.id || !formData.value) {
+  if (!currentId.value || !formData.value) {
     return
   }
   try {
@@ -126,7 +129,7 @@ async function handleSetDefault() {
   }
   defaultLoading.value = true
   try {
-    await updateAccountDefaultStatus(Number(props.id), true)
+    await updateAccountDefaultStatus(Number(currentId.value), true)
     toast.success('设置成功')
     uni.$emit('erp:account:reload')
     await getDetail()
@@ -139,6 +142,11 @@ async function handleSetDefault() {
 onMounted(() => {
   getDetail()
   uni.$on('erp:account:reload', getDetail)
+})
+
+watch(currentId, () => {
+  formData.value = undefined
+  void getDetail()
 })
 
 /** 卸载 */

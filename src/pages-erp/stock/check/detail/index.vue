@@ -19,77 +19,24 @@
       </wd-cell-group>
 
       <!-- 盘点明细 -->
-      <view v-if="items.length > 0" class="mt-24rpx">
-        <view class="px-24rpx py-16rpx text-28rpx text-[#666]">
-          盘点产品清单
-        </view>
-        <view class="px-24rpx">
-          <view v-for="(item, index) in items" :key="index" class="mb-20rpx rounded-12rpx bg-white p-24rpx shadow-sm">
-            <view class="mb-12rpx text-28rpx text-[#333] font-semibold">
-              明细 {{ index + 1 }}
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">仓库：</text>
-              <text class="min-w-0 flex-1">{{ item.warehouseName || '-' }}</text>
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">产品：</text>
-              <text class="min-w-0 flex-1">{{ item.productName || '-' }}</text>
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">条码：</text>
-              <text class="min-w-0 flex-1">{{ item.productBarCode || '-' }}</text>
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">单位：</text>
-              <text class="min-w-0 flex-1">{{ item.productUnitName || '-' }}</text>
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">账面库存：</text>
-              <text class="min-w-0 flex-1">{{ formatCount(item.stockCount) }}</text>
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">实际库存：</text>
-              <text class="min-w-0 flex-1">{{ formatCount(item.actualCount) }}</text>
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">盈亏数量：</text>
-              <text class="min-w-0 flex-1">{{ formatCount(item.count) }}</text>
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">产品单价：</text>
-              <text class="min-w-0 flex-1">{{ formatMoney(item.productPrice) }}</text>
-            </view>
-            <view class="mb-10rpx flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">合计金额：</text>
-              <text class="min-w-0 flex-1">{{ formatMoney(item.totalPrice) }}</text>
-            </view>
-            <view v-if="item.remark" class="flex text-26rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">备注：</text>
-              <text class="min-w-0 flex-1">{{ item.remark }}</text>
-            </view>
-          </view>
-        </view>
-      </view>
+      <ErpDetailItems title="盘点产品清单" :items="items" :fields="itemFields" />
 
       <!-- 底部安全区域 -->
       <view class="h-160rpx" />
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="hasFooter" class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
-          编辑
-        </wd-button>
-        <wd-button v-if="canUpdateStatus" class="flex-1" type="primary" :loading="statusLoading" @click="handleUpdateStatus(nextStatus)">
-          {{ nextStatus === 20 ? '审批' : '反审批' }}
-        </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
-          删除
-        </wd-button>
-      </view>
-    </view>
+    <ErpAuditActions
+      :can-update="canUpdate"
+      :can-update-status="canUpdateStatus"
+      :can-delete="canDelete"
+      :deleting="deleting"
+      :status-loading="statusLoading"
+      :next-status="nextStatus"
+      @edit="handleEdit"
+      @update-status="handleUpdateStatus"
+      @delete="handleDelete"
+    />
   </view>
 </template>
 
@@ -98,15 +45,21 @@ import type { StockCheck } from '@/api/erp/stock/check'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { deleteStockCheck, getStockCheck, updateStockCheckStatus } from '@/api/erp/stock/check'
 import { useAccess } from '@/hooks/useAccess'
+import ErpDetailItems from '@/pages-erp/components/erp-detail-items.vue'
+import ErpAuditActions from '@/pages-erp/components/erp-audit-actions.vue'
+import type { ErpDetailItemField } from '@/pages-erp/components/types'
 import { enrichErpDocumentDetail, formatCount, formatMoney, openErpFile } from '@/pages-erp/utils'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/stock/check/detail/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -122,11 +75,22 @@ const formData = ref<StockCheck>() // 详情数据
 const deleting = ref(false) // 删除状态
 const statusLoading = ref(false) // 审批状态
 const items = computed(() => Array.isArray(formData.value?.items) ? formData.value.items : [])
+const itemFields: ErpDetailItemField[] = [
+  { prop: 'warehouseName', label: '仓库' },
+  { prop: 'productName', label: '产品' },
+  { prop: 'productBarCode', label: '条码' },
+  { prop: 'productUnitName', label: '单位' },
+  { prop: 'stockCount', label: '账面库存', type: 'count' },
+  { prop: 'actualCount', label: '实际库存', type: 'count' },
+  { prop: 'count', label: '盈亏数量', type: 'count' },
+  { prop: 'productPrice', label: '产品单价', type: 'money' },
+  { prop: 'totalPrice', label: '合计金额', type: 'money' },
+  { prop: 'remark', label: '备注', hiddenWhenEmpty: true },
+] // 盘点明细字段
 const canUpdate = computed(() => formData.value?.status !== 20 && hasAccessByCodes(['erp:stock-check:update']))
 const canDelete = computed(() => hasAccessByCodes(['erp:stock-check:delete']))
 const canUpdateStatus = computed(() => hasAccessByCodes(['erp:stock-check:update-status']) && (formData.value?.status === 10 || formData.value?.status === 20))
 const nextStatus = computed(() => formData.value?.status === 10 ? 20 : 10)
-const hasFooter = computed(() => canUpdate.value || canDelete.value || canUpdateStatus.value)
 
 /** 返回上一页 */
 function handleBack() {
@@ -135,12 +99,12 @@ function handleBack() {
 
 /** 加载库存盘点详情 */
 async function getDetail() {
-  if (!props.id || deleting.value) {
+  if (!currentId.value || deleting.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await enrichErpDocumentDetail(await getStockCheck(Number(props.id)), 'stock-check') as StockCheck
+    formData.value = await enrichErpDocumentDetail(await getStockCheck(Number(currentId.value)), 'stock-check') as StockCheck
   } finally {
     toast.close()
   }
@@ -148,7 +112,7 @@ async function getDetail() {
 
 /** 编辑库存盘点 */
 function handleEdit() {
-  uni.navigateTo({ url: `/pages-erp/stock/check/form/index?id=${props.id}` })
+  uni.navigateTo({ url: `/pages-erp/stock/check/form/index?id=${currentId.value}` })
 }
 
 /** 打开附件 */
@@ -160,7 +124,7 @@ function handleOpenFile() {
 
 /** 删除库存盘点 */
 async function handleDelete() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   try {
@@ -170,7 +134,7 @@ async function handleDelete() {
   }
   deleting.value = true
   try {
-    await deleteStockCheck([Number(props.id)])
+    await deleteStockCheck([Number(currentId.value)])
     toast.success('删除成功')
     uni.$emit('erp:stock-check:reload')
     setTimeout(() => handleBack(), 500)
@@ -181,7 +145,7 @@ async function handleDelete() {
 
 /** 审批或反审批 */
 async function handleUpdateStatus(status: number) {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   const actionName = status === 20 ? '审批' : '反审批'
@@ -192,7 +156,7 @@ async function handleUpdateStatus(status: number) {
   }
   statusLoading.value = true
   try {
-    await updateStockCheckStatus(Number(props.id), status)
+    await updateStockCheckStatus(Number(currentId.value), status)
     toast.success(`${actionName}成功`)
     uni.$emit('erp:stock-check:reload')
     await getDetail()
@@ -205,6 +169,11 @@ async function handleUpdateStatus(status: number) {
 onMounted(() => {
   getDetail()
   uni.$on('erp:stock-check:reload', getDetail)
+})
+
+watch(currentId, () => {
+  formData.value = undefined
+  void getDetail()
 })
 
 /** 卸载 */

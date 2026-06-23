@@ -28,7 +28,8 @@
 <script lang="ts" setup>
 import type { StockRecord } from '@/api/erp/stock/record'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { getStockRecord } from '@/api/erp/stock/record'
 import { enrichErpDocumentDetail, formatCount } from '@/pages-erp/utils'
 import { navigateBackPlus } from '@/utils'
@@ -36,6 +37,8 @@ import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/stock/record/detail/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -54,12 +57,12 @@ function handleBack() {
 
 /** 加载库存明细详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await enrichErpDocumentDetail(await getStockRecord(Number(props.id)), 'stock-record') as StockRecord
+    formData.value = await enrichErpDocumentDetail(await getStockRecord(Number(currentId.value)), 'stock-record') as StockRecord
   } finally {
     toast.close()
   }
@@ -68,5 +71,9 @@ async function getDetail() {
 /** 初始化 */
 onMounted(() => {
   getDetail()
+})
+watch(currentId, () => {
+  formData.value = undefined
+  void getDetail()
 })
 </script>

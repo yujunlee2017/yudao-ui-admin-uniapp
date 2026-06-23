@@ -55,15 +55,19 @@
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { ProductCategory } from '@/api/erp/product/category'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { createProductCategory, getProductCategory, getProductCategoryList, updateProductCategory } from '@/api/erp/product/category'
 import YdTreeSelect from '@/components/yudao-ui/yd-tree-select/yd-tree-select.vue'
-import { currRoute, navigateBackPlus } from '@/utils'
+import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum } from '@/utils/constants'
 import { handleTree } from '@/utils/tree'
 import { createFormSchema } from '@/utils/wot'
 
-const props = defineProps<{ id?: number | any }>()
+const props = defineProps<{ id?: number | string, parentId?: number | string }>()
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/product/category/form/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
+const currentParentId = computed(() => getRouteQueryNumber('parentId'))
 
 definePage({
   style: {
@@ -73,16 +77,19 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => props.id ? '编辑产品分类' : '新增产品分类')
+const getTitle = computed(() => currentId.value ? '编辑产品分类' : '新增产品分类')
 const formLoading = ref(false) // 表单提交状态
-const formData = ref<ProductCategory>({
-  id: undefined,
-  parentId: 0,
-  name: '',
-  code: '',
-  sort: 0,
-  status: CommonStatusEnum.ENABLE,
-}) // 表单数据
+function createDefaultFormData(): ProductCategory {
+  return {
+    id: undefined,
+    parentId: 0,
+    name: '',
+    code: '',
+    sort: 0,
+    status: CommonStatusEnum.ENABLE,
+  }
+}
+const formData = ref<ProductCategory>(createDefaultFormData()) // 表单数据
 const formRef = ref<FormInstance>() // 表单组件引用
 const categoryTree = ref<ProductCategory[]>([]) // 产品分类树
 const formSchema = createFormSchema({
@@ -92,6 +99,11 @@ const formSchema = createFormSchema({
   sort: [{ required: true, message: '排序不能为空' }],
   status: [{ required: true, message: '状态不能为空' }],
 })
+
+/** 重置表单数据 */
+function resetFormData() {
+  formData.value = createDefaultFormData()
+}
 
 /** 返回上一页 */
 function handleBack() {
@@ -112,24 +124,30 @@ async function loadCategoryTree() {
 
 /** 应用页面预填参数 */
 function applyQueryDefaults() {
-  if (props.id) {
+  if (currentId.value) {
     return
   }
-  const query = currRoute().query
-  if (query.parentId !== undefined && query.parentId !== '') {
-    formData.value.parentId = Number(query.parentId)
+  if (currentParentId.value !== undefined) {
+    formData.value.parentId = currentParentId.value
   }
 }
 
 /** 加载产品分类详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   formData.value = {
     ...formData.value,
-    ...await getProductCategory(Number(props.id)),
+    ...await getProductCategory(Number(currentId.value)),
   }
+}
+
+/** 加载当前页面数据 */
+async function loadPageData() {
+  resetFormData()
+  applyQueryDefaults()
+  await getDetail()
 }
 
 /** 提交表单 */
@@ -140,7 +158,7 @@ async function handleSubmit() {
   }
   formLoading.value = true
   try {
-    if (props.id) {
+    if (currentId.value) {
       await updateProductCategory(formData.value)
       toast.success('修改成功')
     } else {
@@ -157,7 +175,10 @@ async function handleSubmit() {
 /** 初始化 */
 onMounted(async () => {
   await loadCategoryTree()
-  applyQueryDefaults()
-  await getDetail()
+  await loadPageData()
+})
+
+watch([currentId, currentParentId], () => {
+  void loadPageData()
 })
 </script>

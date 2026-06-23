@@ -10,10 +10,8 @@
           <wd-cell title="收款单号" :value="formData.no || '保存时自动生成'" />
           <wd-form-item title="收款时间" title-width="220rpx" prop="receiptTime" is-link :value="formatDate(formData.receiptTime) || ''" placeholder="请选择收款时间" @click="dateVisible.receiptTime = true" />
           <wd-datetime-picker v-model="formData.receiptTime" v-model:visible="dateVisible.receiptTime" title="请选择收款时间" type="date" />
-          <wd-form-item title="客户" title-width="220rpx" prop="customerId" is-link :value="customerDisplayValue" placeholder="请选择客户" @click="pickerVisible.customer = true" />
-          <wd-picker v-model:visible="pickerVisible.customer" :model-value="formData.customerId" :columns="customerOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.customerId = value[0]" />
-          <wd-form-item title="财务人员" title-width="220rpx" is-link :value="financeUserDisplayValue" placeholder="请选择财务人员" @click="pickerVisible.financeUser = true" />
-          <wd-picker v-model:visible="pickerVisible.financeUser" :model-value="formData.financeUserId" :columns="userOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.financeUserId = value[0]" />
+          <ErpPicker v-model="formData.customerId" label="客户" label-width="220rpx" prop="customerId" source="customer" placeholder="请选择客户" />
+          <ErpPicker v-model="formData.financeUserId" label="财务人员" label-width="220rpx" source="user" placeholder="请选择财务人员" />
           <wd-form-item title="备注" title-width="220rpx" prop="remark">
             <wd-textarea v-model="formData.remark" placeholder="请输入备注" :maxlength="500" show-word-limit clearable />
           </wd-form-item>
@@ -35,8 +33,7 @@
           收款信息
         </view>
         <wd-cell-group border>
-          <wd-form-item title="收款账户" title-width="220rpx" is-link :value="accountDisplayValue" placeholder="请选择收款账户" @click="pickerVisible.account = true" />
-          <wd-picker v-model:visible="pickerVisible.account" :model-value="formData.accountId" :columns="accountOptions" label-key="name" value-key="id" @confirm="({ value }) => formData.accountId = value[0]" />
+          <ErpPicker v-model="formData.accountId" label="收款账户" label-width="220rpx" source="account" placeholder="请选择收款账户" />
           <wd-cell title="合计收款" :value="formatMoney(formData.totalPrice)" />
           <wd-form-item title="优惠金额" title-width="220rpx" prop="discountPrice" center>
             <wd-input-number v-model="formData.discountPrice" :min="0" :precision="2" />
@@ -61,21 +58,21 @@
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { Account } from '@/api/erp/finance/account'
 import type { FinanceReceipt } from '@/api/erp/finance/receipt'
-import type { Customer } from '@/api/erp/sale/customer'
-import type { User } from '@/api/system/user'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { getAccountSimpleList } from '@/api/erp/finance/account'
 import { createFinanceReceipt, getFinanceReceipt, updateFinanceReceipt } from '@/api/erp/finance/receipt'
-import { getCustomerSimpleList } from '@/api/erp/sale/customer'
-import { getSimpleUserList } from '@/api/system/user'
 import { navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
-import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
+import { createFormSchema } from '@/utils/wot'
+import ErpPicker from '@/pages-erp/components/erp-picker.vue'
 import ReceiptItemEditor from '../components/receipt-item-editor.vue'
 import { formatMoney, roundPrice, toNumber } from '@/pages-erp/utils'
 
 const props = defineProps<{ id?: number | any }>()
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/finance/receipt/form/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -85,7 +82,7 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => props.id ? '编辑收款单' : '新增收款单')
+const getTitle = computed(() => currentId.value ? '编辑收款单' : '新增收款单')
 const formLoading = ref(false)
 const formData = ref<FinanceReceipt>({
   id: undefined,
@@ -104,13 +101,6 @@ const formData = ref<FinanceReceipt>({
 const formRef = ref<FormInstance>()
 const itemEditorRef = ref<InstanceType<typeof ReceiptItemEditor>>()
 const accountOptions = ref<Account[]>([])
-const customerOptions = ref<Customer[]>([])
-const userOptions = ref<Array<User & { name: string }>>([])
-const pickerVisible = reactive({
-  account: false,
-  customer: false,
-  financeUser: false,
-})
 const dateVisible = reactive({
   receiptTime: false,
 })
@@ -118,9 +108,6 @@ const formSchema = createFormSchema({
   customerId: [{ required: true, message: '客户不能为空' }],
   receiptTime: [{ required: true, message: '收款时间不能为空' }],
 })
-const customerDisplayValue = computed(() => getWotPickerFormValue(customerOptions.value, formData.value.customerId, { valueKey: 'id', labelKey: 'name' }))
-const accountDisplayValue = computed(() => getWotPickerFormValue(accountOptions.value, formData.value.accountId, { valueKey: 'id', labelKey: 'name' }))
-const financeUserDisplayValue = computed(() => getWotPickerFormValue(userOptions.value, formData.value.financeUserId, { valueKey: 'id', labelKey: 'name' }))
 
 /** 返回上一页 */
 function handleBack() {
@@ -135,14 +122,8 @@ function refreshAmount() {
 }
 
 async function loadOptions() {
-  const [accounts, customers, users] = await Promise.all([
-    getAccountSimpleList(),
-    getCustomerSimpleList(),
-    getSimpleUserList(),
-  ])
+  const accounts = await getAccountSimpleList()
   accountOptions.value = accounts || []
-  customerOptions.value = customers || []
-  userOptions.value = (users || []).map(item => ({ ...item, name: item.nickname || item.username }))
   const defaultAccount = accountOptions.value.find(item => item.defaultStatus)
   if (!formData.value.accountId && defaultAccount?.id) {
     formData.value.accountId = defaultAccount.id
@@ -151,12 +132,12 @@ async function loadOptions() {
 
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   formData.value = {
     ...formData.value,
-    ...await getFinanceReceipt(Number(props.id)),
+    ...await getFinanceReceipt(Number(currentId.value)),
   }
   refreshAmount()
 }
@@ -170,7 +151,7 @@ async function handleSubmit() {
   refreshAmount()
   formLoading.value = true
   try {
-    if (props.id) {
+    if (currentId.value) {
       await updateFinanceReceipt(formData.value)
       toast.success('修改成功')
     } else {

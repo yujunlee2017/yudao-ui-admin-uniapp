@@ -12,21 +12,14 @@
         </wd-button>
       </view>
 
-      <wd-form-item
-        title="产品"
-        title-width="180rpx"
-        is-link
-        :value="getProductDisplay(item.productId)"
+      <ErpPicker
+        v-model="item.productId"
+        label="产品"
+        label-width="180rpx"
+        source="product"
         placeholder="请选择产品"
-        @click="openProductPicker(index)"
-      />
-      <wd-picker
-        v-model:visible="productPickerVisible[index]"
-        :model-value="item.productId"
-        :columns="productOptions"
-        label-key="name"
-        value-key="id"
-        @confirm="({ value }) => handleProductConfirm(index, value[0])"
+        :disabled="disabled"
+        @confirm="option => handleProductConfirm(index, option?.id)"
       />
 
       <wd-cell title="库存" :value="formatCount(item.stockCount)" />
@@ -61,7 +54,7 @@ import type { Product } from '@/api/erp/product/product'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref, watch } from 'vue'
 import { getStockCount } from '@/api/erp/stock/stock'
-import { getWotPickerFormValue } from '@/utils/wot'
+import ErpPicker from '@/pages-erp/components/erp-picker.vue'
 import { formatCount, formatMoney, roundPrice, toNumber } from '@/pages-erp/utils'
 
 const props = defineProps<{
@@ -76,20 +69,6 @@ const emit = defineEmits<{
 
 const toast = useToast()
 const items = ref<Record<string, any>[]>([]) // 明细数据
-const productPickerVisible = ref<Record<number, boolean>>({}) // 产品选择器状态
-
-/** 获取产品展示值 */
-function getProductDisplay(productId?: number) {
-  return getWotPickerFormValue(props.productOptions, productId, { valueKey: 'id', labelKey: 'name' })
-}
-
-/** 打开产品选择器 */
-function openProductPicker(index: number) {
-  if (props.disabled) {
-    return
-  }
-  productPickerVisible.value[index] = true
-}
 
 /** 创建默认明细 */
 function createDefaultItem() {
@@ -120,7 +99,7 @@ function handleRemove(index: number) {
 }
 
 /** 选择产品 */
-async function handleProductConfirm(index: number, productId?: number) {
+async function handleProductConfirm(index: number, productId?: number | string) {
   const item = items.value[index]
   if (!item) {
     return

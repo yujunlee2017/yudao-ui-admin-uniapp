@@ -8,14 +8,35 @@
         </wd-button>
       </view>
 
-      <wd-form-item title="调出仓库" title-width="180rpx" is-link :value="getWarehouseDisplay(item.fromWarehouseId)" placeholder="请选择调出仓库" @click="openFromWarehousePicker(index)" />
-      <wd-picker v-model:visible="fromWarehousePickerVisible[index]" :model-value="item.fromWarehouseId" :columns="warehouseOptions" label-key="name" value-key="id" @confirm="({ value }) => handleFromWarehouseConfirm(index, value[0])" />
+      <ErpPicker
+        v-model="item.fromWarehouseId"
+        label="调出仓库"
+        label-width="180rpx"
+        source="warehouse"
+        placeholder="请选择调出仓库"
+        :disabled="disabled"
+        @confirm="option => handleFromWarehouseConfirm(index, option?.id)"
+      />
 
-      <wd-form-item title="调入仓库" title-width="180rpx" is-link :value="getWarehouseDisplay(item.toWarehouseId)" placeholder="请选择调入仓库" @click="openToWarehousePicker(index)" />
-      <wd-picker v-model:visible="toWarehousePickerVisible[index]" :model-value="item.toWarehouseId" :columns="warehouseOptions" label-key="name" value-key="id" @confirm="({ value }) => handleToWarehouseConfirm(index, value[0])" />
+      <ErpPicker
+        v-model="item.toWarehouseId"
+        label="调入仓库"
+        label-width="180rpx"
+        source="warehouse"
+        placeholder="请选择调入仓库"
+        :disabled="disabled"
+        @confirm="option => handleToWarehouseConfirm(index, option?.id)"
+      />
 
-      <wd-form-item title="产品" title-width="180rpx" is-link :value="getProductDisplay(item.productId)" placeholder="请选择产品" @click="openProductPicker(index)" />
-      <wd-picker v-model:visible="productPickerVisible[index]" :model-value="item.productId" :columns="productOptions" label-key="name" value-key="id" @confirm="({ value }) => handleProductConfirm(index, value[0])" />
+      <ErpPicker
+        v-model="item.productId"
+        label="产品"
+        label-width="180rpx"
+        source="product"
+        placeholder="请选择产品"
+        :disabled="disabled"
+        @confirm="option => handleProductConfirm(index, option?.id)"
+      />
 
       <wd-cell title="调出库存" :value="formatCount(item.stockCount)" />
       <wd-cell title="条码" :value="item.productBarCode || '-'" />
@@ -44,7 +65,7 @@ import type { Product } from '@/api/erp/product/product'
 import type { Warehouse } from '@/api/erp/stock/warehouse'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref, watch } from 'vue'
-import { getWotPickerFormValue } from '@/utils/wot'
+import ErpPicker from '@/pages-erp/components/erp-picker.vue'
 import { formatCount, formatMoney, refreshSingleItemAmount, setItemStockCount } from '@/pages-erp/utils'
 
 const props = defineProps<{
@@ -60,40 +81,6 @@ const emit = defineEmits<{
 
 const toast = useToast()
 const items = ref<Record<string, any>[]>([]) // 明细数据
-const productPickerVisible = ref<Record<number, boolean>>({}) // 产品选择器状态
-const fromWarehousePickerVisible = ref<Record<number, boolean>>({}) // 调出仓库选择器状态
-const toWarehousePickerVisible = ref<Record<number, boolean>>({}) // 调入仓库选择器状态
-
-/** 获取产品展示值 */
-function getProductDisplay(productId?: number) {
-  return getWotPickerFormValue(props.productOptions, productId, { valueKey: 'id', labelKey: 'name' })
-}
-
-/** 获取仓库展示值 */
-function getWarehouseDisplay(warehouseId?: number) {
-  return getWotPickerFormValue(props.warehouseOptions, warehouseId, { valueKey: 'id', labelKey: 'name' })
-}
-
-/** 打开产品选择器 */
-function openProductPicker(index: number) {
-  if (!props.disabled) {
-    productPickerVisible.value[index] = true
-  }
-}
-
-/** 打开调出仓库选择器 */
-function openFromWarehousePicker(index: number) {
-  if (!props.disabled) {
-    fromWarehousePickerVisible.value[index] = true
-  }
-}
-
-/** 打开调入仓库选择器 */
-function openToWarehousePicker(index: number) {
-  if (!props.disabled) {
-    toWarehousePickerVisible.value[index] = true
-  }
-}
 
 /** 创建默认明细 */
 function createDefaultItem() {
@@ -138,7 +125,7 @@ function handleRemove(index: number) {
 }
 
 /** 选择调出仓库 */
-async function handleFromWarehouseConfirm(index: number, warehouseId?: number) {
+async function handleFromWarehouseConfirm(index: number, warehouseId?: number | string) {
   const item = items.value[index]
   if (!item) {
     return
@@ -148,7 +135,7 @@ async function handleFromWarehouseConfirm(index: number, warehouseId?: number) {
 }
 
 /** 选择调入仓库 */
-function handleToWarehouseConfirm(index: number, warehouseId?: number) {
+function handleToWarehouseConfirm(index: number, warehouseId?: number | string) {
   const item = items.value[index]
   if (item) {
     item.toWarehouseId = warehouseId
@@ -156,7 +143,7 @@ function handleToWarehouseConfirm(index: number, warehouseId?: number) {
 }
 
 /** 选择产品 */
-async function handleProductConfirm(index: number, productId?: number) {
+async function handleProductConfirm(index: number, productId?: number | string) {
   const item = items.value[index]
   if (!item) {
     return

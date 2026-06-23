@@ -45,7 +45,8 @@ import type { Warehouse } from '@/api/erp/stock/warehouse'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { deleteWarehouse, getWarehouse, updateWarehouseDefaultStatus } from '@/api/erp/stock/warehouse'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
@@ -53,6 +54,8 @@ import { DICT_TYPE } from '@/utils/constants'
 import { formatMoney } from '@/pages-erp/utils'
 
 const props = defineProps<{ id?: number | any }>()
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/stock/warehouse/detail/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -79,12 +82,12 @@ function handleBack() {
 
 /** 加载仓库详情 */
 async function getDetail() {
-  if (!props.id || deleting.value) {
+  if (!currentId.value || deleting.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getWarehouse(Number(props.id))
+    formData.value = await getWarehouse(Number(currentId.value))
   } finally {
     toast.close()
   }
@@ -92,12 +95,12 @@ async function getDetail() {
 
 /** 编辑仓库 */
 function handleEdit() {
-  uni.navigateTo({ url: `/pages-erp/stock/warehouse/form/index?id=${props.id}` })
+  uni.navigateTo({ url: `/pages-erp/stock/warehouse/form/index?id=${currentId.value}` })
 }
 
 /** 删除仓库 */
 async function handleDelete() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   try {
@@ -107,7 +110,7 @@ async function handleDelete() {
   }
   deleting.value = true
   try {
-    await deleteWarehouse(Number(props.id))
+    await deleteWarehouse(Number(currentId.value))
     toast.success('删除成功')
     uni.$emit('erp:warehouse:reload')
     setTimeout(() => handleBack(), 500)
@@ -118,7 +121,7 @@ async function handleDelete() {
 
 /** 设为默认 */
 async function handleSetDefault() {
-  if (!props.id || !formData.value) {
+  if (!currentId.value || !formData.value) {
     return
   }
   try {
@@ -128,7 +131,7 @@ async function handleSetDefault() {
   }
   defaultLoading.value = true
   try {
-    await updateWarehouseDefaultStatus(Number(props.id), true)
+    await updateWarehouseDefaultStatus(Number(currentId.value), true)
     toast.success('设置成功')
     uni.$emit('erp:warehouse:reload')
     await getDetail()
@@ -141,6 +144,11 @@ async function handleSetDefault() {
 onMounted(() => {
   getDetail()
   uni.$on('erp:warehouse:reload', getDetail)
+})
+
+watch(currentId, () => {
+  formData.value = undefined
+  void getDetail()
 })
 
 /** 卸载 */

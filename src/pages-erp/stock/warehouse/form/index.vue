@@ -52,12 +52,15 @@ import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { Warehouse } from '@/api/erp/stock/warehouse'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { createWarehouse, getWarehouse, updateWarehouse } from '@/api/erp/stock/warehouse'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{ id?: number | any }>()
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/stock/warehouse/form/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -67,7 +70,7 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => props.id ? '编辑仓库' : '新增仓库')
+const getTitle = computed(() => currentId.value ? '编辑仓库' : '新增仓库')
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<Warehouse>({
   id: undefined,
@@ -94,12 +97,12 @@ function handleBack() {
 
 /** 加载仓库详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   formData.value = {
     ...formData.value,
-    ...await getWarehouse(Number(props.id)),
+    ...await getWarehouse(Number(currentId.value)),
   }
 }
 
@@ -111,7 +114,7 @@ async function handleSubmit() {
   }
   formLoading.value = true
   try {
-    if (props.id) {
+    if (currentId.value) {
       await updateWarehouse(formData.value)
       toast.success('修改成功')
     } else {

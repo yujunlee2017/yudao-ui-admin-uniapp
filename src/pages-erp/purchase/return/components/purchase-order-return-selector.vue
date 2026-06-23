@@ -20,8 +20,7 @@
 
       <view class="bg-white px-24rpx pb-20rpx">
         <wd-input v-model="queryParams.no" placeholder="请输入订单单号" clearable />
-        <wd-form-item class="mt-12rpx" :value="productDisplayValue" placeholder="请选择产品" is-link @click="productPickerVisible = true" />
-        <wd-picker v-model:visible="productPickerVisible" :model-value="queryParams.productId" :columns="productOptions" label-key="name" value-key="id" @confirm="({ value }) => queryParams.productId = value[0]" />
+        <ErpPicker v-model="queryParams.productId" class="mt-12rpx" source="product" form-item placeholder="请选择产品" />
         <view class="mt-12rpx flex gap-12rpx">
           <view class="flex-1" @click="dateVisible.start = true">
             <view class="yd-search-form-date-range-picker">
@@ -96,15 +95,13 @@
 </template>
 
 <script lang="ts" setup>
-import type { Product } from '@/api/erp/product/product'
 import type { PurchaseOrder } from '@/api/erp/purchase/order'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, reactive, ref } from 'vue'
-import { getProductSimpleList } from '@/api/erp/product/product'
+import { reactive, ref } from 'vue'
 import { getPurchaseOrder, getPurchaseOrderPage } from '@/api/erp/purchase/order'
-import { formatDate, formatDateRange, formatDateTime } from '@/utils/date'
-import { getWotPickerFormValue } from '@/utils/wot'
+import ErpPicker from '@/pages-erp/components/erp-picker.vue'
 import { formatCount } from '@/pages-erp/utils'
+import { formatDate, formatDateRange, formatDateTime } from '@/utils/date'
 
 const emit = defineEmits<{
   success: [order: PurchaseOrder]
@@ -118,8 +115,6 @@ const pageNo = ref(1)
 const pageSize = 10
 const total = ref(0)
 const list = ref<PurchaseOrder[]>([])
-const productOptions = ref<Product[]>([])
-const productPickerVisible = ref(false)
 const currentOrder = ref<PurchaseOrder>()
 const dateVisible = reactive({ start: false, end: false })
 const queryParams = reactive({
@@ -127,7 +122,6 @@ const queryParams = reactive({
   productId: undefined as number | undefined,
   orderTime: ['', ''] as [any, any],
 })
-const productDisplayValue = computed(() => getWotPickerFormValue(productOptions.value, queryParams.productId, { valueKey: 'id', labelKey: 'name' }))
 
 /** 查询可退货订单列表 */
 async function queryList(reset = false) {
@@ -164,9 +158,6 @@ async function queryList(reset = false) {
 
 async function open() {
   visible.value = true
-  if (productOptions.value.length === 0) {
-    productOptions.value = await getProductSimpleList()
-  }
   await queryList(true)
 }
 
