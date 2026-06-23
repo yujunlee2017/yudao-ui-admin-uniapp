@@ -13,36 +13,49 @@ export interface ProRouteProductBomVO {
   unitName?: string // 单位名称
   quantity?: number // 用料比例
   remark?: string // 备注
-  createTime?: Date // 创建时间
+  createTime?: number | string // 创建时间
+}
+
+export interface ProRouteProductBomCreateReqVO {
+  routeId: number // 工艺路线编号
+  processId: number // 工序编号
+  productId: number // 产品物料编号
+  itemId: number // BOM 物料编号
+  quantity?: number // 用料比例
+  remark?: string // 备注
+}
+
+export interface ProRouteProductBomUpdateReqVO extends ProRouteProductBomCreateReqVO {
+  id: number // 编号
 }
 
 /** 查询工艺路线产品 BOM 列表 */
 export function getRouteProductBomList(params: {
-    routeId: number
-    processId?: number
-    productId?: number
-  }) {
+  routeId: number
+  processId?: number
+  productId?: number
+}) {
   return http.get<ProRouteProductBomVO[]>(`/mes/pro/route-product-bom/list`, params)
 }
 
 /** 查询工艺路线产品 BOM 详情 */
 export function getRouteProductBom(id: number) {
-  return http.get<ProRouteProductBomVO>(`/mes/pro/route-product-bom/get?id=` + id)
+  return http.get<ProRouteProductBomVO>(`/mes/pro/route-product-bom/get?id=${id}`)
 }
 
 /** 新增工艺路线产品 BOM */
-export function createRouteProductBom(data: ProRouteProductBomVO) {
-  return http.post<number>(`/mes/pro/route-product-bom/create`, data)
+export function createRouteProductBom(data: ProRouteProductBomCreateReqVO) {
+  return http.post<number>('/mes/pro/route-product-bom/create', data)
 }
 
 /** 修改工艺路线产品 BOM */
-export function updateRouteProductBom(data: ProRouteProductBomVO) {
-  return http.put<boolean>(`/mes/pro/route-product-bom/update`, data)
+export function updateRouteProductBom(data: ProRouteProductBomUpdateReqVO) {
+  return http.put<boolean>('/mes/pro/route-product-bom/update', data)
 }
 
 /** 删除工艺路线产品 BOM */
 export function deleteRouteProductBom(id: number) {
-  return http.delete<boolean>(`/mes/pro/route-product-bom/delete?id=` + id)
+  return http.delete<boolean>(`/mes/pro/route-product-bom/delete?id=${id}`)
 }
 
 export const ProRouteProductBomApi = {

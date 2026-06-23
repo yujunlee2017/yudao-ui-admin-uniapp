@@ -2,46 +2,77 @@
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
     <wd-navbar
-      title="库存盘点详情"
+      title="盘点任务详情"
       left-arrow placeholder safe-area-inset-top fixed
       @click-left="handleBack"
     />
 
     <!-- 详情内容 -->
-    <view>
+    <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
       <wd-cell-group border>
-        <wd-cell title="任务编码" :value="formatFieldValue(formData?.code) || '-'" />
-        <wd-cell title="任务名称" :value="formatFieldValue(formData?.name) || '-'" />
-        <wd-cell title="盘点类型" :value="formatFieldValue(formData?.type) || '-'" />
-        <wd-cell title="盘点方案" :value="formatFieldValue(formData?.planName) || '-'" />
-        <wd-cell title="盘点日期" :value="formatFieldValue(formData?.takingDate) || '-'" />
-        <wd-cell title="盘点人" :value="formatFieldValue(formData?.userNickname) || '-'" />
-        <wd-cell title="单据状态" :value="formatFieldValue(formData?.status) || '-'" />
-        <wd-cell title="id" :value="formatFieldValue(formData?.id) || '-'" />
-        <wd-cell title="userId" :value="formatFieldValue(formData?.userId) || '-'" />
-        <wd-cell title="planId" :value="formatFieldValue(formData?.planId) || '-'" />
-        <wd-cell title="planCode" :value="formatFieldValue(formData?.planCode) || '-'" />
-        <wd-cell title="blindFlag" :value="formatFieldValue(formData?.blindFlag) || '-'" />
-        <wd-cell title="frozen" :value="formatFieldValue(formData?.frozen) || '-'" />
-        <wd-cell title="startTime" :value="formatFieldValue(formData?.startTime) || '-'" />
-        <wd-cell title="endTime" :value="formatFieldValue(formData?.endTime) || '-'" />
-        <wd-cell title="remark" :value="formatFieldValue(formData?.remark) || '-'" />
-        <wd-cell title="createTime" :value="formatFieldValue(formData?.createTime) || '-'" />
+        <wd-cell title="任务编码" :value="formData?.code || '-'" />
+        <wd-cell title="任务名称" :value="formData?.name || '-'" />
+        <wd-cell title="盘点类型">
+          <dict-tag v-if="formData?.type != null" :type="DICT_TYPE.MES_WM_STOCK_TAKING_TYPE" :value="formData.type" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="盘点方案" :value="getPlanText()" />
+        <wd-cell title="盘点日期" :value="formatDate(formData?.takingDate) || '-'" />
+        <wd-cell title="盘点人" :value="formData?.userNickname || '-'" />
+        <wd-cell title="单据状态">
+          <dict-tag v-if="formData?.status != null" :type="DICT_TYPE.MES_WM_STOCK_TAKING_TASK_STATUS" :value="formData.status" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="是否盲盘">
+          <dict-tag v-if="formData" :type="DICT_TYPE.INFRA_BOOLEAN_STRING" :value="String(Boolean(formData.blindFlag))" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="冻结库存">
+          <dict-tag v-if="formData" :type="DICT_TYPE.INFRA_BOOLEAN_STRING" :value="String(Boolean(formData.frozen))" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="动态开始时间" :value="formatDateTime(formData?.startTime) || '-'" />
+        <wd-cell title="动态结束时间" :value="formatDateTime(formData?.endTime) || '-'" />
+        <wd-cell title="备注" :value="formData?.remark || '-'" />
+        <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime) || '-'" />
       </wd-cell-group>
-    </view>
+
+      <view v-if="currentId" class="px-24rpx">
+        <TaskLinePreview :task-id="currentId" />
+        <TaskResultPreview :task-id="currentId" />
+      </view>
+    </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view class="yd-detail-footer">
+    <view v-if="hasFooterActions" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <wd-button
-          v-if="hasAccessByCodes(['mes:wm-stock-taking-task:update'])"
+          v-if="canUpdate"
           class="flex-1" type="warning" @click="handleEdit"
         >
           编辑
         </wd-button>
         <wd-button
-          v-if="hasAccessByCodes(['mes:wm-stock-taking-task:delete'])"
-          class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
+          v-if="canSubmit"
+          class="flex-1" type="success" @click="handleSubmitTask"
+        >
+          提交
+        </wd-button>
+        <wd-button
+          v-if="canExecute"
+          class="flex-1" type="primary" @click="handleExecute"
+        >
+          执行盘点
+        </wd-button>
+        <wd-button
+          v-if="canCancel"
+          class="flex-1" type="warning" @click="handleCancelTask"
+        >
+          取消
+        </wd-button>
+        <wd-button
+          v-if="canDelete"
+          class="flex-1" type="error" :loading="deleting" @click="handleDelete"
         >
           删除
         </wd-button>
@@ -52,16 +83,26 @@
 
 <script lang="ts" setup>
 import type { StockTakingTaskVO } from '@/api/mes/wm/stocktaking/task'
+import { onShow } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
-import { getStockTaking, deleteStockTaking } from '@/api/mes/wm/stocktaking/task'
+import { computed, onMounted, ref, watch } from 'vue'
+import {
+  cancelStockTaking,
+  deleteStockTaking,
+  getStockTaking,
+  submitStockTaking,
+} from '@/api/mes/wm/stocktaking/task'
 import { useAccess } from '@/hooks/useAccess'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
-import { formatDateTime } from '@/utils/date'
+import { DICT_TYPE, MesWmStockTakingTaskStatusEnum } from '@/utils/constants'
+import { formatDate, formatDateTime } from '@/utils/date'
+import TaskLinePreview from '../components/task-line-preview.vue'
+import TaskResultPreview from '../components/task-result-preview.vue'
 
 const props = defineProps<{
-  id?: number | string | any
+  id?: number | string
 }>()
 
 definePage({
@@ -74,36 +115,47 @@ definePage({
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const formData = ref<any>() // 详情数据
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/wm/stocktaking/task/detail/index')
+const currentId = computed(() => getRouteQueryNumber('id')) // 当前详情编号
+const formData = ref<StockTakingTaskVO>() // 详情数据
 const deleting = ref(false) // 删除状态
+const canUpdatePermission = computed(() => hasAccessByCodes(['mes:wm-stock-taking-task:update']))
+const canDeletePermission = computed(() => hasAccessByCodes(['mes:wm-stock-taking-task:delete']))
+const isPrepare = computed(() => formData.value?.status === MesWmStockTakingTaskStatusEnum.PREPARE)
+const isApproving = computed(() => formData.value?.status === MesWmStockTakingTaskStatusEnum.APPROVING)
+const canUpdate = computed(() => canUpdatePermission.value && isPrepare.value)
+const canSubmit = computed(() => canUpdatePermission.value && isPrepare.value)
+const canExecute = computed(() => canUpdatePermission.value && isApproving.value)
+const canCancel = computed(() => canUpdatePermission.value && isApproving.value)
+const canDelete = computed(() => canDeletePermission.value && isPrepare.value)
+const hasFooterActions = computed(() => {
+  return canUpdate.value || canSubmit.value || canExecute.value || canCancel.value || canDelete.value
+})
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/wm/stocktaking/task/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
+/** 盘点方案展示 */
+function getPlanText() {
+  if (!formData.value) {
+    return '-'
   }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
+  if (formData.value.planCode && formData.value.planName) {
+    return `${formData.value.planCode} / ${formData.value.planName}`
   }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
+  return formData.value.planName || formData.value.planCode || '-'
 }
 
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getStockTaking(props.id)
+    formData.value = await getStockTaking(currentId.value)
   } finally {
     toast.close()
   }
@@ -111,27 +163,74 @@ async function getDetail() {
 
 /** 编辑 */
 function handleEdit() {
-  uni.navigateTo({
-    url: `/pages-mes/wm/stocktaking/task/form/index?id=${props.id}`,
-  })
+  if (!currentId.value) {
+    return
+  }
+  uni.navigateTo({ url: `/pages-mes/wm/stocktaking/task/form/index?id=${currentId.value}` })
 }
 
-/** 删除 */
-async function handleDelete() {
-  if (!props.id) {
+/** 执行盘点 */
+function handleExecute() {
+  if (!currentId.value) {
+    return
+  }
+  uni.navigateTo({ url: `/pages-mes/wm/stocktaking/task/form/index?id=${currentId.value}&mode=execute` })
+}
+
+/** 提交任务 */
+async function handleSubmitTask() {
+  if (!currentId.value || !formData.value) {
     return
   }
   try {
     await dialog.confirm({
       title: '提示',
-      msg: '确定要删除该库存盘点吗？',
+      msg: `确认提交盘点任务「${formData.value.name}」吗？提交后将不能修改。`,
+    })
+  } catch {
+    return
+  }
+  await submitStockTaking(currentId.value)
+  toast.success('提交成功')
+  uni.$emit('mes:wm:stocktaking:task:reload')
+  getDetail()
+}
+
+/** 取消任务 */
+async function handleCancelTask() {
+  if (!currentId.value || !formData.value) {
+    return
+  }
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: `确认取消盘点任务「${formData.value.name}」吗？取消后不可恢复。`,
+    })
+  } catch {
+    return
+  }
+  await cancelStockTaking(currentId.value)
+  toast.success('取消成功')
+  uni.$emit('mes:wm:stocktaking:task:reload')
+  getDetail()
+}
+
+/** 删除 */
+async function handleDelete() {
+  if (!currentId.value || !formData.value) {
+    return
+  }
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: `确定要删除盘点任务「${formData.value.name}」吗？`,
     })
   } catch {
     return
   }
   deleting.value = true
   try {
-    await deleteStockTaking(props.id)
+    await deleteStockTaking(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:wm:stocktaking:task:reload')
     setTimeout(() => {
@@ -146,7 +245,13 @@ async function handleDelete() {
 onMounted(() => {
   getDetail()
 })
-</script>
 
-<style lang="scss" scoped>
-</style>
+/** 页面显示时刷新 */
+onShow(() => {
+  getDetail()
+})
+
+watch(currentId, () => {
+  getDetail()
+})
+</script>

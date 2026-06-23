@@ -1,67 +1,72 @@
 <template>
   <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
-    <wd-navbar
-      title="MES 生产工单管理"
-      left-arrow placeholder safe-area-inset-top fixed
-      @click-left="handleBack"
-    />
+    <wd-navbar title="生产工单" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
 
     <!-- 搜索组件 -->
-    <SearchForm @search="handleQuery" @reset="handleReset" />
+    <SearchForm ref="searchFormRef" @search="handleQuery" @reset="handleReset" />
 
-    <!-- 列表 -->
-    <z-paging
-      ref="pagingRef"
-      v-model="list"
-      :fixed="false"
-      class="min-h-0 flex-1"
-      :default-page-size="10"
-      :refresher-enabled="true"
-      :inside-more="true"
-      :loading-more-default-as-loading="true"
-      empty-view-text="暂无生产工单数据"
-      @query="queryList"
-    >
+    <!-- 导出入口 -->
+    <view v-if="hasAccessByCodes(['mes:pro-work-order:export'])" class="bg-white px-24rpx py-16rpx">
+      <view class="h-64rpx flex items-center justify-center border-2rpx border-[#1677ff] rounded-8rpx text-26rpx text-[#1677ff]" :class="exportLoading ? 'opacity-60' : ''" @click="handleExport">
+        {{ exportLoading ? '导出中...' : '导出当前筛选数据' }}
+      </view>
+    </view>
+
+    <!-- 分页列表 -->
+    <z-paging ref="pagingRef" v-model="list" :fixed="false" class="min-h-0 flex-1" :default-page-size="10" :refresher-enabled="true" :inside-more="true" :loading-more-default-as-loading="true" empty-view-text="暂无生产工单数据" @query="queryList">
       <view class="p-24rpx">
-        <view
-          v-for="item in list"
-          :key="item.id"
-          class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm"
-          @click="handleDetail(item)"
-        >
-          <view class="p-24rpx">
-            <view class="mb-16rpx flex items-center justify-between gap-16rpx">
-              <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-                {{ formatFieldValue(item.code) || '-' }}
+        <view v-for="item in flatList" :key="item.id" class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
+          <view class="p-24rpx" @click="handleDetail(item)">
+            <view class="mb-16rpx flex items-start justify-between gap-16rpx">
+              <view class="min-w-0 flex-1">
+                <view class="truncate text-32rpx text-[#333] font-semibold">
+                  <text v-if="item.level > 0" class="mr-8rpx text-24rpx text-[#999]">子工单</text>{{ item.name || '-' }}
+                </view>
+                <view class="mt-4rpx text-24rpx text-[#999]">
+                  {{ item.code || '-' }}
+                </view>
               </view>
-              <view class="shrink-0 text-24rpx text-[#999]">
-                #{{ item.id }}
+              <dict-tag v-if="item.status != null" :type="DICT_TYPE.MES_PRO_WORK_ORDER_STATUS" :value="item.status" />
+            </view>
+            <view class="mb-14rpx flex flex-wrap gap-10rpx">
+              <dict-tag v-if="item.type != null" :type="DICT_TYPE.MES_PRO_WORK_ORDER_TYPE" :value="item.type" />
+              <dict-tag v-if="item.orderSourceType != null" :type="DICT_TYPE.MES_PRO_WORK_ORDER_SOURCE_TYPE" :value="item.orderSourceType" />
+              <wd-tag v-if="item.parentCode" type="default" plain>
+                父工单 {{ item.parentCode }}
+              </wd-tag>
+            </view>
+            <view class="text-26rpx text-[#666] space-y-8rpx">
+              <view>产品：{{ item.productCode || '-' }} / {{ item.productName || '-' }}</view>
+              <view>规格：{{ item.productSpecification || '-' }} / 单位：{{ item.unitMeasureName || '-' }}</view>
+              <view>数量：{{ item.quantity ?? '-' }}，已生产：{{ item.quantityProduced ?? 0 }}，已排产：{{ item.quantityScheduled ?? 0 }}</view>
+              <view v-if="item.clientName">
+                客户：{{ item.clientCode || '-' }} / {{ item.clientName }}
               </view>
+              <view v-if="item.vendorName">
+                供应商：{{ item.vendorCode || '-' }} / {{ item.vendorName }}
+              </view>
+              <view>需求日期：{{ formatDate(item.requestDate) || '-' }}</view>
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">工单名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.name) || '-' }}</text>
+          </view>
+          <view class="flex border-t border-[#f3f4f6] text-26rpx">
+            <view v-if="canUpdate && item.status === MesProWorkOrderStatusEnum.PREPARE" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
+              编辑
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">工单类型：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.type) || '-' }}</text>
+            <view v-if="canDelete && item.status === MesProWorkOrderStatusEnum.PREPARE" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
+              删除
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">工单来源：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.orderSourceType) || '-' }}</text>
+            <view v-if="canCreate && item.status === MesProWorkOrderStatusEnum.CONFIRMED && item.type === MesProWorkOrderTypeEnum.SELF" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleAddChild(item)">
+              子工单
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">来源单据编号：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.orderSourceCode) || '-' }}</text>
+            <view v-if="canUpdate && item.status === MesProWorkOrderStatusEnum.CONFIRMED" class="flex-1 py-18rpx text-center text-[#52c41a]" @click="handleFinish(item)">
+              完成
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">产品编码：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.productCode) || '-' }}</text>
+            <view v-if="canUpdate && item.status === MesProWorkOrderStatusEnum.CONFIRMED" class="flex-1 py-18rpx text-center text-[#e6a23c]" @click="handleCancel(item)">
+              取消
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">产品名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.productName) || '-' }}</text>
+            <view class="flex-1 py-18rpx text-center text-[#666]" @click="handleBarcode(item)">
+              条码
             </view>
           </view>
         </view>
@@ -69,25 +74,40 @@
     </z-paging>
 
     <!-- 新增按钮 -->
-    <wd-fab
-      v-if="hasAccessByCodes(['mes:pro-work-order:create'])"
-      position="right-bottom"
-      type="primary"
-      :expandable="false"
-      @click="handleAdd"
-    />
+    <wd-fab v-if="canCreate" position="right-bottom" type="primary" :expandable="false" @click="handleAdd" />
   </view>
 </template>
 
 <script lang="ts" setup>
-import type { ProWorkOrderVO } from '@/api/mes/pro/workorder'
+import type { ProWorkOrderQueryParams, ProWorkOrderVO } from '@/api/mes/pro/workorder'
 import { onUnload } from '@dcloudio/uni-app'
-import { onMounted, ref } from 'vue'
-import { getWorkOrderPage } from '@/api/mes/pro/workorder'
+import { useDialog } from '@wot-ui/ui/components/wd-dialog'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { computed, onMounted, ref } from 'vue'
+import { cancelWorkOrder, deleteWorkOrder, finishWorkOrder, getWorkOrderPage } from '@/api/mes/pro/workorder'
+import { downloadApiFile } from '@/utils/download'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
-import { formatDateTime } from '@/utils/date'
+import { DICT_TYPE } from '@/utils/constants'
+import { formatDate } from '@/utils/date'
 import SearchForm from './components/search-form.vue'
+
+interface FlatWorkOrder extends ProWorkOrderVO {
+  level: number
+}
+
+const MesProWorkOrderStatusEnum = {
+  PREPARE: 0,
+  CONFIRMED: 1,
+  FINISHED: 2,
+  CANCELED: 3,
+} as const
+const MesProWorkOrderTypeEnum = {
+  SELF: 1,
+} as const
+const BarcodeBizTypeEnum = {
+  WORKORDER: 301,
+} as const
 
 definePage({
   style: {
@@ -97,53 +117,71 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
-const list = ref<any[]>([]) // 列表数据
-const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const dialog = useDialog()
+const toast = useToast()
+const list = ref<ProWorkOrderVO[]>([])
+const pagingRef = ref<ZPagingRef<ProWorkOrderVO>>()
+const queryParams = ref<Partial<ProWorkOrderQueryParams>>({})
+const searchFormRef = ref<InstanceType<typeof SearchForm>>()
+const exportLoading = ref(false)
+const canCreate = computed(() => hasAccessByCodes(['mes:pro-work-order:create']))
+const canUpdate = computed(() => hasAccessByCodes(['mes:pro-work-order:update']))
+const canDelete = computed(() => hasAccessByCodes(['mes:pro-work-order:delete']))
+const flatList = computed<FlatWorkOrder[]>(() => flattenWorkOrders(list.value))
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
+/** 展平父子工单 */
+function flattenWorkOrders(rows: ProWorkOrderVO[], level = 0): FlatWorkOrder[] {
+  return rows.flatMap((item) => {
+    const current = { ...item, level }
+    const children = item.children?.length ? flattenWorkOrders(item.children, level + 1) : []
+    return [current, ...children]
+  })
 }
 
-/** 查询列表 */
+/** 构造父子树 */
+function buildWorkOrderTree(rows: ProWorkOrderVO[]) {
+  const map = new Map<number, ProWorkOrderVO>()
+  const roots: ProWorkOrderVO[] = []
+  rows.forEach((row) => {
+    map.set(row.id, { ...row, children: [] })
+  })
+  map.forEach((row) => {
+    if (row.parentId && map.has(row.parentId)) {
+      map.get(row.parentId)?.children?.push(row)
+    } else {
+      roots.push(row)
+    }
+  })
+  return roots
+}
+
+/** 查询生产工单列表 */
 async function queryList(pageNo: number, pageSize: number) {
   try {
-    const params = {
-      ...queryParams.value,
-      pageNo,
-      pageSize,
-    }
-    const data = await getWorkOrderPage(params as any)
-    pagingRef.value?.completeByTotal(data.list, data.total)
+    const data = await getWorkOrderPage({ ...queryParams.value, pageNo, pageSize })
+    list.value = buildWorkOrderTree(data.list)
+    pagingRef.value?.completeByTotal(list.value, data.total)
   } catch {
     pagingRef.value?.complete(false)
   }
 }
 
 /** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) {
+function handleQuery(data: Partial<ProWorkOrderQueryParams>) {
   queryParams.value = { ...data }
   reload()
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  handleQuery()
+  queryParams.value = {}
+  searchFormRef.value?.resetFields()
+  reload()
 }
 
 /** 重新加载 */
@@ -151,30 +189,94 @@ function reload() {
   pagingRef.value?.reload()
 }
 
-/** 新增 */
-function handleAdd() {
-  uni.navigateTo({
-    url: '/pages-mes/pro/workorder/form/index',
+/** 导出生产工单 */
+async function handleExport() {
+  if (exportLoading.value) {
+    return
+  }
+  const { confirm } = await uni.showModal({
+    title: '导出确认',
+    content: '确定要导出当前筛选数据吗？',
   })
+  if (!confirm) {
+    return
+  }
+  exportLoading.value = true
+  try {
+    await downloadApiFile('/mes/pro/work-order/export-excel', queryParams.value, '生产工单.xls')
+  } finally {
+    exportLoading.value = false
+  }
+}
+
+/** 新增生产工单 */
+function handleAdd() {
+  uni.navigateTo({ url: '/pages-mes/pro/workorder/form/index' })
+}
+
+/** 新增子工单 */
+function handleAddChild(item: ProWorkOrderVO) {
+  uni.navigateTo({ url: `/pages-mes/pro/workorder/form/index?parentId=${item.id}` })
 }
 
 /** 查看详情 */
-function handleDetail(item: any) {
+function handleDetail(item: ProWorkOrderVO) {
+  uni.navigateTo({ url: `/pages-mes/pro/workorder/detail/index?id=${item.id}` })
+}
+
+/** 编辑生产工单 */
+function handleEdit(item: ProWorkOrderVO) {
+  uni.navigateTo({ url: `/pages-mes/pro/workorder/form/index?id=${item.id}` })
+}
+
+/** 完成生产工单 */
+async function handleFinish(item: ProWorkOrderVO) {
+  try {
+    await dialog.confirm({ title: '提示', msg: `确认要完成「${item.code}」生产工单吗？` })
+  } catch {
+    return
+  }
+  await finishWorkOrder(item.id)
+  toast.success('工单已完成')
+  reload()
+}
+
+/** 取消生产工单 */
+async function handleCancel(item: ProWorkOrderVO) {
+  try {
+    await dialog.confirm({ title: '提示', msg: `确认要取消「${item.code}」生产工单吗？取消后不可恢复。` })
+  } catch {
+    return
+  }
+  await cancelWorkOrder(item.id)
+  toast.success('工单已取消')
+  reload()
+}
+
+/** 删除生产工单 */
+async function handleDelete(item: ProWorkOrderVO) {
+  try {
+    await dialog.confirm({ title: '提示', msg: `确定要删除「${item.code}」生产工单吗？` })
+  } catch {
+    return
+  }
+  await deleteWorkOrder(item.id)
+  toast.success('删除成功')
+  reload()
+}
+
+/** 查看工单条码 */
+function handleBarcode(item: ProWorkOrderVO) {
   uni.navigateTo({
-    url: `/pages-mes/pro/workorder/detail/index?id=${(item as any).id}`,
+    url: `/pages-mes/wm/barcode/index?bizType=${BarcodeBizTypeEnum.WORKORDER}&bizId=${item.id}&bizCode=${encodeURIComponent(item.code)}`,
   })
 }
 
-/** 初始化 */
 onMounted(() => {
   uni.$on('mes:pro:workorder:reload', reload)
 })
 
-/** 卸载 */
 onUnload(() => {
   uni.$off('mes:pro:workorder:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

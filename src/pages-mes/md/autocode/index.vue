@@ -10,6 +10,16 @@
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
+    <!-- 顶部操作 -->
+    <view
+      v-if="hasAccessByCodes(['mes:auto-code-rule:export'])"
+      class="bg-white px-24rpx py-16rpx"
+    >
+      <wd-button block variant="plain" :loading="exportLoading" @click="handleExport">
+        导出当前筛选
+      </wd-button>
+    </view>
+
     <!-- 列表 -->
     <z-paging
       ref="pagingRef"
@@ -33,35 +43,34 @@
           <view class="p-24rpx">
             <view class="mb-16rpx flex items-center justify-between gap-16rpx">
               <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-                {{ formatFieldValue(item.code) || '-' }}
+                {{ item.code || '-' }}
               </view>
-              <view class="shrink-0 text-24rpx text-[#999]">
-                #{{ item.id }}
-              </view>
+              <dict-tag v-if="item.status != null" :type="DICT_TYPE.COMMON_STATUS" :value="item.status" />
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">规则名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.name) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.name || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">规则描述：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.description) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.description || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">最大长度：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.maxLength) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.maxLength ?? '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">是否补齐：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.padded) || '-' }}</text>
+              <dict-tag
+                v-if="item.padded !== undefined"
+                :type="DICT_TYPE.INFRA_BOOLEAN_STRING"
+                :value="item.padded"
+              />
+              <text v-else>-</text>
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">状态：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.status) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+            <view class="flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">备注：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.remark) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.remark || '-' }}</text>
             </view>
           </view>
         </view>
@@ -80,13 +89,15 @@
 </template>
 
 <script lang="ts" setup>
-import type { AutoCodeRuleVO } from '@/api/mes/md/autocode/rule'
+import type { AutoCodeRuleQueryParams, AutoCodeRuleVO } from '@/api/mes/md/autocode/rule'
 import { onUnload } from '@dcloudio/uni-app'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
 import { getAutoCodeRulePage } from '@/api/mes/md/autocode/rule'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
-import { formatDateTime } from '@/utils/date'
+import { DICT_TYPE } from '@/utils/constants'
+import { downloadApiFile } from '@/utils/download'
 import SearchForm from './components/search-form.vue'
 
 definePage({
@@ -97,27 +108,15 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
-const list = ref<any[]>([]) // 列表数据
-const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const toast = useToast()
+const list = ref<AutoCodeRuleVO[]>([]) // 列表数据
+const pagingRef = ref<ZPagingRef<AutoCodeRuleVO>>() // 分页组件引用
+const queryParams = ref<AutoCodeRuleQueryParams>({}) // 查询参数
+const exportLoading = ref(false) // 导出状态
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
-}
-
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
 }
 
 /** 查询列表 */
@@ -128,7 +127,7 @@ async function queryList(pageNo: number, pageSize: number) {
       pageNo,
       pageSize,
     }
-    const data = await getAutoCodeRulePage(params as any)
+    const data = await getAutoCodeRulePage(params)
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
     pagingRef.value?.complete(false)
@@ -136,7 +135,7 @@ async function queryList(pageNo: number, pageSize: number) {
 }
 
 /** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) {
+function handleQuery(data?: AutoCodeRuleQueryParams) {
   queryParams.value = { ...data }
   reload()
 }
@@ -151,6 +150,27 @@ function reload() {
   pagingRef.value?.reload()
 }
 
+/** 导出编码规则 */
+async function handleExport() {
+  if (exportLoading.value) {
+    return
+  }
+  const { confirm } = await uni.showModal({
+    title: '导出确认',
+    content: '确定要导出当前筛选条件下的编码规则吗？',
+  })
+  if (!confirm) {
+    return
+  }
+  exportLoading.value = true
+  try {
+    await downloadApiFile('/mes/md/auto-code-rule/export-excel', queryParams.value, '编码规则.xls')
+    toast.success('导出成功')
+  } finally {
+    exportLoading.value = false
+  }
+}
+
 /** 新增 */
 function handleAdd() {
   uni.navigateTo({
@@ -159,9 +179,12 @@ function handleAdd() {
 }
 
 /** 查看详情 */
-function handleDetail(item: any) {
+function handleDetail(item: AutoCodeRuleVO) {
+  if (!item.id) {
+    return
+  }
   uni.navigateTo({
-    url: `/pages-mes/md/autocode/detail/index?id=${(item as any).id}`,
+    url: `/pages-mes/md/autocode/detail/index?id=${item.id}`,
   })
 }
 
@@ -175,6 +198,3 @@ onUnload(() => {
   uni.$off('mes:md:autocode:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

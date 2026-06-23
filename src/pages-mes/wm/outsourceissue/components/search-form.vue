@@ -8,6 +8,8 @@
   <wd-popup
     v-model="visible"
     position="top"
+    transition="fade"
+    :duration="0"
     :custom-style="getTopPopupStyle()"
     :modal-style="getTopPopupModalStyle()"
     @close="visible = false"
@@ -17,41 +19,30 @@
         <view class="yd-search-form-label">
           发料单编号
         </view>
-        <wd-input
-          v-model="formData.code"
-          placeholder="请输入发料单编号"
-          clearable
-        />
+        <wd-input v-model="formData.code" placeholder="请输入发料单编号" clearable />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           发料单名称
         </view>
-        <wd-input
-          v-model="formData.name"
-          placeholder="请输入发料单名称"
-          clearable
-        />
+        <wd-input v-model="formData.name" placeholder="请输入发料单名称" clearable />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           供应商
         </view>
-        <wd-input
-          v-model="formData.vendorId"
-          placeholder="请输入供应商"
-          clearable
-        />
+        <view class="min-h-64rpx flex items-center justify-between rounded-8rpx bg-white px-4rpx" @click.stop="openVendorSelector">
+          <text :class="selectedVendorText ? 'text-[#333]' : 'text-[#999]'">
+            {{ selectedVendorText || '请选择供应商' }}
+          </text>
+          <wd-icon name="arrow-right" size="28rpx" color="#999" />
+        </view>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           发料日期
         </view>
-        <wd-input
-          v-model="formData.issueDate"
-          placeholder="请输入发料日期"
-          clearable
-        />
+        <wd-calendar v-model="issueDateRange" type="daterange" placeholder="请选择发料日期范围" />
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -63,55 +54,101 @@
       </view>
     </view>
   </wd-popup>
+
+  <VendorSelector ref="vendorSelectorRef" title="选择供应商" @confirm="handleVendorConfirm" />
 </template>
 
 <script lang="ts" setup>
+import type { MdVendorVO } from '@/api/mes/md/vendor'
+import type { WmOutsourceIssueQueryParams } from '@/api/mes/wm/outsourceissue'
 import { computed, reactive, ref } from 'vue'
+import { formatDateRange } from '@/utils/date'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import VendorSelector from '../../../md/vendor/components/vendor-selector.vue'
 
 const emit = defineEmits<{
-  search: [data: Record<string, any>]
+  search: [data: WmOutsourceIssueQueryParams]
   reset: []
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
+const issueDateRange = ref<[string, string]>() // 发料日期范围
+const selectedVendor = ref<MdVendorVO>() // 当前选择供应商
+const vendorSelectorRef = ref<InstanceType<typeof VendorSelector>>() // 供应商选择器引用
 const formData = reactive({
-  code: undefined as any,
-  name: undefined as any,
-  vendorId: undefined as any,
-  issueDate: undefined as any,
+  code: '',
+  name: '',
+  vendorId: undefined as number | undefined,
 }) // 搜索表单数据
+const selectedVendorText = computed(() => {
+  if (!selectedVendor.value) {
+    return ''
+  }
+  return `${selectedVendor.value.code || '-'} ${selectedVendor.value.name || ''}`.trim()
+})
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
   const conditions: string[] = []
-  if (formData.code !== undefined && formData.code !== '') {
-    conditions.push(`发料单编号:${formData.code}`)
+  if (formData.code) {
+    conditions.push(`编号:${formData.code}`)
   }
-  if (formData.name !== undefined && formData.name !== '') {
-    conditions.push(`发料单名称:${formData.name}`)
+  if (formData.name) {
+    conditions.push(`名称:${formData.name}`)
   }
-  if (formData.vendorId !== undefined && formData.vendorId !== '') {
-    conditions.push(`供应商:${formData.vendorId}`)
+  if (selectedVendorText.value) {
+    conditions.push(`供应商:${selectedVendorText.value}`)
   }
-  if (formData.issueDate !== undefined && formData.issueDate !== '') {
-    conditions.push(`发料日期:${formData.issueDate}`)
+  if (issueDateRange.value?.length === 2) {
+    conditions.push('发料日期')
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索外协发料'
 })
 
+/** 打开供应商选择器 */
+function openVendorSelector() {
+  vendorSelectorRef.value?.open()
+}
+
+/** 确认供应商 */
+function handleVendorConfirm(vendors: MdVendorVO[]) {
+  const vendor = vendors[0]
+  selectedVendor.value = vendor
+  formData.vendorId = vendor?.id
+}
+
+/** 构造搜索参数 */
+function buildParams() {
+  const params: WmOutsourceIssueQueryParams = {}
+  if (formData.code) {
+    params.code = formData.code
+  }
+  if (formData.name) {
+    params.name = formData.name
+  }
+  if (formData.vendorId) {
+    params.vendorId = formData.vendorId
+  }
+  const range = formatDateRange(issueDateRange.value)
+  if (range) {
+    params.issueDate = range
+  }
+  return params
+}
+
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  emit('search', { ...formData })
+  emit('search', buildParams())
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  formData.code = undefined
-  formData.name = undefined
+  formData.code = ''
+  formData.name = ''
   formData.vendorId = undefined
-  formData.issueDate = undefined
+  selectedVendor.value = undefined
+  issueDateRange.value = undefined
   visible.value = false
   emit('reset')
 }

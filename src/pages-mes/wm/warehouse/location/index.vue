@@ -1,176 +1,121 @@
 <template>
   <view class="yd-page-container yd-page-container-paging">
-    <!-- 顶部导航栏 -->
-    <wd-navbar
-      title="MES 库位管理"
-      left-arrow placeholder safe-area-inset-top fixed
-      @click-left="handleBack"
-    />
-
-    <!-- 搜索组件 -->
-    <SearchForm @search="handleQuery" @reset="handleReset" />
-
-    <!-- 列表 -->
-    <z-paging
-      ref="pagingRef"
-      v-model="list"
-      :fixed="false"
-      class="min-h-0 flex-1"
-      :default-page-size="10"
-      :refresher-enabled="true"
-      :inside-more="true"
-      :loading-more-default-as-loading="true"
-      empty-view-text="暂无库位数据"
-      @query="queryList"
-    >
+    <wd-navbar title="库区" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
+    <SearchForm ref="searchFormRef" @search="handleQuery" @reset="handleReset" />
+    <z-paging ref="pagingRef" v-model="list" :fixed="false" class="min-h-0 flex-1" :default-page-size="10" :refresher-enabled="true" :inside-more="true" :loading-more-default-as-loading="true" empty-view-text="暂无库区数据" @query="queryList">
       <view class="p-24rpx">
-        <view
-          v-for="item in list"
-          :key="item.id"
-          class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm"
-          @click="handleDetail(item)"
-        >
+        <ListCardWrapper v-for="item in list" :key="item.id" :item="item" :item-id="item.id" :selecting="selecting" :selected="isSelected(item.id)" :can-delete="canDelete" @click="handleDetail" @longpress="enterSelectMode" @toggle-select="toggleSelect" @swipe-delete="handleSwipeDelete">
           <view class="p-24rpx">
-            <view class="mb-16rpx flex items-center justify-between gap-16rpx">
+            <view class="mb-16rpx flex items-start justify-between gap-16rpx">
               <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-                {{ formatFieldValue(item.code) || '-' }}
+                {{ item.name || '-' }}
               </view>
-              <view class="shrink-0 text-24rpx text-[#999]">
-                #{{ item.id }}
+              <view v-if="item.frozen" class="text-24rpx text-[#f56c6c]">
+                已冻结
               </view>
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">库区名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.name) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">面积：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.area) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">冻结：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.frozen) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">备注：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.remark) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">创建时间：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.createTime) || '-' }}</text>
+            <view class="text-26rpx text-[#666] space-y-8rpx">
+              <view>编码：{{ item.code || '-' }}</view>
+              <view>所属仓库：{{ item.warehouseName || '-' }}</view>
+              <view>面积：{{ item.area ?? '-' }} ㎡</view>
+              <view v-if="item.remark">
+                备注：{{ item.remark }}
+              </view>
             </view>
           </view>
-        </view>
+        </ListCardWrapper>
       </view>
     </z-paging>
-
-    <!-- 新增按钮 -->
-    <wd-fab
-      v-if="hasAccessByCodes(['mes:wm-warehouse:create'])"
-      position="right-bottom"
-      type="primary"
-      :expandable="false"
-      @click="handleAdd"
-    />
+    <view v-if="selecting" class="yd-detail-footer">
+      <view class="flex items-center justify-between px-24rpx">
+        <wd-button variant="plain" size="small" @click="exitSelectMode">
+          取消
+        </wd-button>
+        <text class="text-28rpx text-[#666]">已选 {{ selectedIds.size }} 项</text>
+        <wd-button type="danger" size="small" :loading="batchDeleting" :disabled="selectedIds.size === 0" @click="handleBatchDelete">
+          删除
+        </wd-button>
+      </view>
+    </view>
+    <wd-fab v-if="hasAccessByCodes(['mes:wm-warehouse:create'])" position="right-bottom" type="primary" :expandable="false" @click="handleAdd" />
   </view>
 </template>
 
 <script lang="ts" setup>
-import type { WmWarehouseLocationVO } from '@/api/mes/wm/warehouse/location'
+import type { WmWarehouseLocationQueryParams, WmWarehouseLocationVO } from '@/api/mes/wm/warehouse/location'
 import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
-import { getWarehouseLocationPage } from '@/api/mes/wm/warehouse/location'
+import { deleteWarehouseLocation, getWarehouseLocationPage } from '@/api/mes/wm/warehouse/location'
 import { useAccess } from '@/hooks/useAccess'
+import { useBatchSelect } from '@/pages-erp/hooks/useBatchSelect'
 import { navigateBackPlus } from '@/utils'
-import { formatDateTime } from '@/utils/date'
+import ListCardWrapper from '@/pages-erp/components/list-card-wrapper.vue'
 import SearchForm from './components/search-form.vue'
 
-definePage({
-  style: {
-    navigationBarTitleText: '',
-    navigationStyle: 'custom',
-  },
-})
+definePage({ style: { navigationBarTitleText: '', navigationStyle: 'custom' } })
 
 const { hasAccessByCodes } = useAccess()
-const list = ref<any[]>([]) // 列表数据
-const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const list = ref<WmWarehouseLocationVO[]>([])
+const pagingRef = ref<ZPagingRef<WmWarehouseLocationVO>>()
+const queryParams = ref<WmWarehouseLocationQueryParams>({})
 
-/** 返回上一页 */
+const {
+  selecting,
+  selectedIds,
+  batchDeleting,
+  canDelete,
+  isSelected,
+  toggleSelect,
+  enterSelectMode,
+  exitSelectMode,
+  handleSwipeDelete,
+  handleBatchDelete,
+} = useBatchSelect({
+  permission: 'mes:wm-warehouse:delete',
+  deleteApi: (ids: number[]) => Promise.all(ids.map(id => deleteWarehouseLocation(id))).then(() => {}),
+  reloadEvent: 'mes:wm:warehouse-location:reload',
+})
+
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
-}
-
-/** 查询列表 */
 async function queryList(pageNo: number, pageSize: number) {
   try {
-    const params = {
-      ...queryParams.value,
-      pageNo,
-      pageSize,
-    }
-    const data = await getWarehouseLocationPage(params as any)
+    const data = await getWarehouseLocationPage({ ...queryParams.value, pageNo, pageSize })
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
     pagingRef.value?.complete(false)
   }
 }
 
-/** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) {
+function handleQuery(data: WmWarehouseLocationQueryParams) {
   queryParams.value = { ...data }
   reload()
 }
 
-/** 重置按钮操作 */
 function handleReset() {
-  handleQuery()
+  queryParams.value = {}
+  reload()
 }
 
-/** 重新加载 */
 function reload() {
   pagingRef.value?.reload()
 }
 
-/** 新增 */
 function handleAdd() {
-  uni.navigateTo({
-    url: '/pages-mes/wm/warehouse/location/form/index',
-  })
+  uni.navigateTo({ url: `/pages-mes/wm/warehouse/location/form/index` })
 }
 
-/** 查看详情 */
-function handleDetail(item: any) {
-  uni.navigateTo({
-    url: `/pages-mes/wm/warehouse/location/detail/index?id=${(item as any).id}`,
-  })
+function handleDetail(item: WmWarehouseLocationVO) {
+  uni.navigateTo({ url: `/pages-mes/wm/warehouse/location/detail/index?id=${item.id}` })
 }
 
-/** 初始化 */
 onMounted(() => {
-  uni.$on('mes:wm:warehouse:location:reload', reload)
+  uni.$on('mes:wm:warehouse-location:reload', reload)
 })
 
-/** 卸载 */
 onUnload(() => {
-  uni.$off('mes:wm:warehouse:location:reload', reload)
+  uni.$off('mes:wm:warehouse-location:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

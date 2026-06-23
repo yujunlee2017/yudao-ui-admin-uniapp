@@ -17,41 +17,41 @@
         <view class="yd-search-form-label">
           入库单编号
         </view>
-        <wd-input
-          v-model="formData.code"
-          placeholder="请输入入库单编号"
-          clearable
-        />
+        <wd-input v-model="formData.code" placeholder="请输入入库单编号" clearable />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           入库单名称
         </view>
-        <wd-input
-          v-model="formData.name"
-          placeholder="请输入入库单名称"
-          clearable
-        />
+        <wd-input v-model="formData.name" placeholder="请输入入库单名称" clearable />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           生产工单
         </view>
-        <wd-input
-          v-model="formData.workOrderId"
-          placeholder="请输入生产工单"
-          clearable
-        />
+        <view class="yd-search-form-selector" @click="openWorkOrderSelector">
+          <text v-if="selectedWorkOrderText" class="text-[#333]">
+            {{ selectedWorkOrderText }}
+          </text>
+          <text v-else class="text-[#999]">
+            请选择生产工单
+          </text>
+          <wd-icon v-if="formData.workOrderId" name="close" size="28rpx" color="#999" @click.stop="clearWorkOrder" />
+        </view>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           产品物料
         </view>
-        <wd-input
-          v-model="formData.itemId"
-          placeholder="请输入产品物料"
-          clearable
-        />
+        <view class="yd-search-form-selector" @click="openItemSelector">
+          <text v-if="selectedItemText" class="text-[#333]">
+            {{ selectedItemText }}
+          </text>
+          <text v-else class="text-[#999]">
+            请选择产品物料
+          </text>
+          <wd-icon v-if="formData.itemId" name="close" size="28rpx" color="#999" @click.stop="clearItem" />
+        </view>
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -63,42 +63,102 @@
       </view>
     </view>
   </wd-popup>
+
+  <WorkOrderSelector ref="workOrderSelectorRef" :confirmed-only="false" @confirm="handleWorkOrderConfirm" />
+  <ItemSelector ref="itemSelectorRef" item-or-product="PRODUCT" title="选择产品物料" :multiple="false" @confirm="handleItemConfirm" />
 </template>
 
 <script lang="ts" setup>
+import type { MdItemVO } from '@/api/mes/md/item'
+import type { ProWorkOrderVO } from '@/api/mes/pro/workorder'
+import type { WmProductReceiptQueryParams } from '@/api/mes/wm/productreceipt'
 import { computed, reactive, ref } from 'vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import WorkOrderSelector from '../../../pro/card/components/workorder-selector.vue'
+import ItemSelector from '../../../md/item/components/item-selector.vue'
 
 const emit = defineEmits<{
-  search: [data: Record<string, any>]
+  search: [data: WmProductReceiptQueryParams]
   reset: []
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const formData = reactive({
-  code: undefined as any,
-  name: undefined as any,
-  workOrderId: undefined as any,
-  itemId: undefined as any,
+const workOrderSelectorRef = ref<InstanceType<typeof WorkOrderSelector>>() // 工单选择器引用
+const itemSelectorRef = ref<InstanceType<typeof ItemSelector>>() // 物料选择器引用
+const selectedWorkOrder = ref<ProWorkOrderVO>() // 当前选择工单
+const selectedItem = ref<MdItemVO>() // 当前选择物料
+const formData = reactive<WmProductReceiptQueryParams>({
+  code: undefined,
+  name: undefined,
+  workOrderId: undefined,
+  itemId: undefined,
 }) // 搜索表单数据
+const selectedWorkOrderText = computed(() => {
+  return selectedWorkOrder.value
+    ? `${selectedWorkOrder.value.code || '-'} ${selectedWorkOrder.value.name || ''}`.trim()
+    : ''
+})
+const selectedItemText = computed(() => {
+  return selectedItem.value
+    ? `${selectedItem.value.code || '-'} ${selectedItem.value.name || ''}`.trim()
+    : ''
+})
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
   const conditions: string[] = []
-  if (formData.code !== undefined && formData.code !== '') {
-    conditions.push(`入库单编号:${formData.code}`)
+  if (formData.code) {
+    conditions.push(`编号:${formData.code}`)
   }
-  if (formData.name !== undefined && formData.name !== '') {
-    conditions.push(`入库单名称:${formData.name}`)
+  if (formData.name) {
+    conditions.push(`名称:${formData.name}`)
   }
-  if (formData.workOrderId !== undefined && formData.workOrderId !== '') {
-    conditions.push(`生产工单:${formData.workOrderId}`)
+  if (selectedWorkOrderText.value) {
+    conditions.push(`工单:${selectedWorkOrderText.value}`)
   }
-  if (formData.itemId !== undefined && formData.itemId !== '') {
-    conditions.push(`产品物料:${formData.itemId}`)
+  if (selectedItemText.value) {
+    conditions.push(`产品:${selectedItemText.value}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索产品入库'
 })
+
+/** 打开工单选择器 */
+function openWorkOrderSelector() {
+  workOrderSelectorRef.value?.open(formData.workOrderId)
+}
+
+/** 打开物料选择器 */
+function openItemSelector() {
+  itemSelectorRef.value?.open()
+}
+
+/** 确认选择工单 */
+function handleWorkOrderConfirm(workOrder: ProWorkOrderVO) {
+  selectedWorkOrder.value = workOrder
+  formData.workOrderId = workOrder.id
+}
+
+/** 确认选择物料 */
+function handleItemConfirm(items: MdItemVO[]) {
+  const item = items[0]
+  if (!item) {
+    return
+  }
+  selectedItem.value = item
+  formData.itemId = item.id
+}
+
+/** 清空工单 */
+function clearWorkOrder() {
+  selectedWorkOrder.value = undefined
+  formData.workOrderId = undefined
+}
+
+/** 清空物料 */
+function clearItem() {
+  selectedItem.value = undefined
+  formData.itemId = undefined
+}
 
 /** 搜索按钮操作 */
 function handleSearch() {
@@ -110,9 +170,23 @@ function handleSearch() {
 function handleReset() {
   formData.code = undefined
   formData.name = undefined
-  formData.workOrderId = undefined
-  formData.itemId = undefined
+  clearWorkOrder()
+  clearItem()
   visible.value = false
   emit('reset')
 }
 </script>
+
+<style lang="scss" scoped>
+.yd-search-form-selector {
+  min-height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 0 24rpx;
+  border-radius: 8rpx;
+  background: #f7f8fa;
+  font-size: 28rpx;
+}
+</style>

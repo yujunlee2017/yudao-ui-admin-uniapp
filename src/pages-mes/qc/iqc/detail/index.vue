@@ -1,49 +1,79 @@
 <template>
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
-    <wd-navbar
-      title="MES 来料检验单（IQC）详情"
-      left-arrow placeholder safe-area-inset-top fixed
-      @click-left="handleBack"
-    />
+    <wd-navbar title="来料检验单详情" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
 
     <!-- 详情内容 -->
-    <view>
-      <wd-cell-group border>
-        <wd-cell title="来料检验单编号" :value="formatFieldValue(formData?.code) || '-'" />
-        <wd-cell title="来料检验单名称" :value="formatFieldValue(formData?.name) || '-'" />
-        <wd-cell title="供应商简称" :value="formatFieldValue(formData?.vendorNickname) || '-'" />
-        <wd-cell title="供应商批次号" :value="formatFieldValue(formData?.vendorBatch) || '-'" />
-        <wd-cell title="产品物料编码" :value="formatFieldValue(formData?.itemCode) || '-'" />
-        <wd-cell title="产品物料名称" :value="formatFieldValue(formData?.itemName) || '-'" />
-        <wd-cell title="接收数量" :value="formatFieldValue(formData?.receivedQuantity) || '-'" />
-        <wd-cell title="检测数量" :value="formatFieldValue(formData?.checkQuantity) || '-'" />
-        <wd-cell title="编号" :value="formatFieldValue(formData?.id) || '-'" />
-        <wd-cell title="检验模板 ID" :value="formatFieldValue(formData?.templateId) || '-'" />
-        <wd-cell title="来源单据类型" :value="formatFieldValue(formData?.sourceDocType) || '-'" />
-        <wd-cell title="来源单据 ID" :value="formatFieldValue(formData?.sourceDocId) || '-'" />
-        <wd-cell title="来源单据行 ID" :value="formatFieldValue(formData?.sourceLineId) || '-'" />
-        <wd-cell title="供应商 ID" :value="formatFieldValue(formData?.vendorId) || '-'" />
-        <wd-cell title="产品物料 ID" :value="formatFieldValue(formData?.itemId) || '-'" />
-        <wd-cell title="规格型号" :value="formatFieldValue(formData?.itemSpecification) || '-'" />
-        <wd-cell title="单位名称" :value="formatFieldValue(formData?.unitName) || '-'" />
-        <wd-cell title="合格品数量" :value="formatFieldValue(formData?.qualifiedQuantity) || '-'" />
-      </wd-cell-group>
-    </view>
+    <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
+      <view class="p-24rpx">
+        <wd-cell-group title="基本信息" border>
+          <wd-cell title="检验单编号" :value="formData?.code || '-'" />
+          <wd-cell title="检验单名称" :value="formData?.name || '-'" />
+          <wd-cell title="单据状态">
+            <dict-tag v-if="formData?.status != null" :type="DICT_TYPE.MES_ORDER_STATUS" :value="formData.status" />
+            <text v-else>-</text>
+          </wd-cell>
+          <wd-cell title="检测结果">
+            <dict-tag v-if="formData?.checkResult != null" :type="DICT_TYPE.MES_QC_CHECK_RESULT" :value="formData.checkResult" />
+            <text v-else>-</text>
+          </wd-cell>
+          <wd-cell title="备注" :value="formData?.remark || '-'" />
+        </wd-cell-group>
+
+        <wd-cell-group title="来源单据" border class="mt-24rpx">
+          <wd-cell title="来源单据类型">
+            <dict-tag v-if="formData?.sourceDocType != null" :type="DICT_TYPE.MES_QC_SOURCE_DOC_TYPE" :value="formData.sourceDocType" />
+            <text v-else>-</text>
+          </wd-cell>
+          <wd-cell title="来源单据编号" :value="formData?.sourceDocCode || '-'" />
+          <wd-cell title="来源单据 ID" :value="formData?.sourceDocId != null ? String(formData.sourceDocId) : '-'" />
+          <wd-cell title="来源行 ID" :value="formData?.sourceLineId != null ? String(formData.sourceLineId) : '-'" />
+        </wd-cell-group>
+
+        <wd-cell-group title="供应商与物料" border class="mt-24rpx">
+          <wd-cell title="供应商" :value="formData?.vendorNickname || '-'" />
+          <wd-cell title="供应商批次" :value="formData?.vendorBatch || '-'" />
+          <wd-cell title="物料编码" :value="formData?.itemCode || '-'" />
+          <wd-cell title="物料名称" :value="formData?.itemName || '-'" />
+          <wd-cell title="规格型号" :value="formData?.itemSpecification || '-'" />
+          <wd-cell title="单位" :value="formData?.unitName || '-'" />
+        </wd-cell-group>
+
+        <wd-cell-group title="检测情况" border class="mt-24rpx">
+          <wd-cell title="接收数量" :value="formatQuantity(formData?.receivedQuantity)" />
+          <wd-cell title="检测数量" :value="formatQuantity(formData?.checkQuantity)" />
+          <wd-cell title="合格数量" :value="formatQuantity(formData?.qualifiedQuantity)" />
+          <wd-cell title="不合格数量" :value="formatQuantity(formData?.unqualifiedQuantity)" />
+          <wd-cell title="来料日期" :value="formatDateTime(formData?.receiveDate) || '-'" />
+          <wd-cell title="检测日期" :value="formatDateTime(formData?.inspectDate) || '-'" />
+          <wd-cell title="检测人员" :value="formData?.inspectorNickname || '-'" />
+        </wd-cell-group>
+
+        <wd-cell-group title="缺陷情况" border class="mt-24rpx">
+          <wd-cell title="致命缺陷数" :value="formatQuantity(formData?.criticalQuantity)" />
+          <wd-cell title="严重缺陷数" :value="formatQuantity(formData?.majorQuantity)" />
+          <wd-cell title="轻微缺陷数" :value="formatQuantity(formData?.minorQuantity)" />
+          <wd-cell title="致命缺陷率" :value="formatRate(formData?.criticalRate)" />
+          <wd-cell title="严重缺陷率" :value="formatRate(formData?.majorRate)" />
+          <wd-cell title="轻微缺陷率" :value="formatRate(formData?.minorRate)" />
+        </wd-cell-group>
+
+        <QcLineSection type="iqc" :order-id="currentId" :qc-type="MesQcTypeEnum.IQC" />
+        <QcIndicatorResultSection :qc-id="currentId" :qc-type="MesQcTypeEnum.IQC" />
+      </view>
+      <view class="h-160rpx" />
+    </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view class="yd-detail-footer">
+    <view v-if="formData && isDraft" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button
-          v-if="hasAccessByCodes(['mes:qc-iqc:update'])"
-          class="flex-1" type="warning" @click="handleEdit"
-        >
+        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button
-          v-if="hasAccessByCodes(['mes:qc-iqc:delete'])"
-          class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
-        >
+        <wd-button v-if="canUpdate" class="flex-1" type="success" :loading="finishing" @click="handleFinish">
+          完成
+        </wd-button>
+        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -55,14 +85,18 @@
 import type { QcIqcVO } from '@/api/mes/qc/iqc'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
-import { getIqc, deleteIqc } from '@/api/mes/qc/iqc'
+import { computed, onMounted, ref, watch } from 'vue'
+import { deleteIqc, finishIqc, getIqc } from '@/api/mes/qc/iqc'
 import { useAccess } from '@/hooks/useAccess'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
+import QcIndicatorResultSection from '../../components/qc-indicator-result-section.vue'
+import QcLineSection from '../../components/qc-line-section.vue'
 
 const props = defineProps<{
-  id?: number | string | any
+  id?: number | string
 }>()
 
 definePage({
@@ -72,39 +106,54 @@ definePage({
   },
 })
 
+const MesQcStatusEnum = {
+  DRAFT: 0,
+} as const
+const MesQcTypeEnum = {
+  IQC: 1,
+} as const
+
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const formData = ref<any>() // 详情数据
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/qc/iqc/detail/index')
+const formData = ref<QcIqcVO>() // 详情数据
 const deleting = ref(false) // 删除状态
+const finishing = ref(false) // 完成状态
+const canUpdate = computed(() => hasAccessByCodes(['mes:qc-iqc:update']))
+const canDelete = computed(() => hasAccessByCodes(['mes:qc-iqc:delete']))
+const isDraft = computed(() => formData.value?.status === MesQcStatusEnum.DRAFT)
+const currentId = computed(() => getRouteQueryNumber('id'))
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/qc/iqc/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
+/** 格式化数量 */
+function formatQuantity(value?: number | string) {
   if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
+    return '-'
   }
   return String(value)
 }
 
+/** 格式化百分比 */
+function formatRate(value?: number | string) {
+  if (value === undefined || value === null || value === '') {
+    return '-'
+  }
+  return `${value}%`
+}
+
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getIqc(props.id)
+    formData.value = await getIqc(currentId.value)
   } finally {
     toast.close()
   }
@@ -112,32 +161,52 @@ async function getDetail() {
 
 /** 编辑 */
 function handleEdit() {
-  uni.navigateTo({
-    url: `/pages-mes/qc/iqc/form/index?id=${props.id}`,
-  })
+  uni.navigateTo({ url: `/pages-mes/qc/iqc/form/index?id=${currentId.value}` })
 }
 
-/** 删除 */
-async function handleDelete() {
-  if (!props.id) {
+/** 完成 */
+async function handleFinish() {
+  if (!currentId.value) {
     return
   }
   try {
     await dialog.confirm({
-      title: '提示',
-      msg: '确定要删除该来料检验单（IQC）吗？',
+      title: '完成确认',
+      msg: '确定要完成该来料检验单吗？完成后将不能修改。',
+    })
+  } catch {
+    return
+  }
+  finishing.value = true
+  try {
+    await finishIqc(currentId.value)
+    toast.success('完成成功')
+    uni.$emit('mes:qc:iqc:reload')
+    await getDetail()
+  } finally {
+    finishing.value = false
+  }
+}
+
+/** 删除 */
+async function handleDelete() {
+  if (!currentId.value || !formData.value) {
+    return
+  }
+  try {
+    await dialog.confirm({
+      title: '删除确认',
+      msg: `确定要删除来料检验单「${formData.value.code}」吗？删除后将无法恢复。`,
     })
   } catch {
     return
   }
   deleting.value = true
   try {
-    await deleteIqc(props.id)
+    await deleteIqc(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:qc:iqc:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    setTimeout(() => handleBack(), 500)
   } finally {
     deleting.value = false
   }
@@ -147,7 +216,8 @@ async function handleDelete() {
 onMounted(() => {
   getDetail()
 })
-</script>
 
-<style lang="scss" scoped>
-</style>
+watch(currentId, () => {
+  getDetail()
+})
+</script>

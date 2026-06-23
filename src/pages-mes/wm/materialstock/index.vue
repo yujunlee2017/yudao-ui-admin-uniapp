@@ -10,7 +10,14 @@
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
-    <!-- 列表 -->
+    <!-- 导出入口 -->
+    <view v-if="hasAccessByCodes(['mes:wm-material-stock:export'])" class="bg-white px-24rpx py-16rpx">
+      <wd-button block variant="plain" :loading="exportLoading" @click="handleExport">
+        导出当前筛选数据
+      </wd-button>
+    </view>
+
+    <!-- 库存列表 -->
     <z-paging
       ref="pagingRef"
       v-model="list"
@@ -32,53 +39,68 @@
         >
           <view class="p-24rpx">
             <view class="mb-16rpx flex items-center justify-between gap-16rpx">
-              <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-                {{ formatFieldValue(item.itemCode) || '-' }}
+              <view class="min-w-0 flex-1">
+                <view class="truncate text-32rpx text-[#333] font-semibold">
+                  {{ item.itemCode || '-' }}
+                </view>
+                <view class="mt-4rpx truncate text-24rpx text-[#999]">
+                  {{ item.itemName || '-' }}
+                </view>
               </view>
-              <view class="shrink-0 text-24rpx text-[#999]">
-                #{{ item.id }}
+              <view
+                class="shrink-0 rounded-999rpx px-16rpx py-6rpx text-24rpx"
+                :class="item.frozen ? 'bg-[#fff1f0] text-[#f5222d]' : 'bg-[#f6ffed] text-[#52c41a]'"
+              >
+                {{ item.frozen ? '已冻结' : '可用' }}
               </view>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">产品物料名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.itemName) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">规格型号：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.specification) || '-' }}</text>
+              <text class="mr-8rpx shrink-0 text-[#999]">规格：</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.specification || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">在库数量：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.quantity) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">单位：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.unitMeasureName) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate font-semibold">
+                {{ item.quantity ?? '-' }} {{ item.unitMeasureName || '' }}
+              </text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">批次号：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.batchCode) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.batchCode || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">仓库：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.warehouseName) || '-' }}</text>
+              <text class="mr-8rpx shrink-0 text-[#999]">库存位置：</text>
+              <text class="min-w-0 flex-1 truncate">{{ stockPlaceText(item) }}</text>
             </view>
+            <view class="flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">入库日期：</text>
+              <text class="min-w-0 flex-1 truncate">{{ formatDate(item.receiptTime) || '-' }}</text>
+            </view>
+          </view>
+          <view
+            v-if="hasAccessByCodes(['mes:wm-material-stock:update'])"
+            class="border-t border-t-[#f0f0f0] py-18rpx text-center text-28rpx"
+            :class="item.frozen ? 'text-[#52c41a]' : 'text-[#faad14]'"
+            @click.stop="handleFrozenChange(item)"
+          >
+            {{ item.frozen ? '解除冻结' : '冻结库存' }}
           </view>
         </view>
       </view>
     </z-paging>
-
   </view>
 </template>
 
 <script lang="ts" setup>
-import type { WmMaterialStockVO } from '@/api/mes/wm/materialstock'
+import type { WmMaterialStockQueryParams, WmMaterialStockVO } from '@/api/mes/wm/materialstock'
 import { onUnload } from '@dcloudio/uni-app'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
-import { getMaterialStockPage } from '@/api/mes/wm/materialstock'
+import { getMaterialStockPage, updateMaterialStockFrozen } from '@/api/mes/wm/materialstock'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
-import { formatDateTime } from '@/utils/date'
+import { formatDate } from '@/utils/date'
+import { downloadApiFile } from '@/utils/download'
 import SearchForm from './components/search-form.vue'
 
 definePage({
@@ -89,27 +111,16 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
-const list = ref<any[]>([]) // 列表数据
-const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const toast = useToast()
+const list = ref<WmMaterialStockVO[]>([]) // 列表数据
+const pagingRef = ref<ZPagingRef<WmMaterialStockVO>>() // 分页组件引用
+const queryParams = ref<WmMaterialStockQueryParams>({}) // 查询参数
+const exportLoading = ref(false) // 导出状态
+const frozenLoadingId = ref<number>() // 冻结操作中的库存编号
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
-}
-
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
 }
 
 /** 查询列表 */
@@ -120,7 +131,7 @@ async function queryList(pageNo: number, pageSize: number) {
       pageNo,
       pageSize,
     }
-    const data = await getMaterialStockPage(params as any)
+    const data = await getMaterialStockPage(params)
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
     pagingRef.value?.complete(false)
@@ -128,7 +139,7 @@ async function queryList(pageNo: number, pageSize: number) {
 }
 
 /** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) {
+function handleQuery(data?: WmMaterialStockQueryParams) {
   queryParams.value = { ...data }
   reload()
 }
@@ -144,10 +155,65 @@ function reload() {
 }
 
 /** 查看详情 */
-function handleDetail(item: any) {
+function handleDetail(item: WmMaterialStockVO) {
   uni.navigateTo({
-    url: `/pages-mes/wm/materialstock/detail/index?id=${(item as any).id}`,
+    url: `/pages-mes/wm/materialstock/detail/index?id=${item.id}`,
   })
+}
+
+/** 库存位置展示 */
+function stockPlaceText(item: WmMaterialStockVO) {
+  return [
+    item.warehouseName,
+    item.locationName,
+    item.areaName,
+  ].filter(Boolean).join(' / ') || '-'
+}
+
+/** 冻结状态切换 */
+async function handleFrozenChange(item: WmMaterialStockVO) {
+  if (frozenLoadingId.value) {
+    return
+  }
+  const targetFrozen = !item.frozen
+  const actionText = targetFrozen ? '冻结' : '解冻'
+  const { confirm } = await uni.showModal({
+    title: `${actionText}确认`,
+    content: `确定要${actionText}该库存记录吗？`,
+  })
+  if (!confirm) {
+    return
+  }
+  frozenLoadingId.value = item.id
+  try {
+    await updateMaterialStockFrozen({ id: item.id, frozen: targetFrozen })
+    toast.success(`${actionText}成功`)
+    item.frozen = targetFrozen
+    uni.$emit('mes:wm:materialstock:reload')
+  } finally {
+    frozenLoadingId.value = undefined
+  }
+}
+
+/** 导出按钮操作 */
+async function handleExport() {
+  if (exportLoading.value) {
+    return
+  }
+  const { confirm } = await uni.showModal({
+    title: '导出确认',
+    content: '确定要导出当前筛选数据吗？',
+  })
+  if (!confirm) {
+    return
+  }
+  exportLoading.value = true
+  try {
+    await downloadApiFile('/mes/wm/material-stock/export-excel', queryParams.value, '库存台账.xls')
+    toast.success('导出成功')
+  } finally {
+    exportLoading.value = false
+  }
 }
 
 /** 初始化 */

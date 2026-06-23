@@ -2,143 +2,57 @@
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
     <wd-navbar
-      :title="getTitle"
+      title="库存冻结状态"
       left-arrow placeholder safe-area-inset-top fixed
       @click-left="handleBack"
     />
 
-    <!-- 表单区域 -->
-    <view>
-      <wd-form ref="formRef" :model="formData" :schema="formSchema">
-        <wd-cell-group border>
-          <wd-form-item title="itemTypeId" title-width="200rpx" prop="itemTypeId" center>
-            <wd-input-number v-model="formData.itemTypeId" :min="0" />
-          </wd-form-item>
-          <wd-form-item title="itemId" title-width="200rpx" prop="itemId" center>
-            <wd-input-number v-model="formData.itemId" :min="0" />
-          </wd-form-item>
-          <wd-form-item title="itemCode" title-width="200rpx" prop="itemCode">
-            <wd-input
-              v-model="formData.itemCode"
-              clearable
-              placeholder="请输入itemCode"
-            />
-          </wd-form-item>
-          <wd-form-item title="itemName" title-width="200rpx" prop="itemName">
-            <wd-input
-              v-model="formData.itemName"
-              clearable
-              placeholder="请输入itemName"
-            />
-          </wd-form-item>
-          <wd-form-item title="specification" title-width="200rpx" prop="specification">
-            <wd-input
-              v-model="formData.specification"
-              clearable
-              placeholder="请输入specification"
-            />
-          </wd-form-item>
-          <wd-form-item title="unitMeasureName" title-width="200rpx" prop="unitMeasureName">
-            <wd-input
-              v-model="formData.unitMeasureName"
-              clearable
-              placeholder="请输入unitMeasureName"
-            />
-          </wd-form-item>
-          <wd-form-item title="batchId" title-width="200rpx" prop="batchId" center>
-            <wd-input-number v-model="formData.batchId" :min="0" />
-          </wd-form-item>
-          <wd-form-item title="batchCode" title-width="200rpx" prop="batchCode">
-            <wd-input
-              v-model="formData.batchCode"
-              clearable
-              placeholder="请输入batchCode"
-            />
-          </wd-form-item>
-          <wd-form-item title="warehouseId" title-width="200rpx" prop="warehouseId" center>
-            <wd-input-number v-model="formData.warehouseId" :min="0" />
-          </wd-form-item>
-          <wd-form-item title="warehouseCode" title-width="200rpx" prop="warehouseCode">
-            <wd-input
-              v-model="formData.warehouseCode"
-              clearable
-              placeholder="请输入warehouseCode"
-            />
-          </wd-form-item>
-          <wd-form-item title="warehouseName" title-width="200rpx" prop="warehouseName">
-            <wd-input
-              v-model="formData.warehouseName"
-              clearable
-              placeholder="请输入warehouseName"
-            />
-          </wd-form-item>
-          <wd-form-item title="locationId" title-width="200rpx" prop="locationId" center>
-            <wd-input-number v-model="formData.locationId" :min="0" />
-          </wd-form-item>
-          <wd-form-item title="locationName" title-width="200rpx" prop="locationName">
-            <wd-input
-              v-model="formData.locationName"
-              clearable
-              placeholder="请输入locationName"
-            />
-          </wd-form-item>
-          <wd-form-item title="areaId" title-width="200rpx" prop="areaId" center>
-            <wd-input-number v-model="formData.areaId" :min="0" />
-          </wd-form-item>
-          <wd-form-item title="areaName" title-width="200rpx" prop="areaName">
-            <wd-input
-              v-model="formData.areaName"
-              clearable
-              placeholder="请输入areaName"
-            />
-          </wd-form-item>
-          <wd-form-item title="vendorId" title-width="200rpx" prop="vendorId" center>
-            <wd-input-number v-model="formData.vendorId" :min="0" />
-          </wd-form-item>
-          <wd-form-item title="vendorName" title-width="200rpx" prop="vendorName">
-            <wd-input
-              v-model="formData.vendorName"
-              clearable
-              placeholder="请输入vendorName"
-            />
-          </wd-form-item>
-          <wd-form-item title="quantity" title-width="200rpx" prop="quantity" center>
-            <wd-input-number v-model="formData.quantity" :min="0" />
-          </wd-form-item>
-          <wd-datetime-picker
-            v-model="formData.receiptTime"
-            type="datetime"
-            label="receiptTime"
-            label-width="200rpx"
-            prop="receiptTime"
-          />
-          <wd-form-item title="frozen" title-width="200rpx" prop="frozen" center>
-            <wd-switch v-model="formData.frozen" />
-          </wd-form-item>
-        </wd-cell-group>
-      </wd-form>
+    <!-- 库存信息 -->
+    <view class="p-24rpx">
+      <wd-cell-group border>
+        <wd-cell title="产品物料编码" :value="formData?.itemCode || '-'" />
+        <wd-cell title="产品物料名称" :value="formData?.itemName || '-'" />
+        <wd-cell title="规格型号" :value="formData?.specification || '-'" />
+        <wd-cell title="在库数量" :value="quantityText" />
+        <wd-cell title="批次号" :value="formData?.batchCode || '-'" />
+        <wd-cell title="库存位置" :value="stockPlaceText" />
+        <wd-cell title="入库日期" :value="formatDate(formData?.receiptTime) || '-'" />
+        <wd-cell title="当前状态" :value="formData?.frozen ? '已冻结' : '可用'" />
+      </wd-cell-group>
+
+      <view class="mt-24rpx rounded-12rpx bg-white p-24rpx">
+        <view class="mb-12rpx text-30rpx text-[#333] font-semibold">
+          冻结设置
+        </view>
+        <view class="mb-20rpx text-26rpx text-[#999]">
+          冻结后该库存记录不可参与出库事务；解冻后恢复可用。
+        </view>
+        <wd-cell title="是否冻结" center>
+          <wd-switch v-model="frozen" />
+        </wd-cell>
+      </view>
     </view>
 
     <!-- 底部保存按钮 -->
     <view class="yd-detail-footer">
       <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
-        保存
+        保存冻结状态
       </wd-button>
     </view>
   </view>
 </template>
 
 <script lang="ts" setup>
-import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { WmMaterialStockVO } from '@/api/mes/wm/materialstock'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
-import { updateMaterialStockFrozen, getMaterialStock } from '@/api/mes/wm/materialstock'
+import { computed, onMounted, ref, watch } from 'vue'
+import { getMaterialStock, updateMaterialStockFrozen } from '@/api/mes/wm/materialstock'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
-import { createFormSchema } from '@/utils/wot'
+import { formatDate } from '@/utils/date'
 
 const props = defineProps<{
-  id?: number | string | any
+  id?: number | string
 }>()
 
 definePage({
@@ -149,35 +63,27 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => props.id ? '编辑库存台账' : '新增库存台账')
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/wm/materialstock/form/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
 const formLoading = ref(false) // 表单提交状态
-const formData = ref<any>({
-  id: undefined,
-  itemTypeId: undefined,
-  itemId: undefined,
-  itemCode: '',
-  itemName: '',
-  specification: '',
-  unitMeasureName: '',
-  batchId: undefined,
-  batchCode: '',
-  warehouseId: undefined,
-  warehouseCode: '',
-  warehouseName: '',
-  locationId: undefined,
-  locationName: '',
-  areaId: undefined,
-  areaName: '',
-  vendorId: undefined,
-  vendorName: '',
-  quantity: undefined,
-  receiptTime: '',
-  frozen: false,
-} as WmMaterialStockVO) // 表单数据
-const formSchema = createFormSchema({
-
+const formData = ref<WmMaterialStockVO>() // 库存详情
+const frozen = ref(false) // 冻结状态
+const quantityText = computed(() => {
+  if (!formData.value) {
+    return '-'
+  }
+  return `${formData.value.quantity ?? '-'} ${formData.value.unitMeasureName || ''}`.trim()
 })
-const formRef = ref<FormInstance>() // 表单组件引用
+const stockPlaceText = computed(() => {
+  if (!formData.value) {
+    return '-'
+  }
+  return [
+    formData.value.warehouseName,
+    formData.value.locationName,
+    formData.value.areaName,
+  ].filter(Boolean).join(' / ') || '-'
+})
 
 /** 返回上一页 */
 function handleBack() {
@@ -186,28 +92,49 @@ function handleBack() {
 
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
-  formData.value = await getMaterialStock(props.id)
+  toast.loading('加载中...')
+  try {
+    formData.value = await getMaterialStock(currentId.value)
+    frozen.value = formData.value.frozen
+  } finally {
+    toast.close()
+  }
 }
 
-/** 提交表单 */
-async function handleSubmit() {
-  const result = await formRef.value?.validate()
-  if (result && !result.valid) {
+/** 加载页面数据 */
+async function loadPageData() {
+  if (!currentId.value) {
+    formData.value = undefined
+    frozen.value = false
     return
   }
+  await getDetail()
+}
 
+/** 提交冻结状态 */
+async function handleSubmit() {
+  if (!formData.value) {
+    return
+  }
+  if (formData.value.frozen === frozen.value) {
+    toast.warning('冻结状态未变化')
+    return
+  }
+  const actionText = frozen.value ? '冻结' : '解冻'
+  const { confirm } = await uni.showModal({
+    title: `${actionText}确认`,
+    content: `确定要${actionText}该库存记录吗？`,
+  })
+  if (!confirm) {
+    return
+  }
   formLoading.value = true
   try {
-    if (props.id) {
-      await updateMaterialStockFrozen(formData.value)
-      toast.success('修改成功')
-    } else {
-      await updateMaterialStockFrozen(formData.value)
-      toast.success('新增成功')
-    }
+    await updateMaterialStockFrozen({ id: formData.value.id, frozen: frozen.value })
+    toast.success(`${actionText}成功`)
     uni.$emit('mes:wm:materialstock:reload')
     setTimeout(() => {
       handleBack()
@@ -219,9 +146,10 @@ async function handleSubmit() {
 
 /** 初始化 */
 onMounted(() => {
-  getDetail()
+  loadPageData()
+})
+
+watch(currentId, () => {
+  loadPageData()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

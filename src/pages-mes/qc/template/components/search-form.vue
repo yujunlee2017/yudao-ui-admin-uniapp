@@ -17,41 +17,33 @@
         <view class="yd-search-form-label">
           方案编号
         </view>
-        <wd-input
-          v-model="formData.code"
-          placeholder="请输入方案编号"
-          clearable
-        />
+        <wd-input v-model="formData.code" placeholder="请输入方案编号" clearable />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           方案名称
         </view>
-        <wd-input
-          v-model="formData.name"
-          placeholder="请输入方案名称"
-          clearable
-        />
+        <wd-input v-model="formData.name" placeholder="请输入方案名称" clearable />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           检测种类
         </view>
-        <wd-input
-          v-model="formData.type"
-          placeholder="请输入检测种类"
-          clearable
-        />
+        <wd-radio-group v-model="formData.type" type="button">
+          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_QC_TYPE)" :key="dict.value" :value="dict.value">
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           状态
         </view>
-        <wd-input
-          v-model="formData.status"
-          placeholder="请输入状态"
-          clearable
-        />
+        <wd-radio-group v-model="formData.status" type="button">
+          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)" :key="dict.value" :value="dict.value">
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -66,36 +58,39 @@
 </template>
 
 <script lang="ts" setup>
+import type { QcTemplatePageParam } from '@/api/mes/qc/template'
 import { computed, reactive, ref } from 'vue'
+import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 
 const emit = defineEmits<{
-  search: [data: Record<string, any>]
+  search: [data: Partial<QcTemplatePageParam>]
   reset: []
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const formData = reactive({
-  code: undefined as any,
-  name: undefined as any,
-  type: undefined as any,
-  status: undefined as any,
+const formData = reactive<Partial<QcTemplatePageParam>>({
+  code: undefined,
+  name: undefined,
+  type: undefined,
+  status: undefined,
 }) // 搜索表单数据
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
   const conditions: string[] = []
-  if (formData.code !== undefined && formData.code !== '') {
-    conditions.push(`方案编号:${formData.code}`)
+  if (formData.code) {
+    conditions.push(`编号:${formData.code}`)
   }
-  if (formData.name !== undefined && formData.name !== '') {
-    conditions.push(`方案名称:${formData.name}`)
+  if (formData.name) {
+    conditions.push(`名称:${formData.name}`)
   }
-  if (formData.type !== undefined && formData.type !== '') {
-    conditions.push(`检测种类:${formData.type}`)
+  if (formData.type != null) {
+    conditions.push(`种类:${getDictLabel(DICT_TYPE.MES_QC_TYPE, formData.type)}`)
   }
-  if (formData.status !== undefined && formData.status !== '') {
-    conditions.push(`状态:${formData.status}`)
+  if (formData.status != null) {
+    conditions.push(`状态:${getDictLabel(DICT_TYPE.COMMON_STATUS, formData.status)}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索质检方案'
 })
@@ -106,13 +101,20 @@ function handleSearch() {
   emit('search', { ...formData })
 }
 
-/** 重置按钮操作 */
-function handleReset() {
+/** 重置字段 */
+function resetFields() {
   formData.code = undefined
   formData.name = undefined
   formData.type = undefined
   formData.status = undefined
+}
+
+/** 重置按钮操作 */
+function handleReset() {
+  resetFields()
   visible.value = false
   emit('reset')
 }
+
+defineExpose({ resetFields })
 </script>

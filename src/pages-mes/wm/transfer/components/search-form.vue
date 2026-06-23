@@ -17,41 +17,41 @@
         <view class="yd-search-form-label">
           转移单编号
         </view>
-        <wd-input
-          v-model="formData.code"
-          placeholder="请输入转移单编号"
-          clearable
-        />
+        <wd-input v-model="formData.code" placeholder="请输入转移单编号" clearable />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           转移单名称
         </view>
-        <wd-input
-          v-model="formData.name"
-          placeholder="请输入转移单名称"
-          clearable
-        />
+        <wd-input v-model="formData.name" placeholder="请输入转移单名称" clearable />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           转移单类型
         </view>
-        <wd-input
-          v-model="formData.type"
-          placeholder="请输入转移单类型"
-          clearable
-        />
+        <wd-radio-group v-model="formData.type" type="button">
+          <wd-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.MES_WM_TRANSFER_TYPE)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           单据状态
         </view>
-        <wd-input
-          v-model="formData.status"
-          placeholder="请输入单据状态"
-          clearable
-        />
+        <wd-radio-group v-model="formData.status" type="button">
+          <wd-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.MES_WM_TRANSFER_STATUS)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -66,36 +66,41 @@
 </template>
 
 <script lang="ts" setup>
+import type { WmTransferQueryParams } from '@/api/mes/wm/transfer'
 import { computed, reactive, ref } from 'vue'
+import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
+
+interface SearchFormData {
+  code?: string
+  name?: string
+  type?: number
+  status?: number
+}
 
 const emit = defineEmits<{
-  search: [data: Record<string, any>]
+  search: [data: WmTransferQueryParams]
   reset: []
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const formData = reactive({
-  code: undefined as any,
-  name: undefined as any,
-  type: undefined as any,
-  status: undefined as any,
-}) // 搜索表单数据
+const formData = reactive<SearchFormData>({}) // 搜索表单数据
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
   const conditions: string[] = []
-  if (formData.code !== undefined && formData.code !== '') {
-    conditions.push(`转移单编号:${formData.code}`)
+  if (formData.code) {
+    conditions.push(`编号:${formData.code}`)
   }
-  if (formData.name !== undefined && formData.name !== '') {
-    conditions.push(`转移单名称:${formData.name}`)
+  if (formData.name) {
+    conditions.push(`名称:${formData.name}`)
   }
-  if (formData.type !== undefined && formData.type !== '') {
-    conditions.push(`转移单类型:${formData.type}`)
+  if (formData.type != null) {
+    conditions.push(`类型:${getDictLabel(DICT_TYPE.MES_WM_TRANSFER_TYPE, formData.type)}`)
   }
-  if (formData.status !== undefined && formData.status !== '') {
-    conditions.push(`单据状态:${formData.status}`)
+  if (formData.status != null) {
+    conditions.push(`状态:${getDictLabel(DICT_TYPE.MES_WM_TRANSFER_STATUS, formData.status)}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索库存调拨'
 })
@@ -103,7 +108,14 @@ const placeholder = computed(() => {
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  emit('search', { ...formData })
+  emit('search', {
+    pageNo: 1,
+    pageSize: 10,
+    code: formData.code || undefined,
+    name: formData.name || undefined,
+    type: formData.type,
+    status: formData.status,
+  })
 }
 
 /** 重置按钮操作 */

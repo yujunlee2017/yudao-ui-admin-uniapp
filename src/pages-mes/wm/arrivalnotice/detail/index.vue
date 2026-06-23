@@ -8,39 +8,83 @@
     />
 
     <!-- 详情内容 -->
-    <view>
+    <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
       <wd-cell-group border>
-        <wd-cell title="通知单编号" :value="formatFieldValue(formData?.code) || '-'" />
-        <wd-cell title="通知单名称" :value="formatFieldValue(formData?.name) || '-'" />
-        <wd-cell title="采购订单编号" :value="formatFieldValue(formData?.purchaseOrderCode) || '-'" />
-        <wd-cell title="供应商名称" :value="formatFieldValue(formData?.vendorName) || '-'" />
-        <wd-cell title="联系人" :value="formatFieldValue(formData?.contactName) || '-'" />
-        <wd-cell title="联系方式" :value="formatFieldValue(formData?.contactTelephone) || '-'" />
-        <wd-cell title="到货日期" :value="formatFieldValue(formData?.arrivalDate) || '-'" />
-        <wd-cell title="单据状态" :value="formatFieldValue(formData?.status) || '-'" />
-        <wd-cell title="id" :value="formatFieldValue(formData?.id) || '-'" />
-        <wd-cell title="vendorId" :value="formatFieldValue(formData?.vendorId) || '-'" />
-        <wd-cell title="vendorCode" :value="formatFieldValue(formData?.vendorCode) || '-'" />
-        <wd-cell title="remark" :value="formatFieldValue(formData?.remark) || '-'" />
-        <wd-cell title="createTime" :value="formatFieldValue(formData?.createTime) || '-'" />
+        <wd-cell title="通知单编号" :value="formData?.code || '-'" />
+        <wd-cell title="通知单名称" :value="formData?.name || '-'" />
+        <wd-cell title="采购订单编号" :value="formData?.purchaseOrderCode || '-'" />
+        <wd-cell title="供应商编码" :value="formData?.vendorCode || '-'" />
+        <wd-cell title="供应商名称" :value="formData?.vendorName || '-'" />
+        <wd-cell title="到货日期" :value="formatDate(formData?.arrivalDate) || '-'" />
+        <wd-cell title="联系人" :value="formData?.contactName || '-'" />
+        <wd-cell title="联系方式" :value="formData?.contactTelephone || '-'" />
+        <wd-cell title="单据状态">
+          <dict-tag v-if="formData?.status != null" :type="DICT_TYPE.MES_WM_ARRIVAL_NOTICE_STATUS" :value="formData.status" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="备注" :value="formData?.remark || '-'" />
+        <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime) || '-'" />
       </wd-cell-group>
-    </view>
+      <ArrivalNoticeLineList v-if="currentId" :notice-id="currentId" readonly />
+      <view v-if="hasFooter" class="mx-24rpx mt-24rpx rounded-12rpx bg-white p-24rpx">
+        <view class="mb-20rpx text-28rpx text-[#333] font-semibold">
+          通知操作
+        </view>
+        <view class="flex gap-16rpx text-28rpx">
+          <view
+            v-if="canUpdatePrepare"
+            class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white"
+            @click="handleEdit"
+          >
+            编辑
+          </view>
+          <view
+            v-if="canDeletePrepare"
+            class="flex-1 rounded-8rpx bg-[#f56c6c] py-20rpx text-center text-white"
+            :class="deleting ? 'opacity-60' : ''"
+            @click="handleDelete"
+          >
+            {{ deleting ? '删除中...' : '删除' }}
+          </view>
+          <view
+            v-if="canSubmitPrepare"
+            class="flex-1 rounded-8rpx bg-[#faad14] py-20rpx text-center text-white"
+            :class="submitting ? 'opacity-60' : ''"
+            @click="handleSubmitNotice"
+          >
+            {{ submitting ? '提交中...' : '提交' }}
+          </view>
+        </view>
+      </view>
+      <view class="h-180rpx" />
+    </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button
-          v-if="hasAccessByCodes(['mes:wm-arrival-notice:update'])"
-          class="flex-1" type="warning" @click="handleEdit"
+    <view v-if="hasFooter" class="yd-detail-footer">
+      <view class="flex gap-24rpx text-28rpx">
+        <view
+          v-if="canUpdatePrepare"
+          class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white"
+          @click="handleEdit"
         >
           编辑
-        </wd-button>
-        <wd-button
-          v-if="hasAccessByCodes(['mes:wm-arrival-notice:delete'])"
-          class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
+        </view>
+        <view
+          v-if="canDeletePrepare"
+          class="flex-1 rounded-8rpx bg-[#f56c6c] py-20rpx text-center text-white"
+          :class="deleting ? 'opacity-60' : ''"
+          @click="handleDelete"
         >
-          删除
-        </wd-button>
+          {{ deleting ? '删除中...' : '删除' }}
+        </view>
+        <view
+          v-if="canSubmitPrepare"
+          class="flex-1 rounded-8rpx bg-[#faad14] py-20rpx text-center text-white"
+          :class="submitting ? 'opacity-60' : ''"
+          @click="handleSubmitNotice"
+        >
+          {{ submitting ? '提交中...' : '提交' }}
+        </view>
       </view>
     </view>
   </view>
@@ -48,16 +92,20 @@
 
 <script lang="ts" setup>
 import type { WmArrivalNoticeVO } from '@/api/mes/wm/arrivalnotice'
+import { onShow } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
-import { getArrivalNotice, deleteArrivalNotice } from '@/api/mes/wm/arrivalnotice'
+import { computed, onMounted, ref, watch } from 'vue'
+import { deleteArrivalNotice, getArrivalNotice, submitArrivalNotice } from '@/api/mes/wm/arrivalnotice'
 import { useAccess } from '@/hooks/useAccess'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
-import { formatDateTime } from '@/utils/date'
+import { DICT_TYPE, MesWmArrivalNoticeStatusEnum } from '@/utils/constants'
+import { formatDate, formatDateTime } from '@/utils/date'
+import ArrivalNoticeLineList from '../components/arrival-notice-line-list.vue'
 
 const props = defineProps<{
-  id?: number | string | any
+  id?: number | string
 }>()
 
 definePage({
@@ -70,64 +118,77 @@ definePage({
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const formData = ref<any>() // 详情数据
+const formData = ref<WmArrivalNoticeVO>() // 详情数据
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/wm/arrivalnotice/detail/index')
+const currentId = computed(() => getRouteQueryNumber('id')) // 当前详情编号
 const deleting = ref(false) // 删除状态
+const submitting = ref(false) // 提交状态
+const canUpdatePrepare = computed(() => (
+  hasAccessByCodes(['mes:wm-arrival-notice:update'])
+  && formData.value?.status === MesWmArrivalNoticeStatusEnum.PREPARE
+))
+const canDeletePrepare = computed(() => (
+  hasAccessByCodes(['mes:wm-arrival-notice:delete'])
+  && formData.value?.status === MesWmArrivalNoticeStatusEnum.PREPARE
+))
+const canSubmitPrepare = computed(() => (
+  hasAccessByCodes(['mes:wm-arrival-notice:update'])
+  && formData.value?.status === MesWmArrivalNoticeStatusEnum.PREPARE
+))
+const hasFooter = computed(() => canUpdatePrepare.value || canDeletePrepare.value || canSubmitPrepare.value)
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/wm/arrivalnotice/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
-}
-
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getArrivalNotice(props.id)
+    formData.value = await getArrivalNotice(currentId.value)
   } finally {
     toast.close()
+  }
+}
+
+/** 初始化页面数据 */
+async function initPage() {
+  if (!currentId.value) {
+    formData.value = undefined
+    return
+  }
+  if (!formData.value || formData.value.id !== currentId.value) {
+    await getDetail()
   }
 }
 
 /** 编辑 */
 function handleEdit() {
   uni.navigateTo({
-    url: `/pages-mes/wm/arrivalnotice/form/index?id=${props.id}`,
+    url: `/pages-mes/wm/arrivalnotice/form/index?id=${currentId.value}`,
   })
 }
 
 /** 删除 */
 async function handleDelete() {
-  if (!props.id) {
+  if (!currentId.value || !formData.value) {
     return
   }
   try {
     await dialog.confirm({
       title: '提示',
-      msg: '确定要删除该到货通知吗？',
+      msg: `确定要删除「${formData.value.code || formData.value.name || formData.value.id}」吗？`,
     })
   } catch {
     return
   }
   deleting.value = true
   try {
-    await deleteArrivalNotice(props.id)
+    await deleteArrivalNotice(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:wm:arrivalnotice:reload')
     setTimeout(() => {
@@ -138,9 +199,41 @@ async function handleDelete() {
   }
 }
 
+/** 提交到货通知单 */
+async function handleSubmitNotice() {
+  if (!currentId.value) {
+    return
+  }
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: '确认提交该到货通知单？提交后将不能修改。',
+    })
+  } catch {
+    return
+  }
+  submitting.value = true
+  try {
+    await submitArrivalNotice(currentId.value)
+    toast.success('提交成功')
+    await getDetail()
+    uni.$emit('mes:wm:arrivalnotice:reload')
+  } finally {
+    submitting.value = false
+  }
+}
+
 /** 初始化 */
 onMounted(() => {
-  getDetail()
+  initPage()
+})
+
+onShow(() => {
+  initPage()
+})
+
+watch(currentId, () => {
+  initPage()
 })
 </script>
 

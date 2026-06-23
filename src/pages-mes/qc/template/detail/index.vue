@@ -1,37 +1,56 @@
 <template>
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
-    <wd-navbar
-      title="MES 质检方案详情"
-      left-arrow placeholder safe-area-inset-top fixed
-      @click-left="handleBack"
-    />
+    <wd-navbar title="质检方案详情" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
 
     <!-- 详情内容 -->
-    <view>
+    <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
       <wd-cell-group border>
-        <wd-cell title="方案编号" :value="formatFieldValue(formData?.code) || '-'" />
-        <wd-cell title="方案名称" :value="formatFieldValue(formData?.name) || '-'" />
-        <wd-cell title="检测种类" :value="formatFieldValue(formData?.types) || '-'" />
-        <wd-cell title="状态" :value="formatFieldValue(formData?.status) || '-'" />
-        <wd-cell title="备注" :value="formatFieldValue(formData?.remark) || '-'" />
-        <wd-cell title="创建时间" :value="formatFieldValue(formData?.createTime) || '-'" />
-        <wd-cell title="编号" :value="formatFieldValue(formData?.id) || '-'" />
+        <wd-cell title="方案编号" :value="formData?.code || '-'" />
+        <wd-cell title="方案名称" :value="formData?.name || '-'" />
+        <wd-cell title="检测种类">
+          <template v-if="formData?.types?.length">
+            <dict-tag
+              v-for="type in formData.types"
+              :key="type"
+              class="mb-8rpx mr-8rpx"
+              :type="DICT_TYPE.MES_QC_TYPE"
+              :value="type"
+            />
+          </template>
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="状态">
+          <dict-tag v-if="formData?.status != null" :type="DICT_TYPE.COMMON_STATUS" :value="formData.status" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="备注" :value="formData?.remark || '-'" />
+        <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime) || '-'" />
+        <wd-cell title="编号" :value="formData?.id ? String(formData.id) : '-'" />
       </wd-cell-group>
-    </view>
+
+      <TemplateIndicatorSection v-if="templateId" :template-id="templateId" />
+      <TemplateItemSection v-if="templateId" :template-id="templateId" />
+      <view class="h-160rpx" />
+    </scroll-view>
 
     <!-- 底部操作按钮 -->
     <view class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <wd-button
-          v-if="hasAccessByCodes(['mes:qc-template:update'])"
-          class="flex-1" type="warning" @click="handleEdit"
+          v-if="canUpdate"
+          class="flex-1"
+          type="warning"
+          @click="handleEdit"
         >
           编辑
         </wd-button>
         <wd-button
-          v-if="hasAccessByCodes(['mes:qc-template:delete'])"
-          class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
+          v-if="canDelete"
+          class="flex-1"
+          type="danger"
+          :loading="deleting"
+          @click="handleDelete"
         >
           删除
         </wd-button>
@@ -42,17 +61,20 @@
 
 <script lang="ts" setup>
 import type { QcTemplateVO } from '@/api/mes/qc/template'
+import { onShow } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
-import { getTemplate, deleteTemplate } from '@/api/mes/qc/template'
+import { computed, onMounted, ref, watch } from 'vue'
+import { deleteTemplate, getTemplate } from '@/api/mes/qc/template'
 import { useAccess } from '@/hooks/useAccess'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
+import TemplateIndicatorSection from '../components/template-indicator-section.vue'
+import TemplateItemSection from '../components/template-item-section.vue'
 
-const props = defineProps<{
-  id?: number | string | any
-}>()
+const props = defineProps<{ id?: number | string }>()
 
 definePage({
   style: {
@@ -64,69 +86,67 @@ definePage({
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const formData = ref<any>() // 详情数据
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/qc/template/detail/index')
+const currentId = computed(() => getRouteQueryNumber('id')) // 当前详情编号
+const formData = ref<QcTemplateVO>() // 详情数据
 const deleting = ref(false) // 删除状态
+const templateId = computed(() => currentId.value || 0)
+const canUpdate = computed(() => hasAccessByCodes(['mes:qc-template:update']))
+const canDelete = computed(() => hasAccessByCodes(['mes:qc-template:delete']))
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/qc/template/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
-}
-
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getTemplate(props.id)
+    formData.value = await getTemplate(currentId.value)
   } finally {
     toast.close()
   }
 }
 
-/** 编辑 */
-function handleEdit() {
-  uni.navigateTo({
-    url: `/pages-mes/qc/template/form/index?id=${props.id}`,
-  })
+/** 初始化页面数据 */
+async function initPage() {
+  if (!currentId.value) {
+    formData.value = undefined
+    return
+  }
+  if (!formData.value || formData.value.id !== currentId.value) {
+    await getDetail()
+  }
 }
 
-/** 删除 */
+/** 编辑质检方案 */
+function handleEdit() {
+  uni.navigateTo({ url: `/pages-mes/qc/template/form/index?id=${currentId.value}` })
+}
+
+/** 删除质检方案 */
 async function handleDelete() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   try {
     await dialog.confirm({
       title: '提示',
-      msg: '确定要删除该质检方案吗？',
+      msg: '确定要删除该质检方案吗？删除后将无法恢复。',
     })
   } catch {
     return
   }
   deleting.value = true
   try {
-    await deleteTemplate(props.id)
+    await deleteTemplate(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:qc:template:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    setTimeout(() => handleBack(), 500)
   } finally {
     deleting.value = false
   }
@@ -134,9 +154,14 @@ async function handleDelete() {
 
 /** 初始化 */
 onMounted(() => {
-  getDetail()
+  initPage()
+})
+
+onShow(() => {
+  initPage()
+})
+
+watch(currentId, () => {
+  initPage()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

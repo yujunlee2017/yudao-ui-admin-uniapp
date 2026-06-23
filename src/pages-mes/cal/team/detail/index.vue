@@ -1,36 +1,48 @@
 <template>
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
-    <wd-navbar
-      title="MES 班组详情"
-      left-arrow placeholder safe-area-inset-top fixed
-      @click-left="handleBack"
-    />
+    <wd-navbar title="班组详情" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
 
     <!-- 详情内容 -->
-    <view>
+    <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
       <wd-cell-group border>
-        <wd-cell title="班组编码" :value="formatFieldValue(formData?.code) || '-'" />
-        <wd-cell title="班组名称" :value="formatFieldValue(formData?.name) || '-'" />
-        <wd-cell title="班组类型" :value="formatFieldValue(formData?.calendarType) || '-'" />
-        <wd-cell title="备注" :value="formatFieldValue(formData?.remark) || '-'" />
-        <wd-cell title="创建时间" :value="formatFieldValue(formData?.createTime) || '-'" />
-        <wd-cell title="id" :value="formatFieldValue(formData?.id) || '-'" />
+        <wd-cell title="班组编码" :value="formData?.code || '-'" />
+        <wd-cell title="班组名称" :value="formData?.name || '-'" />
+        <wd-cell title="班组类型">
+          <dict-tag
+            v-if="formData?.calendarType != null"
+            :type="DICT_TYPE.MES_CAL_CALENDAR_TYPE"
+            :value="formData.calendarType"
+          />
+          <text v-else>
+            -
+          </text>
+        </wd-cell>
+        <wd-cell title="备注" :value="formData?.remark || '-'" />
+        <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime) || '-'" />
       </wd-cell-group>
-    </view>
+
+      <TeamMemberList :team-id="teamId" />
+      <view class="h-160rpx" />
+    </scroll-view>
 
     <!-- 底部操作按钮 -->
     <view class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <wd-button
           v-if="hasAccessByCodes(['mes:cal-team:update'])"
-          class="flex-1" type="warning" @click="handleEdit"
+          class="flex-1"
+          type="warning"
+          @click="handleEdit"
         >
           编辑
         </wd-button>
         <wd-button
           v-if="hasAccessByCodes(['mes:cal-team:delete'])"
-          class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
+          class="flex-1"
+          type="danger"
+          :loading="deleting"
+          @click="handleDelete"
         >
           删除
         </wd-button>
@@ -43,15 +55,16 @@
 import type { CalTeamVO } from '@/api/mes/cal/team'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
-import { getTeam, deleteTeam } from '@/api/mes/cal/team'
+import { computed, onMounted, ref, watch } from 'vue'
+import { deleteTeam, getTeam } from '@/api/mes/cal/team'
 import { useAccess } from '@/hooks/useAccess'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
+import TeamMemberList from '../components/team-member-list.vue'
 
-const props = defineProps<{
-  id?: number | string | any
-}>()
+const props = defineProps<{ id?: number | string }>()
 
 definePage({
   style: {
@@ -63,79 +76,66 @@ definePage({
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const formData = ref<any>() // 详情数据
+const formData = ref<CalTeamVO>() // 详情数据
 const deleting = ref(false) // 删除状态
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/cal/team/detail/index')
+const teamId = computed(() => getRouteQueryNumber('id'))
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/cal/team/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
-}
-
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!teamId.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getTeam(props.id)
+    formData.value = await getTeam(teamId.value)
   } finally {
     toast.close()
   }
 }
 
-/** 编辑 */
+/** 编辑班组 */
 function handleEdit() {
-  uni.navigateTo({
-    url: `/pages-mes/cal/team/form/index?id=${props.id}`,
-  })
+  if (!teamId.value) {
+    return
+  }
+  uni.navigateTo({ url: `/pages-mes/cal/team/form/index?id=${teamId.value}` })
 }
 
-/** 删除 */
+/** 删除班组 */
 async function handleDelete() {
-  if (!props.id) {
+  if (!teamId.value) {
     return
   }
   try {
     await dialog.confirm({
-      title: '提示',
-      msg: '确定要删除该班组吗？',
+      title: '删除确认',
+      msg: `确定要删除「${formData.value?.name || formData.value?.code || teamId.value}」班组吗？删除后会级联清理班组成员和排班记录。`,
     })
   } catch {
     return
   }
   deleting.value = true
   try {
-    await deleteTeam(props.id)
+    await deleteTeam(teamId.value)
     toast.success('删除成功')
     uni.$emit('mes:cal:team:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    setTimeout(() => handleBack(), 500)
   } finally {
     deleting.value = false
   }
 }
 
-/** 初始化 */
 onMounted(() => {
   getDetail()
 })
-</script>
 
-<style lang="scss" scoped>
-</style>
+watch(teamId, () => {
+  getDetail()
+})
+</script>

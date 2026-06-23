@@ -10,7 +10,14 @@
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
-    <!-- 列表 -->
+    <!-- 导出入口 -->
+    <view v-if="hasAccessByCodes(['mes:wm-outsource-receipt:export'])" class="bg-white px-24rpx py-16rpx">
+      <wd-button block variant="plain" :loading="exportLoading" @click="handleExport">
+        导出当前筛选数据
+      </wd-button>
+    </view>
+
+    <!-- 分页列表 -->
     <z-paging
       ref="pagingRef"
       v-model="list"
@@ -31,33 +38,48 @@
           @click="handleDetail(item)"
         >
           <view class="p-24rpx">
-            <view class="mb-16rpx flex items-center justify-between gap-16rpx">
-              <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-                {{ formatFieldValue(item.code) || '-' }}
+            <view class="mb-16rpx flex items-start justify-between gap-16rpx">
+              <view class="min-w-0 flex-1">
+                <view class="truncate text-32rpx text-[#333] font-semibold">
+                  {{ item.code || '-' }}
+                </view>
+                <view class="mt-6rpx truncate text-26rpx text-[#666]">
+                  {{ item.name || '-' }}
+                </view>
               </view>
-              <view class="shrink-0 text-24rpx text-[#999]">
-                #{{ item.id }}
-              </view>
+              <dict-tag :type="DICT_TYPE.MES_WM_OUTSOURCE_RECEIPT_STATUS" :value="item.status" />
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">入库单名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.name) || '-' }}</text>
+            <view class="mb-12rpx flex text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">外协工单：</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.workOrderCode || '-' }}</text>
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">外协工单号：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.workOrderCode) || '-' }}</text>
+            <view class="mb-12rpx flex text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">供应商：</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.vendorName || '-' }}</text>
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">供应商名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.vendorName) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+            <view class="mb-16rpx flex text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">入库日期：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.receiptDate) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ formatDateTime(item.receiptDate) || '-' }}</text>
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">单据状态：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.status) || '-' }}</text>
+            <view class="flex flex-wrap gap-16rpx text-26rpx">
+              <view v-if="canUpdatePrepare(item)" class="rounded-8rpx bg-[#e6f4ff] px-20rpx py-10rpx text-[#1677ff]" @click.stop="handleEdit(item)">
+                编辑
+              </view>
+              <view v-if="canSubmitPrepare(item)" class="rounded-8rpx bg-[#fff7e6] px-20rpx py-10rpx text-[#fa8c16]" @click.stop="handleSubmitIssue(item)">
+                提交
+              </view>
+              <view v-if="canDeletePrepare(item)" class="rounded-8rpx bg-[#fff1f0] px-20rpx py-10rpx text-[#f5222d]" @click.stop="handleDelete(item)">
+                删除
+              </view>
+              <view v-if="canStockApproving(item)" class="rounded-8rpx bg-[#f6ffed] px-20rpx py-10rpx text-[#52c41a]" @click.stop="handleStock(item)">
+                执行上架
+              </view>
+              <view v-if="canFinishApproved(item)" class="rounded-8rpx bg-[#f6ffed] px-20rpx py-10rpx text-[#52c41a]" @click.stop="handleFinish(item)">
+                完成入库
+              </view>
+              <view v-if="canCancelActive(item)" class="rounded-8rpx bg-[#fff1f0] px-20rpx py-10rpx text-[#f5222d]" @click.stop="handleCancelIssue(item)">
+                取消
+              </view>
             </view>
           </view>
         </view>
@@ -76,12 +98,21 @@
 </template>
 
 <script lang="ts" setup>
-import type { WmOutsourceReceiptVO } from '@/api/mes/wm/outsourcereceipt'
+import type { WmOutsourceReceiptQueryParams, WmOutsourceReceiptVO } from '@/api/mes/wm/outsourcereceipt'
 import { onUnload } from '@dcloudio/uni-app'
+import { useDialog } from '@wot-ui/ui/components/wd-dialog'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
-import { getOutsourceReceiptPage } from '@/api/mes/wm/outsourcereceipt'
+import {
+  cancelOutsourceReceipt,
+  deleteOutsourceReceipt,
+  exportOutsourceReceipt,
+  getOutsourceReceiptPage,
+  submitOutsourceReceipt,
+} from '@/api/mes/wm/outsourcereceipt'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE, MesWmOutsourceReceiptStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import SearchForm from './components/search-form.vue'
 
@@ -93,38 +124,65 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
-const list = ref<any[]>([]) // 列表数据
-const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const dialog = useDialog()
+const toast = useToast()
+const list = ref<WmOutsourceReceiptVO[]>([]) // 列表数据
+const pagingRef = ref<ZPagingInstance>() // 分页组件引用
+const queryParams = ref<WmOutsourceReceiptQueryParams>({
+  pageNo: 1,
+  pageSize: 10,
+}) // 查询参数
+const exportLoading = ref(false) // 导出状态
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
+/** 是否草稿可编辑 */
+function canUpdatePrepare(item: WmOutsourceReceiptVO) {
+  return hasAccessByCodes(['mes:wm-outsource-receipt:update'])
+    && item.status === MesWmOutsourceReceiptStatusEnum.PREPARE
+}
+
+/** 是否草稿可删除 */
+function canDeletePrepare(item: WmOutsourceReceiptVO) {
+  return hasAccessByCodes(['mes:wm-outsource-receipt:delete'])
+    && item.status === MesWmOutsourceReceiptStatusEnum.PREPARE
+}
+
+/** 是否草稿可提交 */
+function canSubmitPrepare(item: WmOutsourceReceiptVO) {
+  return hasAccessByCodes(['mes:wm-outsource-receipt:update'])
+    && item.status === MesWmOutsourceReceiptStatusEnum.PREPARE
+}
+
+/** 是否待上架 */
+function canStockApproving(item: WmOutsourceReceiptVO) {
+  return hasAccessByCodes(['mes:wm-outsource-receipt:update'])
+    && item.status === MesWmOutsourceReceiptStatusEnum.APPROVING
+}
+
+/** 是否待执行入库 */
+function canFinishApproved(item: WmOutsourceReceiptVO) {
+  return hasAccessByCodes(['mes:wm-outsource-receipt:finish'])
+    && item.status === MesWmOutsourceReceiptStatusEnum.APPROVED
+}
+
+/** 是否可取消 */
+function canCancelActive(item: WmOutsourceReceiptVO) {
+  return hasAccessByCodes(['mes:wm-outsource-receipt:update'])
+    && [MesWmOutsourceReceiptStatusEnum.APPROVING, MesWmOutsourceReceiptStatusEnum.APPROVED].includes(item.status)
 }
 
 /** 查询列表 */
 async function queryList(pageNo: number, pageSize: number) {
   try {
-    const params = {
+    const data = await getOutsourceReceiptPage({
       ...queryParams.value,
       pageNo,
       pageSize,
-    }
-    const data = await getOutsourceReceiptPage(params as any)
+    })
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
     pagingRef.value?.complete(false)
@@ -132,14 +190,22 @@ async function queryList(pageNo: number, pageSize: number) {
 }
 
 /** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) {
-  queryParams.value = { ...data }
+function handleQuery(data: WmOutsourceReceiptQueryParams) {
+  queryParams.value = {
+    ...data,
+    pageNo: 1,
+    pageSize: 10,
+  }
   reload()
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  handleQuery()
+  queryParams.value = {
+    pageNo: 1,
+    pageSize: 10,
+  }
+  reload()
 }
 
 /** 重新加载 */
@@ -149,16 +215,91 @@ function reload() {
 
 /** 新增 */
 function handleAdd() {
-  uni.navigateTo({
-    url: '/pages-mes/wm/outsourcereceipt/form/index',
-  })
+  uni.navigateTo({ url: '/pages-mes/wm/outsourcereceipt/form/index' })
+}
+
+/** 编辑 */
+function handleEdit(item: WmOutsourceReceiptVO) {
+  uni.navigateTo({ url: `/pages-mes/wm/outsourcereceipt/form/index?id=${item.id}` })
 }
 
 /** 查看详情 */
-function handleDetail(item: any) {
-  uni.navigateTo({
-    url: `/pages-mes/wm/outsourcereceipt/detail/index?id=${(item as any).id}`,
-  })
+function handleDetail(item: WmOutsourceReceiptVO) {
+  uni.navigateTo({ url: `/pages-mes/wm/outsourcereceipt/detail/index?id=${item.id}` })
+}
+
+/** 执行上架 */
+function handleStock(item: WmOutsourceReceiptVO) {
+  uni.navigateTo({ url: `/pages-mes/wm/outsourcereceipt/form/index?id=${item.id}&mode=stock` })
+}
+
+/** 完成入库 */
+function handleFinish(item: WmOutsourceReceiptVO) {
+  uni.navigateTo({ url: `/pages-mes/wm/outsourcereceipt/form/index?id=${item.id}&mode=finish` })
+}
+
+/** 删除 */
+async function handleDelete(item: WmOutsourceReceiptVO) {
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: `确定要删除「${item.code || item.name || item.id}」吗？`,
+    })
+  } catch {
+    return
+  }
+  await deleteOutsourceReceipt(item.id)
+  toast.success('删除成功')
+  reload()
+}
+
+/** 提交外协入库单 */
+async function handleSubmitIssue(item: WmOutsourceReceiptVO) {
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: '确认提交该外协入库单？提交前请确认已维护入库物料，提交后将不能修改。',
+    })
+  } catch {
+    return
+  }
+  await submitOutsourceReceipt(item.id)
+  toast.success('提交成功')
+  reload()
+}
+
+/** 取消外协入库单 */
+async function handleCancelIssue(item: WmOutsourceReceiptVO) {
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: '确认取消该外协入库单？取消后不可恢复。',
+    })
+  } catch {
+    return
+  }
+  await cancelOutsourceReceipt(item.id)
+  toast.success('取消成功')
+  reload()
+}
+
+/** 导出 */
+async function handleExport() {
+  try {
+    await dialog.confirm({
+      title: '导出确认',
+      msg: '确定要导出当前筛选数据吗？',
+    })
+  } catch {
+    return
+  }
+  exportLoading.value = true
+  try {
+    await exportOutsourceReceipt(queryParams.value)
+    toast.success('导出请求已提交')
+  } finally {
+    exportLoading.value = false
+  }
 }
 
 /** 初始化 */

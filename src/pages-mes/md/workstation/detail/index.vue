@@ -1,45 +1,33 @@
 <template>
   <view class="yd-page-container">
-    <!-- 顶部导航栏 -->
-    <wd-navbar
-      title="MES 工作站详情"
-      left-arrow placeholder safe-area-inset-top fixed
-      @click-left="handleBack"
-    />
-
-    <!-- 详情内容 -->
-    <view>
+    <wd-navbar title="工作站详情" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
+    <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
       <wd-cell-group border>
-        <wd-cell title="工作站编码" :value="formatFieldValue(formData?.code) || '-'" />
-        <wd-cell title="工作站名称" :value="formatFieldValue(formData?.name) || '-'" />
-        <wd-cell title="工作站地点" :value="formatFieldValue(formData?.address) || '-'" />
-        <wd-cell title="所在车间" :value="formatFieldValue(formData?.workshopName) || '-'" />
-        <wd-cell title="所属工序" :value="formatFieldValue(formData?.processName) || '-'" />
-        <wd-cell title="状态" :value="formatFieldValue(formData?.status) || '-'" />
-        <wd-cell title="创建时间" :value="formatFieldValue(formData?.createTime) || '-'" />
-        <wd-cell title="工作站编号" :value="formatFieldValue(formData?.id) || '-'" />
-        <wd-cell title="所在车间 ID" :value="formatFieldValue(formData?.workshopId) || '-'" />
-        <wd-cell title="工序 ID" :value="formatFieldValue(formData?.processId) || '-'" />
-        <wd-cell title="线边库 ID" :value="formatFieldValue(formData?.warehouseId) || '-'" />
-        <wd-cell title="库区 ID" :value="formatFieldValue(formData?.locationId) || '-'" />
-        <wd-cell title="库位 ID" :value="formatFieldValue(formData?.areaId) || '-'" />
-        <wd-cell title="备注" :value="formatFieldValue(formData?.remark) || '-'" />
+        <wd-cell title="工作站编码" :value="formData?.code || '-'" />
+        <wd-cell title="工作站名称" :value="formData?.name || '-'" />
+        <wd-cell title="所在车间" :value="formData?.workshopName || '-'" />
+        <wd-cell title="工作站地点" :value="formData?.address || '-'" />
+        <wd-cell title="所属工序" :value="formData?.processName || '-'" />
+        <wd-cell title="线边仓库" :value="formData?.warehouseName || '-'" />
+        <wd-cell title="库区" :value="formData?.locationName || '-'" />
+        <wd-cell title="库位" :value="formData?.areaName || '-'" />
+        <wd-cell title="状态">
+          <dict-tag v-if="formData?.status != null" :type="DICT_TYPE.COMMON_STATUS" :value="formData.status" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="备注" :value="formData?.remark || '-'" />
+        <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime) || '-'" />
       </wd-cell-group>
-    </view>
 
-    <!-- 底部操作按钮 -->
-    <view class="yd-detail-footer">
+      <WorkstationResourceList :workstation-id="currentId" mode="detail" />
+      <view class="h-160rpx" />
+    </scroll-view>
+    <view v-if="hasFooter" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button
-          v-if="hasAccessByCodes(['mes:md-workstation:update'])"
-          class="flex-1" type="warning" @click="handleEdit"
-        >
+        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button
-          v-if="hasAccessByCodes(['mes:md-workstation:delete'])"
-          class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
-        >
+        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -49,101 +37,129 @@
 
 <script lang="ts" setup>
 import type { MdWorkstationVO } from '@/api/mes/md/workstation'
+import { onShow, onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
-import { getWorkstation, deleteWorkstation } from '@/api/mes/md/workstation'
+import { computed, onMounted, ref, watch } from 'vue'
+import { deleteWorkstation, getWorkstation } from '@/api/mes/md/workstation'
+import { getWorkshopSimpleList } from '@/api/mes/md/workstation/workshop'
+import { getProcessSimpleList } from '@/api/mes/pro/process'
+import { getWarehouseSimpleList } from '@/api/mes/wm/warehouse'
+import { getWarehouseLocationSimpleList } from '@/api/mes/wm/warehouse/location'
+import { getWarehouseAreaSimpleList } from '@/api/mes/wm/warehouse/area'
 import { useAccess } from '@/hooks/useAccess'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
+import WorkstationResourceList from '../components/workstation-resource-list.vue'
 
-const props = defineProps<{
-  id?: number | string | any
-}>()
-
-definePage({
-  style: {
-    navigationBarTitleText: '',
-    navigationStyle: 'custom',
-  },
-})
+const props = defineProps<{ id?: number | string }>()
+definePage({ style: { navigationBarTitleText: '', navigationStyle: 'custom' } })
 
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const formData = ref<any>() // 详情数据
-const deleting = ref(false) // 删除状态
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/md/workstation/detail/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
+interface MdWorkstationDetail extends MdWorkstationVO {
+  warehouseName?: string
+  locationName?: string
+  areaName?: string
+}
+const formData = ref<MdWorkstationDetail>()
+const deleting = ref(false)
+const canUpdate = computed(() => hasAccessByCodes(['mes:md-workstation:update']))
+const canDelete = computed(() => hasAccessByCodes(['mes:md-workstation:delete']))
+const hasFooter = computed(() => canUpdate.value || canDelete.value)
 
-/** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/md/workstation/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
-}
-
-/** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value || deleting.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getWorkstation(props.id)
+    const data = await getWorkstation(currentId.value)
+    if (!data) {
+      formData.value = undefined
+      return
+    }
+    const [workshops, processes, warehouses, locations, areas] = await Promise.all([
+      getWorkshopSimpleList(),
+      getProcessSimpleList(),
+      getWarehouseSimpleList(),
+      data.warehouseId ? getWarehouseLocationSimpleList(data.warehouseId) : Promise.resolve([]),
+      data.locationId ? getWarehouseAreaSimpleList(data.locationId) : Promise.resolve([]),
+    ])
+    formData.value = {
+      ...data,
+      workshopName: data.workshopName || workshops.find(item => item.id === data.workshopId)?.name || null,
+      processName: data.processName || processes.find(item => item.id === data.processId)?.name || null,
+      warehouseName: warehouses.find(item => item.id === data.warehouseId)?.name,
+      locationName: locations.find(item => item.id === data.locationId)?.name,
+      areaName: areas.find(item => item.id === data.areaId)?.name,
+    }
   } finally {
     toast.close()
   }
 }
 
-/** 编辑 */
-function handleEdit() {
-  uni.navigateTo({
-    url: `/pages-mes/md/workstation/form/index?id=${props.id}`,
-  })
+async function initPage() {
+  if (!currentId.value) {
+    formData.value = undefined
+    return
+  }
+  if (!formData.value || formData.value.id !== currentId.value) {
+    await getDetail()
+  }
 }
 
-/** 删除 */
+function handleEdit() {
+  uni.navigateTo({ url: `/pages-mes/md/workstation/form/index?id=${currentId.value}` })
+}
+
 async function handleDelete() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   try {
-    await dialog.confirm({
-      title: '提示',
-      msg: '确定要删除该工作站吗？',
-    })
+    await dialog.confirm({ title: '提示', msg: '确定要删除该工作站吗？' })
   } catch {
     return
   }
   deleting.value = true
   try {
-    await deleteWorkstation(props.id)
+    toast.loading('删除中...')
+    await deleteWorkstation(currentId.value)
+    toast.close()
     toast.success('删除成功')
     uni.$emit('mes:md:workstation:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    setTimeout(() => handleBack(), 500)
+  } catch {
+    toast.close()
   } finally {
     deleting.value = false
   }
 }
 
-/** 初始化 */
 onMounted(() => {
-  getDetail()
+  initPage()
+  uni.$on('mes:md:workstation:reload', getDetail)
+})
+
+onShow(() => {
+  initPage()
+})
+
+onUnload(() => {
+  uni.$off('mes:md:workstation:reload', getDetail)
+})
+
+watch(currentId, () => {
+  initPage()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

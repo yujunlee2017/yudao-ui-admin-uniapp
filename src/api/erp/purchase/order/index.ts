@@ -16,7 +16,7 @@ export interface PurchaseOrder {
   status?: number // 状态
   remark?: string // 备注
   fileUrl?: string // 附件地址
-  outCount?: number // 采购出库数量
+  inCount?: number // 采购入库数量
   returnCount?: number // 采购退货数量
   items?: any[] // 订单明细
   [key: string]: any

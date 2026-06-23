@@ -10,6 +10,17 @@
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
+    <!-- 导出入口 -->
+    <view v-if="hasAccessByCodes(['mes:wm-product-receipt:export'])" class="bg-white px-24rpx py-16rpx">
+      <view
+        class="h-64rpx flex items-center justify-center border-2rpx border-[#1677ff] rounded-8rpx text-26rpx text-[#1677ff]"
+        :class="exportLoading ? 'opacity-60' : ''"
+        @click="handleExport"
+      >
+        {{ exportLoading ? '导出中...' : '导出当前筛选数据' }}
+      </view>
+    </view>
+
     <!-- 列表 -->
     <z-paging
       ref="pagingRef"
@@ -31,37 +42,53 @@
           @click="handleDetail(item)"
         >
           <view class="p-24rpx">
-            <view class="mb-16rpx flex items-center justify-between gap-16rpx">
-              <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-                {{ formatFieldValue(item.code) || '-' }}
+            <view class="mb-16rpx flex items-start justify-between gap-16rpx">
+              <view class="min-w-0 flex-1">
+                <view class="truncate text-32rpx text-[#333] font-semibold">
+                  {{ item.code || '-' }}
+                </view>
+                <view class="mt-4rpx truncate text-24rpx text-[#999]">
+                  {{ item.name || '-' }}
+                </view>
               </view>
-              <view class="shrink-0 text-24rpx text-[#999]">
-                #{{ item.id }}
-              </view>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">入库单名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.name) || '-' }}</text>
+              <dict-tag v-if="item.status != null" :type="DICT_TYPE.MES_WM_PRODUCT_RECPT_STATUS" :value="item.status" />
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">生产工单：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.workOrderCode) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.workOrderCode || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">产品物料编码：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.itemCode) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">产品物料名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.itemName) || '-' }}</text>
+              <text class="mr-8rpx shrink-0 text-[#999]">产品物料：</text>
+              <text class="min-w-0 flex-1 truncate">{{ getItemText(item) }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">规格型号：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.specification) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.specification || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">计量单位：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.unitMeasureName) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.unitMeasureName || '-' }}</text>
+            </view>
+            <view class="flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">入库日期：</text>
+              <text class="min-w-0 flex-1 truncate">{{ formatDate(item.receiptDate) || '-' }}</text>
+            </view>
+          </view>
+          <view v-if="hasRowActions(item)" class="flex border-t border-t-[#f0f0f0] text-28rpx" @click.stop>
+            <view v-if="canUpdatePrepare(item)" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
+              编辑
+            </view>
+            <view v-if="canDeletePrepare(item)" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
+              删除
+            </view>
+            <view v-if="canStockApproving(item)" class="flex-1 py-18rpx text-center text-[#52c41a]" @click="handleStock(item)">
+              执行上架
+            </view>
+            <view v-if="canFinishApproved(item)" class="flex-1 py-18rpx text-center text-[#52c41a]" @click="handleFinish(item)">
+              执行入库
+            </view>
+            <view v-if="canCancelActive(item)" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleCancel(item)">
+              取消
             </view>
           </view>
         </view>
@@ -80,13 +107,17 @@
 </template>
 
 <script lang="ts" setup>
-import type { WmProductReceiptVO } from '@/api/mes/wm/productreceipt'
+import type { WmProductReceiptQueryParams, WmProductReceiptVO } from '@/api/mes/wm/productreceipt'
 import { onUnload } from '@dcloudio/uni-app'
+import { useDialog } from '@wot-ui/ui/components/wd-dialog'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
-import { getProductReceiptPage } from '@/api/mes/wm/productreceipt'
+import { cancelProductReceipt, deleteProductReceipt, getProductReceiptPage } from '@/api/mes/wm/productreceipt'
 import { useAccess } from '@/hooks/useAccess'
+import { downloadApiFile } from '@/utils/download'
 import { navigateBackPlus } from '@/utils'
-import { formatDateTime } from '@/utils/date'
+import { DICT_TYPE, MesWmProductReceiptStatusEnum } from '@/utils/constants'
+import { formatDate } from '@/utils/date'
 import SearchForm from './components/search-form.vue'
 
 definePage({
@@ -97,27 +128,24 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
-const list = ref<any[]>([]) // 列表数据
-const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const dialog = useDialog()
+const toast = useToast()
+const list = ref<WmProductReceiptVO[]>([]) // 列表数据
+const pagingRef = ref<ZPagingRef<WmProductReceiptVO>>() // 分页组件引用
+const queryParams = ref<WmProductReceiptQueryParams>({}) // 查询参数
+const exportLoading = ref(false) // 导出状态
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
+/** 产品展示文案 */
+function getItemText(item: WmProductReceiptVO) {
+  if (item.itemCode || item.itemName) {
+    return `${item.itemCode || '-'} / ${item.itemName || '-'}`.trim()
   }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
+  return item.itemId ? `物料 #${item.itemId}` : '-'
 }
 
 /** 查询列表 */
@@ -128,7 +156,7 @@ async function queryList(pageNo: number, pageSize: number) {
       pageNo,
       pageSize,
     }
-    const data = await getProductReceiptPage(params as any)
+    const data = await getProductReceiptPage(params)
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
     pagingRef.value?.complete(false)
@@ -136,7 +164,7 @@ async function queryList(pageNo: number, pageSize: number) {
 }
 
 /** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) {
+function handleQuery(data?: WmProductReceiptQueryParams) {
   queryParams.value = { ...data }
   reload()
 }
@@ -151,6 +179,26 @@ function reload() {
   pagingRef.value?.reload()
 }
 
+/** 导出按钮操作 */
+async function handleExport() {
+  if (exportLoading.value) {
+    return
+  }
+  const { confirm } = await uni.showModal({
+    title: '导出确认',
+    content: '确定要导出当前筛选数据吗？',
+  })
+  if (!confirm) {
+    return
+  }
+  exportLoading.value = true
+  try {
+    await downloadApiFile('/mes/wm/product-receipt/export-excel', queryParams.value, '产品入库单.xls')
+  } finally {
+    exportLoading.value = false
+  }
+}
+
 /** 新增 */
 function handleAdd() {
   uni.navigateTo({
@@ -159,10 +207,92 @@ function handleAdd() {
 }
 
 /** 查看详情 */
-function handleDetail(item: any) {
+function handleDetail(item: WmProductReceiptVO) {
   uni.navigateTo({
-    url: `/pages-mes/wm/productreceipt/detail/index?id=${(item as any).id}`,
+    url: `/pages-mes/wm/productreceipt/detail/index?id=${item.id}`,
   })
+}
+
+/** 是否可编辑草稿 */
+function canUpdatePrepare(item: WmProductReceiptVO) {
+  return hasAccessByCodes(['mes:wm-product-receipt:update']) && item.status === MesWmProductReceiptStatusEnum.PREPARE
+}
+
+/** 是否可删除草稿 */
+function canDeletePrepare(item: WmProductReceiptVO) {
+  return hasAccessByCodes(['mes:wm-product-receipt:delete']) && item.status === MesWmProductReceiptStatusEnum.PREPARE
+}
+
+/** 是否可执行上架 */
+function canStockApproving(item: WmProductReceiptVO) {
+  return hasAccessByCodes(['mes:wm-product-receipt:update']) && item.status === MesWmProductReceiptStatusEnum.APPROVING
+}
+
+/** 是否可执行入库 */
+function canFinishApproved(item: WmProductReceiptVO) {
+  return hasAccessByCodes(['mes:wm-product-receipt:finish']) && item.status === MesWmProductReceiptStatusEnum.APPROVED
+}
+
+/** 是否可取消 */
+function canCancelActive(item: WmProductReceiptVO) {
+  return hasAccessByCodes(['mes:wm-product-receipt:update'])
+    && [MesWmProductReceiptStatusEnum.APPROVING, MesWmProductReceiptStatusEnum.APPROVED].includes(item.status)
+}
+
+/** 是否存在行操作 */
+function hasRowActions(item: WmProductReceiptVO) {
+  return canUpdatePrepare(item) || canDeletePrepare(item) || canStockApproving(item) || canFinishApproved(item) || canCancelActive(item)
+}
+
+/** 编辑 */
+function handleEdit(item: WmProductReceiptVO) {
+  uni.navigateTo({
+    url: `/pages-mes/wm/productreceipt/form/index?id=${item.id}`,
+  })
+}
+
+/** 执行上架 */
+function handleStock(item: WmProductReceiptVO) {
+  uni.navigateTo({
+    url: `/pages-mes/wm/productreceipt/form/index?id=${item.id}&mode=stock`,
+  })
+}
+
+/** 执行入库 */
+function handleFinish(item: WmProductReceiptVO) {
+  uni.navigateTo({
+    url: `/pages-mes/wm/productreceipt/form/index?id=${item.id}&mode=finish`,
+  })
+}
+
+/** 删除 */
+async function handleDelete(item: WmProductReceiptVO) {
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: `确定要删除「${item.code || item.name || item.id}」吗？`,
+    })
+  } catch {
+    return
+  }
+  await deleteProductReceipt(item.id)
+  toast.success('删除成功')
+  reload()
+}
+
+/** 取消产品入库单 */
+async function handleCancel(item: WmProductReceiptVO) {
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: '确认取消该产品入库单？取消后不可恢复。',
+    })
+  } catch {
+    return
+  }
+  await cancelProductReceipt(item.id)
+  toast.success('取消成功')
+  reload()
 }
 
 /** 初始化 */

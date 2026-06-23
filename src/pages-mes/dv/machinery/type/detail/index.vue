@@ -1,39 +1,27 @@
 <template>
   <view class="yd-page-container">
-    <!-- 顶部导航栏 -->
-    <wd-navbar
-      title="MES 设备类型详情"
-      left-arrow placeholder safe-area-inset-top fixed
-      @click-left="handleBack"
-    />
-
-    <!-- 详情内容 -->
-    <view>
+    <wd-navbar title="设备类型详情" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
+    <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
       <wd-cell-group border>
-        <wd-cell title="设备类型编码" :value="formatFieldValue(formData?.code) || '-'" />
-        <wd-cell title="设备类型名称" :value="formatFieldValue(formData?.name) || '-'" />
-        <wd-cell title="状态" :value="formatFieldValue(formData?.status) || '-'" />
-        <wd-cell title="排序" :value="formatFieldValue(formData?.sort) || '-'" />
-        <wd-cell title="创建时间" :value="formatFieldValue(formData?.createTime) || '-'" />
-        <wd-cell title="编号" :value="formatFieldValue(formData?.id) || '-'" />
-        <wd-cell title="父类型编号" :value="formatFieldValue(formData?.parentId) || '-'" />
-        <wd-cell title="备注" :value="formatFieldValue(formData?.remark) || '-'" />
+        <wd-cell title="类型编码" :value="formData?.code || '-'" />
+        <wd-cell title="类型名称" :value="formData?.name || '-'" />
+        <wd-cell title="上级类型" :value="parentName || '顶级类型'" />
+        <wd-cell title="显示排序" :value="formData?.sort ?? '-'" />
+        <wd-cell title="状态">
+          <dict-tag v-if="formData" :type="DICT_TYPE.COMMON_STATUS" :value="formData.status" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="备注" :value="formData?.remark || '-'" />
+        <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime) || '-'" />
       </wd-cell-group>
-    </view>
-
-    <!-- 底部操作按钮 -->
-    <view class="yd-detail-footer">
+      <view class="h-160rpx" />
+    </scroll-view>
+    <view v-if="hasFooter" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button
-          v-if="hasAccessByCodes(['mes:dv-machinery-type:update'])"
-          class="flex-1" type="warning" @click="handleEdit"
-        >
+        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button
-          v-if="hasAccessByCodes(['mes:dv-machinery-type:delete'])"
-          class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
-        >
+        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -43,101 +31,96 @@
 
 <script lang="ts" setup>
 import type { DvMachineryTypeVO } from '@/api/mes/dv/machinery/type'
+import { onShow } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
-import { getMachineryType, deleteMachineryType } from '@/api/mes/dv/machinery/type'
+import { computed, onMounted, ref, watch } from 'vue'
+import { deleteMachineryType, getMachineryType, getMachineryTypeList } from '@/api/mes/dv/machinery/type'
 import { useAccess } from '@/hooks/useAccess'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
-const props = defineProps<{
-  id?: number | string | any
-}>()
-
-definePage({
-  style: {
-    navigationBarTitleText: '',
-    navigationStyle: 'custom',
-  },
-})
+const props = defineProps<{ id?: number | string }>()
+definePage({ style: { navigationBarTitleText: '', navigationStyle: 'custom' } })
 
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const formData = ref<any>() // 详情数据
-const deleting = ref(false) // 删除状态
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/dv/machinery/type/detail/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
+const formData = ref<DvMachineryTypeVO>()
+const parentName = ref('')
+const deleting = ref(false)
+const canUpdate = computed(() => hasAccessByCodes(['mes:dv-machinery-type:update']))
+const canDelete = computed(() => hasAccessByCodes(['mes:dv-machinery-type:delete']))
+const hasFooter = computed(() => canUpdate.value || canDelete.value)
 
-/** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/dv/machinery/type/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
-}
-
-/** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value || deleting.value)
     return
-  }
   try {
     toast.loading('加载中...')
-    formData.value = await getMachineryType(props.id)
+    const [data, list] = await Promise.all([getMachineryType(currentId.value), getMachineryTypeList()])
+    formData.value = data
+    parentName.value = data.parentId === 0 ? '顶级类型' : list.find(item => item.id === data.parentId)?.name || '-'
   } finally {
     toast.close()
   }
 }
 
-/** 编辑 */
-function handleEdit() {
-  uni.navigateTo({
-    url: `/pages-mes/dv/machinery/type/form/index?id=${props.id}`,
-  })
-}
-
-/** 删除 */
-async function handleDelete() {
-  if (!props.id) {
+async function initPage() {
+  if (!currentId.value) {
+    formData.value = undefined
+    parentName.value = ''
     return
   }
+  if (!formData.value || formData.value.id !== currentId.value) {
+    await getDetail()
+  }
+}
+
+function handleEdit() {
+  uni.navigateTo({ url: `/pages-mes/dv/machinery/type/form/index?id=${currentId.value}` })
+}
+
+async function handleDelete() {
+  if (!currentId.value)
+    return
   try {
-    await dialog.confirm({
-      title: '提示',
-      msg: '确定要删除该设备类型吗？',
-    })
+    await dialog.confirm({ title: '提示', msg: `确定要删除设备类型「${formData.value?.name || ''}」吗？` })
   } catch {
     return
   }
   deleting.value = true
   try {
-    await deleteMachineryType(props.id)
+    toast.loading('删除中...')
+    await deleteMachineryType(currentId.value)
+    toast.close()
     toast.success('删除成功')
-    uni.$emit('mes:dv:machinery:type:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    uni.$emit('mes:dv:machinery-type:reload')
+    setTimeout(() => handleBack(), 500)
+  } catch {
+    toast.close()
   } finally {
     deleting.value = false
   }
 }
 
-/** 初始化 */
 onMounted(() => {
-  getDetail()
+  initPage()
+})
+
+onShow(() => {
+  initPage()
+})
+
+watch(currentId, () => {
+  initPage()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

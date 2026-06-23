@@ -15,8 +15,14 @@
             <wd-input
               v-model="formData.code"
               clearable
-              placeholder="请输入项目编码"
-            />
+              placeholder="请输入或点击生成"
+            >
+              <template #suffix>
+                <wd-button size="small" type="primary" variant="plain" @click="handleGenerateCode">
+                  生成
+                </wd-button>
+              </template>
+            </wd-input>
           </wd-form-item>
           <wd-form-item title="项目名称" title-width="200rpx" prop="name">
             <wd-input
@@ -25,8 +31,12 @@
               placeholder="请输入项目名称"
             />
           </wd-form-item>
-          <wd-form-item title="项目类型" title-width="200rpx" prop="type" center>
-            <wd-input-number v-model="formData.type" :min="0" />
+          <wd-form-item title="项目类型" title-width="200rpx" prop="type">
+            <wd-radio-group v-model="formData.type" type="button">
+              <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_DV_SUBJECT_TYPE)" :key="dict.value" :value="dict.value">
+                {{ dict.label }}
+              </wd-radio>
+            </wd-radio-group>
           </wd-form-item>
           <wd-form-item title="项目内容" title-width="200rpx" prop="content">
             <wd-textarea
@@ -38,14 +48,20 @@
             />
           </wd-form-item>
           <wd-form-item title="标准" title-width="200rpx" prop="standard">
-            <wd-input
+            <wd-textarea
               v-model="formData.standard"
-              clearable
               placeholder="请输入标准"
+              :maxlength="200"
+              show-word-limit
+              clearable
             />
           </wd-form-item>
-          <wd-form-item title="状态" title-width="200rpx" prop="status" center>
-            <wd-input-number v-model="formData.status" :min="0" />
+          <wd-form-item title="状态" title-width="200rpx" prop="status">
+            <wd-radio-group v-model="formData.status" type="button">
+              <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)" :key="dict.value" :value="dict.value">
+                {{ dict.label }}
+              </wd-radio>
+            </wd-radio-group>
           </wd-form-item>
           <wd-form-item title="备注" title-width="200rpx" prop="remark">
             <wd-textarea
@@ -71,15 +87,20 @@
 
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
-import type { DvSubjectVO } from '@/api/mes/dv/subject'
+import type { DvSubjectCreateReqVO } from '@/api/mes/dv/subject'
+import { onShow } from '@dcloudio/uni-app'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
-import { createSubject, updateSubject, getSubject } from '@/api/mes/dv/subject'
+import { computed, onMounted, ref, watch } from 'vue'
+import { createSubject, getSubject, updateSubject } from '@/api/mes/dv/subject'
+import { generateAutoCode } from '@/api/mes/md/autocode/record'
+import { getIntDictOptions } from '@/hooks/useDict'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
+import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
-  id?: number | string | any
+  id?: number | string
 }>()
 
 definePage({
@@ -90,23 +111,37 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => props.id ? '编辑点检项目' : '新增点检项目')
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/dv/subject/form/index')
+const currentId = computed(() => getRouteQueryNumber('id')) // 当前编辑编号
+const getTitle = computed(() => currentId.value ? '编辑点检项目' : '新增点检项目')
 const formLoading = ref(false) // 表单提交状态
-const formData = ref<any>({
-  id: undefined,
-  code: '',
-  name: '',
-  type: undefined,
-  content: '',
-  standard: '',
-  status: undefined,
-  remark: '',
-} as DvSubjectVO) // 表单数据
+interface DvSubjectFormData extends DvSubjectCreateReqVO {
+  id?: number
+}
+const formData = ref<DvSubjectFormData>(getDefaultFormData()) // 表单数据
 const formSchema = createFormSchema({
   code: [{ required: true, message: '项目编码不能为空' }],
-  name: [{ required: true, message: '项目名称不能为空' }],
+  type: [{ required: true, message: '项目类型不能为空' }],
+  content: [{ required: true, message: '项目内容不能为空' }],
+  status: [{ required: true, message: '状态不能为空' }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用
+const MesAutoCodeRuleCode = {
+  DV_SUBJECT_CODE: 'DV_SUBJECT_CODE',
+} as const
+
+/** 默认表单数据 */
+function getDefaultFormData() {
+  return {
+    code: '',
+    name: '',
+    type: undefined,
+    content: '',
+    standard: '',
+    status: CommonStatusEnum.ENABLE,
+    remark: '',
+  } as DvSubjectFormData
+}
 
 /** 返回上一页 */
 function handleBack() {
@@ -115,10 +150,44 @@ function handleBack() {
 
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
-  formData.value = await getSubject(props.id)
+  const data = await getSubject(currentId.value)
+  formData.value = {
+    id: data.id,
+    code: data.code,
+    name: data.name || '',
+    type: data.type,
+    content: data.content,
+    standard: data.standard || '',
+    status: data.status,
+    remark: data.remark || '',
+  }
+}
+
+/** 初始化页面数据 */
+async function initPage() {
+  if (!currentId.value) {
+    formData.value = getDefaultFormData()
+    return
+  }
+  if (!formData.value.id || formData.value.id !== currentId.value) {
+    formData.value = getDefaultFormData()
+    await getDetail()
+  }
+}
+
+/** 生成项目编码 */
+async function handleGenerateCode() {
+  try {
+    toast.loading('生成中...')
+    formData.value.code = await generateAutoCode(MesAutoCodeRuleCode.DV_SUBJECT_CODE)
+    toast.close()
+    toast.success('生成成功')
+  } catch {
+    toast.close()
+  }
 }
 
 /** 提交表单 */
@@ -130,11 +199,20 @@ async function handleSubmit() {
 
   formLoading.value = true
   try {
-    if (props.id) {
-      await updateSubject(formData.value)
+    const data: DvSubjectCreateReqVO = {
+      code: formData.value.code,
+      name: formData.value.name || undefined,
+      type: formData.value.type,
+      content: formData.value.content,
+      standard: formData.value.standard || undefined,
+      status: formData.value.status,
+      remark: formData.value.remark || undefined,
+    }
+    if (currentId.value) {
+      await updateSubject({ ...data, id: currentId.value })
       toast.success('修改成功')
     } else {
-      await createSubject(formData.value)
+      await createSubject(data)
       toast.success('新增成功')
     }
     uni.$emit('mes:dv:subject:reload')
@@ -148,7 +226,15 @@ async function handleSubmit() {
 
 /** 初始化 */
 onMounted(() => {
-  getDetail()
+  initPage()
+})
+
+onShow(() => {
+  initPage()
+})
+
+watch(currentId, () => {
+  initPage()
 })
 </script>
 

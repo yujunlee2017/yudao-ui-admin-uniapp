@@ -9,19 +9,19 @@
     <!-- 柱状趋势图 -->
     <view v-if="points.length > 0" class="px-12rpx py-24rpx">
       <scroll-view scroll-x class="w-full whitespace-nowrap">
-        <view class="inline-flex items-end gap-20rpx px-12rpx" :style="{ height: chartHeight + 'rpx' }">
+        <view class="inline-flex items-end gap-20rpx px-12rpx" :style="{ height: `${chartHeight}rpx` }">
           <view
             v-for="(point, index) in points"
             :key="index"
             class="flex shrink-0 flex-col items-center justify-end"
-            :style="{ height: chartHeight + 'rpx' }"
+            :style="{ height: `${chartHeight}rpx` }"
           >
             <!-- 金额 -->
             <text class="mb-8rpx text-20rpx text-[#999]">{{ point.priceText }}</text>
             <!-- 柱体 -->
             <view
               class="w-40rpx rounded-t-8rpx"
-              :style="{ height: point.barHeight + 'rpx', background: color }"
+              :style="{ height: `${point.barHeight}rpx`, background: color }"
             />
             <!-- 时间 -->
             <text class="mt-12rpx text-20rpx text-[#999]">{{ point.timeText }}</text>
@@ -39,6 +39,7 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue'
+import { toNumber } from '@/pages-erp/utils'
 
 const props = withDefaults(defineProps<{
   title: string // 标题
@@ -51,12 +52,6 @@ const props = withDefaults(defineProps<{
 
 const chartHeight = 280 // 图表高度（rpx）
 const maxBarHeight = 200 // 柱体最大高度（rpx）
-
-/** 转换为数字 */
-function toNumber(value: any) {
-  const result = Number(value || 0)
-  return Number.isNaN(result) ? 0 : result
-}
 
 /** 格式化金额 */
 function formatPrice(value: number) {

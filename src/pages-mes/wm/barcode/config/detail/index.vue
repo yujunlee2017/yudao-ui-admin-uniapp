@@ -10,17 +10,28 @@
     <!-- 详情内容 -->
     <view>
       <wd-cell-group border>
-        <wd-cell title="编号" :value="formatFieldValue(formData?.id) || '-'" />
-        <wd-cell title="条码格式" :value="formatFieldValue(formData?.format) || '-'" />
-        <wd-cell title="业务类型" :value="formatFieldValue(formData?.bizType) || '-'" />
-        <wd-cell title="内容格式" :value="formatFieldValue(formData?.contentFormat) || '-'" />
-        <wd-cell title="内容样例" :value="formatFieldValue(formData?.contentExample) || '-'" />
-        <wd-cell title="默认打印模板" :value="formatFieldValue(formData?.defaultTemplate) || '-'" />
-        <wd-cell title="自动生成" :value="formatFieldValue(formData?.autoGenerateFlag) || '-'" />
-        <wd-cell title="状态" :value="formatFieldValue(formData?.status) || '-'" />
-        <wd-cell title="remark" :value="formatFieldValue(formData?.remark) || '-'" />
-        <wd-cell title="createTime" :value="formatFieldValue(formData?.createTime) || '-'" />
+        <wd-cell title="条码格式">
+          <dict-tag v-if="formData?.format != null" :type="DICT_TYPE.MES_WM_BARCODE_FORMAT" :value="formData.format" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="业务类型">
+          <dict-tag v-if="formData?.bizType != null" :type="DICT_TYPE.MES_WM_BARCODE_BIZ_TYPE" :value="formData.bizType" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="内容格式模板" :value="formData?.contentFormat || '-'" />
+        <wd-cell title="内容样例" :value="formData?.contentExample || '-'" />
+        <wd-cell title="自动生成" :value="formData?.autoGenerateFlag ? '是' : '否'" />
+        <wd-cell title="默认打印模板" :value="formData?.defaultTemplate || '报表/打印专项维护'" />
+        <wd-cell title="状态">
+          <dict-tag v-if="formData?.status != null" :type="DICT_TYPE.COMMON_STATUS" :value="formData.status" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="备注" :value="formData?.remark || '-'" />
+        <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime) || '-'" />
       </wd-cell-group>
+      <view class="mx-24rpx mt-24rpx rounded-12rpx bg-[#f7faff] p-24rpx text-26rpx text-[#666] leading-40rpx">
+        默认打印模板暂不在移动端选择；正式打印和模板维护归入报表/打印专项。
+      </view>
     </view>
 
     <!-- 底部操作按钮 -->
@@ -47,14 +58,16 @@
 import type { WmBarcodeConfigVO } from '@/api/mes/wm/barcode/config'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
-import { getBarcodeConfig, deleteBarcodeConfig } from '@/api/mes/wm/barcode/config'
+import { computed, onMounted, ref, watch } from 'vue'
+import { deleteBarcodeConfig, getBarcodeConfig } from '@/api/mes/wm/barcode/config'
 import { useAccess } from '@/hooks/useAccess'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{
-  id?: number | string | any
+  id?: number | string
 }>()
 
 definePage({
@@ -67,7 +80,9 @@ definePage({
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const formData = ref<any>() // 详情数据
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/wm/barcode/config/detail/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
+const formData = ref<WmBarcodeConfigVO>() // 详情数据
 const deleting = ref(false) // 删除状态
 
 /** 返回上一页 */
@@ -75,43 +90,40 @@ function handleBack() {
   navigateBackPlus('/pages-mes/wm/barcode/config/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
-}
-
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getBarcodeConfig(props.id)
+    formData.value = await getBarcodeConfig(currentId.value)
   } finally {
     toast.close()
+  }
+}
+
+/** 初始化页面数据 */
+async function initPage() {
+  if (!currentId.value) {
+    formData.value = undefined
+    return
+  }
+  if (!formData.value || formData.value.id !== currentId.value) {
+    await getDetail()
   }
 }
 
 /** 编辑 */
 function handleEdit() {
   uni.navigateTo({
-    url: `/pages-mes/wm/barcode/config/form/index?id=${props.id}`,
+    url: `/pages-mes/wm/barcode/config/form/index?id=${currentId.value}`,
   })
 }
 
 /** 删除 */
 async function handleDelete() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   try {
@@ -124,7 +136,7 @@ async function handleDelete() {
   }
   deleting.value = true
   try {
-    await deleteBarcodeConfig(props.id)
+    await deleteBarcodeConfig(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:wm:barcode:config:reload')
     setTimeout(() => {
@@ -137,7 +149,11 @@ async function handleDelete() {
 
 /** 初始化 */
 onMounted(() => {
-  getDetail()
+  initPage()
+})
+
+watch(currentId, () => {
+  initPage()
 })
 </script>
 

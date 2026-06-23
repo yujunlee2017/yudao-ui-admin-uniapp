@@ -1,67 +1,33 @@
 <template>
-  <!-- 搜索框入口 -->
   <view @click="visible = true">
     <wd-search :placeholder="placeholder" hide-cancel disabled />
   </view>
-
-  <!-- 搜索弹窗 -->
-  <wd-popup
-    v-model="visible"
-    position="top"
-    :custom-style="getTopPopupStyle()"
-    :modal-style="getTopPopupModalStyle()"
-    @close="visible = false"
-  >
+  <wd-popup v-model="visible" position="top" :custom-style="getTopPopupStyle()" :modal-style="getTopPopupModalStyle()" @close="visible = false">
     <view class="yd-search-form-container">
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           工作站编码
         </view>
-        <wd-input
-          v-model="formData.code"
-          placeholder="请输入工作站编码"
-          clearable
-        />
+        <wd-input v-model="formData.code" placeholder="请输入工作站编码" clearable />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           工作站名称
         </view>
-        <wd-input
-          v-model="formData.name"
-          placeholder="请输入工作站名称"
-          clearable
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          所在车间
-        </view>
-        <wd-input
-          v-model="formData.workshopId"
-          placeholder="请输入所在车间"
-          clearable
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          所属工序
-        </view>
-        <wd-input
-          v-model="formData.processId"
-          placeholder="请输入所属工序"
-          clearable
-        />
+        <wd-input v-model="formData.name" placeholder="请输入工作站名称" clearable />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           状态
         </view>
-        <wd-input
-          v-model="formData.status"
-          placeholder="请输入状态"
-          clearable
-        />
+        <wd-radio-group v-model="formData.status" type="button">
+          <wd-radio :value="-1">
+            全部
+          </wd-radio>
+          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)" :key="dict.value" :value="dict.value">
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -76,58 +42,53 @@
 </template>
 
 <script lang="ts" setup>
+import type { MdWorkstationQueryParams } from '@/api/mes/md/workstation'
 import { computed, reactive, ref } from 'vue'
+import { getIntDictOptions } from '@/hooks/useDict'
+import { DICT_TYPE } from '@/utils/constants'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 
-const emit = defineEmits<{
-  search: [data: Record<string, any>]
-  reset: []
-}>()
-
-const visible = ref(false) // 搜索弹窗显示状态
-const formData = reactive({
-  code: undefined as any,
-  name: undefined as any,
-  workshopId: undefined as any,
-  processId: undefined as any,
-  status: undefined as any,
-}) // 搜索表单数据
-
-/** 搜索条件 placeholder 拼接 */
+const emit = defineEmits<{ search: [data: MdWorkstationQueryParams], reset: [] }>()
+const visible = ref(false)
+const formData = reactive({ code: '', name: '', status: -1 })
 const placeholder = computed(() => {
   const conditions: string[] = []
-  if (formData.code !== undefined && formData.code !== '') {
-    conditions.push(`工作站编码:${formData.code}`)
-  }
-  if (formData.name !== undefined && formData.name !== '') {
-    conditions.push(`工作站名称:${formData.name}`)
-  }
-  if (formData.workshopId !== undefined && formData.workshopId !== '') {
-    conditions.push(`所在车间:${formData.workshopId}`)
-  }
-  if (formData.processId !== undefined && formData.processId !== '') {
-    conditions.push(`所属工序:${formData.processId}`)
-  }
-  if (formData.status !== undefined && formData.status !== '') {
-    conditions.push(`状态:${formData.status}`)
+  if (formData.code)
+    conditions.push(`编码:${formData.code}`)
+  if (formData.name)
+    conditions.push(`名称:${formData.name}`)
+  if (formData.status !== -1) {
+    const label = getIntDictOptions(DICT_TYPE.COMMON_STATUS).find(d => d.value === formData.status)?.label
+    conditions.push(`状态:${label || formData.status}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索工作站'
 })
 
-/** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  emit('search', { ...formData })
+  const params: MdWorkstationQueryParams = {}
+  if (formData.code)
+    params.code = formData.code
+  if (formData.name)
+    params.name = formData.name
+  if (formData.status !== -1)
+    params.status = formData.status
+  emit('search', params)
 }
 
-/** 重置按钮操作 */
 function handleReset() {
-  formData.code = undefined
-  formData.name = undefined
-  formData.workshopId = undefined
-  formData.processId = undefined
-  formData.status = undefined
+  formData.code = ''
+  formData.name = ''
+  formData.status = -1
   visible.value = false
   emit('reset')
 }
+
+function resetFields() {
+  formData.code = ''
+  formData.name = ''
+  formData.status = -1
+}
+
+defineExpose({ resetFields })
 </script>

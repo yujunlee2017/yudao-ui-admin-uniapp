@@ -1,42 +1,47 @@
 <template>
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
-    <wd-navbar
-      title="MES 排班计划详情"
-      left-arrow placeholder safe-area-inset-top fixed
-      @click-left="handleBack"
-    />
+    <wd-navbar title="排班计划详情" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
 
     <!-- 详情内容 -->
-    <view>
+    <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
       <wd-cell-group border>
-        <wd-cell title="计划编码" :value="formatFieldValue(formData?.code) || '-'" />
-        <wd-cell title="计划名称" :value="formatFieldValue(formData?.name) || '-'" />
-        <wd-cell title="班组类型" :value="formatFieldValue(formData?.calendarType) || '-'" />
-        <wd-cell title="开始日期" :value="formatFieldValue(formData?.startDate) || '-'" />
-        <wd-cell title="结束日期" :value="formatFieldValue(formData?.endDate) || '-'" />
-        <wd-cell title="轮班方式" :value="formatFieldValue(formData?.shiftType) || '-'" />
-        <wd-cell title="倒班方式" :value="formatFieldValue(formData?.shiftMethod) || '-'" />
-        <wd-cell title="单据状态" :value="formatFieldValue(formData?.status) || '-'" />
-        <wd-cell title="id" :value="formatFieldValue(formData?.id) || '-'" />
-        <wd-cell title="倒班天数" :value="formatFieldValue(formData?.shiftCount) || '-'" />
-        <wd-cell title="备注" :value="formatFieldValue(formData?.remark) || '-'" />
+        <wd-cell title="计划编码" :value="formData?.code || '-'" />
+        <wd-cell title="计划名称" :value="formData?.name || '-'" />
+        <wd-cell title="班组类型">
+          <dict-tag v-if="formData?.calendarType != null" :type="DICT_TYPE.MES_CAL_CALENDAR_TYPE" :value="formData.calendarType" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="开始日期" :value="formatDate(formData?.startDate) || '-'" />
+        <wd-cell title="结束日期" :value="formatDate(formData?.endDate) || '-'" />
+        <wd-cell title="轮班方式">
+          <dict-tag v-if="formData?.shiftType != null" :type="DICT_TYPE.MES_CAL_SHIFT_TYPE" :value="formData.shiftType" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="倒班方式">
+          <dict-tag v-if="formData?.shiftMethod != null" :type="DICT_TYPE.MES_CAL_SHIFT_METHOD" :value="formData.shiftMethod" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="倒班天数" :value="formData?.shiftCount ? `${formData.shiftCount} 天` : '-'" />
+        <wd-cell title="单据状态">
+          <dict-tag v-if="formData?.status != null" :type="DICT_TYPE.MES_CAL_PLAN_STATUS" :value="formData.status" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="备注" :value="formData?.remark || '-'" />
       </wd-cell-group>
-    </view>
+
+      <PlanShiftList :plan-id="planId" :editable="false" />
+      <PlanTeamList :plan-id="planId" :editable="false" />
+      <view class="h-180rpx" />
+    </scroll-view>
 
     <!-- 底部操作按钮 -->
     <view class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button
-          v-if="hasAccessByCodes(['mes:cal-plan:update'])"
-          class="flex-1" type="warning" @click="handleEdit"
-        >
+        <wd-button v-if="isPrepare && hasAccessByCodes(['mes:cal-plan:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button
-          v-if="hasAccessByCodes(['mes:cal-plan:delete'])"
-          class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
-        >
+        <wd-button v-if="isPrepare && hasAccessByCodes(['mes:cal-plan:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -48,15 +53,20 @@
 import type { CalPlanVO } from '@/api/mes/cal/plan'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
-import { getPlan, deletePlan } from '@/api/mes/cal/plan'
+import { computed, onMounted, ref, watch } from 'vue'
+import { deletePlan, getPlan } from '@/api/mes/cal/plan'
 import { useAccess } from '@/hooks/useAccess'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
-import { formatDateTime } from '@/utils/date'
+import { DICT_TYPE } from '@/utils/constants'
+import { formatDate } from '@/utils/date'
+import PlanShiftList from '../components/plan-shift-list.vue'
+import PlanTeamList from '../components/plan-team-list.vue'
 
-const props = defineProps<{
-  id?: number | string | any
-}>()
+const props = defineProps<{ id?: number | string }>()
+const MesCalPlanStatusEnum = {
+  PREPARE: 0,
+} as const
 
 definePage({
   style: {
@@ -68,36 +78,25 @@ definePage({
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const formData = ref<any>() // 详情数据
+const formData = ref<CalPlanVO>() // 详情数据
 const deleting = ref(false) // 删除状态
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/cal/plan/detail/index')
+const planId = computed(() => getRouteQueryNumber('id'))
+const isPrepare = computed(() => formData.value?.status === MesCalPlanStatusEnum.PREPARE)
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/cal/plan/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
-}
-
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!planId.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getPlan(props.id)
+    formData.value = await getPlan(planId.value)
   } finally {
     toast.close()
   }
@@ -105,42 +104,41 @@ async function getDetail() {
 
 /** 编辑 */
 function handleEdit() {
-  uni.navigateTo({
-    url: `/pages-mes/cal/plan/form/index?id=${props.id}`,
-  })
+  if (!planId.value) {
+    return
+  }
+  uni.navigateTo({ url: `/pages-mes/cal/plan/form/index?id=${planId.value}` })
 }
 
 /** 删除 */
 async function handleDelete() {
-  if (!props.id) {
+  if (!planId.value) {
     return
   }
   try {
     await dialog.confirm({
-      title: '提示',
-      msg: '确定要删除该排班计划吗？',
+      title: '删除确认',
+      msg: `确定要删除「${formData.value?.name || formData.value?.code || planId.value}」排班计划吗？删除后会级联清理班次和计划班组关联。`,
     })
   } catch {
     return
   }
   deleting.value = true
   try {
-    await deletePlan(props.id)
+    await deletePlan(planId.value)
     toast.success('删除成功')
     uni.$emit('mes:cal:plan:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    setTimeout(() => handleBack(), 500)
   } finally {
     deleting.value = false
   }
 }
 
-/** 初始化 */
 onMounted(() => {
   getDetail()
 })
-</script>
 
-<style lang="scss" scoped>
-</style>
+watch(planId, () => {
+  getDetail()
+})
+</script>

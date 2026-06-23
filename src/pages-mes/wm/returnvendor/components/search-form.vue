@@ -8,6 +8,8 @@
   <wd-popup
     v-model="visible"
     position="top"
+    transition="fade"
+    :duration="0"
     :custom-style="getTopPopupStyle()"
     :modal-style="getTopPopupModalStyle()"
     @close="visible = false"
@@ -47,11 +49,15 @@
         <view class="yd-search-form-label">
           供应商
         </view>
-        <wd-input
-          v-model="formData.vendorId"
-          placeholder="请输入供应商"
-          clearable
-        />
+        <view class="yd-search-form-selector" @click="openVendorSelector">
+          <text v-if="selectedVendorText" class="text-[#333]">
+            {{ selectedVendorText }}
+          </text>
+          <text v-else class="text-[#999]">
+            请选择供应商
+          </text>
+          <wd-icon v-if="formData.vendorId" name="close" size="28rpx" color="#999" @click.stop="clearVendor" />
+        </view>
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -63,42 +69,75 @@
       </view>
     </view>
   </wd-popup>
+
+  <VendorSelector ref="vendorSelectorRef" @confirm="handleVendorConfirm" />
 </template>
 
 <script lang="ts" setup>
+import type { MdVendorVO } from '@/api/mes/md/vendor'
+import type { WmReturnVendorQueryParams } from '@/api/mes/wm/returnvendor'
 import { computed, reactive, ref } from 'vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import VendorSelector from '../../../md/vendor/components/vendor-selector.vue'
 
 const emit = defineEmits<{
-  search: [data: Record<string, any>]
+  search: [data: WmReturnVendorQueryParams]
   reset: []
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const formData = reactive({
-  code: undefined as any,
-  name: undefined as any,
-  purchaseOrderCode: undefined as any,
-  vendorId: undefined as any,
+const vendorSelectorRef = ref<InstanceType<typeof VendorSelector>>() // 供应商选择器引用
+const selectedVendor = ref<MdVendorVO>() // 当前选择供应商
+const formData = reactive<WmReturnVendorQueryParams>({
+  code: undefined,
+  name: undefined,
+  purchaseOrderCode: undefined,
+  vendorId: undefined,
 }) // 搜索表单数据
+const selectedVendorText = computed(() => {
+  return selectedVendor.value
+    ? `${selectedVendor.value.code || '-'} ${selectedVendor.value.name || ''}`.trim()
+    : ''
+})
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
   const conditions: string[] = []
-  if (formData.code !== undefined && formData.code !== '') {
-    conditions.push(`退货单编号:${formData.code}`)
+  if (formData.code) {
+    conditions.push(`编号:${formData.code}`)
   }
-  if (formData.name !== undefined && formData.name !== '') {
-    conditions.push(`退货单名称:${formData.name}`)
+  if (formData.name) {
+    conditions.push(`名称:${formData.name}`)
   }
-  if (formData.purchaseOrderCode !== undefined && formData.purchaseOrderCode !== '') {
-    conditions.push(`采购订单编号:${formData.purchaseOrderCode}`)
+  if (formData.purchaseOrderCode) {
+    conditions.push(`采购订单:${formData.purchaseOrderCode}`)
   }
-  if (formData.vendorId !== undefined && formData.vendorId !== '') {
-    conditions.push(`供应商:${formData.vendorId}`)
+  if (selectedVendorText.value) {
+    conditions.push(`供应商:${selectedVendorText.value}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索采购退货'
 })
+
+/** 打开供应商选择器 */
+function openVendorSelector() {
+  vendorSelectorRef.value?.open()
+}
+
+/** 确认选择供应商 */
+function handleVendorConfirm(vendors: MdVendorVO[]) {
+  const vendor = vendors[0]
+  if (!vendor) {
+    return
+  }
+  selectedVendor.value = vendor
+  formData.vendorId = vendor.id
+}
+
+/** 清空供应商 */
+function clearVendor() {
+  selectedVendor.value = undefined
+  formData.vendorId = undefined
+}
 
 /** 搜索按钮操作 */
 function handleSearch() {
@@ -111,7 +150,7 @@ function handleReset() {
   formData.code = undefined
   formData.name = undefined
   formData.purchaseOrderCode = undefined
-  formData.vendorId = undefined
+  clearVendor()
   visible.value = false
   emit('reset')
 }

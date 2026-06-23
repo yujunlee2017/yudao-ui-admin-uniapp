@@ -7,10 +7,24 @@
       @click-left="handleBack"
     />
 
-    <!-- 搜索组件 -->
-    <SearchForm @search="handleQuery" @reset="handleReset" />
+    <!-- 当前工作状态 -->
+    <WorkRecordStatusBar ref="statusBarRef" @change="reload" />
 
-    <!-- 列表 -->
+    <!-- 搜索组件 -->
+    <SearchForm ref="searchFormRef" @search="handleQuery" @reset="handleReset" />
+
+    <!-- 导出入口 -->
+    <view v-if="hasAccessByCodes(['mes:pro-workrecord:export'])" class="bg-white px-24rpx py-16rpx">
+      <view
+        class="h-64rpx flex items-center justify-center border-2rpx border-[#1677ff] rounded-8rpx text-26rpx text-[#1677ff]"
+        :class="exportLoading ? 'opacity-60' : ''"
+        @click="handleExport"
+      >
+        {{ exportLoading ? '导出中...' : '导出当前筛选数据' }}
+      </view>
+    </view>
+
+    <!-- 分页列表 -->
     <z-paging
       ref="pagingRef"
       v-model="list"
@@ -31,51 +45,43 @@
           @click="handleDetail(item)"
         >
           <view class="p-24rpx">
-            <view class="mb-16rpx flex items-center justify-between gap-16rpx">
-              <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-                {{ formatFieldValue(item.workstationCode) || '-' }}
+            <view class="mb-16rpx flex items-start justify-between gap-16rpx">
+              <view class="min-w-0 flex-1">
+                <view class="truncate text-32rpx text-[#333] font-semibold">
+                  {{ item.workstationName || '-' }}
+                </view>
+                <view class="mt-6rpx text-24rpx text-[#999]">
+                  {{ item.workstationCode || '-' }} / #{{ item.id }}
+                </view>
               </view>
-              <view class="shrink-0 text-24rpx text-[#999]">
-                #{{ item.id }}
+              <dict-tag v-if="item.type != null" :type="DICT_TYPE.MES_PRO_WORK_RECORD_TYPE" :value="item.type" />
+            </view>
+            <view class="text-26rpx text-[#666] space-y-8rpx">
+              <view>用户：{{ item.userNickname || '-' }}</view>
+              <view>操作时间：{{ formatDateTime(item.createTime) || '-' }}</view>
+              <view v-if="item.remark">
+                备注：{{ item.remark }}
               </view>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">编号：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.id) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">用户：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.userNickname) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">工作站名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.workstationName) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">操作类型：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.type) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">创建时间：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.createTime) || '-' }}</text>
             </view>
           </view>
         </view>
       </view>
     </z-paging>
-
   </view>
 </template>
 
 <script lang="ts" setup>
-import type { ProWorkRecordLogVO } from '@/api/mes/pro/workrecord'
+import type { ProWorkRecordLogQueryParams, ProWorkRecordLogVO } from '@/api/mes/pro/workrecord'
 import { onUnload } from '@dcloudio/uni-app'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { getWorkRecordLogPage } from '@/api/mes/pro/workrecord'
+import { downloadApiFile } from '@/utils/download'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import SearchForm from './components/search-form.vue'
+import WorkRecordStatusBar from './components/work-record-status-bar.vue'
 
 definePage({
   style: {
@@ -85,38 +91,27 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
-const list = ref<any[]>([]) // 列表数据
-const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const list = ref<ProWorkRecordLogVO[]>([]) // 列表数据
+const pagingRef = ref() // 分页组件引用
+const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索表单引用
+const statusBarRef = ref<InstanceType<typeof WorkRecordStatusBar>>() // 当前状态引用
+const queryParams = ref<Partial<ProWorkRecordLogQueryParams>>({}) // 查询参数
+const exportLoading = ref(false) // 导出状态
+const exportParams = computed(() => ({ ...queryParams.value })) // 导出参数
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
-}
-
 /** 查询列表 */
 async function queryList(pageNo: number, pageSize: number) {
   try {
-    const params = {
+    const data = await getWorkRecordLogPage({
       ...queryParams.value,
       pageNo,
       pageSize,
-    }
-    const data = await getWorkRecordLogPage(params as any)
+    })
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
     pagingRef.value?.complete(false)
@@ -124,25 +119,48 @@ async function queryList(pageNo: number, pageSize: number) {
 }
 
 /** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) {
+function handleQuery(data: Partial<ProWorkRecordLogQueryParams>) {
   queryParams.value = { ...data }
   reload()
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  handleQuery()
+  queryParams.value = {}
+  searchFormRef.value?.resetFields()
+  reload()
 }
 
 /** 重新加载 */
 function reload() {
   pagingRef.value?.reload()
+  statusBarRef.value?.loadCurrent()
+}
+
+/** 导出工作记录 */
+async function handleExport() {
+  if (exportLoading.value) {
+    return
+  }
+  const { confirm } = await uni.showModal({
+    title: '导出确认',
+    content: '确定要导出当前筛选数据吗？',
+  })
+  if (!confirm) {
+    return
+  }
+  exportLoading.value = true
+  try {
+    await downloadApiFile('/mes/pro/workrecord/log/export-excel', exportParams.value, '工作记录.xls')
+  } finally {
+    exportLoading.value = false
+  }
 }
 
 /** 查看详情 */
-function handleDetail(item: any) {
+function handleDetail(item: ProWorkRecordLogVO) {
   uni.navigateTo({
-    url: `/pages-mes/pro/workrecord/detail/index?id=${(item as any).id}`,
+    url: `/pages-mes/pro/workrecord/detail/index?id=${item.id}`,
   })
 }
 

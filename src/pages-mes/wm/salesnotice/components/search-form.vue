@@ -47,11 +47,15 @@
         <view class="yd-search-form-label">
           客户
         </view>
-        <wd-input
-          v-model="formData.clientId"
-          placeholder="请输入客户"
-          clearable
-        />
+        <view class="yd-search-form-selector" @click="openClientSelector">
+          <text v-if="selectedClientText" class="text-[#333]">
+            {{ selectedClientText }}
+          </text>
+          <text v-else class="text-[#999]">
+            请选择客户
+          </text>
+          <wd-icon v-if="formData.clientId" name="close" size="28rpx" color="#999" @click.stop="clearClient" />
+        </view>
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -63,42 +67,75 @@
       </view>
     </view>
   </wd-popup>
+
+  <ClientSelector ref="clientSelectorRef" @confirm="handleClientConfirm" />
 </template>
 
 <script lang="ts" setup>
+import type { MdClientVO } from '@/api/mes/md/client'
+import type { WmSalesNoticeQueryParams } from '@/api/mes/wm/salesnotice'
 import { computed, reactive, ref } from 'vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import ClientSelector from '../../../md/client/components/client-selector.vue'
 
 const emit = defineEmits<{
-  search: [data: Record<string, any>]
+  search: [data: WmSalesNoticeQueryParams]
   reset: []
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const formData = reactive({
-  code: undefined as any,
-  name: undefined as any,
-  salesOrderCode: undefined as any,
-  clientId: undefined as any,
+const clientSelectorRef = ref<InstanceType<typeof ClientSelector>>() // 客户选择器引用
+const selectedClient = ref<MdClientVO>() // 当前选择客户
+const formData = reactive<WmSalesNoticeQueryParams>({
+  code: undefined,
+  name: undefined,
+  salesOrderCode: undefined,
+  clientId: undefined,
 }) // 搜索表单数据
+const selectedClientText = computed(() => {
+  return selectedClient.value
+    ? `${selectedClient.value.code || '-'} ${selectedClient.value.name || ''}`.trim()
+    : ''
+})
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
   const conditions: string[] = []
-  if (formData.code !== undefined && formData.code !== '') {
-    conditions.push(`通知单编号:${formData.code}`)
+  if (formData.code) {
+    conditions.push(`编号:${formData.code}`)
   }
-  if (formData.name !== undefined && formData.name !== '') {
-    conditions.push(`通知单名称:${formData.name}`)
+  if (formData.name) {
+    conditions.push(`名称:${formData.name}`)
   }
-  if (formData.salesOrderCode !== undefined && formData.salesOrderCode !== '') {
-    conditions.push(`销售订单编号:${formData.salesOrderCode}`)
+  if (formData.salesOrderCode) {
+    conditions.push(`销售订单:${formData.salesOrderCode}`)
   }
-  if (formData.clientId !== undefined && formData.clientId !== '') {
-    conditions.push(`客户:${formData.clientId}`)
+  if (selectedClientText.value) {
+    conditions.push(`客户:${selectedClientText.value}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索发货通知'
 })
+
+/** 打开客户选择器 */
+function openClientSelector() {
+  clientSelectorRef.value?.open()
+}
+
+/** 确认选择客户 */
+function handleClientConfirm(clients: MdClientVO[]) {
+  const client = clients[0]
+  if (!client) {
+    return
+  }
+  selectedClient.value = client
+  formData.clientId = client.id
+}
+
+/** 清空客户 */
+function clearClient() {
+  selectedClient.value = undefined
+  formData.clientId = undefined
+}
 
 /** 搜索按钮操作 */
 function handleSearch() {
@@ -111,7 +148,7 @@ function handleReset() {
   formData.code = undefined
   formData.name = undefined
   formData.salesOrderCode = undefined
-  formData.clientId = undefined
+  clearClient()
   visible.value = false
   emit('reset')
 }

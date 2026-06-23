@@ -10,6 +10,17 @@
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
+    <!-- 导出入口 -->
+    <view v-if="hasAccessByCodes(['mes:wm-product-sales:export'])" class="bg-white px-24rpx py-16rpx">
+      <view
+        class="h-64rpx flex items-center justify-center border-2rpx border-[#1677ff] rounded-8rpx text-26rpx text-[#1677ff]"
+        :class="exportLoading ? 'opacity-60' : ''"
+        @click="handleExport"
+      >
+        {{ exportLoading ? '导出中...' : '导出当前筛选数据' }}
+      </view>
+    </view>
+
     <!-- 列表 -->
     <z-paging
       ref="pagingRef"
@@ -32,36 +43,59 @@
         >
           <view class="p-24rpx">
             <view class="mb-16rpx flex items-center justify-between gap-16rpx">
-              <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-                {{ formatFieldValue(item.code) || '-' }}
+              <view class="min-w-0 flex-1">
+                <view class="truncate text-32rpx text-[#333] font-semibold">
+                  {{ item.code || '-' }}
+                </view>
+                <view class="mt-4rpx truncate text-24rpx text-[#999]">
+                  {{ item.name || '-' }}
+                </view>
               </view>
-              <view class="shrink-0 text-24rpx text-[#999]">
-                #{{ item.id }}
-              </view>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">出库单名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.name) || '-' }}</text>
+              <dict-tag v-if="item.status != null" :type="DICT_TYPE.MES_WM_PRODUCT_SALES_STATUS" :value="item.status" />
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">发货通知单号：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.noticeCode) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.noticeCode || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">销售订单编号：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.salesOrderCode) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.salesOrderCode || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">客户编码：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.clientCode) || '-' }}</text>
-            </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx shrink-0 text-[#999]">客户名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.clientName) || '-' }}</text>
+              <text class="mr-8rpx shrink-0 text-[#999]">客户：</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.clientName || item.clientCode || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">收货人：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.contactName) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.contactName || '-' }}</text>
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">运输单号：</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.shippingNumber || '-' }}</text>
+            </view>
+            <view class="flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">出库日期：</text>
+              <text class="min-w-0 flex-1 truncate">{{ formatDate(item.salesDate || item.shipmentDate) || '-' }}</text>
+            </view>
+          </view>
+          <view v-if="hasRowActions(item)" class="flex flex-wrap border-t border-t-[#f0f0f0] text-28rpx" @click.stop>
+            <view v-if="canUpdatePrepare(item)" class="min-w-180rpx flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
+              编辑
+            </view>
+            <view v-if="canDeletePrepare(item)" class="min-w-180rpx flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
+              删除
+            </view>
+            <view v-if="canStock(item)" class="min-w-180rpx flex-1 py-18rpx text-center text-[#52c41a]" @click="handleStock(item)">
+              拣货
+            </view>
+            <view v-if="canShipping(item)" class="min-w-180rpx flex-1 py-18rpx text-center text-[#faad14]" @click="handleShipping(item)">
+              填写运单
+            </view>
+            <view v-if="canFinish(item)" class="min-w-180rpx flex-1 py-18rpx text-center text-[#52c41a]" @click="handleFinish(item)">
+              执行出库
+            </view>
+            <view v-if="canCancel(item)" class="min-w-180rpx flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleCancel(item)">
+              取消
             </view>
           </view>
         </view>
@@ -80,13 +114,17 @@
 </template>
 
 <script lang="ts" setup>
-import type { WmProductSalesVO } from '@/api/mes/wm/productsales'
+import type { WmProductSalesQueryParams, WmProductSalesVO } from '@/api/mes/wm/productsales'
 import { onUnload } from '@dcloudio/uni-app'
+import { useDialog } from '@wot-ui/ui/components/wd-dialog'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
-import { getProductSalesPage } from '@/api/mes/wm/productsales'
+import { deleteProductSales, getProductSalesPage } from '@/api/mes/wm/productsales'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
-import { formatDateTime } from '@/utils/date'
+import { downloadApiFile } from '@/utils/download'
+import { DICT_TYPE, MesWmProductSalesStatusEnum } from '@/utils/constants'
+import { formatDate } from '@/utils/date'
 import SearchForm from './components/search-form.vue'
 
 definePage({
@@ -97,27 +135,16 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
-const list = ref<any[]>([]) // 列表数据
-const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const dialog = useDialog()
+const toast = useToast()
+const list = ref<WmProductSalesVO[]>([]) // 列表数据
+const pagingRef = ref<ZPagingRef<WmProductSalesVO>>() // 分页组件引用
+const queryParams = ref<WmProductSalesQueryParams>({}) // 查询参数
+const exportLoading = ref(false) // 导出状态
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
-}
-
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
 }
 
 /** 查询列表 */
@@ -128,7 +155,7 @@ async function queryList(pageNo: number, pageSize: number) {
       pageNo,
       pageSize,
     }
-    const data = await getProductSalesPage(params as any)
+    const data = await getProductSalesPage(params)
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
     pagingRef.value?.complete(false)
@@ -136,7 +163,7 @@ async function queryList(pageNo: number, pageSize: number) {
 }
 
 /** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) {
+function handleQuery(data?: WmProductSalesQueryParams) {
   queryParams.value = { ...data }
   reload()
 }
@@ -151,6 +178,26 @@ function reload() {
   pagingRef.value?.reload()
 }
 
+/** 导出按钮操作 */
+async function handleExport() {
+  if (exportLoading.value) {
+    return
+  }
+  const { confirm } = await uni.showModal({
+    title: '导出确认',
+    content: '确定要导出当前筛选数据吗？',
+  })
+  if (!confirm) {
+    return
+  }
+  exportLoading.value = true
+  try {
+    await downloadApiFile('/mes/wm/product-sales/export-excel', queryParams.value, '销售出库单.xls')
+  } finally {
+    exportLoading.value = false
+  }
+}
+
 /** 新增 */
 function handleAdd() {
   uni.navigateTo({
@@ -159,10 +206,106 @@ function handleAdd() {
 }
 
 /** 查看详情 */
-function handleDetail(item: any) {
+function handleDetail(item: WmProductSalesVO) {
   uni.navigateTo({
-    url: `/pages-mes/wm/productsales/detail/index?id=${(item as any).id}`,
+    url: `/pages-mes/wm/productsales/detail/index?id=${item.id}`,
   })
+}
+
+/** 是否可编辑草稿 */
+function canUpdatePrepare(item: WmProductSalesVO) {
+  return hasAccessByCodes(['mes:wm-product-sales:update']) && item.status === MesWmProductSalesStatusEnum.PREPARE
+}
+
+/** 是否可删除草稿 */
+function canDeletePrepare(item: WmProductSalesVO) {
+  return hasAccessByCodes(['mes:wm-product-sales:delete']) && item.status === MesWmProductSalesStatusEnum.PREPARE
+}
+
+/** 是否可拣货 */
+function canStock(item: WmProductSalesVO) {
+  return hasAccessByCodes(['mes:wm-product-sales:stock']) && item.status === MesWmProductSalesStatusEnum.APPROVING
+}
+
+/** 是否可填写运单 */
+function canShipping(item: WmProductSalesVO) {
+  return hasAccessByCodes(['mes:wm-product-sales:shipping']) && item.status === MesWmProductSalesStatusEnum.SHIPPING
+}
+
+/** 是否可执行出库 */
+function canFinish(item: WmProductSalesVO) {
+  return hasAccessByCodes(['mes:wm-product-sales:finish']) && item.status === MesWmProductSalesStatusEnum.APPROVED
+}
+
+/** 是否可取消 */
+function canCancel(item: WmProductSalesVO) {
+  return hasAccessByCodes(['mes:wm-product-sales:cancel'])
+    && [
+      MesWmProductSalesStatusEnum.CONFIRMED,
+      MesWmProductSalesStatusEnum.APPROVING,
+      MesWmProductSalesStatusEnum.SHIPPING,
+      MesWmProductSalesStatusEnum.APPROVED,
+    ].includes(item.status)
+}
+
+/** 是否存在行操作 */
+function hasRowActions(item: WmProductSalesVO) {
+  return canUpdatePrepare(item)
+    || canDeletePrepare(item)
+    || canStock(item)
+    || canShipping(item)
+    || canFinish(item)
+    || canCancel(item)
+}
+
+/** 编辑 */
+function handleEdit(item: WmProductSalesVO) {
+  uni.navigateTo({
+    url: `/pages-mes/wm/productsales/form/index?id=${item.id}`,
+  })
+}
+
+/** 拣货 */
+function handleStock(item: WmProductSalesVO) {
+  uni.navigateTo({
+    url: `/pages-mes/wm/productsales/form/index?id=${item.id}&mode=stock`,
+  })
+}
+
+/** 填写运单 */
+function handleShipping(item: WmProductSalesVO) {
+  uni.navigateTo({
+    url: `/pages-mes/wm/productsales/form/index?id=${item.id}&mode=shipping`,
+  })
+}
+
+/** 执行出库 */
+function handleFinish(item: WmProductSalesVO) {
+  uni.navigateTo({
+    url: `/pages-mes/wm/productsales/form/index?id=${item.id}&mode=finish`,
+  })
+}
+
+/** 取消 */
+function handleCancel(item: WmProductSalesVO) {
+  uni.navigateTo({
+    url: `/pages-mes/wm/productsales/form/index?id=${item.id}&mode=cancel`,
+  })
+}
+
+/** 删除 */
+async function handleDelete(item: WmProductSalesVO) {
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: `确定要删除「${item.code || item.name || item.id}」吗？`,
+    })
+  } catch {
+    return
+  }
+  await deleteProductSales(item.id)
+  toast.success('删除成功')
+  reload()
 }
 
 /** 初始化 */

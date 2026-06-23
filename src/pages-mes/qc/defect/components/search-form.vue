@@ -17,41 +17,33 @@
         <view class="yd-search-form-label">
           缺陷编码
         </view>
-        <wd-input
-          v-model="formData.code"
-          placeholder="请输入缺陷编码"
-          clearable
-        />
+        <wd-input v-model="formData.code" placeholder="请输入缺陷编码" clearable />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           缺陷描述
         </view>
-        <wd-input
-          v-model="formData.name"
-          placeholder="请输入缺陷描述"
-          clearable
-        />
+        <wd-input v-model="formData.name" placeholder="请输入缺陷描述" clearable />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           检测项类型
         </view>
-        <wd-input
-          v-model="formData.type"
-          placeholder="请输入检测项类型"
-          clearable
-        />
+        <wd-radio-group v-model="formData.type" type="button">
+          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_INDICATOR_TYPE)" :key="dict.value" :value="dict.value">
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           缺陷等级
         </view>
-        <wd-input
-          v-model="formData.level"
-          placeholder="请输入缺陷等级"
-          clearable
-        />
+        <wd-radio-group v-model="formData.level" type="button">
+          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_DEFECT_LEVEL)" :key="dict.value" :value="dict.value">
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -66,36 +58,35 @@
 </template>
 
 <script lang="ts" setup>
+import type { QcDefectPageParam } from '@/api/mes/qc/defect'
 import { computed, reactive, ref } from 'vue'
+import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 
-const emit = defineEmits<{
-  search: [data: Record<string, any>]
-  reset: []
-}>()
+const emit = defineEmits<{ search: [data: Partial<QcDefectPageParam>], reset: [] }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const formData = reactive({
-  code: undefined as any,
-  name: undefined as any,
-  type: undefined as any,
-  level: undefined as any,
+const formData = reactive<Partial<QcDefectPageParam>>({
+  code: '',
+  name: '',
+  type: undefined,
+  level: undefined,
 }) // 搜索表单数据
 
-/** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
   const conditions: string[] = []
-  if (formData.code !== undefined && formData.code !== '') {
-    conditions.push(`缺陷编码:${formData.code}`)
+  if (formData.code) {
+    conditions.push(`编码:${formData.code}`)
   }
-  if (formData.name !== undefined && formData.name !== '') {
-    conditions.push(`缺陷描述:${formData.name}`)
+  if (formData.name) {
+    conditions.push(`描述:${formData.name}`)
   }
-  if (formData.type !== undefined && formData.type !== '') {
-    conditions.push(`检测项类型:${formData.type}`)
+  if (formData.type != null) {
+    conditions.push(`类型:${getDictLabel(DICT_TYPE.MES_INDICATOR_TYPE, formData.type)}`)
   }
-  if (formData.level !== undefined && formData.level !== '') {
-    conditions.push(`缺陷等级:${formData.level}`)
+  if (formData.level != null) {
+    conditions.push(`等级:${getDictLabel(DICT_TYPE.MES_DEFECT_LEVEL, formData.level)}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索缺陷类型'
 })
@@ -103,16 +94,36 @@ const placeholder = computed(() => {
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  emit('search', { ...formData })
+  const params: Partial<QcDefectPageParam> = {}
+  if (formData.code) {
+    params.code = formData.code
+  }
+  if (formData.name) {
+    params.name = formData.name
+  }
+  if (formData.type != null) {
+    params.type = formData.type
+  }
+  if (formData.level != null) {
+    params.level = formData.level
+  }
+  emit('search', params)
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  formData.code = undefined
-  formData.name = undefined
-  formData.type = undefined
-  formData.level = undefined
+  resetFields()
   visible.value = false
   emit('reset')
 }
+
+/** 重置搜索字段 */
+function resetFields() {
+  formData.code = ''
+  formData.name = ''
+  formData.type = undefined
+  formData.level = undefined
+}
+
+defineExpose({ resetFields })
 </script>

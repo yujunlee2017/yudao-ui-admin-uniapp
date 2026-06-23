@@ -17,51 +17,61 @@
         <view class="yd-search-form-label">
           检验单编号
         </view>
-        <wd-input
-          v-model="formData.code"
-          placeholder="请输入检验单编号"
-          clearable
-        />
+        <wd-input v-model="formData.code" placeholder="请输入检验单编号" clearable />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           客户
         </view>
-        <wd-input
-          v-model="formData.clientId"
-          placeholder="请输入客户"
-          clearable
-        />
+        <view class="flex items-center gap-16rpx">
+          <wd-input
+            :model-value="selectedClientName"
+            placeholder="请选择客户"
+            clearable
+            readonly
+            class="min-w-0 flex-1"
+            @click="openClientSelector"
+            @clear="clearClient"
+          />
+          <wd-button size="small" @click="openClientSelector">
+            选择
+          </wd-button>
+        </view>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           批次号
         </view>
-        <wd-input
-          v-model="formData.batchCode"
-          placeholder="请输入批次号"
-          clearable
-        />
+        <wd-input v-model="formData.batchCode" placeholder="请输入批次号" clearable />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           产品物料
         </view>
-        <wd-input
-          v-model="formData.itemId"
-          placeholder="请输入产品物料"
-          clearable
-        />
+        <view class="flex items-center gap-16rpx">
+          <wd-input
+            :model-value="selectedItemName"
+            placeholder="请选择产品物料"
+            clearable
+            readonly
+            class="min-w-0 flex-1"
+            @click="openItemSelector"
+            @clear="clearItem"
+          />
+          <wd-button size="small" @click="openItemSelector">
+            选择
+          </wd-button>
+        </view>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           检测结果
         </view>
-        <wd-input
-          v-model="formData.checkResult"
-          placeholder="请输入检测结果"
-          clearable
-        />
+        <wd-radio-group v-model="formData.checkResult" type="button">
+          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_QC_CHECK_RESULT)" :key="dict.value" :value="dict.value">
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -73,61 +83,141 @@
       </view>
     </view>
   </wd-popup>
+
+  <ClientSelector ref="clientSelectorRef" title="选择客户" :multiple="false" @confirm="handleClientConfirm" />
+  <ItemSelector ref="itemSelectorRef" title="选择产品物料" :multiple="false" @confirm="handleItemConfirm" />
 </template>
 
 <script lang="ts" setup>
+import type { MdClientVO } from '@/api/mes/md/client'
+import type { MdItemVO } from '@/api/mes/md/item'
+import type { QcOqcPageParam } from '@/api/mes/qc/oqc'
 import { computed, reactive, ref } from 'vue'
+import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
+import ClientSelector from '@/pages-mes/md/client/components/client-selector.vue'
+import ItemSelector from '@/pages-mes/md/item/components/item-selector.vue'
 
 const emit = defineEmits<{
-  search: [data: Record<string, any>]
+  search: [data: Partial<QcOqcPageParam>]
   reset: []
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
+const selectedClientName = ref('') // 已选客户展示名
+const selectedItemName = ref('') // 已选物料展示名
+const clientSelectorRef = ref<InstanceType<typeof ClientSelector>>() // 客户选择器引用
+const itemSelectorRef = ref<InstanceType<typeof ItemSelector>>() // 物料选择器引用
 const formData = reactive({
-  code: undefined as any,
-  clientId: undefined as any,
-  batchCode: undefined as any,
-  itemId: undefined as any,
-  checkResult: undefined as any,
+  code: '',
+  clientId: undefined as number | undefined,
+  batchCode: '',
+  itemId: undefined as number | undefined,
+  checkResult: undefined as number | undefined,
 }) // 搜索表单数据
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
   const conditions: string[] = []
-  if (formData.code !== undefined && formData.code !== '') {
-    conditions.push(`检验单编号:${formData.code}`)
+  if (formData.code) {
+    conditions.push(`编号:${formData.code}`)
   }
-  if (formData.clientId !== undefined && formData.clientId !== '') {
-    conditions.push(`客户:${formData.clientId}`)
+  if (formData.clientId != null) {
+    conditions.push(`客户:${selectedClientName.value || formData.clientId}`)
   }
-  if (formData.batchCode !== undefined && formData.batchCode !== '') {
-    conditions.push(`批次号:${formData.batchCode}`)
+  if (formData.batchCode) {
+    conditions.push(`批次:${formData.batchCode}`)
   }
-  if (formData.itemId !== undefined && formData.itemId !== '') {
-    conditions.push(`产品物料:${formData.itemId}`)
+  if (formData.itemId != null) {
+    conditions.push(`物料:${selectedItemName.value || formData.itemId}`)
   }
-  if (formData.checkResult !== undefined && formData.checkResult !== '') {
-    conditions.push(`检测结果:${formData.checkResult}`)
+  if (formData.checkResult != null) {
+    conditions.push(`结果:${getDictLabel(DICT_TYPE.MES_QC_CHECK_RESULT, formData.checkResult) || formData.checkResult}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索出货检验单（OQC）'
 })
 
+/** 打开客户选择器 */
+function openClientSelector() {
+  clientSelectorRef.value?.open()
+}
+
+/** 清空客户 */
+function clearClient() {
+  formData.clientId = undefined
+  selectedClientName.value = ''
+}
+
+/** 确认客户 */
+function handleClientConfirm(clients: MdClientVO[]) {
+  const client = clients[0]
+  formData.clientId = client?.id
+  selectedClientName.value = client ? `${client.code || '-'} ${client.nickname || client.name || ''}`.trim() : ''
+}
+
+/** 打开物料选择器 */
+function openItemSelector() {
+  itemSelectorRef.value?.open()
+}
+
+/** 清空物料 */
+function clearItem() {
+  formData.itemId = undefined
+  selectedItemName.value = ''
+}
+
+/** 确认物料 */
+function handleItemConfirm(items: MdItemVO[]) {
+  const item = items[0]
+  formData.itemId = item?.id
+  selectedItemName.value = item ? `${item.code || '-'} ${item.name || ''}`.trim() : ''
+}
+
+/** 构造搜索参数 */
+function buildParams(): Partial<QcOqcPageParam> {
+  const params: Partial<QcOqcPageParam> = {}
+  if (formData.code) {
+    params.code = formData.code
+  }
+  if (formData.clientId != null) {
+    params.clientId = formData.clientId
+  }
+  if (formData.batchCode) {
+    params.batchCode = formData.batchCode
+  }
+  if (formData.itemId != null) {
+    params.itemId = formData.itemId
+  }
+  if (formData.checkResult != null) {
+    params.checkResult = formData.checkResult
+  }
+  return params
+}
+
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  emit('search', { ...formData })
+  emit('search', buildParams())
+}
+
+/** 重置字段 */
+function resetFields() {
+  formData.code = ''
+  formData.clientId = undefined
+  formData.batchCode = ''
+  formData.itemId = undefined
+  formData.checkResult = undefined
+  selectedClientName.value = ''
+  selectedItemName.value = ''
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  formData.code = undefined
-  formData.clientId = undefined
-  formData.batchCode = undefined
-  formData.itemId = undefined
-  formData.checkResult = undefined
+  resetFields()
   visible.value = false
   emit('reset')
 }
+
+defineExpose({ resetFields })
 </script>

@@ -1,11 +1,7 @@
 <template>
   <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
-    <wd-navbar
-      title="MES 批次追溯管理"
-      left-arrow placeholder safe-area-inset-top fixed
-      @click-left="handleBack"
-    />
+    <wd-navbar title="批次追溯" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
 
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
@@ -33,7 +29,7 @@
           <view class="p-24rpx">
             <view class="mb-16rpx flex items-center justify-between gap-16rpx">
               <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
-                {{ formatFieldValue(item.code) || '-' }}
+                {{ item.code || '-' }}
               </view>
               <view class="shrink-0 text-24rpx text-[#999]">
                 #{{ item.id }}
@@ -41,44 +37,50 @@
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">产品物料编码：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.itemCode) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.itemCode || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">产品物料名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.itemName) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.itemName || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">规格型号：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.itemSpecification) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.itemSpecification || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">单位：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.unitName) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.unitName || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">供应商编码：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.vendorCode) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.vendorCode || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">供应商名称：</text>
-              <text class="min-w-0 flex-1 truncate">{{ formatFieldValue(item.vendorName) || '-' }}</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.vendorName || '-' }}</text>
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">客户名称：</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.clientName || '-' }}</text>
+            </view>
+            <view class="flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">订单编号：</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.purchaseOrderCode || item.salesOrderCode || '-' }}</text>
             </view>
           </view>
         </view>
       </view>
     </z-paging>
-
   </view>
 </template>
 
 <script lang="ts" setup>
-import type { BatchVO } from '@/api/mes/wm/batch'
+import type { BatchPageParam, BatchVO } from '@/api/mes/wm/batch'
+import type { ZPagingRef } from 'z-paging'
 import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { getBatchPage } from '@/api/mes/wm/batch'
-import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
-import { formatDateTime } from '@/utils/date'
 import SearchForm from './components/search-form.vue'
 
 definePage({
@@ -88,39 +90,24 @@ definePage({
   },
 })
 
-const { hasAccessByCodes } = useAccess()
-const list = ref<any[]>([]) // 列表数据
-const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const list = ref<BatchVO[]>([]) // 列表数据
+const pagingRef = ref<ZPagingRef<BatchVO>>() // 分页组件引用
+const queryParams = ref<Partial<BatchPageParam>>({}) // 查询参数
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
-}
-
 /** 查询列表 */
 async function queryList(pageNo: number, pageSize: number) {
   try {
-    const params = {
+    const params: BatchPageParam = {
       ...queryParams.value,
       pageNo,
       pageSize,
     }
-    const data = await getBatchPage(params as any)
+    const data = await getBatchPage(params)
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
     pagingRef.value?.complete(false)
@@ -128,7 +115,7 @@ async function queryList(pageNo: number, pageSize: number) {
 }
 
 /** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) {
+function handleQuery(data?: Partial<BatchPageParam>) {
   queryParams.value = { ...data }
   reload()
 }
@@ -144,10 +131,8 @@ function reload() {
 }
 
 /** 查看详情 */
-function handleDetail(item: any) {
-  uni.navigateTo({
-    url: `/pages-mes/qc/batchtrace/detail/index?id=${(item as any).id}`,
-  })
+function handleDetail(item: BatchVO) {
+  uni.navigateTo({ url: `/pages-mes/qc/batchtrace/detail/index?id=${item.id}` })
 }
 
 /** 初始化 */
@@ -160,6 +145,3 @@ onUnload(() => {
   uni.$off('mes:qc:batchtrace:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

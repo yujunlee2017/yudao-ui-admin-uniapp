@@ -8,6 +8,8 @@
   <wd-popup
     v-model="visible"
     position="top"
+    transition="fade"
+    :duration="0"
     :custom-style="getTopPopupStyle()"
     :modal-style="getTopPopupModalStyle()"
     @close="visible = false"
@@ -17,50 +19,58 @@
         <view class="yd-search-form-label">
           保养计划
         </view>
-        <wd-input
-          v-model="formData.planId"
-          placeholder="请输入保养计划"
-          clearable
-        />
+        <view class="yd-search-form-selector" @click="openPlanSelector">
+          <text v-if="selectedPlanText" class="text-[#333]">
+            {{ selectedPlanText }}
+          </text>
+          <text v-else class="text-[#999]">
+            请选择保养计划
+          </text>
+        </view>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           设备
         </view>
-        <wd-input
-          v-model="formData.machineryId"
-          placeholder="请输入设备"
-          clearable
-        />
+        <view class="yd-search-form-selector" @click="openMachinerySelector">
+          <text v-if="selectedMachineryText" class="text-[#333]">
+            {{ selectedMachineryText }}
+          </text>
+          <text v-else class="text-[#999]">
+            请选择设备
+          </text>
+        </view>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           保养人
         </view>
-        <wd-input
+        <UserPicker
+          ref="userPickerRef"
           v-model="formData.userId"
-          placeholder="请输入保养人"
-          clearable
-        />
+          type="radio"
+          placeholder="请选择保养人"
+          use-default-slot
+          @confirm="handleUserConfirm"
+        >
+          <view class="yd-search-form-selector">
+            <text v-if="selectedUserName" class="text-[#333]">
+              {{ selectedUserName }}
+            </text>
+            <text v-else class="text-[#999]">
+              请选择保养人
+            </text>
+          </view>
+        </UserPicker>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           保养时间
         </view>
-        <wd-input
-          v-model="formData.maintenTime"
-          placeholder="请输入保养时间"
-          clearable
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          设备编码
-        </view>
-        <wd-input
-          v-model="formData.machineryCode"
-          placeholder="请输入设备编码"
-          clearable
+        <wd-calendar
+          v-model="maintenTimeRange"
+          type="daterange"
+          placeholder="请选择保养时间范围"
         />
       </view>
       <view class="yd-search-form-actions">
@@ -73,61 +83,157 @@
       </view>
     </view>
   </wd-popup>
+
+  <CheckPlanSelector
+    ref="planSelectorRef"
+    title="选择保养计划"
+    :type="MesDvSubjectTypeEnum.MAINTENANCE"
+    @confirm="handlePlanConfirm"
+  />
+  <MachinerySelector ref="machinerySelectorRef" @confirm="handleMachineryConfirm" />
 </template>
 
 <script lang="ts" setup>
+import type { User } from '@/api/system/user'
+import type { DvCheckPlanVO } from '@/api/mes/dv/checkplan'
+import type { DvMachineryVO } from '@/api/mes/dv/machinery'
+import type { DvMaintenRecordQueryParams } from '@/api/mes/dv/maintenrecord'
 import { computed, reactive, ref } from 'vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import { MesDvSubjectTypeEnum } from '@/utils/constants'
+import { formatDateRange } from '@/utils/date'
+import UserPicker from '@/components/system-select/user-picker.vue'
+import CheckPlanSelector from '../../checkplan/components/checkplan-selector.vue'
+import MachinerySelector from '../../machinery/components/machinery-selector.vue'
 
 const emit = defineEmits<{
-  search: [data: Record<string, any>]
+  search: [data: DvMaintenRecordQueryParams]
   reset: []
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
+const userPickerRef = ref<InstanceType<typeof UserPicker>>() // 用户选择器
+const planSelectorRef = ref<InstanceType<typeof CheckPlanSelector>>() // 保养计划选择器
+const machinerySelectorRef = ref<InstanceType<typeof MachinerySelector>>() // 设备选择器
+const selectedPlan = ref<DvCheckPlanVO>() // 已选计划
+const selectedMachinery = ref<DvMachineryVO>() // 已选设备
+const selectedUserName = ref('') // 已选保养人名称
+const maintenTimeRange = ref<[string, string]>() // 保养时间范围
 const formData = reactive({
-  planId: undefined as any,
-  machineryId: undefined as any,
-  userId: undefined as any,
-  maintenTime: undefined as any,
-  machineryCode: undefined as any,
+  planId: undefined as number | undefined,
+  machineryId: undefined as number | undefined,
+  userId: undefined as number | undefined,
 }) // 搜索表单数据
+const selectedPlanText = computed(() => {
+  return selectedPlan.value
+    ? `${selectedPlan.value.code || '-'} / ${selectedPlan.value.name || '-'}`
+    : ''
+})
+const selectedMachineryText = computed(() => {
+  return selectedMachinery.value
+    ? `${selectedMachinery.value.code || '-'} / ${selectedMachinery.value.name || '-'}`
+    : ''
+})
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
   const conditions: string[] = []
-  if (formData.planId !== undefined && formData.planId !== '') {
-    conditions.push(`保养计划:${formData.planId}`)
+  if (selectedPlan.value) {
+    conditions.push(`计划:${selectedPlan.value.code || selectedPlan.value.name}`)
   }
-  if (formData.machineryId !== undefined && formData.machineryId !== '') {
-    conditions.push(`设备:${formData.machineryId}`)
+  if (selectedMachinery.value) {
+    conditions.push(`设备:${selectedMachinery.value.code || selectedMachinery.value.name}`)
   }
-  if (formData.userId !== undefined && formData.userId !== '') {
-    conditions.push(`保养人:${formData.userId}`)
+  if (selectedUserName.value) {
+    conditions.push(`保养人:${selectedUserName.value}`)
   }
-  if (formData.maintenTime !== undefined && formData.maintenTime !== '') {
-    conditions.push(`保养时间:${formData.maintenTime}`)
-  }
-  if (formData.machineryCode !== undefined && formData.machineryCode !== '') {
-    conditions.push(`设备编码:${formData.machineryCode}`)
+  if (maintenTimeRange.value?.length === 2) {
+    conditions.push('保养时间')
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索保养记录'
 })
 
+/** 打开计划选择器 */
+function openPlanSelector() {
+  planSelectorRef.value?.open()
+}
+
+/** 打开设备选择器 */
+function openMachinerySelector() {
+  machinerySelectorRef.value?.open()
+}
+
+/** 选择计划 */
+function handlePlanConfirm(item: DvCheckPlanVO) {
+  selectedPlan.value = item
+  formData.planId = item.id
+}
+
+/** 选择设备 */
+function handleMachineryConfirm(item: DvMachineryVO) {
+  selectedMachinery.value = item
+  formData.machineryId = item.id
+}
+
+/** 选择保养人 */
+function handleUserConfirm(users: User[]) {
+  selectedUserName.value = users[0]?.nickname || ''
+}
+
+/** 构造搜索参数 */
+function buildParams() {
+  const params: DvMaintenRecordQueryParams = {}
+  if (formData.planId != null) {
+    params.planId = formData.planId
+  }
+  if (formData.machineryId != null) {
+    params.machineryId = formData.machineryId
+  }
+  if (formData.userId != null) {
+    params.userId = formData.userId
+  }
+  const range = formatDateRange(maintenTimeRange.value)
+  if (range) {
+    params.maintenTime = range
+  }
+  return params
+}
+
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  emit('search', { ...formData })
+  emit('search', buildParams())
+}
+
+/** 重置字段 */
+function resetFields() {
+  formData.planId = undefined
+  formData.machineryId = undefined
+  formData.userId = undefined
+  selectedPlan.value = undefined
+  selectedMachinery.value = undefined
+  selectedUserName.value = ''
+  maintenTimeRange.value = undefined
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  formData.planId = undefined
-  formData.machineryId = undefined
-  formData.userId = undefined
-  formData.maintenTime = undefined
-  formData.machineryCode = undefined
+  resetFields()
   visible.value = false
   emit('reset')
 }
+
+defineExpose({ resetFields })
 </script>
+
+<style lang="scss" scoped>
+.yd-search-form-selector {
+  min-height: 72rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+  border-radius: 8rpx;
+  background: #f7f8fa;
+  font-size: 28rpx;
+}
+</style>

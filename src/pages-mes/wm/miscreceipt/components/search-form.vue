@@ -37,11 +37,11 @@
         <view class="yd-search-form-label">
           杂项类型
         </view>
-        <wd-input
-          v-model="formData.type"
-          placeholder="请输入杂项类型"
-          clearable
-        />
+        <wd-radio-group v-model="formData.type" type="button">
+          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_WM_MISC_RECEIPT_TYPE)" :key="dict.value" :value="dict.value">
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
@@ -63,6 +63,27 @@
           clearable
         />
       </view>
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
+          入库日期
+        </view>
+        <wd-calendar
+          v-model="formData.receiptDate"
+          type="daterange"
+          placeholder="请选择入库日期"
+          clearable
+        />
+      </view>
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
+          单据状态
+        </view>
+        <wd-radio-group v-model="formData.status" type="button">
+          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_WM_MISC_RECEIPT_STATUS)" :key="dict.value" :value="dict.value">
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
+      </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -76,48 +97,81 @@
 </template>
 
 <script lang="ts" setup>
+import type { WmMiscReceiptQueryParams } from '@/api/mes/wm/miscreceipt'
 import { computed, reactive, ref } from 'vue'
+import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
+import { formatDateRange } from '@/utils/date'
+
+interface SearchFormData {
+  code?: string
+  name?: string
+  type?: number
+  sourceDocType?: string
+  sourceDocCode?: string
+  receiptDate?: string[]
+  status?: number
+}
 
 const emit = defineEmits<{
-  search: [data: Record<string, any>]
+  search: [data: WmMiscReceiptQueryParams]
   reset: []
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const formData = reactive({
-  code: undefined as any,
-  name: undefined as any,
-  type: undefined as any,
-  sourceDocType: undefined as any,
-  sourceDocCode: undefined as any,
+const formData = reactive<SearchFormData>({
+  code: undefined,
+  name: undefined,
+  type: undefined,
+  sourceDocType: undefined,
+  sourceDocCode: undefined,
+  receiptDate: undefined,
+  status: undefined,
 }) // 搜索表单数据
 
-/** 搜索条件 placeholder 拼接 */
-const placeholder = computed(() => {
+const placeholder = computed(() => { // 搜索条件摘要
   const conditions: string[] = []
-  if (formData.code !== undefined && formData.code !== '') {
-    conditions.push(`入库单编号:${formData.code}`)
+  if (formData.code) {
+    conditions.push(`编号:${formData.code}`)
   }
-  if (formData.name !== undefined && formData.name !== '') {
-    conditions.push(`入库单名称:${formData.name}`)
+  if (formData.name) {
+    conditions.push(`名称:${formData.name}`)
   }
-  if (formData.type !== undefined && formData.type !== '') {
-    conditions.push(`杂项类型:${formData.type}`)
+  if (formData.type != null) {
+    conditions.push(`类型:${getDictLabel(DICT_TYPE.MES_WM_MISC_RECEIPT_TYPE, formData.type)}`)
   }
-  if (formData.sourceDocType !== undefined && formData.sourceDocType !== '') {
+  if (formData.sourceDocType) {
     conditions.push(`来源单据类型:${formData.sourceDocType}`)
   }
-  if (formData.sourceDocCode !== undefined && formData.sourceDocCode !== '') {
+  if (formData.sourceDocCode) {
     conditions.push(`来源单据编号:${formData.sourceDocCode}`)
+  }
+  if (formData.status != null) {
+    conditions.push(`状态:${getDictLabel(DICT_TYPE.MES_WM_MISC_RECEIPT_STATUS, formData.status)}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索其他入库'
 })
 
+/** 构造搜索参数 */
+function buildSearchParams(): WmMiscReceiptQueryParams {
+  return {
+    pageNo: 1,
+    pageSize: 10,
+    code: formData.code || undefined,
+    name: formData.name || undefined,
+    type: formData.type,
+    sourceDocType: formData.sourceDocType || undefined,
+    sourceDocCode: formData.sourceDocCode || undefined,
+    receiptDate: formatDateRange(formData.receiptDate),
+    status: formData.status,
+  }
+}
+
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  emit('search', { ...formData })
+  emit('search', buildSearchParams())
 }
 
 /** 重置按钮操作 */
@@ -127,6 +181,8 @@ function handleReset() {
   formData.type = undefined
   formData.sourceDocType = undefined
   formData.sourceDocCode = undefined
+  formData.receiptDate = undefined
+  formData.status = undefined
   visible.value = false
   emit('reset')
 }

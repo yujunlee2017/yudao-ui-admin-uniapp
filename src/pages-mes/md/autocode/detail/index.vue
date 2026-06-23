@@ -10,17 +10,35 @@
     <!-- 详情内容 -->
     <view>
       <wd-cell-group border>
-        <wd-cell title="规则编码" :value="formatFieldValue(formData?.code) || '-'" />
-        <wd-cell title="规则名称" :value="formatFieldValue(formData?.name) || '-'" />
-        <wd-cell title="规则描述" :value="formatFieldValue(formData?.description) || '-'" />
-        <wd-cell title="最大长度" :value="formatFieldValue(formData?.maxLength) || '-'" />
-        <wd-cell title="是否补齐" :value="formatFieldValue(formData?.padded) || '-'" />
-        <wd-cell title="状态" :value="formatFieldValue(formData?.status) || '-'" />
-        <wd-cell title="备注" :value="formatFieldValue(formData?.remark) || '-'" />
-        <wd-cell title="创建时间" :value="formatFieldValue(formData?.createTime) || '-'" />
-        <wd-cell title="规则编号" :value="formatFieldValue(formData?.id) || '-'" />
-        <wd-cell title="补齐字符" :value="formatFieldValue(formData?.paddedChar) || '-'" />
-        <wd-cell title="补齐方式" :value="formatFieldValue(formData?.paddedMethod) || '-'" />
+        <wd-cell title="规则编码" :value="formData?.code || '-'" />
+        <wd-cell title="规则名称" :value="formData?.name || '-'" />
+        <wd-cell title="规则描述" :value="formData?.description || '-'" />
+        <wd-cell title="最大长度" :value="formData?.maxLength != null ? String(formData.maxLength) : '-'" />
+        <wd-cell title="是否补齐">
+          <dict-tag
+            v-if="formData?.padded !== undefined"
+            :type="DICT_TYPE.INFRA_BOOLEAN_STRING"
+            :value="formData.padded"
+          />
+          <text v-else>-</text>
+        </wd-cell>
+        <template v-if="formData?.padded">
+          <wd-cell title="补齐字符" :value="formData.paddedChar || '-'" />
+          <wd-cell title="补齐方式">
+            <dict-tag
+              v-if="formData.paddedMethod != null"
+              :type="DICT_TYPE.MES_MD_AUTO_CODE_PADDED_METHOD"
+              :value="formData.paddedMethod"
+            />
+            <text v-else>-</text>
+          </wd-cell>
+        </template>
+        <wd-cell title="状态">
+          <dict-tag v-if="formData?.status != null" :type="DICT_TYPE.COMMON_STATUS" :value="formData.status" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="备注" :value="formData?.remark || '-'" />
+        <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime) || '-'" />
       </wd-cell-group>
     </view>
 
@@ -48,14 +66,16 @@
 import type { AutoCodeRuleVO } from '@/api/mes/md/autocode/rule'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
-import { getAutoCodeRule, deleteAutoCodeRule } from '@/api/mes/md/autocode/rule'
+import { computed, onMounted, ref, watch } from 'vue'
+import { deleteAutoCodeRule, getAutoCodeRule } from '@/api/mes/md/autocode/rule'
 import { useAccess } from '@/hooks/useAccess'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{
-  id?: number | string | any
+  id?: number | string
 }>()
 
 definePage({
@@ -68,7 +88,9 @@ definePage({
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const formData = ref<any>() // 详情数据
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/md/autocode/detail/index')
+const currentId = computed(() => getRouteQueryNumber('id'))
+const formData = ref<AutoCodeRuleVO>() // 详情数据
 const deleting = ref(false) // 删除状态
 
 /** 返回上一页 */
@@ -76,56 +98,53 @@ function handleBack() {
   navigateBackPlus('/pages-mes/md/autocode/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
-}
-
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getAutoCodeRule(props.id)
+    formData.value = await getAutoCodeRule(currentId.value)
   } finally {
     toast.close()
+  }
+}
+
+/** 初始化页面数据 */
+async function initPage() {
+  if (!currentId.value) {
+    formData.value = undefined
+    return
+  }
+  if (!formData.value || formData.value.id !== currentId.value) {
+    await getDetail()
   }
 }
 
 /** 编辑 */
 function handleEdit() {
   uni.navigateTo({
-    url: `/pages-mes/md/autocode/form/index?id=${props.id}`,
+    url: `/pages-mes/md/autocode/form/index?id=${currentId.value}`,
   })
 }
 
 /** 删除 */
 async function handleDelete() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   try {
     await dialog.confirm({
       title: '提示',
-      msg: '确定要删除该编码规则吗？',
+      msg: `确定要删除编码规则「${formData.value?.code || currentId.value}」吗？`,
     })
   } catch {
     return
   }
   deleting.value = true
   try {
-    await deleteAutoCodeRule(props.id)
+    await deleteAutoCodeRule(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:md:autocode:reload')
     setTimeout(() => {
@@ -138,9 +157,10 @@ async function handleDelete() {
 
 /** 初始化 */
 onMounted(() => {
-  getDetail()
+  initPage()
+})
+
+watch(currentId, () => {
+  initPage()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

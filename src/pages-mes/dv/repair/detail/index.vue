@@ -8,44 +8,117 @@
     />
 
     <!-- 详情内容 -->
-    <view>
+    <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
       <wd-cell-group border>
-        <wd-cell title="维修单编号" :value="formatFieldValue(formData?.code) || '-'" />
-        <wd-cell title="维修单名称" :value="formatFieldValue(formData?.name) || '-'" />
-        <wd-cell title="设备编码" :value="formatFieldValue(formData?.machineryCode) || '-'" />
-        <wd-cell title="设备名称" :value="formatFieldValue(formData?.machineryName) || '-'" />
-        <wd-cell title="报修日期" :value="formatFieldValue(formData?.requireDate) || '-'" />
-        <wd-cell title="维修完成日期" :value="formatFieldValue(formData?.finishDate) || '-'" />
-        <wd-cell title="验收日期" :value="formatFieldValue(formData?.confirmDate) || '-'" />
-        <wd-cell title="维修结果" :value="formatFieldValue(formData?.result) || '-'" />
-        <wd-cell title="编号" :value="formatFieldValue(formData?.id) || '-'" />
-        <wd-cell title="设备编号" :value="formatFieldValue(formData?.machineryId) || '-'" />
-        <wd-cell title="品牌" :value="formatFieldValue(formData?.machineryBrand) || '-'" />
-        <wd-cell title="规格型号" :value="formatFieldValue(formData?.machinerySpecification) || '-'" />
-        <wd-cell title="维修人用户编号" :value="formatFieldValue(formData?.acceptedUserId) || '-'" />
-        <wd-cell title="维修人名称" :value="formatFieldValue(formData?.acceptedUserNickname) || '-'" />
-        <wd-cell title="验收人用户编号" :value="formatFieldValue(formData?.confirmUserId) || '-'" />
-        <wd-cell title="验收人名称" :value="formatFieldValue(formData?.confirmUserNickname) || '-'" />
-        <wd-cell title="来源单据类型" :value="formatFieldValue(formData?.sourceDocType) || '-'" />
-        <wd-cell title="来源单据编号" :value="formatFieldValue(formData?.sourceDocId) || '-'" />
+        <wd-cell title="维修单编号" :value="formData?.code || '-'" />
+        <wd-cell title="维修单名称" :value="formData?.name || '-'" />
+        <wd-cell title="设备编码" :value="formData?.machineryCode || '-'" />
+        <wd-cell title="设备名称" :value="formData?.machineryName || '-'" />
+        <wd-cell title="品牌" :value="formData?.machineryBrand || '-'" />
+        <wd-cell title="规格型号" :value="formData?.machinerySpecification || '-'" />
+        <wd-cell title="报修日期" :value="formatDateTime(formData?.requireDate) || '-'" />
+        <wd-cell title="维修完成日期" :value="formatDateTime(formData?.finishDate) || '-'" />
+        <wd-cell title="维修人员" :value="formData?.acceptedUserNickname || '-'" />
+        <wd-cell title="验收日期" :value="formatDateTime(formData?.confirmDate) || '-'" />
+        <wd-cell title="验收人员" :value="formData?.confirmUserNickname || '-'" />
+        <wd-cell title="维修结果">
+          <dict-tag v-if="formData?.result != null" :type="DICT_TYPE.MES_DV_REPAIR_RESULT" :value="formData.result" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="单据状态">
+          <dict-tag v-if="formData?.status != null" :type="DICT_TYPE.MES_DV_REPAIR_STATUS" :value="formData.status" />
+          <text v-else>-</text>
+        </wd-cell>
+        <wd-cell title="备注" :value="formData?.remark || '-'" />
       </wd-cell-group>
-    </view>
+      <RepairLineList :repair-id="currentId" readonly />
+      <view v-if="hasFooter" class="mx-24rpx mt-24rpx rounded-12rpx bg-white p-24rpx">
+        <view class="mb-20rpx text-28rpx text-[#333] font-semibold">
+          工单操作
+        </view>
+        <view class="flex gap-16rpx text-28rpx">
+          <view
+            v-if="canUpdatePrepare"
+            class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white"
+            @click="handleEdit"
+          >
+            编辑
+          </view>
+          <view
+            v-if="canDeletePrepare"
+            class="flex-1 rounded-8rpx bg-[#f56c6c] py-20rpx text-center text-white"
+            :class="deleting ? 'opacity-60' : ''"
+            @click="handleDelete"
+          >
+            {{ deleting ? '删除中...' : '删除' }}
+          </view>
+          <view
+            v-if="canSubmitPrepare"
+            class="flex-1 rounded-8rpx bg-[#faad14] py-20rpx text-center text-white"
+            :class="submitting ? 'opacity-60' : ''"
+            @click="handleSubmitRepair"
+          >
+            {{ submitting ? '提交中...' : '提交' }}
+          </view>
+          <view
+            v-if="canConfirmRepair"
+            class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white"
+            @click="handleConfirm"
+          >
+            完成维修
+          </view>
+          <view
+            v-if="canFinishRepair"
+            class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white"
+            @click="handleFinish"
+          >
+            验收
+          </view>
+        </view>
+      </view>
+      <view class="h-180rpx" />
+    </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button
-          v-if="hasAccessByCodes(['mes:dv-repair:update'])"
-          class="flex-1" type="warning" @click="handleEdit"
+    <view v-if="hasFooter" class="yd-detail-footer">
+      <view class="flex gap-24rpx text-28rpx">
+        <view
+          v-if="canUpdatePrepare"
+          class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white"
+          @click="handleEdit"
         >
           编辑
-        </wd-button>
-        <wd-button
-          v-if="hasAccessByCodes(['mes:dv-repair:delete'])"
-          class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
+        </view>
+        <view
+          v-if="canDeletePrepare"
+          class="flex-1 rounded-8rpx bg-[#f56c6c] py-20rpx text-center text-white"
+          :class="deleting ? 'opacity-60' : ''"
+          @click="handleDelete"
         >
-          删除
-        </wd-button>
+          {{ deleting ? '删除中...' : '删除' }}
+        </view>
+        <view
+          v-if="canSubmitPrepare"
+          class="flex-1 rounded-8rpx bg-[#faad14] py-20rpx text-center text-white"
+          :class="submitting ? 'opacity-60' : ''"
+          @click="handleSubmitRepair"
+        >
+          {{ submitting ? '提交中...' : '提交' }}
+        </view>
+        <view
+          v-if="canConfirmRepair"
+          class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white"
+          @click="handleConfirm"
+        >
+          完成维修
+        </view>
+        <view
+          v-if="canFinishRepair"
+          class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white"
+          @click="handleFinish"
+        >
+          验收
+        </view>
       </view>
     </view>
   </view>
@@ -53,16 +126,20 @@
 
 <script lang="ts" setup>
 import type { DvRepairVO } from '@/api/mes/dv/repair'
+import { onShow } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
-import { getRepair, deleteRepair } from '@/api/mes/dv/repair'
+import { computed, onMounted, ref, watch } from 'vue'
+import { deleteRepair, getRepair, submitRepair } from '@/api/mes/dv/repair'
 import { useAccess } from '@/hooks/useAccess'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE, MesDvRepairStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
+import RepairLineList from '../components/repair-line-list.vue'
 
 const props = defineProps<{
-  id?: number | string | any
+  id?: number | string
 }>()
 
 definePage({
@@ -75,64 +152,91 @@ definePage({
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const formData = ref<any>() // 详情数据
+const formData = ref<DvRepairVO>() // 详情数据
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/dv/repair/detail/index')
+const currentId = computed(() => getRouteQueryNumber('id')) // 当前详情编号
 const deleting = ref(false) // 删除状态
+const submitting = ref(false) // 提交状态
+const canUpdatePrepare = computed(() => (
+  hasAccessByCodes(['mes:dv-repair:update'])
+  && formData.value?.status === MesDvRepairStatusEnum.PREPARE
+))
+const canDeletePrepare = computed(() => (
+  hasAccessByCodes(['mes:dv-repair:delete'])
+  && formData.value?.status === MesDvRepairStatusEnum.PREPARE
+))
+const canSubmitPrepare = computed(() => (
+  hasAccessByCodes(['mes:dv-repair:update'])
+  && formData.value?.status === MesDvRepairStatusEnum.PREPARE
+))
+const canConfirmRepair = computed(() => (
+  hasAccessByCodes(['mes:dv-repair:update'])
+  && formData.value?.status === MesDvRepairStatusEnum.CONFIRMED
+))
+const canFinishRepair = computed(() => (
+  hasAccessByCodes(['mes:dv-repair:update'])
+  && formData.value?.status === MesDvRepairStatusEnum.APPROVING
+))
+const hasFooter = computed(() => (
+  canUpdatePrepare.value
+  || canDeletePrepare.value
+  || canSubmitPrepare.value
+  || canConfirmRepair.value
+  || canFinishRepair.value
+))
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/dv/repair/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
-}
-
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getRepair(props.id)
+    formData.value = await getRepair(currentId.value)
   } finally {
     toast.close()
+  }
+}
+
+/** 初始化页面数据 */
+async function initPage() {
+  if (!currentId.value) {
+    formData.value = undefined
+    return
+  }
+  if (!formData.value || formData.value.id !== currentId.value) {
+    await getDetail()
   }
 }
 
 /** 编辑 */
 function handleEdit() {
   uni.navigateTo({
-    url: `/pages-mes/dv/repair/form/index?id=${props.id}`,
+    url: `/pages-mes/dv/repair/form/index?id=${currentId.value}`,
   })
 }
 
 /** 删除 */
 async function handleDelete() {
-  if (!props.id) {
+  if (!currentId.value || !formData.value) {
     return
   }
   try {
     await dialog.confirm({
       title: '提示',
-      msg: '确定要删除该维修工单吗？',
+      msg: `确定要删除「${formData.value.code || formData.value.name || formData.value.id}」吗？`,
     })
   } catch {
     return
   }
   deleting.value = true
   try {
-    await deleteRepair(props.id)
+    await deleteRepair(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:dv:repair:reload')
     setTimeout(() => {
@@ -143,9 +247,55 @@ async function handleDelete() {
   }
 }
 
+/** 提交维修工单 */
+async function handleSubmitRepair() {
+  if (!currentId.value) {
+    return
+  }
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: '确认提交该维修工单？提交后将不能修改。',
+    })
+  } catch {
+    return
+  }
+  submitting.value = true
+  try {
+    await submitRepair(currentId.value)
+    toast.success('提交成功')
+    await getDetail()
+    uni.$emit('mes:dv:repair:reload')
+  } finally {
+    submitting.value = false
+  }
+}
+
+/** 完成维修 */
+function handleConfirm() {
+  uni.navigateTo({
+    url: `/pages-mes/dv/repair/form/index?id=${currentId.value}&mode=confirm`,
+  })
+}
+
+/** 验收 */
+function handleFinish() {
+  uni.navigateTo({
+    url: `/pages-mes/dv/repair/form/index?id=${currentId.value}&mode=finish`,
+  })
+}
+
 /** 初始化 */
 onMounted(() => {
-  getDetail()
+  initPage()
+})
+
+onShow(() => {
+  initPage()
+})
+
+watch(currentId, () => {
+  initPage()
 })
 </script>
 

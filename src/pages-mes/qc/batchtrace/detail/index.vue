@@ -1,57 +1,78 @@
 <template>
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
-    <wd-navbar
-      title="MES 批次追溯详情"
-      left-arrow placeholder safe-area-inset-top fixed
-      @click-left="handleBack"
-    />
+    <wd-navbar title="批次追溯详情" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
 
     <!-- 详情内容 -->
-    <view>
-      <wd-cell-group border>
-        <wd-cell title="批次编号" :value="formatFieldValue(formData?.code) || '-'" />
-        <wd-cell title="产品物料编码" :value="formatFieldValue(formData?.itemCode) || '-'" />
-        <wd-cell title="产品物料名称" :value="formatFieldValue(formData?.itemName) || '-'" />
-        <wd-cell title="规格型号" :value="formatFieldValue(formData?.itemSpecification) || '-'" />
-        <wd-cell title="单位" :value="formatFieldValue(formData?.unitName) || '-'" />
-        <wd-cell title="供应商编码" :value="formatFieldValue(formData?.vendorCode) || '-'" />
-        <wd-cell title="供应商名称" :value="formatFieldValue(formData?.vendorName) || '-'" />
-        <wd-cell title="客户编码" :value="formatFieldValue(formData?.clientCode) || '-'" />
-        <wd-cell title="id" :value="formatFieldValue(formData?.id) || '-'" />
-        <wd-cell title="itemId" :value="formatFieldValue(formData?.itemId) || '-'" />
-        <wd-cell title="produceDate" :value="formatFieldValue(formData?.produceDate) || '-'" />
-        <wd-cell title="expireDate" :value="formatFieldValue(formData?.expireDate) || '-'" />
-        <wd-cell title="receiptDate" :value="formatFieldValue(formData?.receiptDate) || '-'" />
-        <wd-cell title="vendorId" :value="formatFieldValue(formData?.vendorId) || '-'" />
-        <wd-cell title="clientId" :value="formatFieldValue(formData?.clientId) || '-'" />
-        <wd-cell title="clientName" :value="formatFieldValue(formData?.clientName) || '-'" />
-        <wd-cell title="purchaseOrderCode" :value="formatFieldValue(formData?.purchaseOrderCode) || '-'" />
-        <wd-cell title="salesOrderCode" :value="formatFieldValue(formData?.salesOrderCode) || '-'" />
-      </wd-cell-group>
-    </view>
+    <scroll-view class="min-h-0 flex-1" scroll-y scroll-with-animation>
+      <view class="p-24rpx">
+        <wd-cell-group title="批次信息" border>
+          <wd-cell title="批次编号" :value="formData?.code || '-'" />
+          <wd-cell title="生产批号" :value="formData?.lotNumber || '-'" />
+          <wd-cell title="质量状态">
+            <dict-tag v-if="formData?.qualityStatus != null" :type="DICT_TYPE.MES_WM_QUALITY_STATUS" :value="formData.qualityStatus" />
+            <text v-else>-</text>
+          </wd-cell>
+          <wd-cell title="生产日期" :value="formatDateTime(formData?.produceDate) || '-'" />
+          <wd-cell title="有效期" :value="formatDateTime(formData?.expireDate) || '-'" />
+          <wd-cell title="入库日期" :value="formatDateTime(formData?.receiptDate) || '-'" />
+          <wd-cell title="备注" :value="formData?.remark || '-'" />
+        </wd-cell-group>
 
-    <!-- 底部操作按钮 -->
-    <view class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
+        <wd-cell-group title="产品物料" border class="mt-24rpx">
+          <wd-cell title="物料编码" :value="formData?.itemCode || '-'" />
+          <wd-cell title="物料名称" :value="formData?.itemName || '-'" />
+          <wd-cell title="规格型号" :value="formData?.itemSpecification || '-'" />
+          <wd-cell title="单位" :value="formData?.unitName || '-'" />
+        </wd-cell-group>
 
+        <wd-cell-group title="供应与销售" border class="mt-24rpx">
+          <wd-cell title="供应商" :value="`${formData?.vendorCode || '-'} / ${formData?.vendorName || '-'}`" />
+          <wd-cell title="客户" :value="`${formData?.clientCode || '-'} / ${formData?.clientName || '-'}`" />
+          <wd-cell title="采购订单编号" :value="formData?.purchaseOrderCode || '-'" />
+          <wd-cell title="销售订单编号" :value="formData?.salesOrderCode || '-'" />
+        </wd-cell-group>
+
+        <wd-cell-group title="生产关联" border class="mt-24rpx">
+          <wd-cell title="生产工单" :value="formData?.workOrderCode || '-'" />
+          <wd-cell title="生产任务" :value="formData?.taskCode || '-'" />
+          <wd-cell title="工作站" :value="formData?.workstationCode || '-'" />
+          <wd-cell title="工具" :value="formData?.toolCode || '-'" />
+        </wd-cell-group>
+
+        <view class="mt-24rpx overflow-hidden rounded-12rpx bg-white">
+          <wd-tabs v-model="activeTab">
+            <wd-tab title="向前追溯" name="forward">
+              <view class="p-24rpx">
+                <BatchTraceList :batch-code="formData?.code" direction="forward" />
+              </view>
+            </wd-tab>
+            <wd-tab title="向后追溯" name="backward">
+              <view class="p-24rpx">
+                <BatchTraceList :batch-code="formData?.code" direction="backward" />
+              </view>
+            </wd-tab>
+          </wd-tabs>
+        </view>
       </view>
-    </view>
+      <view class="h-48rpx" />
+    </scroll-view>
   </view>
 </template>
 
 <script lang="ts" setup>
 import type { BatchVO } from '@/api/mes/wm/batch'
-import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { getBatch } from '@/api/mes/wm/batch'
-import { useAccess } from '@/hooks/useAccess'
+import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
+import BatchTraceList from './trace-list.vue'
 
 const props = defineProps<{
-  id?: number | string | any
+  id?: number | string
 }>()
 
 definePage({
@@ -61,49 +82,35 @@ definePage({
   },
 })
 
-const { hasAccessByCodes } = useAccess()
-const dialog = useDialog()
 const toast = useToast()
-const formData = ref<any>() // 详情数据
-const deleting = ref(false) // 删除状态
+const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/qc/batchtrace/detail/index')
+const formData = ref<BatchVO>() // 详情数据
+const activeTab = ref('forward') // 当前追溯方向
+const currentId = computed(() => getRouteQueryNumber('id'))
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/qc/batchtrace/index')
 }
 
-/** 格式化字段值 */
-function formatFieldValue(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-  if (typeof value === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (value instanceof Date || (/Date|Time/.test(String(value)) && /^\d{4}-/.test(String(value)))) {
-    return formatDateTime(value) || String(value)
-  }
-  return String(value)
-}
-
 /** 加载详情 */
 async function getDetail() {
-  if (!props.id) {
+  if (!currentId.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getBatch(props.id)
+    formData.value = await getBatch(currentId.value)
   } finally {
     toast.close()
   }
 }
 
-/** 初始化 */
 onMounted(() => {
   getDetail()
 })
-</script>
 
-<style lang="scss" scoped>
-</style>
+watch(currentId, () => {
+  getDetail()
+})
+</script>
