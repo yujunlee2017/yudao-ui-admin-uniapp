@@ -118,6 +118,13 @@ definePage({
 const userStore = useUserStore()
 const toast = useToast()
 
+const layoutOptions: { value: MenuLayout, label: string }[] = [ // 工作台布局选项
+  { value: 'section', label: '小标题' },
+  { value: 'accordion', label: '折叠' },
+  { value: 'sidebar', label: '纵向分类' },
+  { value: 'tabs', label: '横向分类' },
+]
+
 const searchKeyword = ref('') // 搜索关键词
 const menuGroups = ref<MenuGroup[]>([]) // 菜单分组列表
 /** 常用服务菜单（从 store 中计算得出） */
