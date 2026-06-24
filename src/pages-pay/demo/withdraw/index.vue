@@ -125,9 +125,8 @@
               </wd-radio>
             </wd-radio-group>
           </wd-form-item>
-          <wd-form-item title="提现金额" title-width="210rpx" prop="price" center>
-            <wd-input-number v-model="formData.price" :min="0.01" :step="0.01" :precision="2" input-width="200rpx" />
-            <text class="ml-12rpx text-26rpx text-[#999]">元</text>
+          <wd-form-item title="提现金额(元)" title-width="210rpx" prop="price" center>
+            <wd-input-number v-model="formData.price" :min="0.01" :step="0.01" :precision="2" />
           </wd-form-item>
           <wd-form-item title="收款账号" title-width="210rpx" prop="userAccount">
             <wd-input v-model="formData.userAccount" clearable :placeholder="accountPlaceholder" />

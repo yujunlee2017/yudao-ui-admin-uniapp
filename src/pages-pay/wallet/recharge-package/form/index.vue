@@ -18,13 +18,11 @@
               placeholder="请输入套餐名"
             />
           </wd-form-item>
-          <wd-form-item title="支付金额" title-width="220rpx" prop="payPrice" center>
-            <wd-input-number v-model="formData.payPrice" :min="0" :step="0.01" :precision="2" input-width="200rpx" />
-            <text class="ml-12rpx text-26rpx text-[#999]">元</text> <!-- TODO @AI：应该在一行，目前换行了；你没该对！！！ -->
+          <wd-form-item title="支付金额(元)" title-width="220rpx" prop="payPrice" center>
+            <wd-input-number v-model="formData.payPrice" :min="0" :step="0.01" :precision="2" />
           </wd-form-item>
-          <wd-form-item title="赠送金额" title-width="220rpx" prop="bonusPrice" center>
-            <wd-input-number v-model="formData.bonusPrice" :min="0" :step="0.01" :precision="2" input-width="200rpx" />
-            <text class="ml-12rpx text-26rpx text-[#999]">元</text> <!-- TODO @AI：应该在一行，目前换行了；你没该对！！！ -->
+          <wd-form-item title="赠送金额(元)" title-width="220rpx" prop="bonusPrice" center>
+            <wd-input-number v-model="formData.bonusPrice" :min="0" :step="0.01" :precision="2" />
           </wd-form-item>
           <wd-form-item title="开启状态" title-width="220rpx" prop="status" center>
             <wd-radio-group v-model="formData.status" type="button">

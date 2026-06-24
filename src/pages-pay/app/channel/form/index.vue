@@ -14,10 +14,8 @@
           <wd-form-item title="渠道编码" title-width="220rpx">
             <wd-input v-model="formData.code" disabled />
           </wd-form-item>
-          <wd-form-item title="渠道费率" title-width="220rpx" prop="feeRate" center>
-            <wd-input-number v-model="formData.feeRate" :min="0" :step="0.01" :precision="2" input-width="200rpx" />
-            <!-- TODO @AI：放在尾部，不要折行 -->
-            <text class="ml-12rpx text-26rpx text-[#999]">%</text>
+          <wd-form-item title="渠道费率(%)" title-width="220rpx" prop="feeRate" center>
+            <wd-input-number v-model="formData.feeRate" :min="0" :step="0.01" :precision="2" />
           </wd-form-item>
           <wd-form-item title="渠道状态" title-width="220rpx" prop="status" center>
             <wd-radio-group v-model="formData.status" type="button">
@@ -38,15 +36,9 @@
               placeholder="请输入备注"
             />
           </wd-form-item>
-          <!-- TODO @AI：目前直接展示 json 不好，参考下 vue3 + ep 的做法！ -->
-          <wd-form-item title="渠道配置" title-width="220rpx" prop="configText">
-            <wd-textarea
-              v-model="formData.configText"
-              auto-height
-              clearable
-              placeholder="请输入 JSON 配置"
-            />
-          </wd-form-item>
+          <!-- 渠道配置 -->
+          <AlipayConfig v-if="isAlipayChannel" :config="formData.config" />
+          <WeixinConfig v-if="isWeixinChannel" :config="formData.config" />
         </wd-cell-group>
       </wd-form>
     </view>
@@ -78,6 +70,8 @@ import { getIntDictOptions } from '@/hooks/useDict'
 import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE, PayChannelEnum } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
+import AlipayConfig from '../components/alipay-config.vue'
+import WeixinConfig from '../components/weixin-config.vue'
 
 const props = defineProps<{
   appId?: number | any
@@ -101,12 +95,21 @@ const formData = ref({
   status: CommonStatusEnum.ENABLE,
   feeRate: 0,
   remark: '',
-  configText: '',
+  config: {} as Record<string, any>,
 }) // 表单数据
 const getTitle = computed(() => formData.value.id ? '编辑支付渠道' : '新增支付渠道')
 const formSchema = createFormSchema({
   feeRate: [{ required: true, message: '渠道费率不能为空' }],
   status: [{ required: true, message: '渠道状态不能为空' }],
+})
+
+const isAlipayChannel = computed(() => {
+  const code = props.code || ''
+  return code.startsWith('alipay_')
+})
+const isWeixinChannel = computed(() => {
+  const code = props.code || ''
+  return code.startsWith('wx_')
 })
 
 /** 返回上一页 */
@@ -154,13 +157,30 @@ function getDefaultConfig(code?: string) {
   return {}
 }
 
-/** JSON 格式化 */
-function stringifyConfig(config: any) {
-  try {
-    return JSON.stringify(typeof config === 'string' ? JSON.parse(config || '{}') : config, null, 2)
-  } catch {
-    return config || '{}'
+/** 解析渠道配置为对象（兼容后端返回字符串或对象） */
+function parseConfig(config: any): Record<string, any> {
+  if (!config) {
+    return {}
   }
+  if (typeof config === 'string') {
+    try {
+      return JSON.parse(config)
+    } catch {
+      return {}
+    }
+  }
+  return { ...config }
+}
+
+/** 校验渠道配置 */
+function validateConfig() {
+  const code = props.code || ''
+  const config = formData.value.config
+  if (code.startsWith('wx_') && config.apiVersion === 'v3' && !config.publicKeyId) {
+    toast.show('公钥 ID 不能为空')
+    return false
+  }
+  return true
 }
 
 /** 加载详情 */
@@ -168,7 +188,6 @@ async function getDetail() {
   if (!props.appId || !props.code) {
     return
   }
-  // TODO @AI：是不是不用这样默认值，直接后端加载？类似别的界面一样。
   formData.value = {
     id: undefined,
     appId: Number(props.appId),
@@ -176,7 +195,7 @@ async function getDetail() {
     status: CommonStatusEnum.ENABLE,
     feeRate: 0,
     remark: '',
-    configText: stringifyConfig(getDefaultConfig(props.code)),
+    config: getDefaultConfig(props.code),
   }
   formLoading.value = true
   try {
@@ -191,10 +210,8 @@ async function getDetail() {
       status: data.status ?? CommonStatusEnum.ENABLE,
       feeRate: data.feeRate ?? 0,
       remark: data.remark || '',
-      configText: stringifyConfig(data.config || getDefaultConfig(props.code)),
+      config: { ...getDefaultConfig(props.code), ...parseConfig(data.config) },
     }
-  } catch {
-    // 保持默认新增表单
   } finally {
     formLoading.value = false
   }
@@ -206,25 +223,17 @@ async function handleSubmit() {
   if (!valid) {
     return
   }
-
-  let config = ''
-  try {
-    config = JSON.stringify(JSON.parse(formData.value.configText || '{}'))
-  } catch {
-    toast.error('渠道配置必须是合法 JSON')
+  if (!validateConfig()) {
     return
   }
 
   formLoading.value = true
   try {
     const data = {
-      id: formData.value.id,
+      ...formData.value,
       appId: Number(props.appId),
       code: props.code,
-      status: formData.value.status,
-      feeRate: formData.value.feeRate,
-      remark: formData.value.remark,
-      config,
+      config: JSON.stringify(formData.value.config),
     }
     if (formData.value.id) {
       await updatePayChannel(data)
