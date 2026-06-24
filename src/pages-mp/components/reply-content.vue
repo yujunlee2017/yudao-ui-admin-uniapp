@@ -1,3 +1,4 @@
+<!-- TODO @AI：注释下作用 -->
 <template>
   <view>
     <text v-if="type === 'text'">{{ content || '-' }}</text>

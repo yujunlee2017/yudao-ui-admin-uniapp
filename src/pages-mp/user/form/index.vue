@@ -17,6 +17,7 @@
           <wd-form-item title="备注" title-width="180rpx" prop="remark">
             <wd-input v-model="formData.remark" clearable placeholder="请输入备注" />
           </wd-form-item>
+          <!-- TODO @AI：标签，是不是要挪到 /Users/yunai/Java/yudao-ui-admin-uniapp-next-v4/src/pages-mp/user/components -->
           <wd-form-item
             title="标签"
             title-width="180rpx"

@@ -610,6 +610,9 @@ async function handleDeleteActive() {
   }
   editorVisible.value = false
 }
+// TODO @AI：对比下 pc，是不是完整了实现了？
+// TODO @AI：是不是要拆下 components 更好维护？？？
+// TODO @AI：一些地方需要 upload 等组件，是不是没弄？其他模块，你也检查下。特别是自动回复那。
 </script>
 
 <style lang="scss" scoped>

@@ -1,3 +1,4 @@
+<!-- TODO @AI：注释下作用 -->
 <template>
   <view class="overflow-hidden border border-[#eee] rounded-12rpx bg-white">
     <view
