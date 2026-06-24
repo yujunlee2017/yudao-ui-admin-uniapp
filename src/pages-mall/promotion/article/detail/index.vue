@@ -11,15 +11,10 @@
     <wd-cell-group border>
       <wd-cell title="编号" :value="formData.id != null ? String(formData.id) : '-'" />
       <wd-cell title="文章标题" :value="formData.title || '-'" />
-      <wd-cell title="文章分类" :value="formData.categoryName || '-'" />
+      <wd-cell title="文章分类" :value="categoryName" />
       <wd-cell title="文章作者" :value="formData.author || '-'" />
       <wd-cell title="文章封面">
-        <image
-          v-if="formData.picUrl"
-          :src="formData.picUrl"
-          class="h-112rpx w-112rpx rounded-8rpx bg-[#f5f5f5]"
-          mode="aspectFill"
-        />
+        <wd-img v-if="formData.picUrl" :src="formData.picUrl" width="112rpx" height="112rpx" radius="8rpx" mode="aspectFill" enable-preview />
         <text v-else>-</text>
       </wd-cell>
       <wd-cell title="文章简介" :value="formData.introduction || '-'" />
@@ -36,12 +31,12 @@
     </wd-cell-group>
 
     <!-- 底部操作按钮 -->
-    <view v-if="canUpdate || canDelete" class="yd-detail-footer">
+    <view v-if="hasAccessByCodes(['promotion:article:update', 'promotion:article:delete'])" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['promotion:article:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['promotion:article:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -51,13 +46,15 @@
 
 <script lang="ts" setup>
 import type { PromotionArticle } from '@/api/mall/promotion/article'
+import type { PromotionArticleCategory } from '@/api/mall/promotion/article-category'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { deletePromotionArticle, getPromotionArticle } from '@/api/mall/promotion/article'
+import { getSimplePromotionArticleCategoryList } from '@/api/mall/promotion/article-category'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -75,8 +72,8 @@ const dialog = useDialog()
 const toast = useToast()
 const formData = ref<PromotionArticle>({} as PromotionArticle) // 详情数据
 const deleting = ref(false) // 删除状态
-const canUpdate = computed(() => hasAccessByCodes(['promotion:article:update']))
-const canDelete = computed(() => hasAccessByCodes(['promotion:article:delete']))
+const categories = ref<PromotionArticleCategory[]>([]) // 文章分类（按 id 解析名称）
+const categoryName = computed(() => categories.value.find(c => c.id === formData.value.categoryId)?.name || '-') // 文章分类名
 
 /** 返回上一页 */
 function handleBack() {
@@ -116,14 +113,15 @@ async function handleDelete() {
     await deletePromotionArticle(Number(props.id))
     toast.success('删除成功')
     uni.$emit('mall:promotion-article:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }
 }
 
 /** 初始化 */
-onMounted(() => {
+onMounted(async () => {
+  categories.value = await getSimplePromotionArticleCategoryList()
   getDetail()
   uni.$on('mall:promotion-article:reload', getDetail)
 })

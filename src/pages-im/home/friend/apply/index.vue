@@ -58,7 +58,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { ref } from 'vue'
 import { applyFriendRequest } from '@/api/im/friend/request'
 import { UserPicker } from '@/components/system-select'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { ImFriendAddSource } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -101,7 +101,7 @@ async function handleSubmit() {
       addSource: ImFriendAddSource.SEARCH,
     })
     toast.success('申请已发送')
-    setTimeout(handleBack, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

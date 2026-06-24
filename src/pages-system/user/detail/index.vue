@@ -11,9 +11,7 @@
     <view>
       <wd-cell-group border>
         <wd-cell title="头像">
-          <view v-if="formData?.avatar" class="h-80rpx w-80rpx overflow-hidden rounded-full">
-            <image :src="formData.avatar" class="h-full w-full" mode="aspectFill" />
-          </view>
+          <wd-img v-if="formData?.avatar" :src="formData.avatar" width="80rpx" height="80rpx" mode="aspectFill" round enable-preview />
           <text v-else>-</text>
         </wd-cell>
         <wd-cell title="用户昵称" :value="formData?.nickname || '-'" />
@@ -75,7 +73,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { deleteUser, getUser, updateUserStatus } from '@/api/system/user'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import PasswordForm from './components/password-form.vue'
@@ -165,9 +163,7 @@ async function handleDelete() {
     await deleteUser(Number(props.id))
     toast.success('删除成功')
     uni.$emit('system:user:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

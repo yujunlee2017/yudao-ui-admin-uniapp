@@ -126,7 +126,7 @@ import { computed, onMounted, ref } from 'vue'
 import { createTenant, getTenant, updateTenant } from '@/api/system/tenant'
 import { getTenantPackageList } from '@/api/system/tenant/package'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
@@ -205,9 +205,7 @@ async function handleSubmit() {
       await createTenant(formData.value)
       toast.success('新增成功')
     }
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

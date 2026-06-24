@@ -61,7 +61,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { deleteJob, getJob, runJob, updateJobStatus } from '@/api/infra/job'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, InfraJobStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -167,9 +167,7 @@ async function handleDelete() {
   try {
     await deleteJob(props.id)
     toast.success('删除成功')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

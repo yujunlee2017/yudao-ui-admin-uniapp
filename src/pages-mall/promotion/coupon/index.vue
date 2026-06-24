@@ -10,8 +10,21 @@
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
-    <!-- 列表操作 -->
-    <view v-if="canSend" class="bg-white px-24rpx py-16rpx">
+    <!-- 状态筛选 -->
+    <view class="bg-white">
+      <wd-tabs v-model="statusTabIndex" @change="reload">
+        <wd-tab title="全部" />
+        <wd-tab
+          v-for="dict in statusOptions"
+          :key="dict.value"
+          :title="dict.label"
+        />
+      </wd-tabs>
+    </view>
+
+    <!-- 发送优惠券 -->
+    <!-- pc 没有优惠劵的发送，可以考虑去掉 -->
+    <view v-if="hasAccessByCodes(['promotion:coupon:send'])" class="bg-white px-24rpx py-16rpx">
       <wd-button size="small" type="primary" @click="sendVisible = true">
         发送优惠券
       </wd-button>
@@ -45,8 +58,8 @@
           </view>
 
           <view class="mb-12rpx flex items-center justify-between text-26rpx text-[#666]">
-            <text>门槛：{{ formatMallMoney(item.usePrice) }}</text>
-            <text>优惠：{{ formatMallMoney(item.discountPrice) }}</text>
+            <text>门槛：{{ formatDisplayMoney(item.usePrice) }}</text>
+            <text>优惠：{{ formatDisplayMoney(item.discountPrice) }}</text>
           </view>
           <view class="flex items-center text-26rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">用户编号：</text>
@@ -72,9 +85,7 @@
           <wd-form-item title="模板编号" title-width="200rpx">
             <wd-input v-model="sendForm.templateId" type="number" clearable placeholder="请输入优惠券模板编号" />
           </wd-form-item>
-          <wd-form-item title="用户编号" title-width="200rpx">
-            <wd-input v-model="sendForm.userIds" clearable placeholder="多个用户编号用英文逗号分隔" />
-          </wd-form-item>
+          <UserPicker v-model="sendUserIds" type="checkbox" label="选择用户" label-width="200rpx" placeholder="请选择用户" />
         </wd-cell-group>
         <view class="mt-24rpx flex gap-20rpx">
           <wd-button class="flex-1" variant="plain" @click="sendVisible = false">
@@ -93,10 +104,11 @@
 import type { PromotionCoupon } from '@/api/mall/promotion/coupon/coupon'
 import { onUnload } from '@dcloudio/uni-app'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { getPromotionCouponPage, sendPromotionCoupon } from '@/api/mall/promotion/coupon/coupon'
+import { getIntDictOptions } from '@/hooks/useDict'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import SearchForm from './components/search-form.vue'
@@ -112,11 +124,13 @@ const { hasAccessByCodes } = useAccess()
 const toast = useToast()
 const list = ref<PromotionCoupon[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const queryParams = ref<Record<string, any>>({}) // 查询参数（昵称 + 领取时间）
+const statusOptions = getIntDictOptions(DICT_TYPE.PROMOTION_COUPON_STATUS) // 优惠券状态选项
+const statusTabIndex = ref(0) // 状态筛选 tab 下标（0 全部，其余对应 statusOptions）
 const sendVisible = ref(false) // 发送弹窗
 const submitting = ref(false) // 发送提交状态
-const sendForm = reactive({ templateId: '', userIds: '' }) // 发送表单
-const canSend = computed(() => hasAccessByCodes(['promotion:coupon:send']))
+const sendForm = reactive({ templateId: '' }) // 发送表单（模板编号）
+const sendUserIds = ref<number[]>([]) // 发送目标用户编号
 
 /** 返回上一页 */
 function handleBack() {
@@ -126,7 +140,12 @@ function handleBack() {
 /** 查询优惠券列表 */
 async function queryList(pageNo: number, pageSize: number) {
   try {
-    const data = await getPromotionCouponPage({ ...queryParams.value, pageNo, pageSize })
+    const data = await getPromotionCouponPage({
+      ...queryParams.value,
+      status: statusTabIndex.value === 0 ? undefined : statusOptions[statusTabIndex.value - 1]?.value,
+      pageNo,
+      pageSize,
+    })
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
     pagingRef.value?.complete(false)
@@ -152,39 +171,26 @@ function reload() {
 /** 发送优惠券 */
 async function handleSend() {
   const templateId = Number(sendForm.templateId)
-  const userIds = String(sendForm.userIds).split(/[,，]/).map(item => Number(item.trim())).filter(item => !Number.isNaN(item))
-  if (!templateId || !userIds.length) {
-    toast.warning('请填写模板编号与用户编号')
+  if (!templateId || !sendUserIds.value.length) {
+    toast.warning('请填写模板编号并选择用户')
     return
   }
   submitting.value = true
   try {
-    await sendPromotionCoupon({ templateId, userIds })
+    await sendPromotionCoupon({ templateId, userIds: sendUserIds.value })
     toast.success('发送成功')
     sendVisible.value = false
     sendForm.templateId = ''
-    sendForm.userIds = ''
+    sendUserIds.value = []
     reload()
   } finally {
     submitting.value = false
   }
 }
 
-/** 查看详情：优惠券接口无 get，详情字段经路由参数透传 */
+/** 查看详情 */
 function handleDetail(item: PromotionCoupon) {
-  const query = [
-    `id=${item.id}`,
-    item.name ? `name=${encodeURIComponent(item.name)}` : '',
-    item.templateId != null ? `templateId=${item.templateId}` : '',
-    item.userId != null ? `userId=${item.userId}` : '',
-    item.discountType != null ? `discountType=${item.discountType}` : '',
-    item.status != null ? `status=${item.status}` : '',
-    item.usePrice != null ? `usePrice=${item.usePrice}` : '',
-    item.discountPrice != null ? `discountPrice=${item.discountPrice}` : '',
-    item.useTime ? `useTime=${encodeURIComponent(item.useTime)}` : '',
-    item.createTime ? `createTime=${encodeURIComponent(item.createTime)}` : '',
-  ].filter(Boolean).join('&')
-  uni.navigateTo({ url: `/pages-mall/promotion/coupon/detail/index?${query}` })
+  uni.navigateTo({ url: `/pages-mall/promotion/coupon/detail/index?id=${item.id}` })
 }
 
 /** 初始化 */

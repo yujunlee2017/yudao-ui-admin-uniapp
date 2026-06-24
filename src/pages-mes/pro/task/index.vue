@@ -72,7 +72,7 @@
             </view>
           </view>
           <view class="flex border-t border-[#f3f4f6] text-26rpx">
-            <view v-if="canCreate && item.status === MesProWorkOrderStatusEnum.CONFIRMED" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleSchedule(item)">
+            <view v-if="hasAccessByCodes(['mes:pro-task:create']) && item.status === MesProWorkOrderStatusEnum.CONFIRMED" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleSchedule(item)">
               排产
             </view>
             <view class="flex-1 py-18rpx text-center text-[#666]" @click="handleDetail(item)">
@@ -89,7 +89,7 @@
 import type { ProTaskGanttVO } from '@/api/mes/pro/task'
 import type { ProWorkOrderQueryParams, ProWorkOrderVO } from '@/api/mes/pro/workorder'
 import { onUnload } from '@dcloudio/uni-app'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { getGanttTaskList } from '@/api/mes/pro/task'
 import { getWorkOrderPage } from '@/api/mes/pro/workorder'
 import { useAccess } from '@/hooks/useAccess'
@@ -122,7 +122,6 @@ const pagingRef = ref<ZPagingRef<ProWorkOrderVO>>()
 const queryParams = ref<Partial<ProWorkOrderQueryParams>>({})
 const searchFormRef = ref<InstanceType<typeof SearchForm>>()
 const ganttTasks = ref<ProTaskGanttVO[]>([]) // 甘特摘要数据
-const canCreate = computed(() => hasAccessByCodes(['mes:pro-task:create']))
 const flatList = computed<FlatWorkOrder[]>(() => flattenWorkOrders(list.value))
 
 /** 返回上一页 */

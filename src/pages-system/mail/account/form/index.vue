@@ -90,7 +90,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createMailAccount, getMailAccount, updateMailAccount } from '@/api/system/mail/account'
 import { getBoolDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -158,9 +158,7 @@ async function handleSubmit() {
       await createMailAccount(formData.value)
       toast.success('新增成功')
     }
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

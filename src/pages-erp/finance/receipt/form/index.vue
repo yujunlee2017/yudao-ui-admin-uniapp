@@ -63,7 +63,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { getAccountSimpleList } from '@/api/erp/finance/account'
 import { createFinanceReceipt, getFinanceReceipt, updateFinanceReceipt } from '@/api/erp/finance/receipt'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 import ErpPicker from '@/pages-erp/components/erp-picker.vue'
@@ -159,7 +159,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('erp:finance-receipt:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

@@ -47,7 +47,7 @@ import type { ImFriendRespVO } from '@/api/im/friend'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { blockFriend, deleteFriend, getFriend, unblockFriend, updateFriend } from '@/api/im/friend'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 
 const props = defineProps<{
   friendUserId?: number | string
@@ -141,7 +141,7 @@ function handleDelete() {
       }
       await deleteFriend(friendUserId.value, false)
       toast.success('已删除')
-      setTimeout(() => navigateBackPlus('/pages-im/home/friend/index'), 600)
+      delay(() => navigateBackPlus('/pages-im/home/friend/index'))
     },
   })
 }

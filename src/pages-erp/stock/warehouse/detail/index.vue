@@ -26,13 +26,13 @@
     <!-- 底部操作按钮 -->
     <view v-if="hasFooter" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['erp:warehouse:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
         <wd-button v-if="canSetDefault" class="flex-1" type="primary" :loading="defaultLoading" @click="handleSetDefault">
           设为默认
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['erp:warehouse:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -49,7 +49,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { deleteWarehouse, getWarehouse, updateWarehouseDefaultStatus } from '@/api/erp/stock/warehouse'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatMoney } from '@/pages-erp/utils'
 
@@ -70,10 +70,8 @@ const toast = useToast()
 const formData = ref<Warehouse>() // 详情数据
 const deleting = ref(false) // 删除状态
 const defaultLoading = ref(false) // 默认状态修改状态
-const canUpdate = computed(() => hasAccessByCodes(['erp:warehouse:update']))
-const canDelete = computed(() => hasAccessByCodes(['erp:warehouse:delete']))
-const canSetDefault = computed(() => canUpdate.value && !formData.value?.defaultStatus)
-const hasFooter = computed(() => canUpdate.value || canDelete.value || canSetDefault.value)
+const canSetDefault = computed(() => hasAccessByCodes(['erp:warehouse:update']) && !formData.value?.defaultStatus)
+const hasFooter = computed(() => hasAccessByCodes(['erp:warehouse:update']) || hasAccessByCodes(['erp:warehouse:delete']) || canSetDefault.value)
 
 /** 返回上一页 */
 function handleBack() {
@@ -113,7 +111,7 @@ async function handleDelete() {
     await deleteWarehouse(Number(currentId.value))
     toast.success('删除成功')
     uni.$emit('erp:warehouse:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

@@ -8,39 +8,87 @@
       <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
           <EntityPicker v-model="formData.productId" label="所属产品" prop="productId" :columns="productOptions" placeholder="请选择产品" label-width="220rpx" :disabled="!!props.id" />
-          <wd-form-item title="功能类型" title-width="220rpx" center prop="type"><wd-radio-group v-model="formData.type" type="button" :disabled="!!props.id"><wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.IOT_THING_MODEL_TYPE)" :key="dict.value" :value="dict.value">{{ dict.label }}</wd-radio></wd-radio-group></wd-form-item>
-          <wd-form-item title="功能名称" title-width="220rpx" prop="name"><wd-input v-model="formData.name" placeholder="请输入功能名称" clearable /></wd-form-item>
-          <wd-form-item title="标识符" title-width="220rpx" prop="identifier"><wd-input v-model="formData.identifier" placeholder="请输入标识符" :disabled="!!props.id" clearable /></wd-form-item>
+          <wd-form-item title="功能类型" title-width="220rpx" center prop="type">
+            <wd-radio-group v-model="formData.type" type="button" :disabled="!!props.id">
+              <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.IOT_THING_MODEL_TYPE)" :key="dict.value" :value="dict.value">
+                {{ dict.label }}
+              </wd-radio>
+            </wd-radio-group>
+          </wd-form-item>
+          <wd-form-item title="功能名称" title-width="220rpx" prop="name">
+            <wd-input v-model="formData.name" placeholder="请输入功能名称" clearable />
+          </wd-form-item>
+          <wd-form-item title="标识符" title-width="220rpx" prop="identifier">
+            <wd-input v-model="formData.identifier" placeholder="请输入标识符" :disabled="!!props.id" clearable />
+          </wd-form-item>
 
           <!-- 属性配置 -->
           <template v-if="formData.type === IoTThingModelTypeEnum.PROPERTY">
-            <wd-form-item title="数据类型" title-width="220rpx" center><wd-radio-group v-model="property.dataType" type="button" @change="onPropertyDataTypeChange"><wd-radio v-for="opt in dataTypeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</wd-radio></wd-radio-group></wd-form-item>
+            <wd-form-item title="数据类型" title-width="220rpx" center>
+              <wd-radio-group v-model="property.dataType" type="button" @change="onPropertyDataTypeChange">
+                <wd-radio v-for="opt in dataTypeOptions" :key="opt.value" :value="opt.value">
+                  {{ opt.label }}
+                </wd-radio>
+              </wd-radio-group>
+            </wd-form-item>
             <DataSpecsForm :target="property" title-width="220rpx" />
-            <wd-form-item title="读写类型" title-width="220rpx" center><wd-radio-group v-model="property.accessMode" type="button"><wd-radio v-for="opt in accessModeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</wd-radio></wd-radio-group></wd-form-item>
+            <wd-form-item title="读写类型" title-width="220rpx" center>
+              <wd-radio-group v-model="property.accessMode" type="button">
+                <wd-radio v-for="opt in accessModeOptions" :key="opt.value" :value="opt.value">
+                  {{ opt.label }}
+                </wd-radio>
+              </wd-radio-group>
+            </wd-form-item>
           </template>
 
           <!-- 服务配置 -->
-          <wd-form-item v-else-if="formData.type === IoTThingModelTypeEnum.SERVICE" title="调用方式" title-width="220rpx" center><wd-radio-group v-model="callType" type="button"><wd-radio v-for="opt in callTypeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</wd-radio></wd-radio-group></wd-form-item>
+          <wd-form-item v-else-if="formData.type === IoTThingModelTypeEnum.SERVICE" title="调用方式" title-width="220rpx" center>
+            <wd-radio-group v-model="callType" type="button">
+              <wd-radio v-for="opt in callTypeOptions" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </wd-radio>
+            </wd-radio-group>
+          </wd-form-item>
 
           <!-- 事件配置 -->
-          <wd-form-item v-else-if="formData.type === IoTThingModelTypeEnum.EVENT" title="事件类型" title-width="220rpx" center><wd-radio-group v-model="eventType" type="button"><wd-radio v-for="opt in eventTypeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</wd-radio></wd-radio-group></wd-form-item>
+          <wd-form-item v-else-if="formData.type === IoTThingModelTypeEnum.EVENT" title="事件类型" title-width="220rpx" center>
+            <wd-radio-group v-model="eventType" type="button">
+              <wd-radio v-for="opt in eventTypeOptions" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </wd-radio>
+            </wd-radio-group>
+          </wd-form-item>
 
-          <wd-form-item title="是否必选" title-width="220rpx" center><wd-switch v-model="required" /></wd-form-item>
-          <wd-form-item title="功能描述" title-width="220rpx" prop="description"><wd-textarea v-model="formData.description" placeholder="请输入功能描述" :maxlength="300" show-word-limit /></wd-form-item>
+          <wd-form-item title="是否必选" title-width="220rpx" center>
+            <wd-switch v-model="required" />
+          </wd-form-item>
+          <wd-form-item title="功能描述" title-width="220rpx" prop="description">
+            <wd-textarea v-model="formData.description" placeholder="请输入功能描述" :maxlength="300" show-word-limit />
+          </wd-form-item>
         </wd-cell-group>
 
         <!-- 服务：输入 / 输出参数 -->
         <template v-if="formData.type === IoTThingModelTypeEnum.SERVICE">
-          <view class="mt-20rpx"><ParamList v-model="inputParams" direction="input" title="输入参数" /></view>
-          <view class="mt-20rpx"><ParamList v-model="outputParams" direction="output" title="输出参数" /></view>
+          <view class="mt-20rpx">
+            <ParamList v-model="inputParams" direction="input" title="输入参数" />
+          </view>
+          <view class="mt-20rpx">
+            <ParamList v-model="outputParams" direction="output" title="输出参数" />
+          </view>
         </template>
         <!-- 事件：输出参数 -->
-        <view v-else-if="formData.type === IoTThingModelTypeEnum.EVENT" class="mt-20rpx"><ParamList v-model="outputParams" direction="output" title="输出参数" /></view>
+        <view v-else-if="formData.type === IoTThingModelTypeEnum.EVENT" class="mt-20rpx">
+          <ParamList v-model="outputParams" direction="output" title="输出参数" />
+        </view>
       </wd-form>
     </view>
 
     <!-- 底部保存按钮 -->
-    <view class="yd-detail-footer"><wd-button type="primary" block :loading="formLoading" @click="handleSubmit">保存</wd-button></view>
+    <view class="yd-detail-footer">
+      <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
+        保存
+      </wd-button>
+    </view>
   </view>
 </template>
 
@@ -55,7 +103,7 @@ import { createThingModel, getThingModel, updateThingModel } from '@/api/iot/thi
 import { getIntDictOptions } from '@/hooks/useDict'
 import EntityPicker from '@/pages-iot/components/entity-picker.vue'
 import { getDataTypeOptions, IoTDataSpecsDataTypeEnum, IoTThingModelAccessModeEnum, IoTThingModelEventTypeEnum, IoTThingModelServiceCallTypeEnum, IoTThingModelTypeEnum } from '@/pages-iot/utils/constants'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import DataSpecsForm from '../components/data-specs-form.vue'
@@ -88,7 +136,7 @@ const formSchema = createFormSchema({
   name: [{ required: true, message: '功能名称不能为空' }],
   identifier: [
     { required: true, message: '标识符不能为空' },
-    { pattern: /^[a-zA-Z][a-zA-Z0-9_]{0,31}$/, message: '标识符必须以字母开头，不超过 32 个字符' },
+    { pattern: /^[a-z]\w{0,31}$/i, message: '标识符必须以字母开头，不超过 32 个字符' },
     { validator: value => !RESERVED_IDENTIFIERS.includes(String(value)), message: '标识符不能使用系统保留字' },
   ],
 })
@@ -106,7 +154,8 @@ function onPropertyDataTypeChange() {
 
 /** 加载物模型详情 */
 async function getDetail() {
-  if (!props.id) return
+  if (!props.id)
+    return
   formData.value = await getThingModel(Number(props.id))
   const data = formData.value
   if (data.type === IoTThingModelTypeEnum.PROPERTY && data.property) {
@@ -147,14 +196,14 @@ function buildSubmitData() {
 /** 提交表单 */
 async function handleSubmit() {
   const { valid } = await formRef.value.validate()
-  if (!valid) return
+  if (!valid)
+    return
   formLoading.value = true
   try {
     const data = buildSubmitData()
-    if (props.id) { await updateThingModel(data); toast.success('修改成功') }
-    else { await createThingModel(data); toast.success('新增成功') }
+    if (props.id) { await updateThingModel(data); toast.success('修改成功') } else { await createThingModel(data); toast.success('新增成功') }
     uni.$emit('iot:thingmodel:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally { formLoading.value = false }
 }
 

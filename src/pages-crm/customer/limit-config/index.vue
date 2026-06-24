@@ -55,10 +55,10 @@
             <text class="text-[#999]">成交占用：</text>{{ item.dealCountEnabled ? '是' : '否' }}
           </view>
           <view class="flex gap-16rpx">
-            <wd-button v-if="canUpdate" size="small" type="primary" variant="plain" @click="handleEdit(item)">
+            <wd-button v-if="hasAccessByCodes(['crm:customer-limit-config:update'])" size="small" type="primary" variant="plain" @click="handleEdit(item)">
               编辑
             </wd-button>
-            <wd-button v-if="canDelete" size="small" type="danger" variant="plain" :loading="deletingId === item.id" @click="handleDelete(item)">
+            <wd-button v-if="hasAccessByCodes(['crm:customer-limit-config:delete'])" size="small" type="danger" variant="plain" :loading="deletingId === item.id" @click="handleDelete(item)">
               删除
             </wd-button>
           </view>
@@ -68,7 +68,7 @@
 
     <!-- 新增按钮 -->
     <wd-fab
-      v-if="canCreate"
+      v-if="hasAccessByCodes(['crm:customer-limit-config:create'])"
       position="right-bottom"
       type="primary"
       :expandable="false"
@@ -101,9 +101,6 @@ definePage({
 const dialog = useDialog()
 const toast = useToast()
 const { hasAccessByCodes } = useAccess()
-const canCreate = computed(() => hasAccessByCodes(['crm:customer-limit-config:create'])) // 新增权限
-const canUpdate = computed(() => hasAccessByCodes(['crm:customer-limit-config:update'])) // 编辑权限
-const canDelete = computed(() => hasAccessByCodes(['crm:customer-limit-config:delete'])) // 删除权限
 const tabIndex = ref(0) // 当前配置类型
 const list = ref<CustomerLimitConfig[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用

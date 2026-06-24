@@ -127,7 +127,7 @@ import { getAreaTree } from '@/api/system/area'
 import { getIntDictOptions } from '@/hooks/useDict'
 import GroupPicker from '@/pages-member/group/components/group-picker.vue'
 import TagPicker from '@/pages-member/tag/components/tag-picker.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
@@ -203,9 +203,7 @@ async function handleSubmit() {
     await updateMemberUser(data)
     toast.success('修改成功')
     uni.$emit('member:user:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

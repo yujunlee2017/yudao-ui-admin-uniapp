@@ -145,6 +145,7 @@ async function handleSync() {
 }
 
 /** 发送模板消息 */
+// TODO @AI：后端有详情接口么？搞个吧。。。然后交互做成和别的短信模板之类的类似；
 function handleSend(item: MsgTemplate) {
   uni.navigateTo({
     url: `/pages-mp/message-template/send/index?id=${item.id}&accountId=${accountId.value}&title=${encodeURIComponent(item.title || '')}`,

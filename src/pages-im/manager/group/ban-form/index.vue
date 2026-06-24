@@ -39,7 +39,7 @@ import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { ref } from 'vue'
 import { banManagerGroup } from '@/api/im/manager/group'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
@@ -81,7 +81,7 @@ async function handleSubmit() {
     await banManagerGroup({ id: Number(props.id), reason: formData.value.reason })
     toast.success('封禁成功')
     uni.$emit('im:manager:group:reload')
-    setTimeout(handleBack, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

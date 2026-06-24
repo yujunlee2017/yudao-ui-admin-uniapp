@@ -88,8 +88,8 @@
           </wd-radio>
         </wd-radio-group>
       </view>
-      <yd-search-picker v-model="formData.payChannelCode" label="支付方式" dict-type="PAY_CHANNEL_CODE" dict-kind="str" all-option />
-      <yd-search-picker v-model="formData.terminal" label="订单来源" dict-type="TERMINAL" all-option />
+      <yd-search-picker v-model="formData.payChannelCode" label="支付方式" :dict-type="DICT_TYPE.PAY_CHANNEL_CODE" dict-kind="str" all-option />
+      <yd-search-picker v-model="formData.terminal" label="订单来源" :dict-type="DICT_TYPE.TERMINAL" all-option />
       <yd-search-picker v-model="formData.logisticsId" label="快递公司" :columns="expressOptions" all-option />
       <yd-search-picker v-model="formData.pickUpStoreId" label="自提门店" :columns="storeOptions" all-option />
       <view class="yd-search-form-item">

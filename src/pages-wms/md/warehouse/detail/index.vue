@@ -45,7 +45,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
 import { deleteWarehouse, getWarehouse } from '@/api/wms/md/warehouse'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{
@@ -109,9 +109,7 @@ async function handleDelete() {
     await deleteWarehouse(Number(props.id))
     toast.success('删除成功')
     uni.$emit('wms:warehouse:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

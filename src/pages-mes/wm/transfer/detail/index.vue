@@ -90,7 +90,7 @@ import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import TransferLineList from '@/pages-mes/wm/transfer/components/transfer-line-list.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmTransferStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -239,9 +239,7 @@ async function handleDelete() {
     await deleteTransfer(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:wm:transfer:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

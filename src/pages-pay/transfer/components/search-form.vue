@@ -19,6 +19,7 @@
         </view>
         <wd-input v-model="formData.no" placeholder="请输入转账单号" clearable />
       </view>
+      <!-- TODO @AI：select 更好，太长了 -->
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           转账渠道
@@ -42,6 +43,7 @@
         </view>
         <wd-input v-model="formData.merchantTransferId" placeholder="请输入商户单号" clearable />
       </view>
+      <!-- TODO @AI：select 更好，太长了 -->
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           转账类型

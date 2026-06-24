@@ -1,4 +1,4 @@
-// 客服实时链路：复用 yudao 内置 /infra/ws 通道（对齐 PC 客服控制台）
+// 客服实时链路：复用 yudao 内置 /infra/ws 通道
 // 处理两类帧：kefu_message_type（新消息）、kefu_message_read_status_change（管理员已读回执）
 // 收到后广播 mall:kefu:message / mall:kefu:read 给客服页，由页面更新消息与会话列表
 
@@ -83,35 +83,56 @@ function handleFrame(data: string) {
   }
 }
 
-/** 建立连接（幂等） */
+/** 建立连接（幂等：已连接或连接中则不重复建连） */
 export function connectKefuWebSocket() {
-  if (socketTask && connected) {
+  // socketTask 在 connectSocket 后同步赋值，故「连接中」也会拦住重复建连
+  if (socketTask) {
     return
   }
   manualClosed = false
   const url = buildUrl()
-  socketTask = uni.connectSocket({ url, fail: () => scheduleReconnect() })
-  if (!socketTask) {
+  const task = uni.connectSocket({
+    url,
+    fail: () => {
+      if (socketTask === task) {
+        socketTask = null
+      }
+      scheduleReconnect()
+    },
+  })
+  if (!task) {
     scheduleReconnect()
     return
   }
-  socketTask.onOpen(() => {
+  socketTask = task
+  task.onOpen(() => {
+    if (socketTask !== task) {
+      return
+    }
     connected = true
     reconnectAttempts = 0
     startHeartbeat()
   })
-  socketTask.onMessage((res) => {
-    handleFrame(res.data as string)
+  task.onMessage((res) => {
+    if (socketTask === task) {
+      handleFrame(res.data as string)
+    }
   })
-  socketTask.onClose(() => {
+  task.onClose(() => {
+    if (socketTask !== task) {
+      return
+    }
     connected = false
     socketTask = null
     stopHeartbeat()
     scheduleReconnect()
   })
-  socketTask.onError(() => {
+  task.onError(() => {
+    if (socketTask !== task) {
+      return
+    }
     connected = false
-    socketTask?.close({})
+    task.close({})
   })
 }
 

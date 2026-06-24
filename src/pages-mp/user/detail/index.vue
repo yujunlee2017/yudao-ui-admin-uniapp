@@ -11,12 +11,7 @@
     <view>
       <wd-cell-group border>
         <wd-cell title="头像">
-          <image
-            v-if="formData?.headImageUrl"
-            :src="formData.headImageUrl"
-            class="h-96rpx w-96rpx rounded-full"
-            mode="aspectFill"
-          />
+          <wd-img v-if="formData?.headImageUrl" :src="formData.headImageUrl" width="96rpx" height="96rpx" mode="aspectFill" round enable-preview />
           <text v-else>-</text>
         </wd-cell>
         <wd-cell title="昵称" :value="formData?.nickname || '-'" />

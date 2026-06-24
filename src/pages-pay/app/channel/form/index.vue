@@ -37,6 +37,7 @@
               placeholder="请输入备注"
             />
           </wd-form-item>
+          <!-- TODO @AI：目前直接展示 json 不好，参考下 vue3 + ep 的做法！ -->
           <wd-form-item title="渠道配置" title-width="220rpx" prop="configText">
             <wd-textarea
               v-model="formData.configText"
@@ -73,7 +74,7 @@ import {
   updatePayChannel,
 } from '@/api/pay/channel'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE, PayChannelEnum } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -90,6 +91,7 @@ definePage({
 })
 
 const toast = useToast()
+// TODO @AI：这里的 formData.value.id 报“ESLint: 'formData' was used before it was defined. (ts/no-use-before-define)”错。
 const getTitle = computed(() => formData.value.id ? '编辑支付渠道' : '新增支付渠道')
 const formRef = ref<FormInstance>() // 表单组件引用
 const formLoading = ref(false) // 表单提交状态
@@ -166,6 +168,7 @@ async function getDetail() {
   if (!props.appId || !props.code) {
     return
   }
+  // TODO @AI：是不是不用这样默认值，直接后端加载？类似别的界面一样。
   formData.value = {
     id: undefined,
     appId: Number(props.appId),
@@ -230,9 +233,7 @@ async function handleSubmit() {
       await createPayChannel(data)
       toast.success('新增成功')
     }
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

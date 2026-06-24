@@ -20,10 +20,12 @@
           </wd-form-item>
           <wd-form-item title="支付金额" title-width="220rpx" prop="payPrice" center>
             <wd-input-number v-model="formData.payPrice" :min="0" :step="0.01" />
+            <!-- TODO @AI：应该在一行，目前换行了 -->
             <text class="ml-12rpx text-26rpx text-[#999]">元</text>
           </wd-form-item>
           <wd-form-item title="赠送金额" title-width="220rpx" prop="bonusPrice" center>
             <wd-input-number v-model="formData.bonusPrice" :min="0" :step="0.01" />
+            <!-- TODO @AI：应该在一行，目前换行了 -->
             <text class="ml-12rpx text-26rpx text-[#999]">元</text>
           </wd-form-item>
           <wd-form-item title="开启状态" title-width="220rpx" prop="status" center>
@@ -66,7 +68,7 @@ import {
   updatePayWalletRechargePackage,
 } from '@/api/pay/wallet/rechargePackage'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import { fenToYuan, yuanToFen } from '../../../utils'
@@ -145,9 +147,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('pay:recharge-package:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

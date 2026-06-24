@@ -1,3 +1,4 @@
+// TODO @AI：看看全局，是不是已经有可复用的方法了？？？！
 /** 金额分转元展示 */
 export function formatPayAmount(value?: number | string) {
   const amount = Number(value || 0) / 100

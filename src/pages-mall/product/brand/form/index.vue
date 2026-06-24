@@ -15,16 +15,7 @@
             <wd-input v-model="formData.name" clearable placeholder="请输入品牌名称" />
           </wd-form-item>
           <wd-form-item title="品牌图片" title-width="220rpx" prop="picUrl">
-            <!-- TODO @AI：图片的上传组件；看看其他地方，是不是也要修复； -->
-            <view class="w-full">
-              <image
-                v-if="formData.picUrl"
-                :src="formData.picUrl"
-                class="mb-12rpx h-140rpx w-140rpx rounded-8rpx bg-[#f5f5f5]"
-                mode="aspectFill"
-              />
-              <wd-input v-model="formData.picUrl" clearable placeholder="请输入品牌图片 URL" />
-            </view>
+            <yd-upload-img v-model="formData.picUrl" />
           </wd-form-item>
           <wd-form-item title="品牌排序" title-width="220rpx" prop="sort">
             <wd-input-number v-model="formData.sort" :min="0" />
@@ -68,7 +59,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createProductBrand, getProductBrand, updateProductBrand } from '@/api/mall/product/brand'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -133,9 +124,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mall:product-brand:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

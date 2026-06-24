@@ -32,7 +32,7 @@
     </view>
 
     <!-- 底部保存按钮 -->
-    <view v-if="canUpdate" class="yd-detail-footer">
+    <view v-if="hasAccessByCodes(['crm:contract-config:update'])" class="yd-detail-footer">
       <wd-button
         type="primary"
         block
@@ -49,7 +49,7 @@
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { ContractConfig } from '@/api/crm/contract/config'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { getContractConfig, saveContractConfig } from '@/api/crm/contract/config'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
@@ -64,7 +64,6 @@ definePage({
 
 const toast = useToast()
 const { hasAccessByCodes } = useAccess()
-const canUpdate = computed(() => hasAccessByCodes(['crm:contract-config:update'])) // 保存权限
 const formLoading = ref(false) // 表单提交状态
 const formRef = ref<FormInstance>() // 表单组件引用
 const formData = ref<ContractConfig>({

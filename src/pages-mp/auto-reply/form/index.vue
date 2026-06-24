@@ -140,7 +140,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, ref } from 'vue'
 import { AutoReplyType, createAutoReply, getAutoReply, updateAutoReply } from '@/api/mp/autoReply'
 import { getIntDictOptions, getStrDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
 import MaterialPicker from '../../components/material-picker.vue'
@@ -200,6 +200,7 @@ const requestMessageOptions = computed(() => getStrDictOptions(DICT_TYPE.MP_MESS
 const responseMessageOptions = computed(() => getStrDictOptions(DICT_TYPE.MP_MESSAGE_TYPE).filter(item => ['text', 'image', 'voice', 'video', 'news', 'music'].includes(String(item.value))))
 const canPickMaterial = computed(() => ['image', 'voice', 'video', 'news', 'music'].includes(String(formData.value.responseMessageType)))
 const materialPickerType = computed(() => {
+  // TODO @AI：是不是 includes 简化？
   if (formData.value.responseMessageType === 'news') {
     return 'news'
   }
@@ -222,6 +223,7 @@ async function getDetail() {
   if (!id.value) {
     return
   }
+  // TODO @AI：是不是不用 try catch 呀？
   try {
     formData.value = await getAutoReply(id.value)
     responseArticlesText.value = formData.value.responseArticles ? JSON.stringify(formData.value.responseArticles) : ''
@@ -279,9 +281,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mp:auto-reply:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }
@@ -293,10 +293,16 @@ onLoad((query) => {
   if (!id.value) {
     formData.value.accountId = accountId.value || 0
     formData.value.type = replyType.value
+    // TODO @AI：枚举类；
     formData.value.requestMatch = replyType.value === AutoReplyType.Keyword ? 1 : undefined
   }
   getDetail()
 })
+// TODO @AI：一些地方需要 upload 等组件，是不是没弄？其他模块，你也检查下。特别是自动回复那。
+// TODO @AI：图片、语音：好像是【素材库选择】【上传图片】
+// TODO @AI：视频：除了上述之外，还要输入标题、描述
+// TODO @AI：图文：选择已发布图文；
+// TODO @AI：音乐：也是类似的，你看看是不是缺了；
 </script>
 
 <style lang="scss" scoped>

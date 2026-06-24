@@ -96,7 +96,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteMaintenRecord, getMaintenRecord, submitMaintenRecord } from '@/api/mes/dv/maintenrecord'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesDvMaintenRecordStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
@@ -195,9 +195,7 @@ async function handleDelete() {
     await deleteMaintenRecord(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:dv:maintenrecord:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

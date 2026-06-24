@@ -12,12 +12,7 @@
       <wd-cell title="分类名称" :value="formData.name || '-'" />
       <wd-cell title="上级分类" :value="parentName" />
       <wd-cell title="分类图片">
-        <image
-          v-if="formData.picUrl"
-          :src="formData.picUrl"
-          class="h-112rpx w-112rpx rounded-8rpx bg-[#f5f5f5]"
-          mode="aspectFill"
-        />
+        <wd-img v-if="formData.picUrl" :src="formData.picUrl" width="112rpx" height="112rpx" radius="8rpx" mode="aspectFill" enable-preview />
         <text v-else>-</text>
       </wd-cell>
       <wd-cell title="分类排序" :value="formData.sort != null ? String(formData.sort) : '-'" />
@@ -29,12 +24,12 @@
     </wd-cell-group>
 
     <!-- 底部操作按钮 -->
-    <view v-if="canUpdate || canDelete" class="yd-detail-footer">
+    <view v-if="hasAccessByCodes(['product:category:update', 'product:category:delete'])" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['product:category:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['product:category:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -50,7 +45,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { deleteProductCategory, getProductCategory, getProductCategoryList } from '@/api/mall/product/category'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -69,8 +64,6 @@ const toast = useToast()
 const formData = ref<ProductCategory>({} as ProductCategory) // 详情数据
 const deleting = ref(false) // 删除状态
 const categoryNameMap = ref<Record<number, string>>({}) // 分类编号到名称映射，用于回显上级分类名
-const canUpdate = computed(() => hasAccessByCodes(['product:category:update']))
-const canDelete = computed(() => hasAccessByCodes(['product:category:delete']))
 
 /** 上级分类名称：0 或空为顶级分类，否则从映射取名 */
 const parentName = computed(() => {
@@ -131,7 +124,7 @@ async function handleDelete() {
     await deleteProductCategory(Number(props.id))
     toast.success('删除成功')
     uni.$emit('mall:product-category:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

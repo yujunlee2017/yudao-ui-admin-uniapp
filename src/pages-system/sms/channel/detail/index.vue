@@ -53,7 +53,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
 import { deleteSmsChannel, getSmsChannel } from '@/api/system/sms/channel'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -117,9 +117,7 @@ async function handleDelete() {
   try {
     await deleteSmsChannel(props.id)
     toast.success('删除成功')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

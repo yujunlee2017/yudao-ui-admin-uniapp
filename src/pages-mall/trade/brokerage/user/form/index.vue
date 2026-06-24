@@ -35,7 +35,7 @@ import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { ref } from 'vue'
 import { createTradeBrokerageUser } from '@/api/mall/trade/brokerage/user'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 
 definePage({
@@ -75,7 +75,7 @@ async function handleSubmit() {
     })
     toast.success('新增成功')
     uni.$emit('mall:brokerage-user:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

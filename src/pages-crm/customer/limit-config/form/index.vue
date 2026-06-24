@@ -80,7 +80,7 @@ import {
 } from '@/api/crm/customer/limitConfig'
 import { getSimpleDeptList } from '@/api/system/dept'
 import UserPicker from '@/components/system-select/user-picker.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { handleTree } from '@/utils/tree'
 import { createFormSchema } from '@/utils/wot'
 
@@ -161,7 +161,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('crm:customer-limit-config:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

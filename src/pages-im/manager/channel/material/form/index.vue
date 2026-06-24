@@ -103,7 +103,7 @@ import {
   updateManagerChannelMaterial,
 } from '@/api/im/manager/channel/material'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
 
@@ -181,7 +181,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('im:manager:channel-material:reload')
-    setTimeout(handleBack, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

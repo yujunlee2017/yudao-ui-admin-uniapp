@@ -98,7 +98,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createNotifyTemplate, getNotifyTemplate, updateNotifyTemplate } from '@/api/system/notify/template'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
 
@@ -174,9 +174,7 @@ async function handleSubmit() {
       await createNotifyTemplate(formData.value)
       toast.success('新增成功')
     }
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

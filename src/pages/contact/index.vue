@@ -47,11 +47,8 @@
         @click="handleUserClick(item)"
       >
         <view class="flex items-center p-24rpx">
-          <view
-            v-if="item.avatar"
-            class="mr-16rpx h-80rpx w-80rpx overflow-hidden rounded-full"
-          >
-            <image :src="item.avatar" class="h-full w-full" mode="aspectFill" />
+          <view v-if="item.avatar" class="mr-16rpx shrink-0">
+            <wd-img :src="item.avatar" width="80rpx" height="80rpx" mode="aspectFill" round />
           </view>
           <view
             v-else

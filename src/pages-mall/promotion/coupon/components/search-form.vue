@@ -15,38 +15,9 @@
     <view class="yd-search-form-container">
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
-          模板编号
-        </view>
-        <wd-input v-model="formData.templateId" type="number" placeholder="请输入模板编号" clearable />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
           用户昵称
         </view>
         <wd-input v-model="formData.nickname" placeholder="请输入用户昵称" clearable />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          用户编号
-        </view>
-        <wd-input v-model="formData.userId" type="number" placeholder="请输入用户编号" clearable />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          状态
-        </view>
-        <wd-radio-group v-model="formData.status" type="button">
-          <wd-radio :value="-1">
-            全部
-          </wd-radio>
-          <wd-radio
-            v-for="dict in getIntDictOptions(DICT_TYPE.PROMOTION_COUPON_STATUS)"
-            :key="dict.value"
-            :value="dict.value"
-          >
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
       </view>
       <yd-search-date-range v-model="formData.createTime" label="领取时间" />
       <view class="yd-search-form-actions">
@@ -63,9 +34,7 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
-import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
-import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
 
 const emit = defineEmits<{
@@ -75,27 +44,15 @@ const emit = defineEmits<{
 
 const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
-  templateId: undefined as string | undefined,
   nickname: undefined as string | undefined,
-  userId: undefined as string | undefined,
-  status: -1,
   createTime: [undefined, undefined] as [number | undefined, number | undefined],
 }) // 搜索表单数据
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
   const conditions: string[] = []
-  if (formData.templateId) {
-    conditions.push(`模板:${formData.templateId}`)
-  }
   if (formData.nickname) {
     conditions.push(`昵称:${formData.nickname}`)
-  }
-  if (formData.userId) {
-    conditions.push(`用户:${formData.userId}`)
-  }
-  if (formData.status !== -1) {
-    conditions.push(`状态:${getDictLabel(DICT_TYPE.PROMOTION_COUPON_STATUS, formData.status)}`)
   }
   if (formData.createTime?.[0] && formData.createTime?.[1]) {
     conditions.push(`时间:${formatDate(formData.createTime[0])}~${formatDate(formData.createTime[1])}`)
@@ -107,20 +64,14 @@ const placeholder = computed(() => {
 function handleSearch() {
   visible.value = false
   emit('search', {
-    templateId: formData.templateId ? Number(formData.templateId) : undefined,
     nickname: formData.nickname || undefined,
-    userIds: formData.userId ? [Number(formData.userId)] : undefined,
-    status: formData.status === -1 ? undefined : formData.status,
     createTime: formatDateRange(formData.createTime),
   })
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  formData.templateId = undefined
   formData.nickname = undefined
-  formData.userId = undefined
-  formData.status = -1
   formData.createTime = [undefined, undefined]
   visible.value = false
   emit('reset')

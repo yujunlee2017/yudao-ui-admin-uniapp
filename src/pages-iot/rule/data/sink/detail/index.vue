@@ -8,8 +8,12 @@
       <wd-cell-group border>
         <wd-cell title="目的编号" :value="String(formData?.id || '-')" />
         <wd-cell title="目的名称" :value="formData?.name || '-'" />
-        <wd-cell title="目的状态"><dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="formData?.status" /></wd-cell>
-        <wd-cell title="目的类型"><dict-tag :type="DICT_TYPE.IOT_DATA_SINK_TYPE_ENUM" :value="formData?.type" /></wd-cell>
+        <wd-cell title="目的状态">
+          <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="formData?.status" />
+        </wd-cell>
+        <wd-cell title="目的类型">
+          <dict-tag :type="DICT_TYPE.IOT_DATA_SINK_TYPE_ENUM" :value="formData?.type" />
+        </wd-cell>
         <wd-cell title="目的描述" :value="formData?.description || '-'" />
         <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime) || '-'" />
       </wd-cell-group>
@@ -119,8 +123,12 @@
     <!-- 底部操作按钮 -->
     <view class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="hasAccessByCodes(['iot:data-sink:update'])" class="flex-1" type="warning" @click="handleEdit">编辑</wd-button>
-        <wd-button v-if="hasAccessByCodes(['iot:data-sink:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">删除</wd-button>
+        <wd-button v-if="hasAccessByCodes(['iot:data-sink:update'])" class="flex-1" type="warning" @click="handleEdit">
+          编辑
+        </wd-button>
+        <wd-button v-if="hasAccessByCodes(['iot:data-sink:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+          删除
+        </wd-button>
       </view>
     </view>
   </view>
@@ -134,7 +142,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, ref } from 'vue'
 import { deleteDataSink, getDataSink, IotDataSinkTypeEnum } from '@/api/iot/rule/data/sink'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -157,14 +165,17 @@ function formatValue(value: any) {
 
 /** 格式化布尔值为是/否 */
 function formatBool(value: any) {
-  if (value === undefined || value === null) return '-'
+  if (value === undefined || value === null)
+    return '-'
   return value ? '是' : '否'
 }
 
 /** 格式化对象字段为 JSON 文本 */
 function formatObject(value: any) {
-  if (!value || typeof value !== 'object') return '-'
-  if (!Object.keys(value).length) return '-'
+  if (!value || typeof value !== 'object')
+    return '-'
+  if (!Object.keys(value).length)
+    return '-'
   return JSON.stringify(value)
 }
 
@@ -173,7 +184,8 @@ function handleBack() { navigateBackPlus('/pages-iot/rule/data/sink/index') }
 
 /** 加载数据目的详情 */
 async function getDetail() {
-  if (!props.id || deleting.value) return
+  if (!props.id || deleting.value)
+    return
   formData.value = await getDataSink(Number(props.id))
 }
 
@@ -182,14 +194,15 @@ function handleEdit() { uni.navigateTo({ url: `/pages-iot/rule/data/sink/form/in
 
 /** 删除数据目的 */
 async function handleDelete() {
-  if (!props.id) return
+  if (!props.id)
+    return
   try { await dialog.confirm({ title: '提示', msg: '确定要删除该数据目的吗？' }) } catch { return }
   deleting.value = true
   try {
     await deleteDataSink(Number(props.id))
     toast.success('删除成功')
     uni.$emit('iot:data-sink:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

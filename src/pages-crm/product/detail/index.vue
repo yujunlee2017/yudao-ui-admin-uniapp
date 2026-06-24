@@ -38,10 +38,10 @@
     <view v-if="hasFooter" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <template v-if="activeTab === 'basic'">
-          <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+          <wd-button v-if="hasAccessByCodes(['crm:product:update'])" class="flex-1" type="warning" @click="handleEdit">
             编辑
           </wd-button>
-          <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+          <wd-button v-if="hasAccessByCodes(['crm:product:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
             删除
           </wd-button>
         </template>
@@ -58,7 +58,7 @@ import { computed, onMounted, ref } from 'vue'
 import { deleteProduct, getProduct } from '@/api/crm/product'
 import { BizTypeEnum } from '@/api/crm/permission'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatMoney } from '@/utils/format'
 import CrmOperateLogs from '@/pages-crm/operate-log/components/operate-log-list.vue'
@@ -85,14 +85,12 @@ const deleting = ref(false) // 删除状态
 const productId = computed(() => Number(props.id))
 const activeTab = computed(() => tabs[tabIndex.value].key)
 const isPagingTab = computed(() => activeTab.value === 'log') // 操作日志 tab 用 z-paging 固定高布局
-const canUpdate = computed(() => hasAccessByCodes(['crm:product:update']))
-const canDelete = computed(() => hasAccessByCodes(['crm:product:delete']))
 const hasFooter = computed(() => {
   switch (activeTab.value) {
     case 'log':
       return false
     case 'basic':
-      return canUpdate.value || canDelete.value
+      return hasAccessByCodes(['crm:product:update']) || hasAccessByCodes(['crm:product:delete'])
     default:
       return false
   }
@@ -136,7 +134,7 @@ async function handleDelete() {
     await deleteProduct(productId.value)
     toast.success('删除成功')
     uni.$emit('crm:product:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

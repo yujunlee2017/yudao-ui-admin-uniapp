@@ -62,7 +62,7 @@ import { onUnload } from '@dcloudio/uni-app'
 import { computed, onMounted, ref } from 'vue'
 import { deleteRole, getRole } from '@/api/system/role'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import DataPermissionForm from './components/data-permission-form.vue'
@@ -145,9 +145,7 @@ async function handleDelete() {
     await deleteRole(props.id)
     toast.success('删除成功')
     uni.$emit('system:role:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

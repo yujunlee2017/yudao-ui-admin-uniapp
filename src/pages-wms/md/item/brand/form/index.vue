@@ -42,7 +42,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createItemBrand, getItemBrand, updateItemBrand } from '@/api/wms/md/item/brand'
 import { generateWmsCode } from '@/pages-wms/utils/constants'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
@@ -100,9 +100,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('wms:item-brand:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

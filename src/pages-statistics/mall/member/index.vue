@@ -1,3 +1,4 @@
+<!-- TODO @AI：从对齐 vue3 + ep 功能来看，还缺什么么？ -->
 <template>
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
@@ -7,7 +8,7 @@
       @click-left="handleBack"
     />
 
-    <!-- TODO @AI：是不是要 tabs？ -->
+    <!-- TODO @AI：tabs？避免过长？类似 crm 的 -->
     <scroll-view scroll-y class="min-h-0 flex-1">
       <view class="p-24rpx">
         <!-- 会员概览：累计会员数等 4 项（累计值，无环比） -->
@@ -22,12 +23,7 @@
           @reset="handleReset"
         />
 
-        <!-- 统计周期与刷新 -->
-        <view class="mb-24rpx flex items-center justify-between">
-          <!-- TODO @AI：这里是不是不用噢？因为 search 那已经展示了 -->
-          <view class="text-26rpx text-[#999]">
-            {{ periodText }}
-          </view>
+        <view class="mb-24rpx flex justify-end">
           <wd-button size="small" type="primary" variant="plain" :loading="loading" @click="loadData">
             刷新
           </wd-button>
@@ -50,7 +46,6 @@
         <StatisticsCard :section="sexSection" :rows="sexRows" />
 
         <!-- 地域分布（移动端以排行表呈现，不渲染地图） -->
-        <!-- TODO @AI：有没更好的呈现方式？ -->
         <StatisticsCard :section="areaSection" :rows="areaRows" />
       </view>
     </scroll-view>
@@ -58,8 +53,8 @@
 </template>
 
 <script lang="ts" setup>
-import type { SummaryItem } from '../components/summary-grid.vue'
-import type { StatisticsSection } from '../components/statistics'
+import type { SummaryItem } from '@/pages-statistics/components/card/summary-grid.vue'
+import type { StatisticsSection } from '@/pages-statistics/utils/statistics'
 import { computed, onMounted, reactive, ref } from 'vue'
 import {
   getMemberAnalyse,
@@ -71,12 +66,13 @@ import {
 import { getDictLabel } from '@/hooks/useDict'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
-import { formatDate, formatDateRange } from '@/utils/date'
+import { formatDateRange } from '@/utils/date'
 import YdChart from '../../components/yd-chart/yd-chart.vue'
 import SearchForm from '../components/search-form.vue'
-import { buildChartOption, fenToYuan, normalizeRows } from '../components/statistics'
-import StatisticsCard from '../components/statistics-card.vue'
-import SummaryGrid from '../components/summary-grid.vue'
+import { fenToYuan } from '@/utils/format'
+import { buildFunnelOption, normalizeRows } from '@/pages-statistics/utils/statistics'
+import StatisticsCard from '@/pages-statistics/components/card/statistics-card.vue'
+import SummaryGrid from '@/pages-statistics/components/card/summary-grid.vue'
 
 definePage({
   style: {
@@ -100,10 +96,6 @@ const sexRows = ref<Record<string, any>[]>([]) // 性别分布（含字典标签
 const areaRows = ref<Record<string, any>[]>([]) // 地域分布（已转元）
 
 const times = computed(() => formatDateRange([filters.startTime, filters.endTime])) // 查询时间区间
-const periodText = computed(() => {
-  const range = times.value || []
-  return range.length === 2 ? `${formatDate(range[0])} 至 ${formatDate(range[1])}` : '默认统计周期'
-})
 const atvText = computed(() => fenToYuan(analyse.value.atv).toFixed(2)) // 客单价（分转元）
 
 const summaryItems = computed<SummaryItem[]>(() => [
@@ -118,18 +110,12 @@ const funnelOption = computed(() => {
   if (!value || value.visitUserCount === undefined) {
     return undefined
   }
-  // 通用漏斗：访客→下单→成交
-  return buildChartOption({
-    title: '会员漏斗',
-    chart: {
-      type: 'funnel',
-      funnelData: [
-        { name: '访客', value: value.visitUserCount || 0 },
-        { name: '下单', value: value.orderUserCount || 0 },
-        { name: '成交', value: value.payUserCount || 0 },
-      ],
-    },
-  }, [])
+  // 访客→下单→成交
+  return buildFunnelOption([
+    { name: '访客', value: value.visitUserCount || 0 },
+    { name: '下单', value: value.orderUserCount || 0 },
+    { name: '成交', value: value.payUserCount || 0 },
+  ], '会员漏斗')
 }) // 会员漏斗图配置
 
 const terminalSection: StatisticsSection = {

@@ -11,29 +11,20 @@
     <view>
       <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
-          <wd-form-item
-            title="上级分类"
-            title-width="220rpx"
+          <yd-form-picker
+            v-model="formData.parentId"
+            label="上级分类"
+            label-width="220rpx"
             prop="parentId"
-            is-link
-            :value="getOptionText(parentOptions, formData.parentId)"
-            placeholder="请选择上级分类"
-            @click="pickerVisible = true"
+            :columns="parentOptions"
+            label-key="name"
+            value-key="id"
           />
           <wd-form-item title="分类名称" title-width="220rpx" prop="name">
             <wd-input v-model="formData.name" clearable placeholder="请输入分类名称" />
           </wd-form-item>
-          <!-- TODO @AI：是不是换成 upload -->
           <wd-form-item title="分类图片" title-width="220rpx" prop="picUrl">
-            <view class="w-full">
-              <image
-                v-if="formData.picUrl"
-                :src="formData.picUrl"
-                class="mb-12rpx h-140rpx w-140rpx rounded-8rpx bg-[#f5f5f5]"
-                mode="aspectFill"
-              />
-              <wd-input v-model="formData.picUrl" clearable placeholder="请输入分类图片 URL" />
-            </view>
+            <yd-upload-img v-model="formData.picUrl" />
           </wd-form-item>
           <wd-form-item title="分类排序" title-width="220rpx" prop="sort">
             <wd-input-number v-model="formData.sort" :min="0" />
@@ -52,14 +43,6 @@
         </wd-cell-group>
       </wd-form>
     </view>
-
-    <!-- 上级分类选择器 -->
-    <wd-picker
-      v-model:visible="pickerVisible"
-      :model-value="formData.parentId"
-      :columns="parentOptions"
-      @confirm="({ value }) => formData.parentId = Number(value[0])"
-    />
 
     <!-- 底部保存按钮 -->
     <view class="yd-detail-footer">
@@ -82,7 +65,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createProductCategory, getProductCategory, getProductCategoryList, updateProductCategory } from '@/api/mall/product/category'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -100,9 +83,7 @@ definePage({
 const toast = useToast()
 const getTitle = computed(() => props.id ? '编辑分类' : '新增分类')
 const formLoading = ref(false) // 表单提交状态
-const pickerVisible = ref(false) // 上级分类选择器状态
-// TODO @AI：yd-form-picker 换个组件？？？
-const parentOptions = ref<{ label: string, value: number }[]>([]) // 上级分类选项
+const parentOptions = ref<{ id?: number, name: string }[]>([]) // 上级分类选项（顶级分类 + 一级分类）
 const formData = ref<ProductCategory>({
   id: undefined,
   parentId: 0,
@@ -125,21 +106,10 @@ function handleBack() {
   navigateBackPlus('/pages-mall/product/category/index')
 }
 
-/** 获取选项文本 */
-function getOptionText(options: { label: string, value: number }[], value?: number) {
-  if (value == null) {
-    return ''
-  }
-  return options.find(item => Number(item.value) === Number(value))?.label || String(value)
-}
-
 /** 加载上级分类选项：顶级分类 + 一级分类 */
 async function loadOptions() {
   const list = await getProductCategoryList({ parentId: 0 })
-  parentOptions.value = [
-    { label: '顶级分类', value: 0 },
-    ...list.map(item => ({ label: item.name || String(item.id), value: Number(item.id) })),
-  ]
+  parentOptions.value = [{ id: 0, name: '顶级分类' }, ...list]
 }
 
 /** 加载详情 */
@@ -168,9 +138,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mall:product-category:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

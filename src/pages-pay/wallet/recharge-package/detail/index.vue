@@ -21,12 +21,12 @@
     </wd-cell-group>
 
     <!-- 底部操作按钮 -->
-    <view v-if="canUpdate || canDelete" class="yd-detail-footer">
+    <view v-if="hasAccessByCodes(['pay:wallet-recharge-package:update']) || hasAccessByCodes(['pay:wallet-recharge-package:delete'])" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['pay:wallet-recharge-package:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['pay:wallet-recharge-package:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -39,10 +39,10 @@ import type { PayWalletRechargePackage } from '@/api/pay/wallet/rechargePackage'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { deletePayWalletRechargePackage, getPayWalletRechargePackage } from '@/api/pay/wallet/rechargePackage'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { formatPayMoney } from '../../../utils'
@@ -61,8 +61,6 @@ const dialog = useDialog()
 const toast = useToast()
 const formData = ref<PayWalletRechargePackage>({}) // 详情数据
 const deleting = ref(false) // 删除状态
-const canUpdate = computed(() => hasAccessByCodes(['pay:wallet-recharge-package:update']))
-const canDelete = computed(() => hasAccessByCodes(['pay:wallet-recharge-package:delete']))
 
 /** 返回上一页 */
 function handleBack() {
@@ -102,7 +100,7 @@ async function handleDelete() {
     await deletePayWalletRechargePackage(Number(props.id))
     toast.success('删除成功')
     uni.$emit('pay:recharge-package:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

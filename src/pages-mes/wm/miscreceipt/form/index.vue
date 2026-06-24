@@ -141,7 +141,7 @@ import { getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import MiscReceiptLineList from '@/pages-mes/wm/miscreceipt/components/misc-receipt-line-list.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesAutoCodeRuleCode, MesWmMiscReceiptStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
@@ -353,9 +353,7 @@ async function handleSubmitReceipt() {
     await submitMiscReceipt(currentId.value)
     toast.success('提交成功')
     uni.$emit('mes:wm:miscreceipt:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     submitLoading.value = false
   }
@@ -379,9 +377,7 @@ async function handleFinishReceipt() {
     await finishMiscReceipt(currentId.value)
     toast.success('入库成功')
     uni.$emit('mes:wm:miscreceipt:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     finishLoading.value = false
   }

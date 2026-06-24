@@ -86,7 +86,7 @@ import { getBusiness } from '@/api/crm/business'
 import { createContract, getContract, updateContract } from '@/api/crm/contract'
 import UserPicker from '@/components/system-select/user-picker.vue'
 import { useUserStore } from '@/store/user'
-import { currRoute, navigateBackPlus } from '@/utils'
+import { currRoute, delay, navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
 import { formatMoney } from '@/utils/format'
 import { createFormSchema } from '@/utils/wot'
@@ -217,7 +217,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('crm:contract:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

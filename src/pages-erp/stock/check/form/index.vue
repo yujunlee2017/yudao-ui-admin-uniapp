@@ -62,7 +62,7 @@ import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { getProductSimpleList } from '@/api/erp/product/product'
 import { createStockCheck, getStockCheck, updateStockCheck } from '@/api/erp/stock/check'
 import { getWarehouseSimpleList } from '@/api/erp/stock/warehouse'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 import CheckItemEditor from '../components/check-item-editor.vue'
@@ -156,7 +156,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('erp:stock-check:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

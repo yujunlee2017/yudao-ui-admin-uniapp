@@ -45,7 +45,7 @@ import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { deleteProductCategory, getProductCategory } from '@/api/erp/product/category'
 import { useAccess } from '@/hooks/useAccess'
 import ErpBasicActions from '@/pages-erp/components/erp-basic-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -109,7 +109,7 @@ async function handleDelete() {
     await deleteProductCategory(Number(currentId.value))
     toast.success('删除成功')
     uni.$emit('erp:product-category:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

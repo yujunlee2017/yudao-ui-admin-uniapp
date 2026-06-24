@@ -1,3 +1,4 @@
+<!-- TODO @AI：挪到 /Users/yunai/Java/yudao-ui-admin-uniapp-next-v4/src/pages-statistics 里；然后功能对齐 vue3 + ep，代码风格参考下其他 statistics -->
 <template>
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->

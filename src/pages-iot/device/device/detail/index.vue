@@ -10,8 +10,12 @@
         <wd-cell title="DeviceName" :value="formData?.deviceName || '-'" />
         <wd-cell title="备注名称" :value="formData?.nickname || '-'" />
         <wd-cell title="所属产品" :value="formData?.productName || String(formData?.productId || '-')" />
-        <wd-cell title="设备类型"><dict-tag :type="DICT_TYPE.IOT_PRODUCT_DEVICE_TYPE" :value="formData?.deviceType" /></wd-cell>
-        <wd-cell title="设备状态"><dict-tag :type="DICT_TYPE.IOT_DEVICE_STATE" :value="formData?.state" /></wd-cell>
+        <wd-cell title="设备类型">
+          <dict-tag :type="DICT_TYPE.IOT_PRODUCT_DEVICE_TYPE" :value="formData?.deviceType" />
+        </wd-cell>
+        <wd-cell title="设备状态">
+          <dict-tag :type="DICT_TYPE.IOT_DEVICE_STATE" :value="formData?.state" />
+        </wd-cell>
         <wd-cell title="设备 IP" :value="formData?.ip || '-'" />
         <wd-cell title="固件版本" :value="formData?.firmwareVersion || '-'" />
         <wd-cell title="设备序列号" :value="formData?.serialNumber || '-'" />
@@ -38,22 +42,32 @@
     <!-- 底部操作按钮 -->
     <view class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button class="flex-1" type="info" :loading="authLoading" @click="handleAuthInfo">认证</wd-button>
-        <wd-button v-if="hasAccessByCodes(['iot:device:update'])" class="flex-1" type="warning" @click="handleEdit">编辑</wd-button>
-        <wd-button v-if="hasAccessByCodes(['iot:device:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">删除</wd-button>
+        <wd-button class="flex-1" type="info" :loading="authLoading" @click="handleAuthInfo">
+          认证
+        </wd-button>
+        <wd-button v-if="hasAccessByCodes(['iot:device:update'])" class="flex-1" type="warning" @click="handleEdit">
+          编辑
+        </wd-button>
+        <wd-button v-if="hasAccessByCodes(['iot:device:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+          删除
+        </wd-button>
       </view>
     </view>
 
     <!-- 认证信息弹窗 -->
     <wd-popup v-model="authVisible" position="bottom" custom-style="border-radius: 24rpx 24rpx 0 0;">
       <view class="p-24rpx">
-        <view class="mb-24rpx text-center text-32rpx text-[#333] font-semibold">设备认证信息</view>
+        <view class="mb-24rpx text-center text-32rpx text-[#333] font-semibold">
+          设备认证信息
+        </view>
         <wd-cell-group border>
           <wd-cell title="ClientId" :value="authInfo?.clientId || '-'" />
           <wd-cell title="Username" :value="authInfo?.username || '-'" />
           <wd-cell title="Password" :value="authInfo?.password || '-'" />
         </wd-cell-group>
-        <wd-button class="mt-24rpx" block @click="authVisible = false">关闭</wd-button>
+        <wd-button class="mt-24rpx" block @click="authVisible = false">
+          关闭
+        </wd-button>
       </view>
     </wd-popup>
   </view>
@@ -69,7 +83,7 @@ import { computed, ref } from 'vue'
 import { deleteDevice, getDevice, getDeviceAuthInfo } from '@/api/iot/device/device'
 import { DeviceTypeEnum, getProduct, ProtocolTypeEnum } from '@/api/iot/product/product'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -96,7 +110,8 @@ function handleBack() { navigateBackPlus('/pages-iot/device/device/index') }
 
 /** 加载设备详情 */
 async function getDetail() {
-  if (!props.id || deleting.value) return
+  if (!props.id || deleting.value)
+    return
   formData.value = await getDevice(Number(props.id))
   if (formData.value.productId) {
     productData.value = await getProduct(Number(formData.value.productId))
@@ -108,7 +123,8 @@ function handleEdit() { uni.navigateTo({ url: `/pages-iot/device/device/form/ind
 
 /** 查看认证信息 */
 async function handleAuthInfo() {
-  if (!props.id) return
+  if (!props.id)
+    return
   authLoading.value = true
   try {
     authInfo.value = await getDeviceAuthInfo(Number(props.id))
@@ -150,14 +166,15 @@ function handleModbus() {
 
 /** 删除设备 */
 async function handleDelete() {
-  if (!props.id) return
+  if (!props.id)
+    return
   try { await dialog.confirm({ title: '提示', msg: '确定要删除该设备吗？' }) } catch { return }
   deleting.value = true
   try {
     await deleteDevice(Number(props.id))
     toast.success('删除成功')
     uni.$emit('iot:device:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

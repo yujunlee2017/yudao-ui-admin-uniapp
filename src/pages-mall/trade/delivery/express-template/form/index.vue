@@ -79,9 +79,9 @@ import {
 import { getAreaTree } from '@/api/system/area'
 import RegionEditor from '@/pages-mall/trade/delivery/express-template/components/region-editor.vue'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { fenToYuan, yuanToFen } from '@/pages-mall/utils'
-import { navigateBackPlus } from '@/utils'
-import { DICT_TYPE } from '@/utils/constants'
+import { fenToYuan, yuanToFen } from '@/utils/format'
+import { delay, navigateBackPlus } from '@/utils'
+import { DeliveryExpressChargeModeEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{ id?: number | any }>()
@@ -103,7 +103,7 @@ const frees = ref<Record<string, any>[]>([]) // 包邮区域规则（金额单�
 const formData = ref<DeliveryExpressTemplate>({
   id: undefined,
   name: '',
-  chargeMode: 1,
+  chargeMode: DeliveryExpressChargeModeEnum.COUNT,
   sort: 0,
 }) // 表单数据
 const formSchema = createFormSchema({
@@ -123,7 +123,10 @@ async function getDetail() {
     return
   }
   const data = await getDeliveryExpressTemplate(Number(props.id))
-  formData.value = { id: data.id, name: data.name, chargeMode: data.chargeMode ?? 1, sort: data.sort }
+  formData.value = {
+    ...data,
+    chargeMode: data.chargeMode ?? DeliveryExpressChargeModeEnum.COUNT,
+  }
   // 区域金额 分→元 回显
   charges.value = (data.charges || []).map(item => ({
     ...item,
@@ -172,7 +175,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mall:delivery-express-template:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

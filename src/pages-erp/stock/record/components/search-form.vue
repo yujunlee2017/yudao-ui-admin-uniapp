@@ -56,26 +56,7 @@
         </view>
         <wd-input v-model="formData.bizNo" placeholder="请输入业务单号" clearable />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          出入库日期
-        </view>
-        <view class="yd-search-form-date-range-container">
-          <view class="flex-1" @click="dateVisible.start = true">
-            <view class="yd-search-form-date-range-picker">
-              {{ formatDate(formData.createTime[0]) || '开始日期' }}
-            </view>
-          </view>
-          -
-          <view class="flex-1" @click="dateVisible.end = true">
-            <view class="yd-search-form-date-range-picker">
-              {{ formatDate(formData.createTime[1]) || '结束日期' }}
-            </view>
-          </view>
-        </view>
-        <wd-datetime-picker v-model="formData.createTime[0]" v-model:visible="dateVisible.start" title="请选择开始日期" type="date" />
-        <wd-datetime-picker v-model="formData.createTime[1]" v-model:visible="dateVisible.end" title="请选择结束日期" type="date" />
-      </view>
+      <yd-search-date-range v-model="formData.createTime" label="出入库日期" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -102,10 +83,6 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const dateVisible = reactive({
-  start: false,
-  end: false,
-}) // 日期选择器状态
 const selectedNames = reactive({
   product: '',
   warehouse: '',

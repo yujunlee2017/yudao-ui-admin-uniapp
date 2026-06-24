@@ -30,12 +30,12 @@
     </view>
 
     <!-- 底部操作 -->
-    <view v-if="canUpdate || canDelete" class="yd-detail-footer">
+    <view v-if="hasAccessByCodes(['crm:business-status:update']) || hasAccessByCodes(['crm:business-status:delete'])" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['crm:business-status:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['crm:business-status:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -51,7 +51,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { deleteBusinessStatus, getBusinessStatus } from '@/api/crm/business/status'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 
 const props = defineProps<{ id?: number | any }>()
 definePage({
@@ -67,8 +67,6 @@ const toast = useToast()
 const formData = ref<BusinessStatusType>({ name: '', statuses: [] }) // 详情数据
 const deleting = ref(false) // 删除状态
 const statusId = computed(() => Number(props.id))
-const canUpdate = computed(() => hasAccessByCodes(['crm:business-status:update']))
-const canDelete = computed(() => hasAccessByCodes(['crm:business-status:delete']))
 
 /** 返回上一页 */
 function handleBack() {
@@ -108,7 +106,7 @@ async function handleDelete() {
     await deleteBusinessStatus(statusId.value)
     toast.success('删除成功')
     uni.$emit('crm:businessStatus:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

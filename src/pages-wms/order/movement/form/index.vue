@@ -115,7 +115,7 @@ import WarehousePicker from '@/pages-wms/components/warehouse-picker.vue'
 import { WmsOrderStatusEnum } from '@/pages-wms/utils/constants'
 import { dividePrice, formatQuantity, multiplyPrice } from '@/pages-wms/utils/format'
 import { generateOrderNo } from '@/pages-wms/utils/order'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 
@@ -319,9 +319,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('wms:movement-order:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

@@ -20,7 +20,7 @@
         <view>上工时间：{{ formatDateTime(current?.clockInTime) || '-' }}</view>
       </view>
 
-      <view v-if="canClock" class="mt-20rpx">
+      <view v-if="hasAccessByCodes(['mes:pro-workrecord:clock'])" class="mt-20rpx">
         <wd-button
           v-if="isClockIn"
           :loading="submitting"
@@ -76,7 +76,6 @@ const current = ref<ProWorkRecordVO | null>(null) // 当前上工状态
 const loading = ref(false) // 状态加载中
 const submitting = ref(false) // 上下工提交中
 const workstationSelectorRef = ref<InstanceType<typeof WorkstationSelector>>() // 工作站选择器
-const canClock = computed(() => hasAccessByCodes(['mes:pro-workrecord:clock']))
 const isClockIn = computed(() => current.value?.type === MesProWorkRecordTypeEnum.CLOCK_IN)
 const statusDescription = computed(() => {
   if (loading.value) {
@@ -85,7 +84,7 @@ const statusDescription = computed(() => {
   if (isClockIn.value) {
     return '完成现场作业后请及时下工'
   }
-  return canClock.value ? '请选择工作站开始本次作业' : '暂无上工记录'
+  return hasAccessByCodes(['mes:pro-workrecord:clock']) ? '请选择工作站开始本次作业' : '暂无上工记录'
 })
 
 /** 加载当前上工状态 */

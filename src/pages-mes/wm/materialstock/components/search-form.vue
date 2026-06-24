@@ -88,7 +88,7 @@
         <view class="yd-search-form-label">
           是否冻结
         </view>
-        <wd-radio-group v-model="formData.frozen" shape="button">
+        <wd-radio-group v-model="formData.frozen" type="button">
           <wd-radio :value="undefined">
             全部
           </wd-radio>

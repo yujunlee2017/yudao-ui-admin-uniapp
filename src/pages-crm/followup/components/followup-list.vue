@@ -41,13 +41,15 @@
             下次联系：{{ formatDateTime(item.nextTime) }}
           </view>
           <view v-if="item.picUrls?.length" class="mb-12rpx flex flex-wrap gap-12rpx">
-            <image
+            <wd-img
               v-for="url in item.picUrls"
               :key="url"
-              class="h-120rpx w-120rpx rounded-8rpx bg-[#f5f5f5]"
-              mode="aspectFill"
               :src="url"
-              @click="handlePreviewImage(item.picUrls!, url)"
+              width="120rpx"
+              height="120rpx"
+              radius="8rpx"
+              mode="aspectFill"
+              enable-preview
             />
           </view>
           <view v-if="item.fileUrls?.length" class="mb-12rpx">
@@ -152,11 +154,6 @@ async function handleDelete(id: number) {
   } finally {
     deletingId.value = undefined
   }
-}
-
-/** 预览图片 */
-function handlePreviewImage(urls: string[], current: string) {
-  uni.previewImage({ urls, current })
 }
 
 /** 打开附件 */

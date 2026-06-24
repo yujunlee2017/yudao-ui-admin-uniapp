@@ -80,7 +80,7 @@ import type { Config } from '@/api/infra/config'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createConfig, getConfig, updateConfig } from '@/api/infra/config'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
@@ -145,9 +145,7 @@ async function handleSubmit() {
       await createConfig(formData.value)
       toast.success('新增成功')
     }
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

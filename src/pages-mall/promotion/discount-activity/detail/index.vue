@@ -25,41 +25,28 @@
           </wd-cell-group>
         </view>
 
-        <!-- 商品规则 -->
+        <!-- 优惠商品 -->
         <view v-if="formData.products?.length" class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
           <view class="border-b border-[#f0f0f0] px-24rpx py-18rpx text-30rpx text-[#333] font-semibold">
             优惠商品
           </view>
-          <wd-cell-group border>
-            <view v-for="(product, index) in formData.products" :key="index" class="px-24rpx py-16rpx">
-              <view class="mb-8rpx text-28rpx text-[#333]">
-                SKU 编号：{{ product.skuId }}
-              </view>
-              <view class="flex flex-wrap items-center gap-24rpx text-26rpx text-[#666]">
-                <view class="flex items-center gap-8rpx">
-                  <text>优惠类型：</text>
-                  <dict-tag v-if="product.discountType != null" :type="DICT_TYPE.PROMOTION_DISCOUNT_TYPE" :value="product.discountType" />
-                  <text v-else>-</text>
-                </view>
-                <text v-if="product.discountType === 1">优惠金额：{{ formatMallMoney(product.discountPrice) }}</text>
-                <text v-if="product.discountType === 2">折扣：{{ product.discountPercent ?? '-' }}%</text>
-              </view>
-            </view>
-          </wd-cell-group>
+          <view class="p-16rpx">
+            <SpuSkuView :products="formData.products" :fields="productFields" />
+          </view>
         </view>
       </view>
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="canUpdate || canDelete || canClose" class="yd-detail-footer">
+    <view v-if="hasAccessByCodes(['promotion:discount-activity:update', 'promotion:discount-activity:delete', 'promotion:discount-activity:close'])" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['promotion:discount-activity:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canClose" class="flex-1" type="info" :loading="closing" @click="handleClose">
+        <wd-button v-if="hasAccessByCodes(['promotion:discount-activity:close'])" class="flex-1" type="info" :loading="closing" @click="handleClose">
           关闭活动
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['promotion:discount-activity:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -69,20 +56,22 @@
 
 <script lang="ts" setup>
 import type { PromotionDiscountActivity } from '@/api/mall/promotion/discount'
+import type { SpuSkuViewField } from '@/pages-mall/promotion/components/spu-sku-view.vue'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import {
   closePromotionDiscountActivity,
   deletePromotionDiscountActivity,
   getPromotionDiscountActivity,
 } from '@/api/mall/promotion/discount'
+import { getDictLabel } from '@/hooks/useDict'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
-import { navigateBackPlus } from '@/utils'
-import { DICT_TYPE } from '@/utils/constants'
+import { delay, navigateBackPlus } from '@/utils'
+import { DICT_TYPE, PromotionDiscountTypeEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
+import SpuSkuView from '@/pages-mall/promotion/components/spu-sku-view.vue'
 
 const props = defineProps<{ id?: number | any }>()
 
@@ -99,9 +88,12 @@ const toast = useToast()
 const formData = ref<PromotionDiscountActivity>({}) // 详情数据
 const deleting = ref(false) // 删除状态
 const closing = ref(false) // 关闭状态
-const canUpdate = computed(() => hasAccessByCodes(['promotion:discount-activity:update']))
-const canDelete = computed(() => hasAccessByCodes(['promotion:discount-activity:delete']))
-const canClose = computed(() => hasAccessByCodes(['promotion:discount-activity:close']))
+
+const productFields: SpuSkuViewField[] = [
+  { label: '优惠类型', formatter: product => getDictLabel(DICT_TYPE.PROMOTION_DISCOUNT_TYPE, product.discountType) || '-' },
+  { label: '优惠金额', prop: 'discountPrice', type: 'money', show: product => product.discountType === PromotionDiscountTypeEnum.PRICE },
+  { label: '折扣', prop: 'discountPercent', type: 'percent', show: product => product.discountType === PromotionDiscountTypeEnum.PERCENT },
+] // 优惠商品每个 SKU 展示的活动字段
 
 /** 返回上一页 */
 function handleBack() {
@@ -162,7 +154,7 @@ async function handleDelete() {
     await deletePromotionDiscountActivity(Number(props.id))
     toast.success('删除成功')
     uni.$emit('mall:promotion-discount-activity:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

@@ -1,12 +1,8 @@
 <template>
   <view class="mx-20rpx mt-20rpx overflow-hidden rounded-16rpx bg-white">
     <view class="flex items-center p-24rpx">
-      <view class="avatar-wrapper mr-20rpx h-100rpx w-100rpx overflow-hidden rounded-full">
-        <image
-          :src="userInfo.avatar"
-          mode="aspectFill"
-          class="h-full w-full"
-        />
+      <view class="avatar-wrapper mr-20rpx">
+        <wd-img :src="userInfo.avatar" width="100rpx" height="100rpx" mode="aspectFill" round />
       </view>
       <view class="flex-1">
         <view class="text-32rpx text-#333 font-500">

@@ -12,21 +12,33 @@
         <view v-for="item in list" :key="item.id" class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm" @click="handleDetail(item)">
           <view class="p-24rpx">
             <view class="mb-18rpx flex items-start gap-20rpx">
-              <view class="h-88rpx w-88rpx flex shrink-0 items-center justify-center overflow-hidden rounded-12rpx bg-[#f3f6fb]">
-                <image v-if="item.icon" :src="item.icon" class="h-full w-full" mode="aspectFill" />
+              <view class="h-88rpx w-88rpx flex shrink-0 items-center justify-center rounded-12rpx bg-[#f3f6fb]">
+                <wd-img v-if="item.icon" :src="item.icon" width="88rpx" height="88rpx" radius="12rpx" mode="aspectFill" />
                 <wd-icon v-else name="apps" size="44rpx" color="#4b77f3" />
               </view>
               <view class="min-w-0 flex-1">
                 <view class="mb-8rpx flex items-center justify-between gap-16rpx">
-                  <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">{{ item.name }}</view>
+                  <view class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
+                    {{ item.name }}
+                  </view>
                   <dict-tag :type="DICT_TYPE.IOT_PRODUCT_STATUS" :value="item.status" />
                 </view>
-                <view class="truncate text-24rpx text-[#999]">{{ item.productKey }}</view>
+                <view class="truncate text-24rpx text-[#999]">
+                  {{ item.productKey }}
+                </view>
               </view>
             </view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]"><text class="mr-8rpx text-[#999]">产品分类：</text>{{ item.categoryName || '-' }}</view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]"><text class="mr-8rpx text-[#999]">设备类型：</text><dict-tag :type="DICT_TYPE.IOT_PRODUCT_DEVICE_TYPE" :value="item.deviceType" /></view>
-            <view class="mb-12rpx flex items-center text-28rpx text-[#666]"><text class="mr-8rpx text-[#999]">接入协议：</text><dict-tag :type="DICT_TYPE.IOT_PROTOCOL_TYPE" :value="item.protocolType" /></view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx text-[#999]">产品分类：</text>{{ item.categoryName || '-' }}
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx text-[#999]">设备类型：</text>
+              <dict-tag :type="DICT_TYPE.IOT_PRODUCT_DEVICE_TYPE" :value="item.deviceType" />
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx text-[#999]">接入协议：</text>
+              <dict-tag :type="DICT_TYPE.IOT_PROTOCOL_TYPE" :value="item.protocolType" />
+            </view>
             <view class="flex items-center justify-between text-24rpx text-[#999]">
               <text>设备数量：{{ item.deviceCount || 0 }}</text>
               <text>{{ formatDateTime(item.createTime) || '-' }}</text>
@@ -60,7 +72,9 @@ const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({}) // 查询参数
 
 /** 返回上一页 */
-function handleBack() { navigateBackPlus() }
+function handleBack() {
+  navigateBackPlus()
+}
 
 /** 查询产品列表 */
 async function queryList(pageNo: number, pageSize: number) {
@@ -73,23 +87,38 @@ async function queryList(pageNo: number, pageSize: number) {
 }
 
 /** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) { queryParams.value = { ...data }; reload() }
+function handleQuery(data?: Record<string, any>) {
+  queryParams.value = { ...data }
+  reload()
+}
 
 /** 重置按钮操作 */
-function handleReset() { handleQuery() }
+function handleReset() {
+  handleQuery()
+}
 
 /** 重新加载 */
-function reload() { pagingRef.value?.reload() }
+function reload() {
+  pagingRef.value?.reload()
+}
 
 /** 新增产品 */
-function handleAdd() { uni.navigateTo({ url: '/pages-iot/product/product/form/index' }) }
+function handleAdd() {
+  uni.navigateTo({ url: '/pages-iot/product/product/form/index' })
+}
 
 /** 查看详情 */
-function handleDetail(item: Product) { uni.navigateTo({ url: `/pages-iot/product/product/detail/index?id=${item.id}` }) }
+function handleDetail(item: Product) {
+  uni.navigateTo({ url: `/pages-iot/product/product/detail/index?id=${item.id}` })
+}
 
 /** 初始化 */
-onMounted(() => { uni.$on('iot:product:reload', reload) })
+onMounted(() => {
+  uni.$on('iot:product:reload', reload)
+})
 
 /** 卸载 */
-onUnload(() => { uni.$off('iot:product:reload', reload) })
+onUnload(() => {
+  uni.$off('iot:product:reload', reload)
+})
 </script>

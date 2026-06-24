@@ -1,3 +1,4 @@
+<!-- TODO @AI：类似 /Users/yunai/Java/yudao-ui-admin-uniapp-next-v4/src/pages-pay/demo/withdraw/index.vue 的建议 -->
 <template>
   <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
@@ -35,6 +36,7 @@
                 订单编号：{{ item.id || '-' }}
               </view>
             </view>
+            <!-- TODO @AI：未支付、已支付、已退款？这样更合适？ -->
             <dict-tag :type="DICT_TYPE.INFRA_BOOLEAN_STRING" :value="item.payStatus" />
           </view>
 
@@ -46,25 +48,29 @@
             <text class="mr-8rpx shrink-0 text-[#999]">用户编号：</text>
             <text>{{ item.userId || '-' }}</text>
           </view>
-          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-            <text class="mr-8rpx shrink-0 text-[#999]">退款金额：</text>
-            <text>{{ formatPayAmount(item.refundPrice) }}</text>
-          </view>
-          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-            <text class="mr-8rpx shrink-0 text-[#999]">支付单号：</text>
-            <text>{{ item.payOrderId || '-' }}</text>
-          </view>
+          <!-- TODO @AI：退款金额存在，才展示 -->
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">创建时间：</text>
             <text>{{ formatDateTime(item.createTime) || '-' }}</text>
           </view>
+          <!-- TODO @AI：支付单号存在，才展示 -->
+          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+            <text class="mr-8rpx shrink-0 text-[#999]">支付单号：</text>
+            <text>{{ item.payOrderId || '-' }}</text>
+          </view>
+          <!-- TODO @AI：支付时间存在，才展示 -->
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">支付时间：</text>
             <text>{{ formatDateTime(item.payTime) || '-' }}</text>
           </view>
+          <!-- TODO @AI：退款金额存在，才展示 -->
           <view class="mb-16rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">退款时间：</text>
             <text>{{ getRefundText(item) }}</text>
+          </view>
+          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+            <text class="mr-8rpx shrink-0 text-[#999]">退款金额：</text>
+            <text>{{ formatPayAmount(item.refundPrice) }}</text>
           </view>
 
           <view class="flex gap-16rpx">
@@ -77,6 +83,7 @@
             >
               前往支付
             </wd-button>
+            <!-- TODO @AI：发起退款这个 error 貌似不存在，看看换一个； -->
             <wd-button
               v-if="item.payStatus && !item.payRefundId"
               class="flex-1"
@@ -102,6 +109,7 @@
     />
 
     <!-- 发起订单弹窗 -->
+    <!-- TODO @AI：是不是直接弹出商品的 select 然后确认发起更好？ -->
     <wd-popup
       v-model="createVisible"
       position="bottom"

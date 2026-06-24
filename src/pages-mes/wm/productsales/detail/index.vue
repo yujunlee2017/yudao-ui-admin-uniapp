@@ -74,7 +74,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteProductSales, getProductSales, submitProductSales } from '@/api/mes/wm/productsales'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmProductSalesStatusEnum } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
 import ProductSalesLineList from '../components/product-sales-line-list.vue'
@@ -218,9 +218,7 @@ async function handleDelete() {
     await deleteProductSales(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:wm:productsales:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

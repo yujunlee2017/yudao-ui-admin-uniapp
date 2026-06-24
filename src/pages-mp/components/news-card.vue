@@ -1,15 +1,17 @@
+<!-- TODO @AI：注释下作用 -->
 <template>
-  <view class="overflow-hidden rounded-12rpx border border-[#eee] bg-white">
+  <view class="overflow-hidden border border-[#eee] rounded-12rpx bg-white">
     <view
       v-for="(article, index) in safeArticles"
       :key="index"
       class="border-b border-[#f0f0f0] last:border-b-0"
     >
       <view v-if="index === 0" class="relative h-260rpx bg-[#f5f5f5]">
-        <image
+        <wd-img
           v-if="getImageUrl(article)"
           :src="getImageUrl(article)"
-          class="h-full w-full"
+          width="100%"
+          height="260rpx"
           mode="aspectFill"
         />
         <view v-else class="h-full flex items-center justify-center text-26rpx text-[#999]">
@@ -23,10 +25,12 @@
         <view class="min-w-0 flex-1 text-28rpx text-[#333]">
           {{ article.title || '未命名图文' }}
         </view>
-        <image
+        <wd-img
           v-if="getImageUrl(article)"
           :src="getImageUrl(article)"
-          class="h-96rpx w-96rpx shrink-0 rounded-8rpx"
+          width="96rpx"
+          height="96rpx"
+          radius="8rpx"
           mode="aspectFill"
         />
       </view>

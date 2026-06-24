@@ -72,6 +72,7 @@
       v-if="hasAccessByCodes(['mp:tag:sync'])"
       class="fixed bottom-140rpx right-32rpx z-10"
     >
+      <!-- TODO @AI：同步是不是放在 search 下面哪一行？ -->
       <wd-button type="success" size="small" :loading="syncing" @click="handleSync">
         同步
       </wd-button>

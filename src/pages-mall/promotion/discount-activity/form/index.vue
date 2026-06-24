@@ -44,11 +44,11 @@
                 <template #sku="{ row }">
                   <view class="flex items-center gap-12rpx py-8rpx">
                     <text class="w-160rpx shrink-0 text-26rpx text-[#666]">优惠金额(元)</text>
-                    <wd-input-number v-model="row.discountPrice" :min="0" :step="0.01" />
+                    <wd-input-number v-model="row.discountPrice" :min="0" :step="0.01" :precision="2" />
                   </view>
                   <view class="flex items-center gap-12rpx py-8rpx">
                     <text class="w-160rpx shrink-0 text-26rpx text-[#666]">折扣百分比(%)</text>
-                    <wd-input-number v-model="row.discountPercent" :min="0" :max="100" :step="0.01" />
+                    <wd-input-number v-model="row.discountPercent" :min="0" :max="100" :step="0.01" :precision="2" />
                   </view>
                 </template>
               </SpuSkuEditor>
@@ -80,8 +80,8 @@ import {
   updatePromotionDiscountActivity,
 } from '@/api/mall/promotion/discount'
 import SpuSkuEditor from '@/pages-mall/promotion/components/spu-sku-editor.vue'
-import { fenToYuan, yuanToFen } from '@/pages-mall/utils'
-import { navigateBackPlus } from '@/utils'
+import { fenToYuan, yuanToFen } from '@/utils/format'
+import { delay, navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 
@@ -141,11 +141,7 @@ async function getDetail() {
   }
   const data = await getPromotionDiscountActivity(Number(props.id))
   formData.value = {
-    id: data.id,
-    name: data.name,
-    startTime: data.startTime,
-    endTime: data.endTime,
-    remark: data.remark,
+    ...data,
   }
   // 回显商品与每个 SKU 的优惠配置
   if (data.products?.length) {
@@ -191,7 +187,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mall:promotion-discount-activity:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

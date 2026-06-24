@@ -129,7 +129,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref, watch } from 'vue'
 import { createArrivalNotice, getArrivalNotice, submitArrivalNotice, updateArrivalNotice } from '@/api/mes/wm/arrivalnotice'
 import { generateAutoCode } from '@/api/mes/md/autocode/record'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesAutoCodeRuleCode, MesWmArrivalNoticeStatusEnum } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
@@ -330,9 +330,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:wm:arrivalnotice:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }
@@ -361,9 +359,7 @@ async function handleSubmitNotice() {
     await submitArrivalNotice(currentId.value)
     toast.success('提交成功')
     uni.$emit('mes:wm:arrivalnotice:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     submitLoading.value = false
   }

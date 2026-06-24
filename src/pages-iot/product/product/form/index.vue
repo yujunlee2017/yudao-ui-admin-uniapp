@@ -10,7 +10,9 @@
           <wd-form-item title="ProductKey" title-width="220rpx" prop="productKey">
             <view class="w-full flex items-center gap-12rpx">
               <wd-input v-model="formData.productKey" class="min-w-0 flex-1" placeholder="请输入 ProductKey" :disabled="!!props.id" clearable />
-              <wd-button v-if="!props.id" size="small" type="primary" variant="plain" @click="generateProductKey">生成</wd-button>
+              <wd-button v-if="!props.id" size="small" type="primary" variant="plain" @click="generateProductKey">
+                生成
+              </wd-button>
             </view>
           </wd-form-item>
           <wd-form-item title="产品名称" title-width="220rpx" prop="name">
@@ -19,22 +21,30 @@
           <EntityPicker v-model="formData.categoryId" label="产品分类" prop="categoryId" :columns="categoryOptions" placeholder="请选择产品分类" label-width="220rpx" />
           <wd-form-item title="设备类型" title-width="220rpx" center prop="deviceType">
             <wd-radio-group v-model="formData.deviceType" type="button" :disabled="!!props.id">
-              <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.IOT_PRODUCT_DEVICE_TYPE)" :key="dict.value" :value="dict.value">{{ dict.label }}</wd-radio>
+              <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.IOT_PRODUCT_DEVICE_TYPE)" :key="dict.value" :value="dict.value">
+                {{ dict.label }}
+              </wd-radio>
             </wd-radio-group>
           </wd-form-item>
           <wd-form-item v-if="showNetType" title="联网方式" title-width="220rpx" center prop="netType">
             <wd-radio-group v-model="formData.netType" type="button">
-              <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.IOT_NET_TYPE)" :key="dict.value" :value="dict.value">{{ dict.label }}</wd-radio>
+              <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.IOT_NET_TYPE)" :key="dict.value" :value="dict.value">
+                {{ dict.label }}
+              </wd-radio>
             </wd-radio-group>
           </wd-form-item>
           <wd-form-item title="协议类型" title-width="220rpx" center prop="protocolType">
             <wd-radio-group v-model="formData.protocolType" type="button">
-              <wd-radio v-for="dict in getStrDictOptions(DICT_TYPE.IOT_PROTOCOL_TYPE)" :key="dict.value" :value="dict.value">{{ dict.label }}</wd-radio>
+              <wd-radio v-for="dict in getStrDictOptions(DICT_TYPE.IOT_PROTOCOL_TYPE)" :key="dict.value" :value="dict.value">
+                {{ dict.label }}
+              </wd-radio>
             </wd-radio-group>
           </wd-form-item>
           <wd-form-item title="序列化类型" title-width="220rpx" center prop="serializeType">
             <wd-radio-group v-model="formData.serializeType" type="button">
-              <wd-radio v-for="dict in getStrDictOptions(DICT_TYPE.IOT_SERIALIZE_TYPE)" :key="dict.value" :value="dict.value">{{ dict.label }}</wd-radio>
+              <wd-radio v-for="dict in getStrDictOptions(DICT_TYPE.IOT_SERIALIZE_TYPE)" :key="dict.value" :value="dict.value">
+                {{ dict.label }}
+              </wd-radio>
             </wd-radio-group>
           </wd-form-item>
           <wd-form-item title="动态注册" title-width="220rpx" center prop="registerEnabled">
@@ -55,7 +65,9 @@
 
     <!-- 底部保存按钮 -->
     <view class="yd-detail-footer">
-      <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">保存</wd-button>
+      <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
+        保存
+      </wd-button>
     </view>
   </view>
 </template>
@@ -70,7 +82,7 @@ import { getSimpleProductCategoryList } from '@/api/iot/product/category'
 import { createProduct, DeviceTypeEnum, getProduct, ProtocolTypeEnum, SerializeTypeEnum, updateProduct } from '@/api/iot/product/product'
 import { getIntDictOptions, getStrDictOptions } from '@/hooks/useDict'
 import EntityPicker from '@/pages-iot/components/entity-picker.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { ProductStatusEnum } from '@/pages-iot/utils/constants'
 import { createFormSchema } from '@/utils/wot'
@@ -130,11 +142,13 @@ async function getDetail() {
 /** 提交表单 */
 async function handleSubmit() {
   const { valid } = await formRef.value.validate()
-  if (!valid) return
+  if (!valid)
+    return
   formLoading.value = true
   try {
     const data = { ...formData.value }
-    if (!showNetType.value) data.netType = undefined // 网关子设备不需要联网方式
+    if (!showNetType.value)
+      data.netType = undefined // 网关子设备不需要联网方式
     if (props.id) {
       await updateProduct(data)
       toast.success('修改成功')
@@ -143,7 +157,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('iot:product:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

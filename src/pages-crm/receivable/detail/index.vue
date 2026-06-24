@@ -59,7 +59,7 @@
           <wd-button v-if="canEdit" class="flex-1" type="warning" @click="handleEdit">
             编辑
           </wd-button>
-          <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+          <wd-button v-if="hasAccessByCodes(['crm:receivable:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
             删除
           </wd-button>
           <wd-button v-if="moreActions.length" class="flex-1" type="info" @click="moreActionVisible = true">
@@ -90,7 +90,7 @@ import { computed, onMounted, ref } from 'vue'
 import { deleteReceivable, getReceivable, submitReceivable } from '@/api/crm/receivable'
 import { BizTypeEnum, CrmAuditStatusEnum } from '@/api/crm/permission'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
 import { formatMoney } from '@/utils/format'
@@ -125,15 +125,13 @@ const teamRef = ref<{ openAdd: () => void, quit: () => void, validateWrite: bool
 const receivableId = computed(() => Number(props.id))
 const activeTab = computed(() => tabs[tabIndex.value].key)
 const isPagingTab = computed(() => activeTab.value === 'log') // 操作日志 tab 用 z-paging 固定高布局
-const canUpdate = computed(() => hasAccessByCodes(['crm:receivable:update']))
-const canDelete = computed(() => hasAccessByCodes(['crm:receivable:delete']))
 const validateWrite = computed(() => teamRef.value?.validateWrite ?? false) // 读写权限（负责人或读写成员）
 const validateOwnerUser = computed(() => teamRef.value?.validateOwnerUser ?? false) // 负责人权限
-const canEdit = computed(() => canUpdate.value && validateWrite.value) // 可编辑（菜单权限 + 读写权限）
+const canEdit = computed(() => hasAccessByCodes(['crm:receivable:update']) && validateWrite.value) // 可编辑（菜单权限 + 读写权限）
 const isDraft = computed(() => Number(formData.value.auditStatus) === CrmAuditStatusEnum.DRAFT) // 未提交（草稿）
 const moreActions = computed(() => {
   const data = formData.value
-  if (!data?.id || !canUpdate.value) {
+  if (!data?.id || !hasAccessByCodes(['crm:receivable:update'])) {
     return []
   }
   const actions: { name: string, value: string }[] = []
@@ -149,7 +147,7 @@ const hasFooter = computed(() => {
     case 'log':
       return false
     case 'basic':
-      return canEdit.value || canDelete.value || moreActions.value.length > 0
+      return canEdit.value || hasAccessByCodes(['crm:receivable:delete']) || moreActions.value.length > 0
     case 'team':
       return teamCanQuit.value || validateOwnerUser.value
     default:
@@ -215,7 +213,7 @@ function handleViewProcess() {
 /** 退出团队后返回 */
 function handleQuitTeam() {
   uni.$emit('crm:receivable:reload')
-  setTimeout(() => handleBack(), 500)
+  delay(handleBack)
 }
 
 /** 编辑 */
@@ -238,7 +236,7 @@ async function handleDelete() {
     await deleteReceivable(receivableId.value)
     toast.success('删除成功')
     uni.$emit('crm:receivable:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

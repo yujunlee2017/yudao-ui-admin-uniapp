@@ -37,7 +37,9 @@
 
     <!-- 底部保存按钮 -->
     <view class="yd-detail-footer">
-      <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">保存</wd-button>
+      <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
+        保存
+      </wd-button>
     </view>
   </view>
 </template>
@@ -51,7 +53,7 @@ import { computed, onMounted, ref } from 'vue'
 import { createOtaFirmware, getOtaFirmware, updateOtaFirmware } from '@/api/iot/ota/firmware'
 import { getSimpleProductList } from '@/api/iot/product/product'
 import EntityPicker from '@/pages-iot/components/entity-picker.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{ id?: number | any }>()
@@ -84,14 +86,16 @@ function handleBack() { navigateBackPlus('/pages-iot/ota/firmware/index') }
 
 /** 加载固件详情 */
 async function getDetail() {
-  if (!editId.value) return
+  if (!editId.value)
+    return
   formData.value = await getOtaFirmware(editId.value)
 }
 
 /** 提交表单 */
 async function handleSubmit() {
   const { valid } = await formRef.value.validate()
-  if (!valid) return
+  if (!valid)
+    return
   formLoading.value = true
   try {
     if (editId.value) {
@@ -112,7 +116,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('iot:ota-firmware:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

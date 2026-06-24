@@ -31,12 +31,9 @@
           @click="handleDetail(item)"
         >
           <view class="mb-16rpx flex items-center gap-20rpx">
-            <image
-              v-if="item.avatar"
-              :src="item.avatar"
-              class="h-88rpx w-88rpx shrink-0 rounded-full bg-[#f5f5f5]"
-              mode="aspectFill"
-            />
+            <view v-if="item.avatar" class="shrink-0">
+              <wd-img :src="item.avatar" width="88rpx" height="88rpx" mode="aspectFill" round />
+            </view>
             <view class="min-w-0 flex-1">
               <view class="flex items-center justify-between gap-16rpx">
                 <text class="min-w-0 flex-1 truncate text-32rpx text-[#333] font-semibold">
@@ -45,7 +42,7 @@
                 <!-- 推广资格开关（有权限时可直接切换） -->
                 <view @click.stop>
                   <wd-switch
-                    v-if="canUpdateEnabled"
+                    v-if="hasAccessByCodes(['trade:brokerage-user:update-brokerage-enable'])"
                     :model-value="!!item.brokerageEnabled"
                     @change="handleEnabledChange(item)"
                   />
@@ -62,11 +59,11 @@
           <view class="mb-12rpx flex items-center justify-between text-26rpx text-[#666]">
             <text>推广人数：{{ item.brokerageUserCount ?? 0 }}</text>
             <text>推广订单：{{ item.brokerageOrderCount ?? 0 }}</text>
-            <text>已提现：{{ formatMallMoney(item.withdrawPrice) }}</text>
+            <text>已提现：{{ formatDisplayMoney(item.withdrawPrice) }}</text>
           </view>
           <view class="flex items-center justify-between text-26rpx text-[#666]">
-            <text>可用佣金：{{ formatMallMoney(item.price) }}</text>
-            <text>冻结佣金：{{ formatMallMoney(item.frozenPrice) }}</text>
+            <text>可用佣金：{{ formatDisplayMoney(item.price) }}</text>
+            <text>冻结佣金：{{ formatDisplayMoney(item.frozenPrice) }}</text>
           </view>
         </view>
       </view>
@@ -88,10 +85,10 @@ import type { TradeBrokerageUser } from '@/api/mall/trade/brokerage/user'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { getTradeBrokerageUserPage, updateTradeBrokerageUserEnabled } from '@/api/mall/trade/brokerage/user'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import SearchForm from './components/search-form.vue'
 
@@ -108,8 +105,6 @@ const toast = useToast()
 const list = ref<TradeBrokerageUser[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({}) // 查询参数
-// 推广资格开关：后端 /update-brokerage-enable 校验 trade:brokerage-user:update-brokerage-enable
-const canUpdateEnabled = computed(() => hasAccessByCodes(['trade:brokerage-user:update-brokerage-enable']))
 
 /** 返回上一页 */
 function handleBack() {

@@ -76,7 +76,7 @@ import { getAccountSimpleList } from '@/api/erp/finance/account'
 import { createPurchaseIn, getPurchaseIn, updatePurchaseIn } from '@/api/erp/purchase/in'
 import { getSupplierSimpleList } from '@/api/erp/purchase/supplier'
 import { getWarehouseSimpleList } from '@/api/erp/stock/warehouse'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
 import ErpPicker from '@/pages-erp/components/erp-picker.vue'
@@ -215,7 +215,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('erp:purchase-in:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

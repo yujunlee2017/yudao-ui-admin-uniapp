@@ -31,7 +31,7 @@
         </view>
         <view class="flex items-center gap-12rpx py-6rpx">
           <text class="w-180rpx shrink-0 text-26rpx text-[#666]">运费(元)</text>
-          <wd-input-number v-model="rule.startPrice" :min="0" :step="0.01" @change="emitChange" />
+          <wd-input-number v-model="rule.startPrice" :min="0" :step="0.01" :precision="2" @change="emitChange" />
         </view>
         <view class="flex items-center gap-12rpx py-6rpx">
           <text class="w-180rpx shrink-0 text-26rpx text-[#666]">续{{ unitLabel }}</text>
@@ -39,7 +39,7 @@
         </view>
         <view class="flex items-center gap-12rpx py-6rpx">
           <text class="w-180rpx shrink-0 text-26rpx text-[#666]">续费(元)</text>
-          <wd-input-number v-model="rule.extraPrice" :min="0" :step="0.01" @change="emitChange" />
+          <wd-input-number v-model="rule.extraPrice" :min="0" :step="0.01" :precision="2" @change="emitChange" />
         </view>
       </template>
 
@@ -51,7 +51,7 @@
         </view>
         <view class="flex items-center gap-12rpx py-6rpx">
           <text class="w-180rpx shrink-0 text-26rpx text-[#666]">包邮金额(元)</text>
-          <wd-input-number v-model="rule.freePrice" :min="0" :step="0.01" @change="emitChange" />
+          <wd-input-number v-model="rule.freePrice" :min="0" :step="0.01" :precision="2" @change="emitChange" />
         </view>
       </template>
     </view>

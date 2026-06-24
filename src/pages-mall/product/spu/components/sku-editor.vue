@@ -7,30 +7,21 @@
         :key="sIndex"
         class="mb-16rpx rounded-8rpx bg-[#f7f8fa] p-16rpx"
       >
-        <!-- TODO @AI：交互可以更像 pc 端么？默认把这些规格拿出来，可能太多了。可能还是希望添加后，可以下拉选择，然后也可以输入后点击选择；（如果点击选择不好做，看看弹出 select 选择，然后右上角有个新建）； -->
         <view class="mb-12rpx flex items-center justify-between">
           <text class="text-28rpx text-[#333] font-medium">{{ spec.propertyName }}</text>
           <text class="text-26rpx text-[#fa4350]" @click="handleRemoveSpec(sIndex)">删除</text>
         </view>
-        <view class="flex flex-wrap gap-12rpx">
+        <!-- 已选属性值 + 选择入口（弹层多选 + 新增属性值） -->
+        <view class="flex flex-wrap items-center gap-12rpx">
           <view
-            v-for="val in spec.allValues"
+            v-for="val in selectedValues(spec)"
             :key="val.id"
-            class="rounded-6rpx px-20rpx py-8rpx text-26rpx"
-            :class="spec.selectedValueIds.includes(val.id) ? 'bg-[#1677ff] text-white' : 'bg-white text-[#666]'"
-            @click="handleToggleValue(spec, val.id)"
+            class="rounded-6rpx bg-[#1677ff] px-20rpx py-8rpx text-26rpx text-white"
           >
             {{ val.name }}
           </view>
-          <view v-if="!spec.allValues.length" class="text-24rpx text-[#999]">
-            该规格暂无属性值
-          </view>
-        </view>
-        <!-- 手动新增属性值 -->
-        <view class="mt-12rpx flex items-center gap-12rpx">
-          <wd-input v-model="spec.newValueName" placeholder="新增属性值" clearable />
-          <wd-button size="small" variant="plain" :disabled="!spec.newValueName?.trim()" @click="handleCreateValue(spec)">
-            添加
+          <wd-button size="small" variant="plain" @click="openValuePicker(spec)">
+            {{ spec.selectedValueIds.length ? '修改属性值' : '选择属性值' }}
           </wd-button>
         </view>
       </view>
@@ -55,15 +46,15 @@
       </view>
       <view class="flex items-center gap-12rpx py-6rpx">
         <text class="w-160rpx shrink-0 text-26rpx text-[#666]">销售价(元)</text>
-        <wd-input-number v-model="sku.price" :min="0" :step="0.01" @change="emitChange" />
+        <wd-input-number v-model="sku.price" :min="0" :step="0.01" :precision="2" @change="emitChange" />
       </view>
       <view class="flex items-center gap-12rpx py-6rpx">
         <text class="w-160rpx shrink-0 text-26rpx text-[#666]">市场价(元)</text>
-        <wd-input-number v-model="sku.marketPrice" :min="0" :step="0.01" @change="emitChange" />
+        <wd-input-number v-model="sku.marketPrice" :min="0" :step="0.01" :precision="2" @change="emitChange" />
       </view>
       <view class="flex items-center gap-12rpx py-6rpx">
         <text class="w-160rpx shrink-0 text-26rpx text-[#666]">成本价(元)</text>
-        <wd-input-number v-model="sku.costPrice" :min="0" :step="0.01" @change="emitChange" />
+        <wd-input-number v-model="sku.costPrice" :min="0" :step="0.01" :precision="2" @change="emitChange" />
       </view>
       <view class="flex items-center gap-12rpx py-6rpx">
         <text class="w-160rpx shrink-0 text-26rpx text-[#666]">库存</text>
@@ -75,25 +66,25 @@
       </view>
       <view class="flex items-center gap-12rpx py-6rpx">
         <text class="w-160rpx shrink-0 text-26rpx text-[#666]">重量(kg)</text>
-        <wd-input-number v-model="sku.weight" :min="0" :step="0.01" @change="emitChange" />
+        <wd-input-number v-model="sku.weight" :min="0" :step="0.01" :precision="2" @change="emitChange" />
       </view>
       <view class="flex items-center gap-12rpx py-6rpx">
         <text class="w-160rpx shrink-0 text-26rpx text-[#666]">体积(m³)</text>
-        <wd-input-number v-model="sku.volume" :min="0" :step="0.01" @change="emitChange" />
+        <wd-input-number v-model="sku.volume" :min="0" :step="0.01" :precision="2" @change="emitChange" />
       </view>
       <view class="flex items-start gap-12rpx py-6rpx">
         <text class="w-160rpx shrink-0 text-26rpx text-[#666]">图片</text>
-        <yd-upload-img v-model="sku.picUrl" directory="mall/spu" @update:model-value="emitChange" />
+        <yd-upload-img v-model="sku.picUrl" @update:model-value="emitChange" />
       </view>
       <!-- 单独分佣时展示一二级佣金 -->
       <template v-if="subCommissionType">
         <view class="flex items-center gap-12rpx py-6rpx">
           <text class="w-160rpx shrink-0 text-26rpx text-[#666]">一级佣金(元)</text>
-          <wd-input-number v-model="sku.firstBrokeragePrice" :min="0" :step="0.01" @change="emitChange" />
+          <wd-input-number v-model="sku.firstBrokeragePrice" :min="0" :step="0.01" :precision="2" @change="emitChange" />
         </view>
         <view class="flex items-center gap-12rpx py-6rpx">
           <text class="w-160rpx shrink-0 text-26rpx text-[#666]">二级佣金(元)</text>
-          <wd-input-number v-model="sku.secondBrokeragePrice" :min="0" :step="0.01" @change="emitChange" />
+          <wd-input-number v-model="sku.secondBrokeragePrice" :min="0" :step="0.01" :precision="2" @change="emitChange" />
         </view>
       </template>
     </view>
@@ -115,8 +106,8 @@
         </view>
         <!-- 手动新建规格 -->
         <view class="mb-16rpx flex items-center gap-12rpx">
-          <wd-input v-model="newPropertyName" placeholder="输入新规格名称（如 颜色）" clearable />
-          <wd-button size="small" type="primary" :disabled="!newPropertyName.trim()" @click="handleCreateProperty">
+          <wd-input v-model="newPropertyName" class="min-w-0 flex-1" placeholder="输入新规格名称（如 颜色）" clearable />
+          <wd-button class="shrink-0" size="small" type="primary" :disabled="!newPropertyName.trim()" @click="handleCreateProperty">
             新建
           </wd-button>
         </view>
@@ -133,6 +124,48 @@
             暂无可选规格
           </view>
         </scroll-view>
+      </view>
+    </wd-popup>
+
+    <!-- 属性值选择弹窗（含新增属性值） -->
+    <wd-popup
+      v-model="valuePickerVisible"
+      position="bottom"
+      closable
+      custom-style="border-radius: 24rpx 24rpx 0 0; height: 70vh;"
+      @close="valuePickerVisible = false"
+    >
+      <view v-if="editingSpec" class="h-70vh flex flex-col p-24rpx">
+        <view class="mb-16rpx text-32rpx text-[#333] font-semibold">
+          选择「{{ editingSpec.propertyName }}」属性值
+        </view>
+        <!-- 新增属性值 -->
+        <view class="mb-16rpx flex items-center gap-12rpx">
+          <wd-input v-model="editingSpec.newValueName" class="min-w-0 flex-1" placeholder="输入新属性值名称" clearable />
+          <wd-button class="shrink-0" size="small" type="primary" :disabled="!editingSpec.newValueName?.trim()" @click="handleCreateValue(editingSpec)">
+            新增
+          </wd-button>
+        </view>
+        <!-- 属性值多选 -->
+        <scroll-view class="min-h-0 flex-1" scroll-y>
+          <view
+            v-for="val in editingSpec.allValues"
+            :key="val.id"
+            class="flex items-center justify-between border-b border-[#f5f5f5] py-20rpx"
+            @click="toggleValue(editingSpec, val.id)"
+          >
+            <text class="text-28rpx" :class="editingSpec.selectedValueIds.includes(val.id) ? 'text-[#1677ff]' : 'text-[#333]'">
+              {{ val.name }}
+            </text>
+            <wd-icon v-if="editingSpec.selectedValueIds.includes(val.id)" name="check" size="36rpx" color="#1677ff" />
+          </view>
+          <view v-if="!editingSpec.allValues.length" class="py-48rpx text-center text-26rpx text-[#999]">
+            暂无属性值，请在上方新增
+          </view>
+        </scroll-view>
+        <wd-button class="mt-16rpx" type="primary" block @click="valuePickerVisible = false">
+          确定（已选 {{ editingSpec.selectedValueIds.length }}）
+        </wd-button>
       </view>
     </wd-popup>
   </view>
@@ -173,6 +206,8 @@ const specs = ref<SpecItem[]>([]) // 规格定义
 const propertyList = ref<ProductProperty[]>([]) // 全部商品属性
 const specPickerVisible = ref(false) // 规格选择弹窗
 const newPropertyName = ref('') // 手动新建规格名称
+const valuePickerVisible = ref(false) // 属性值选择弹窗显示状态
+const editingSpec = ref<SpecItem>() // 当前编辑属性值的规格
 const availableProperties = computed(() => propertyList.value.filter(p => !specs.value.some(s => s.propertyId === p.id))) // 未选规格
 const canGenerate = computed(() => specs.value.length > 0 && specs.value.every(s => s.selectedValueIds.length > 0)) // 可生成
 
@@ -184,6 +219,27 @@ function createSku(properties: ProductSku['properties'] = []): ProductSku {
 /** SKU 规格组合文案 */
 function skuLabel(sku: ProductSku) {
   return (sku.properties || []).map(p => p.valueName).filter(Boolean).join(' / ') || '默认'
+}
+
+/** 规格已选属性值（标签展示） */
+function selectedValues(spec: SpecItem) {
+  return spec.allValues.filter(v => spec.selectedValueIds.includes(v.id))
+}
+
+/** 打开属性值选择弹窗 */
+function openValuePicker(spec: SpecItem) {
+  editingSpec.value = spec
+  valuePickerVisible.value = true
+}
+
+/** 切换属性值选中 */
+function toggleValue(spec: SpecItem, valueId: number) {
+  const idx = spec.selectedValueIds.indexOf(valueId)
+  if (idx >= 0) {
+    spec.selectedValueIds.splice(idx, 1)
+  } else {
+    spec.selectedValueIds.push(valueId)
+  }
 }
 
 /** 通知父级 SKU 变化（结构变化时重新派发数组） */
@@ -240,16 +296,6 @@ async function handleCreateValue(spec: SpecItem) {
 /** 删除规格 */
 function handleRemoveSpec(index: number) {
   specs.value.splice(index, 1)
-}
-
-/** 切换属性值选中 */
-function handleToggleValue(spec: SpecItem, valueId: number) {
-  const idx = spec.selectedValueIds.indexOf(valueId)
-  if (idx >= 0) {
-    spec.selectedValueIds.splice(idx, 1)
-  } else {
-    spec.selectedValueIds.push(valueId)
-  }
 }
 
 /** 生成规格组合 SKU（保留已有组合的价格库存） */
@@ -320,7 +366,7 @@ function syncStructure() {
   }
 }
 
-// 多规格切换：重置规格定义
+/** 多规格切换：重置规格定义 */
 watch(() => props.specType, syncStructure)
 
 /** 初始化 */

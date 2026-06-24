@@ -12,11 +12,7 @@
 
     <!-- Logo 区域 -->
     <view class="flex flex-col items-center py-60rpx">
-      <image
-        class="mb-24rpx h-150rpx w-150rpx rounded-full"
-        src="/static/logo.svg"
-        mode="aspectFit"
-      />
+      <wd-img class="mb-24rpx" src="/static/logo.svg" width="150rpx" height="150rpx" mode="aspectFit" round />
       <text class="text-40rpx text-gray-800 font-medium">芋道移动端</text>
     </view>
 

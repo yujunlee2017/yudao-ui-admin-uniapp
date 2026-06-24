@@ -87,7 +87,7 @@ import type { Job } from '@/api/infra/job'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createJob, getJob, updateJob } from '@/api/infra/job'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum } from '@/utils/constants/biz-system-enum'
 import { createFormSchema } from '@/utils/wot'
 
@@ -154,9 +154,7 @@ async function handleSubmit() {
       await createJob(formData.value)
       toast.success('新增成功')
     }
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

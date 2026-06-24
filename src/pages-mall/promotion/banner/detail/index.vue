@@ -12,12 +12,7 @@
       <wd-cell title="编号" :value="formData.id != null ? String(formData.id) : '-'" />
       <wd-cell title="标题" :value="formData.title || '-'" />
       <wd-cell title="图片">
-        <image
-          v-if="formData.picUrl"
-          :src="formData.picUrl"
-          class="h-112rpx w-112rpx rounded-8rpx bg-[#f5f5f5]"
-          mode="aspectFill"
-        />
+        <wd-img v-if="formData.picUrl" :src="formData.picUrl" width="112rpx" height="112rpx" radius="8rpx" mode="aspectFill" enable-preview />
         <text v-else>-</text>
       </wd-cell>
       <wd-cell title="跳转地址" :value="formData.url || '-'" />
@@ -35,12 +30,12 @@
     </wd-cell-group>
 
     <!-- 底部操作按钮 -->
-    <view v-if="canUpdate || canDelete" class="yd-detail-footer">
+    <view v-if="hasAccessByCodes(['promotion:banner:update', 'promotion:banner:delete'])" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        <wd-button v-if="hasAccessByCodes(['promotion:banner:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button v-if="hasAccessByCodes(['promotion:banner:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
           删除
         </wd-button>
       </view>
@@ -53,10 +48,10 @@ import type { PromotionBanner } from '@/api/mall/promotion/banner'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { deletePromotionBanner, getPromotionBanner } from '@/api/mall/promotion/banner'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -74,8 +69,6 @@ const dialog = useDialog()
 const toast = useToast()
 const formData = ref<PromotionBanner>({} as PromotionBanner) // 详情数据
 const deleting = ref(false) // 删除状态
-const canUpdate = computed(() => hasAccessByCodes(['promotion:banner:update']))
-const canDelete = computed(() => hasAccessByCodes(['promotion:banner:delete']))
 
 /** 返回上一页 */
 function handleBack() {
@@ -115,7 +108,7 @@ async function handleDelete() {
     await deletePromotionBanner(Number(props.id))
     toast.success('删除成功')
     uni.$emit('mall:promotion-banner:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

@@ -150,7 +150,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { getArrivalNotice } from '@/api/mes/wm/arrivalnotice'
 import { createItemReceipt, finishItemReceipt, getItemReceipt, stockItemReceipt, submitItemReceipt, updateItemReceipt } from '@/api/mes/wm/itemreceipt'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesAutoCodeRuleCode, MesWmArrivalNoticeStatusEnum, MesWmItemReceiptStatusEnum } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
@@ -496,9 +496,7 @@ async function handleSubmitReceipt() {
     await submitItemReceipt(currentId.value)
     toast.success('提交成功')
     uni.$emit('mes:wm:itemreceipt:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     submitLoading.value = false
   }
@@ -522,9 +520,7 @@ async function handleStockReceipt() {
     await stockItemReceipt(currentId.value)
     toast.success('上架成功')
     uni.$emit('mes:wm:itemreceipt:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     stockLoading.value = false
   }
@@ -548,9 +544,7 @@ async function handleFinishReceipt() {
     await finishItemReceipt(currentId.value)
     toast.success('入库成功')
     uni.$emit('mes:wm:itemreceipt:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     finishLoading.value = false
   }

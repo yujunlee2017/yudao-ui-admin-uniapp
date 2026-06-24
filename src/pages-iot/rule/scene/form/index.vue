@@ -7,29 +7,51 @@
       <!-- 基础信息 -->
       <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
-          <wd-form-item title="规则名称" title-width="200rpx" prop="name"><wd-input v-model="formData.name" placeholder="请输入规则名称" clearable /></wd-form-item>
-          <wd-form-item title="规则状态" title-width="200rpx" center prop="status"><wd-radio-group v-model="formData.status" type="button"><wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)" :key="dict.value" :value="dict.value">{{ dict.label }}</wd-radio></wd-radio-group></wd-form-item>
-          <wd-form-item title="规则描述" title-width="200rpx" prop="description"><wd-textarea v-model="formData.description" placeholder="请输入规则描述" :maxlength="200" show-word-limit /></wd-form-item>
+          <wd-form-item title="规则名称" title-width="200rpx" prop="name">
+            <wd-input v-model="formData.name" placeholder="请输入规则名称" clearable />
+          </wd-form-item>
+          <wd-form-item title="规则状态" title-width="200rpx" center prop="status">
+            <wd-radio-group v-model="formData.status" type="button">
+              <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)" :key="dict.value" :value="dict.value">
+                {{ dict.label }}
+              </wd-radio>
+            </wd-radio-group>
+          </wd-form-item>
+          <wd-form-item title="规则描述" title-width="200rpx" prop="description">
+            <wd-textarea v-model="formData.description" placeholder="请输入规则描述" :maxlength="200" show-word-limit />
+          </wd-form-item>
         </wd-cell-group>
       </wd-form>
 
       <!-- 触发器（满足任一即触发） -->
       <view class="mt-20rpx px-24rpx">
-        <view class="mb-12rpx text-28rpx text-[#333] font-semibold">触发器（满足任一即触发）</view>
+        <view class="mb-12rpx text-28rpx text-[#333] font-semibold">
+          触发器（满足任一即触发）
+        </view>
         <TriggerItem v-for="(trigger, index) in formData.triggers" :key="index" :trigger="trigger" :product-options="productOptions" :index="index" @remove="removeTrigger(index)" />
-        <wd-button size="small" type="primary" variant="plain" @click="addTrigger">+ 添加触发器</wd-button>
+        <wd-button size="small" type="primary" variant="plain" @click="addTrigger">
+          + 添加触发器
+        </wd-button>
       </view>
 
       <!-- 执行器 -->
       <view class="mt-24rpx px-24rpx">
-        <view class="mb-12rpx text-28rpx text-[#333] font-semibold">执行器</view>
+        <view class="mb-12rpx text-28rpx text-[#333] font-semibold">
+          执行器
+        </view>
         <ActionItem v-for="(action, index) in formData.actions" :key="index" :action="action" :product-options="productOptions" :alert-config-options="alertConfigOptions" :index="index" @remove="removeAction(index)" />
-        <wd-button size="small" type="primary" variant="plain" @click="addAction">+ 添加执行器</wd-button>
+        <wd-button size="small" type="primary" variant="plain" @click="addAction">
+          + 添加执行器
+        </wd-button>
       </view>
     </view>
 
     <!-- 底部保存按钮 -->
-    <view class="yd-detail-footer"><wd-button type="primary" block :loading="formLoading" @click="handleSubmit">保存</wd-button></view>
+    <view class="yd-detail-footer">
+      <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
+        保存
+      </wd-button>
+    </view>
   </view>
 </template>
 
@@ -46,7 +68,7 @@ import { createRuleScene, getRuleScene, updateRuleScene } from '@/api/iot/rule/s
 import { getIntDictOptions } from '@/hooks/useDict'
 import { IotRuleSceneActionTypeEnum, IotRuleSceneTriggerTypeEnum } from '@/pages-iot/utils/constants'
 import { validateActionItem, validateTriggerItem } from '@/pages-iot/utils/sceneRule'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import ActionItem from '../components/action-item.vue'
@@ -94,7 +116,8 @@ function removeAction(index: number) { formData.value.actions?.splice(index, 1) 
 
 /** 加载场景联动详情 */
 async function getDetail() {
-  if (!props.id) return
+  if (!props.id)
+    return
   const data = await getRuleScene(Number(props.id))
   formData.value = { ...data, triggers: data.triggers?.length ? data.triggers : [createTrigger()], actions: data.actions || [] }
 }
@@ -102,7 +125,8 @@ async function getDetail() {
 /** 提交表单 */
 async function handleSubmit() {
   const { valid } = await formRef.value.validate()
-  if (!valid) return
+  if (!valid)
+    return
   // 触发器兜底校验（至少一个 + 逐项必填）
   const triggers = formData.value.triggers || []
   if (triggers.length === 0) { toast.warning('请至少配置一个触发器'); return }
@@ -119,10 +143,9 @@ async function handleSubmit() {
   }
   formLoading.value = true
   try {
-    if (props.id) { await updateRuleScene(formData.value); toast.success('修改成功') }
-    else { await createRuleScene(formData.value); toast.success('新增成功') }
+    if (props.id) { await updateRuleScene(formData.value); toast.success('修改成功') } else { await createRuleScene(formData.value); toast.success('新增成功') }
     uni.$emit('iot:scene-rule:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally { formLoading.value = false }
 }
 

@@ -35,6 +35,10 @@
       <wd-cell title="渠道错误信息" :value="formData.channelErrorMsg || '-'" />
       <wd-cell title="成功时间" :value="formatDateTime(formData.successTime) || '-'" />
       <wd-cell title="创建时间" :value="formatDateTime(formData.createTime) || '-'" />
+      <!-- TODO @AI：转账通知内容，是不是漏了？？？
+       看看其他字段有没漏。
+       这个问题，在支付单、转账单、会不会也有；
+       -->
     </wd-cell-group>
   </view>
 </template>

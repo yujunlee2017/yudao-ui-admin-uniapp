@@ -35,16 +35,20 @@
               {{ item.name || '-' }}
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx text-[#999]">商品编号：</text>
-              <text>{{ item.code || '-' }}</text>
+              <text class="mr-8rpx shrink-0 text-[#999]">商品编号：</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.code || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx text-[#999]">分类/品牌：</text>
-              <text>{{ item.categoryName || '-' }} / {{ item.brandName || '-' }}</text>
+              <text class="mr-8rpx shrink-0 text-[#999]">分类：</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.categoryName || '-' }}</text>
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">品牌：</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.brandName || '-' }}</text>
             </view>
             <view class="flex items-center text-28rpx text-[#666]">
-              <text class="mr-8rpx text-[#999]">单位：</text>
-              <text>{{ item.unit || '-' }}</text>
+              <text class="mr-8rpx shrink-0 text-[#999]">单位：</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.unit || '-' }}</text>
             </view>
           </view>
         </view>

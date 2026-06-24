@@ -1,3 +1,5 @@
+<!-- TODO @AI：注释下作用 -->
+<!-- TODO @AI：是不是应该挪到对应的模块？？？ -->
 <template>
   <wd-popup v-model="innerVisible" position="bottom" safe-area-inset-bottom>
     <view class="h-[80vh] bg-white">
@@ -29,10 +31,13 @@
           >
             <NewsCard v-if="type === 'news'" :articles="getNewsArticles(item)" />
             <template v-else-if="type === 'image'">
-              <image
+              <wd-img
                 v-if="item.url"
                 :src="item.url"
-                class="mb-16rpx h-280rpx w-full rounded-8rpx"
+                class="mb-16rpx"
+                width="100%"
+                height="280rpx"
+                radius="8rpx"
                 mode="aspectFit"
               />
               <view class="text-28rpx text-[#333]">
@@ -120,6 +125,8 @@ async function queryList(pageNo: number, pageSize: number) {
       pageNo,
       pageSize,
     }
+    // TODO @AI：这里有个 linter 报错；data
+    // TODO @AI：是不是要拆分成多个？？？
     let data
     if (props.type === 'news' && props.newsType === 'draft') {
       data = await getDraftPage(params)

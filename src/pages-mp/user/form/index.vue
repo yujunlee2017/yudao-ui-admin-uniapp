@@ -17,6 +17,7 @@
           <wd-form-item title="备注" title-width="180rpx" prop="remark">
             <wd-input v-model="formData.remark" clearable placeholder="请输入备注" />
           </wd-form-item>
+          <!-- TODO @AI：标签，是不是要挪到 /Users/yunai/Java/yudao-ui-admin-uniapp-next-v4/src/pages-mp/user/components -->
           <wd-form-item
             title="标签"
             title-width="180rpx"
@@ -58,7 +59,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, ref } from 'vue'
 import { getSimpleTagList } from '@/api/mp/tag'
 import { getUser, updateUser } from '@/api/mp/user'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { getMpRouteNumber, useMpRouteParams } from '../../utils/route'
 
 const props = defineProps<{
@@ -147,9 +148,7 @@ async function handleSubmit() {
     })
     toast.success('修改成功')
     uni.$emit('mp:user:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

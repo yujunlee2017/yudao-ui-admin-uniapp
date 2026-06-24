@@ -46,7 +46,7 @@
         <view class="yd-search-form-label">
           检验类型
         </view>
-        <wd-radio-group v-model="formData.qcType" shape="button">
+        <wd-radio-group v-model="formData.qcType" type="button">
           <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_QC_TYPE)" :key="dict.value" :value="dict.value">
             {{ dict.label }}
           </wd-radio>

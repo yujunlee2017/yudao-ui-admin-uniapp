@@ -40,10 +40,12 @@
             <text class="mr-8rpx shrink-0 text-[#999]">创建时间：</text>
             <text>{{ formatDateTime(item.createTime) || '-' }}</text>
           </view>
-          <!-- TODO @AI：看看这个交互，是否符合整个项目的规范？！ -->
-          <view class="flex items-center" @click.stop="handleViewValues(item)">
-            <text class="text-26rpx text-[#1890ff]">属性值</text>
-            <wd-icon name="arrow-right" size="12px" color="#1890ff" />
+          <!-- 属性值入口 -->
+          <view class="mt-16rpx flex items-center justify-end border-t border-[#f0f0f0] pt-16rpx">
+            <view class="flex items-center" @click.stop="handleViewValues(item)">
+              <text class="text-26rpx text-[#1890ff]">属性值</text>
+              <wd-icon name="arrow-right" size="12px" color="#1890ff" />
+            </view>
           </view>
         </view>
       </view>
@@ -124,7 +126,7 @@ function handleDetail(item: ProductProperty) {
 
 /** 查看该属性的属性值列表 */
 function handleViewValues(item: ProductProperty) {
-  uni.navigateTo({ url: `/pages-mall/product/property-value/index?propertyId=${item.id}` })
+  uni.navigateTo({ url: `/pages-mall/product/property/value/index?propertyId=${item.id}` })
 }
 
 /** 初始化 */

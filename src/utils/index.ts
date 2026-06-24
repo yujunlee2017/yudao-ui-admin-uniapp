@@ -219,6 +219,11 @@ export function navigateBackPlus(fallbackUrl?: string) {
   }
 }
 
+/** 延迟执行回调，给成功提示等交互留出展示时间 */
+export function delay(callback: () => void, ms = 500) {
+  setTimeout(callback, ms)
+}
+
 /** 获取 wd-navbar 导航栏高度 */
 export function getNavbarHeight() {
   const systemInfo = uni.getSystemInfoSync()
@@ -245,4 +250,9 @@ export function getTopPopupStyle() {
 /** 生成顶部弹窗遮罩样式，使遮罩只覆盖 navbar 下方内容 */
 export function getTopPopupModalStyle() {
   return `top: ${getNavbarHeight()}px;`
+}
+
+/** 字符串数组逐项去空白并过滤空项 */
+export function trimArray(list: string[]): string[] {
+  return list.map(item => item.trim()).filter(Boolean)
 }

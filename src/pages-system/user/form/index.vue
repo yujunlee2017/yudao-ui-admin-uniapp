@@ -102,7 +102,7 @@ import { createUser, getUser, updateUser } from '@/api/system/user'
 import { getIntDictOptions } from '@/hooks/useDict'
 import DeptPicker from '@/pages-system/dept/form/components/dept-picker.vue'
 import PostPicker from '@/pages-system/post/form/components/post-picker.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -174,9 +174,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('system:user:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

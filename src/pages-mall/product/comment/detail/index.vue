@@ -54,7 +54,7 @@
     </wd-cell-group>
 
     <!-- 底部操作按钮 -->
-    <view v-if="canUpdate" class="yd-detail-footer">
+    <view v-if="hasAccessByCodes(['product:comment:update'])" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <wd-button class="flex-1" type="primary" @click="handleOpenReply">
           商家回复
@@ -132,7 +132,6 @@ const replyFormRef = ref<FormInstance>() // 回复表单引用
 const replySchema = createFormSchema({
   replyContent: [{ required: true, message: '回复内容不能为空' }],
 })
-const canUpdate = computed(() => hasAccessByCodes(['product:comment:update']))
 
 /** 返回上一页 */
 function handleBack() {

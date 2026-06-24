@@ -12,12 +12,7 @@
       <wd-cell title="用户编号" :value="formData.id != null ? String(formData.id) : '-'" />
       <wd-cell title="用户昵称" :value="formData.nickname || '-'" />
       <wd-cell title="头像">
-        <image
-          v-if="formData.avatar"
-          :src="formData.avatar"
-          class="h-88rpx w-88rpx rounded-full bg-[#f5f5f5]"
-          mode="aspectFill"
-        />
+        <wd-img v-if="formData.avatar" :src="formData.avatar" width="88rpx" height="88rpx" mode="aspectFill" round enable-preview />
         <text v-else>-</text>
       </wd-cell>
       <wd-cell title="上级推广员编号" :value="formData.bindUserId != null ? String(formData.bindUserId) : '-'" />
@@ -26,23 +21,23 @@
       <wd-cell title="推广资格" :value="formData.brokerageEnabled ? '是' : '否'" />
       <wd-cell title="推广人数" :value="formData.brokerageUserCount != null ? String(formData.brokerageUserCount) : '-'" />
       <wd-cell title="推广订单数量" :value="formData.brokerageOrderCount != null ? String(formData.brokerageOrderCount) : '-'" />
-      <wd-cell title="推广订单金额" :value="formatMallMoney(formData.brokerageOrderPrice)" />
-      <wd-cell title="已提现金额" :value="formatMallMoney(formData.withdrawPrice)" />
+      <wd-cell title="推广订单金额" :value="formatDisplayMoney(formData.brokerageOrderPrice)" />
+      <wd-cell title="已提现金额" :value="formatDisplayMoney(formData.withdrawPrice)" />
       <wd-cell title="已提现次数" :value="formData.withdrawCount != null ? String(formData.withdrawCount) : '-'" />
-      <wd-cell title="可用佣金" :value="formatMallMoney(formData.price)" />
-      <wd-cell title="冻结佣金" :value="formatMallMoney(formData.frozenPrice)" />
+      <wd-cell title="可用佣金" :value="formatDisplayMoney(formData.price)" />
+      <wd-cell title="冻结佣金" :value="formatDisplayMoney(formData.frozenPrice)" />
     </wd-cell-group>
 
     <!-- 底部操作按钮 -->
-    <view v-if="canUpdate" class="yd-detail-footer">
+    <view v-if="hasAccessByCodes(['trade:brokerage-user:update-bind-user', 'trade:brokerage-user:clear-bind-user', 'trade:brokerage-user:update-brokerage-enable'])" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="canUpdateBind" class="flex-1" type="primary" @click="bindVisible = true">
+        <wd-button v-if="hasAccessByCodes(['trade:brokerage-user:update-bind-user'])" class="flex-1" type="primary" @click="bindVisible = true">
           修改推广员
         </wd-button>
-        <wd-button v-if="formData.bindUserId && canClearBind" class="flex-1" type="warning" :loading="submitting" @click="handleClearBind">
+        <wd-button v-if="formData.bindUserId && hasAccessByCodes(['trade:brokerage-user:clear-bind-user'])" class="flex-1" type="warning" :loading="submitting" @click="handleClearBind">
           清除推广员
         </wd-button>
-        <wd-button v-if="canUpdateEnabled" class="flex-1" type="info" :loading="submitting" @click="handleToggleEnabled">
+        <wd-button v-if="hasAccessByCodes(['trade:brokerage-user:update-brokerage-enable'])" class="flex-1" type="info" :loading="submitting" @click="handleToggleEnabled">
           {{ formData.brokerageEnabled ? '取消资格' : '开通资格' }}
         </wd-button>
       </view>
@@ -78,7 +73,7 @@
 import type { TradeBrokerageUser } from '@/api/mall/trade/brokerage/user'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import {
   clearTradeBrokerageUserBind,
   getTradeBrokerageUser,
@@ -86,7 +81,7 @@ import {
   updateTradeBrokerageUserEnabled,
 } from '@/api/mall/trade/brokerage/user'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
+import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 
@@ -106,11 +101,6 @@ const formData = ref<TradeBrokerageUser>({}) // 详情数据
 const submitting = ref(false) // 操作提交状态
 const bindVisible = ref(false) // 修改推广员弹窗
 const bindUserId = ref<number | string>('') // 推广员编号输入
-// 各操作按后端 @PreAuthorize 单独网关
-const canUpdateBind = computed(() => hasAccessByCodes(['trade:brokerage-user:update-bind-user']))
-const canClearBind = computed(() => hasAccessByCodes(['trade:brokerage-user:clear-bind-user']))
-const canUpdateEnabled = computed(() => hasAccessByCodes(['trade:brokerage-user:update-brokerage-enable']))
-const canUpdate = computed(() => canUpdateBind.value || canClearBind.value || canUpdateEnabled.value)
 
 /** 返回上一页 */
 function handleBack() {

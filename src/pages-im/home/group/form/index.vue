@@ -65,7 +65,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createGroup, getGroup, updateGroup } from '@/api/im/group'
 import { UserPicker } from '@/components/system-select'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
@@ -152,7 +152,7 @@ async function handleSubmit() {
       }
       toast.success('创建成功')
     }
-    setTimeout(handleBack, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

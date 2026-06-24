@@ -22,7 +22,7 @@
           </view>
           <!-- 邀请成员 -->
           <view class="flex flex-col items-center gap-8rpx" @click="inviteVisible = true">
-            <view class="h-96rpx w-96rpx flex items-center justify-center rounded-12rpx border border-[#ddd] border-dashed">
+            <view class="h-96rpx w-96rpx flex items-center justify-center border border-[#ddd] rounded-12rpx border-dashed">
               <wd-icon name="plus" size="48rpx" color="#bbb" />
             </view>
           </view>
@@ -88,13 +88,19 @@
     <!-- 邀请成员 -->
     <wd-popup v-model="inviteVisible" position="bottom" custom-style="border-radius: 24rpx 24rpx 0 0;">
       <view class="p-24rpx pb-[calc(24rpx+env(safe-area-inset-bottom))]">
-        <view class="mb-24rpx text-32rpx text-[#333] font-semibold">邀请成员</view>
+        <view class="mb-24rpx text-32rpx text-[#333] font-semibold">
+          邀请成员
+        </view>
         <wd-cell-group border>
           <UserPicker v-model="inviteUserIds" label="成员" type="checkbox" placeholder="请选择用户" />
         </wd-cell-group>
-        <view class="mt-24rpx grid grid-cols-2 gap-16rpx">
-          <wd-button block variant="plain" @click="inviteVisible = false">取消</wd-button>
-          <wd-button block type="primary" :loading="inviting" @click="handleInviteMembers">邀请</wd-button>
+        <view class="grid grid-cols-2 mt-24rpx gap-16rpx">
+          <wd-button block variant="plain" @click="inviteVisible = false">
+            取消
+          </wd-button>
+          <wd-button block type="primary" :loading="inviting" @click="handleInviteMembers">
+            邀请
+          </wd-button>
         </view>
       </view>
     </wd-popup>
@@ -128,11 +134,9 @@ import {
 } from '@/api/im/group/member'
 import { UserPicker } from '@/components/system-select'
 import { useUserStore } from '@/store/user'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { ImGroupMemberRole } from '@/utils/constants'
 import ImAvatar from '../../components/im-avatar.vue'
-
-const MEMBER_LIMIT = 10 // 折叠时展示的成员数
 
 const props = defineProps<{
   id?: number | string
@@ -145,6 +149,7 @@ definePage({
   },
 })
 
+const MEMBER_LIMIT = 10 // 折叠时展示的成员数
 const userStore = useUserStore()
 const dialog = useDialog()
 const toast = useToast()
@@ -365,7 +370,7 @@ async function handleQuit() {
   }
   await quitGroup(formData.value.id)
   toast.success('已退出群聊')
-  setTimeout(handleBack, 500)
+  delay(handleBack)
 }
 
 /** 解散群聊 */
@@ -380,7 +385,7 @@ async function handleDissolve() {
   }
   await dissolveGroup(formData.value.id)
   toast.success('已解散群聊')
-  setTimeout(handleBack, 500)
+  delay(handleBack)
 }
 
 /** 加载详情 */

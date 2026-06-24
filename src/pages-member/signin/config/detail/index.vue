@@ -50,7 +50,7 @@ import {
   getMemberSignInConfig,
 } from '@/api/member/signin/config'
 import { useAccess } from '@/hooks/useAccess'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 
 const props = defineProps<{
@@ -113,9 +113,7 @@ async function handleDelete() {
     await deleteMemberSignInConfig(Number(props.id))
     toast.success('删除成功')
     uni.$emit('member:signin-config:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

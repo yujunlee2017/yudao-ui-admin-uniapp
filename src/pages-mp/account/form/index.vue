@@ -52,7 +52,7 @@ import { onLoad } from '@dcloudio/uni-app'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, ref } from 'vue'
 import { createAccount, getAccount, updateAccount } from '@/api/mp/account'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 import { getMpRouteNumber, useMpRouteParams } from '../../utils/route'
 
@@ -125,9 +125,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mp:account:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

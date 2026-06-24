@@ -46,7 +46,7 @@
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { ref } from 'vue'
-import { navigateBackPlus } from '@/utils/index'
+import { delay, navigateBackPlus } from '@/utils/index'
 import { createFormSchema } from '@/utils/wot'
 
 definePage({
@@ -94,9 +94,7 @@ async function handleSubmit() {
     await mockSubmitFeedback(submitData)
 
     toast.success('提交成功，感谢您的反馈！')
-    setTimeout(() => {
-      handleBack()
-    }, 1500)
+    delay(handleBack, 1500)
   } finally {
     formLoading.value = false
   }

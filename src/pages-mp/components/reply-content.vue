@@ -1,8 +1,9 @@
+<!-- TODO @AI：注释下作用 -->
 <template>
   <view>
     <text v-if="type === 'text'">{{ content || '-' }}</text>
     <view v-else-if="type === 'image'">
-      <image v-if="mediaUrl" :src="mediaUrl" class="h-180rpx w-180rpx rounded-8rpx" mode="aspectFill" />
+      <wd-img v-if="mediaUrl" :src="mediaUrl" width="180rpx" height="180rpx" radius="8rpx" mode="aspectFill" enable-preview />
       <text v-else>-</text>
     </view>
     <view v-else-if="type === 'voice'">
@@ -21,10 +22,13 @@
       <NewsCard :articles="articles" />
     </view>
     <view v-else-if="type === 'music'">
-      <image
+      <wd-img
         v-if="thumbMediaUrl"
         :src="thumbMediaUrl"
-        class="mb-12rpx h-160rpx w-160rpx rounded-8rpx"
+        class="mb-12rpx"
+        width="160rpx"
+        height="160rpx"
+        radius="8rpx"
         mode="aspectFill"
       />
       <view class="text-28rpx text-[#333]">

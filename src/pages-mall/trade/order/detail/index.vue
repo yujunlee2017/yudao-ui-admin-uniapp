@@ -35,15 +35,15 @@
             金额信息
           </view>
           <view class="grid grid-cols-2 gap-x-20rpx gap-y-12rpx text-26rpx">
-            <view><text class="text-[#999]">商品原价：</text>{{ formatMallMoney(formData.totalPrice) }}</view>
-            <view><text class="text-[#999]">运费：</text>{{ formatMallMoney(formData.deliveryPrice) }}</view>
-            <view><text class="text-[#999]">优惠金额：</text>{{ formatMallMoney(formData.discountPrice) }}</view>
-            <view><text class="text-[#999]">优惠券：</text>{{ formatMallMoney(formData.couponPrice) }}</view>
-            <view><text class="text-[#999]">积分抵扣：</text>{{ formatMallMoney(formData.pointPrice) }}</view>
-            <view><text class="text-[#999]">VIP 优惠：</text>{{ formatMallMoney(formData.vipPrice) }}</view>
-            <view><text class="text-[#999]">订单调价：</text>{{ formatMallMoney(formData.adjustPrice) }}</view>
+            <view><text class="text-[#999]">商品原价：</text>{{ formatDisplayMoney(formData.totalPrice) }}</view>
+            <view><text class="text-[#999]">运费：</text>{{ formatDisplayMoney(formData.deliveryPrice) }}</view>
+            <view><text class="text-[#999]">优惠金额：</text>{{ formatDisplayMoney(formData.discountPrice) }}</view>
+            <view><text class="text-[#999]">优惠券：</text>{{ formatDisplayMoney(formData.couponPrice) }}</view>
+            <view><text class="text-[#999]">积分抵扣：</text>{{ formatDisplayMoney(formData.pointPrice) }}</view>
+            <view><text class="text-[#999]">VIP 优惠：</text>{{ formatDisplayMoney(formData.vipPrice) }}</view>
+            <view><text class="text-[#999]">订单调价：</text>{{ formatDisplayMoney(formData.adjustPrice) }}</view>
             <view class="text-[#fa4350] font-semibold">
-              <text>实付：</text>{{ formatMallMoney(formData.payPrice) }}
+              <text>实付：</text>{{ formatDisplayMoney(formData.payPrice) }}
             </view>
           </view>
         </view>
@@ -83,18 +83,18 @@
             :key="item.id"
             class="mb-16rpx flex gap-20rpx rounded-8rpx bg-[#f8f8f8] p-16rpx last:mb-0"
           >
-            <image
+            <wd-img
               v-if="item.picUrl"
               :src="item.picUrl"
-              class="h-112rpx w-112rpx shrink-0 rounded-8rpx bg-[#eee]"
-              mode="aspectFill"
+              width="112rpx" height="112rpx" radius="8rpx" mode="aspectFill"
+              enable-preview
             />
             <view class="min-w-0 flex-1">
               <view class="line-clamp-2 text-28rpx text-[#333] font-semibold">
                 {{ item.spuName || '-' }}
               </view>
               <view class="mt-8rpx text-24rpx text-[#777]">
-                x{{ item.count || 0 }} / {{ formatMallMoney(item.payPrice) }}
+                x{{ item.count || 0 }} / {{ formatDisplayMoney(item.payPrice) }}
               </view>
               <view v-if="item.properties?.length" class="mt-8rpx text-22rpx text-[#999]">
                 {{ item.properties.map(prop => `${prop.propertyName}:${prop.valueName}`).join('；') }}
@@ -123,87 +123,137 @@
       <wd-empty v-else icon="content" tip="订单不存在" />
     </scroll-view>
 
-    <!-- 底部操作按钮 -->
-    <view v-if="formData && (showRemarkButton || sheetActions.length)" class="yd-detail-footer">
+    <!-- 底部操作按钮：按状态/权限显式展示，每个动作各自的按钮 + 处理函数 -->
+    <view v-if="formData && (canRemark || canPrice || canDelivery || canAddress || canPickUp)" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button v-if="showRemarkButton" class="flex-1" type="warning" @click="openAction('remark')">
+        <wd-button v-if="canRemark" class="flex-1" type="warning" @click="openRemark">
           备注
         </wd-button>
-        <wd-button v-if="sheetActions.length" class="flex-1" type="info" @click="actionSheetVisible = true">
-          更多
+        <wd-button v-if="canPrice" class="flex-1" type="primary" @click="openPrice">
+          改价
+        </wd-button>
+        <wd-button v-if="canDelivery" class="flex-1" type="primary" @click="openDelivery">
+          发货
+        </wd-button>
+        <wd-button v-if="canAddress" class="flex-1" @click="openAddress">
+          改地址
+        </wd-button>
+        <wd-button v-if="canPickUp" class="flex-1" type="success" :loading="submitting" @click="handlePickUp">
+          核销
         </wd-button>
       </view>
     </view>
 
-    <!-- 更多操作菜单 -->
-    <wd-action-sheet v-model="actionSheetVisible" :actions="sheetActions" @select="handleSelectAction" />
-
-    <!-- 动作表单 -->
-    <wd-popup
-      v-model="actionFormVisible"
-      position="bottom"
-      closable
-      custom-style="border-radius: 24rpx 24rpx 0 0;"
-      @close="closeActionForm"
-    >
+    <!-- 修改备注 -->
+    <wd-popup v-model="remarkVisible" position="bottom" closable custom-style="border-radius: 24rpx 24rpx 0 0;" @close="remarkVisible = false">
       <view class="p-24rpx">
         <view class="mb-24rpx text-32rpx text-[#333] font-semibold">
-          {{ currentAction?.label }}
+          修改备注
         </view>
-        <wd-form ref="actionFormRef" :model="actionFormData" :schema="actionFormSchema">
+        <wd-textarea v-model="remarkForm.remark" clearable :maxlength="2000" placeholder="请输入商家备注" />
+        <view class="mt-24rpx flex gap-20rpx">
+          <wd-button class="flex-1" variant="plain" @click="remarkVisible = false">
+            取消
+          </wd-button>
+          <wd-button class="flex-1" type="primary" :loading="submitting" @click="handleRemark">
+            确定
+          </wd-button>
+        </view>
+      </view>
+    </wd-popup>
+
+    <!-- 订单改价 -->
+    <wd-popup v-model="priceVisible" position="bottom" closable custom-style="border-radius: 24rpx 24rpx 0 0;" @close="priceVisible = false">
+      <view class="p-24rpx">
+        <view class="mb-24rpx text-32rpx text-[#333] font-semibold">
+          订单改价
+        </view>
+        <view class="mb-12rpx flex items-center gap-16rpx">
+          <text class="shrink-0 text-28rpx text-[#666]">订单调价</text>
+          <wd-input-number v-model="priceForm.adjustPrice" :min="-999999" :step="0.01" :precision="2" />
+        </view>
+        <view class="text-24rpx text-[#999]">
+          正数加价，负数减价（单位：元）
+        </view>
+        <view class="mt-24rpx flex gap-20rpx">
+          <wd-button class="flex-1" variant="plain" @click="priceVisible = false">
+            取消
+          </wd-button>
+          <wd-button class="flex-1" type="primary" :loading="submitting" @click="handlePrice">
+            确定
+          </wd-button>
+        </view>
+      </view>
+    </wd-popup>
+
+    <!-- 订单发货 -->
+    <wd-popup v-model="deliveryVisible" position="bottom" closable custom-style="border-radius: 24rpx 24rpx 0 0;" @close="deliveryVisible = false">
+      <view class="p-24rpx">
+        <view class="mb-24rpx text-32rpx text-[#333] font-semibold">
+          订单发货
+        </view>
+        <view class="mb-16rpx flex items-center gap-16rpx">
+          <text class="w-160rpx shrink-0 text-28rpx text-[#666]">快递公司</text>
+          <view class="min-w-0 flex-1" @click="expressPickerVisible = true">
+            <wd-input :model-value="expressName" readonly placeholder="请选择快递公司" />
+          </view>
+        </view>
+        <view class="flex items-center gap-16rpx">
+          <text class="w-160rpx shrink-0 text-28rpx text-[#666]">快递单号</text>
+          <wd-input v-model="deliveryForm.logisticsNo" class="min-w-0 flex-1" clearable placeholder="请输入快递单号" />
+        </view>
+        <view class="mt-24rpx flex gap-20rpx">
+          <wd-button class="flex-1" variant="plain" @click="deliveryVisible = false">
+            取消
+          </wd-button>
+          <wd-button class="flex-1" type="primary" :loading="submitting" @click="handleDelivery">
+            确定
+          </wd-button>
+        </view>
+      </view>
+    </wd-popup>
+
+    <!-- 快递公司选择器 -->
+    <wd-picker
+      v-model:visible="expressPickerVisible"
+      :model-value="deliveryForm.logisticsId"
+      :columns="expressList"
+      label-key="name"
+      value-key="id"
+      @confirm="({ value }) => deliveryForm.logisticsId = Number(value[0])"
+    />
+
+    <!-- 修改地址 -->
+    <wd-popup v-model="addressVisible" position="bottom" closable custom-style="border-radius: 24rpx 24rpx 0 0;" @close="addressVisible = false">
+      <view class="p-24rpx">
+        <view class="mb-24rpx text-32rpx text-[#333] font-semibold">
+          修改地址
+        </view>
+        <wd-form :model="addressForm">
           <wd-cell-group border>
-            <template v-for="field in currentFields" :key="field.prop">
-              <!-- 地区选择：yd-tree-select 自带 wd-form-item，需独立渲染 -->
-              <yd-tree-select
-                v-if="field.type === 'area'"
-                v-model="actionFormData[field.prop]"
-                :label="field.label"
-                :prop="field.prop"
-                label-width="200rpx"
-                :data="areaTree"
-                :placeholder="field.placeholder || `请选择${field.label}`"
-              />
-              <wd-form-item
-                v-else
-                :title="field.label"
-                title-width="200rpx"
-                :prop="field.prop"
-              >
-                <wd-input
-                  v-if="field.type === 'text'"
-                  v-model="actionFormData[field.prop]"
-                  clearable
-                  :placeholder="field.placeholder || `请输入${field.label}`"
-                />
-                <wd-input-number
-                  v-else-if="field.type === 'number'"
-                  v-model="actionFormData[field.prop]"
-                  :min="field.min ?? 0"
-                  :max="field.max"
-                />
-                <wd-input-number
-                  v-else-if="field.type === 'money'"
-                  v-model="actionFormData[field.prop]"
-                  :min="field.min ?? -999999"
-                  :max="field.max"
-                  :step="0.01"
-                />
-                <wd-textarea
-                  v-else
-                  v-model="actionFormData[field.prop]"
-                  clearable
-                  :maxlength="2000"
-                  :placeholder="field.placeholder || `请输入${field.label}`"
-                />
-              </wd-form-item>
-            </template>
+            <wd-form-item title="收件人" title-width="180rpx">
+              <wd-input v-model="addressForm.receiverName" clearable placeholder="请输入收件人" />
+            </wd-form-item>
+            <wd-form-item title="手机号" title-width="180rpx">
+              <wd-input v-model="addressForm.receiverMobile" clearable placeholder="请输入手机号" />
+            </wd-form-item>
+            <yd-tree-select
+              v-model="addressForm.receiverAreaId"
+              label="所在地区"
+              label-width="180rpx"
+              :data="areaTree"
+              placeholder="请选择所在地区"
+            />
+            <wd-form-item title="详细地址" title-width="180rpx">
+              <wd-textarea v-model="addressForm.receiverDetailAddress" clearable :maxlength="2000" placeholder="请输入详细地址" />
+            </wd-form-item>
           </wd-cell-group>
         </wd-form>
         <view class="mt-24rpx flex gap-20rpx">
-          <wd-button class="flex-1" variant="plain" @click="closeActionForm">
+          <wd-button class="flex-1" variant="plain" @click="addressVisible = false">
             取消
           </wd-button>
-          <wd-button class="flex-1" type="primary" :loading="actionSubmitting" @click="submitActionForm">
+          <wd-button class="flex-1" type="primary" :loading="submitting" @click="handleAddress">
             确定
           </wd-button>
         </view>
@@ -213,11 +263,11 @@
 </template>
 
 <script lang="ts" setup>
-import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { TradeOrder } from '@/api/mall/trade/order'
+import type { DeliveryExpress } from '@/api/mall/trade/delivery/express'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import {
   deliveryTradeOrder,
   getTradeOrder,
@@ -227,39 +277,16 @@ import {
   updateTradeOrderPrice,
   updateTradeOrderRemark,
 } from '@/api/mall/trade/order'
+import { getSimpleDeliveryExpressList } from '@/api/mall/trade/delivery/express'
 import { getAreaTree } from '@/api/system/area'
 import { getDictLabel } from '@/hooks/useDict'
 import { useAccess } from '@/hooks/useAccess'
-import { formatMallMoney } from '@/pages-mall/utils'
-import { currRoute, navigateBackPlus } from '@/utils'
-import { DICT_TYPE } from '@/utils/constants'
+import { fenToYuan, formatDisplayMoney, yuanToFen } from '@/utils/format'
+import { navigateBackPlus } from '@/utils'
+import { DeliveryTypeEnum, DICT_TYPE, TradeOrderStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import { createFormSchema } from '@/utils/wot'
 
-interface ActionField {
-  prop: string
-  label: string
-  type: 'area' | 'money' | 'number' | 'text' | 'textarea'
-  required?: boolean
-  min?: number
-  max?: number
-  placeholder?: string
-}
-
-interface DetailAction {
-  key: string
-  label: string
-  fields?: ActionField[]
-  defaults?: () => Record<string, any>
-  confirm?: string
-  visible?: () => boolean
-  handler: (data?: Record<string, any>) => Promise<unknown>
-}
-
-// 订单状态：0 待付款、10 待发货、20 待收货、30 已完成、40 已取消
-const ORDER_STATUS = { UNPAID: 0, UNDELIVERED: 10 }
-// 配送方式：1 快递、2 自提
-const DELIVERY_TYPE = { EXPRESS: 1, PICK_UP: 2 }
+const props = defineProps<{ id?: number | any }>()
 
 definePage({
   style: {
@@ -271,96 +298,30 @@ definePage({
 const { hasAccessByCodes } = useAccess()
 const toast = useToast()
 const dialog = useDialog()
+const detailId = computed(() => props.id != null && props.id !== '' ? Number(props.id) : undefined) // 订单编号（路由透传）
 const formData = ref<TradeOrder>() // 订单详情
-const detailId = ref<number>() // 订单编号
 const expressTracks = ref<Record<string, any>[]>([]) // 物流轨迹
 const areaTree = ref<any[]>([]) // 地区树（修改地址用）
-const actionSheetVisible = ref(false) // 更多菜单
-const actionFormVisible = ref(false) // 动作表单
-const actionSubmitting = ref(false) // 动作提交状态
-const currentAction = ref<DetailAction>() // 当前动作
-const actionFormData = ref<Record<string, any>>({}) // 动作表单数据
-const actionFormRef = ref<FormInstance>() // 动作表单引用
-const actions = computed<DetailAction[]>(() => {
-  const status = formData.value?.status
-  const deliveryType = formData.value?.deliveryType
-  const canUpdate = hasAccessByCodes(['trade:order:update'])
-  const canPickUp = hasAccessByCodes(['trade:order:pick-up'])
-  const result: DetailAction[] = [
-    {
-      key: 'delivery',
-      label: '订单发货',
-      // 仅「待发货 + 快递」可发货
-      visible: () => canUpdate && status === ORDER_STATUS.UNDELIVERED && deliveryType === DELIVERY_TYPE.EXPRESS,
-      fields: [
-        { prop: 'logisticsId', label: '快递公司编号', type: 'number' },
-        { prop: 'logisticsNo', label: '快递单号', type: 'text', required: true },
-      ],
-      defaults: () => ({ logisticsId: formData.value?.logisticsId, logisticsNo: formData.value?.logisticsNo || '' }),
-      handler: data => deliveryTradeOrder({ id: detailId.value, logisticsId: data?.logisticsId ?? null, logisticsNo: String(data?.logisticsNo || '') }),
-    },
-    {
-      key: 'remark',
-      label: '修改备注',
-      // 备注任意状态可改
-      visible: () => canUpdate,
-      fields: [{ prop: 'remark', label: '商家备注', type: 'textarea', required: true }],
-      defaults: () => ({ remark: formData.value?.remark || '' }),
-      handler: data => updateTradeOrderRemark({ id: detailId.value, remark: data?.remark }),
-    },
-    {
-      key: 'price',
-      label: '订单改价',
-      // 仅「待付款」可改价
-      visible: () => canUpdate && status === ORDER_STATUS.UNPAID,
-      fields: [{ prop: 'adjustPrice', label: '订单调价', type: 'money', required: true, min: -999999, placeholder: '正数加价，负数减价' }],
-      defaults: () => ({ adjustPrice: Number(formData.value?.adjustPrice || 0) / 100 }),
-      handler: data => updateTradeOrderPrice({ id: detailId.value, adjustPrice: Math.round(Number(data?.adjustPrice || 0) * 100) }),
-    },
-    {
-      key: 'address',
-      label: '修改地址',
-      // 仅「待发货 + 快递」可改地址
-      visible: () => canUpdate && status === ORDER_STATUS.UNDELIVERED && deliveryType === DELIVERY_TYPE.EXPRESS,
-      fields: [
-        { prop: 'receiverName', label: '收件人', type: 'text', required: true },
-        { prop: 'receiverMobile', label: '手机号', type: 'text', required: true },
-        { prop: 'receiverAreaId', label: '所在地区', type: 'area', required: true },
-        { prop: 'receiverDetailAddress', label: '详细地址', type: 'textarea', required: true },
-      ],
-      defaults: () => ({
-        receiverName: formData.value?.receiverName || '',
-        receiverMobile: formData.value?.receiverMobile || '',
-        receiverAreaId: formData.value?.receiverAreaId,
-        receiverDetailAddress: formData.value?.receiverDetailAddress || '',
-      }),
-      handler: data => updateTradeOrderAddress({ id: detailId.value, ...data }),
-    },
-    {
-      key: 'pick-up',
-      label: '订单核销',
-      // 仅「待发货 + 自提」可核销
-      visible: () => canPickUp && status === ORDER_STATUS.UNDELIVERED && deliveryType === DELIVERY_TYPE.PICK_UP,
-      confirm: '确定要核销该订单吗？',
-      handler: () => pickUpTradeOrder(Number(detailId.value)),
-    },
-  ]
-  return result.filter(item => item.visible?.() ?? true)
-})
-const showRemarkButton = computed(() => actions.value.some(item => item.key === 'remark')) // 备注按钮可见
-const sheetActions = computed(() => actions.value
-  .filter(item => item.key !== 'remark')
-  .map(item => ({ name: item.label, value: item.key })))
-const currentFields = computed(() => currentAction.value?.fields || [])
-const actionFormSchema = createFormSchema(() => {
-  const rules: Record<string, any> = {}
-  currentFields.value.forEach((field) => {
-    if (field.required) {
-      rules[field.prop] = [{ required: true, message: `${field.label}不能为空` }]
-    }
-  })
-  return rules
-})
+const submitting = ref(false) // 动作提交状态
+
+const remarkVisible = ref(false) // 备注弹窗
+const priceVisible = ref(false) // 改价弹窗
+const deliveryVisible = ref(false) // 发货弹窗
+const addressVisible = ref(false) // 改地址弹窗
+const remarkForm = reactive({ remark: '' }) // 备注表单
+const priceForm = reactive({ adjustPrice: 0 }) // 改价表单（元）
+const deliveryForm = reactive<{ logisticsId?: number, logisticsNo: string }>({ logisticsId: undefined, logisticsNo: '' }) // 发货表单
+const addressForm = reactive<Record<string, any>>({ receiverName: '', receiverMobile: '', receiverAreaId: undefined, receiverDetailAddress: '' }) // 地址表单
+const expressPickerVisible = ref(false) // 快递公司选择器
+const expressList = ref<DeliveryExpress[]>([]) // 快递公司列表
+const expressName = computed(() => expressList.value.find(item => item.id === deliveryForm.logisticsId)?.name || '') // 当前选中快递公司名
+
+// 各动作可见性：按权限 + 订单状态 + 配送方式判断
+const canRemark = computed(() => !!formData.value && hasAccessByCodes(['trade:order:update'])) // 备注任意状态可改
+const canPrice = computed(() => canRemark.value && formData.value?.status === TradeOrderStatusEnum.UNPAID) // 待付款可改价
+const canDelivery = computed(() => canRemark.value && formData.value?.status === TradeOrderStatusEnum.UNDELIVERED && formData.value?.deliveryType === DeliveryTypeEnum.EXPRESS) // 待发货 + 快递
+const canAddress = computed(() => canDelivery.value) // 与发货同条件
+const canPickUp = computed(() => !!formData.value && hasAccessByCodes(['trade:order:pick-up']) && formData.value?.status === TradeOrderStatusEnum.UNDELIVERED && formData.value?.deliveryType === DeliveryTypeEnum.PICK_UP) // 待发货 + 自提
 
 /** 返回上一页 */
 function handleBack() {
@@ -373,84 +334,133 @@ async function loadDetail() {
     return
   }
   formData.value = await getTradeOrder(detailId.value)
-  if (formData.value.logisticsId) {
-    expressTracks.value = await getTradeOrderExpressTrackList(detailId.value)
-  } else {
-    expressTracks.value = []
-  }
+  expressTracks.value = formData.value.logisticsId ? await getTradeOrderExpressTrackList(detailId.value) : []
 }
 
-/** 打开动作 */
-function openAction(key: string) {
-  const action = actions.value.find(item => item.key === key)
-  if (!action) {
+/** 提交后统一处理：成功提示 + 通知列表刷新 + 重载详情 */
+async function afterSubmit() {
+  toast.success('操作成功')
+  uni.$emit('mall:trade-order:reload')
+  await loadDetail()
+}
+
+/** 打开备注弹窗 */
+function openRemark() {
+  remarkForm.remark = formData.value?.remark || ''
+  remarkVisible.value = true
+}
+
+/** 修改备注 */
+async function handleRemark() {
+  if (!remarkForm.remark?.trim()) {
+    toast.warning('请输入商家备注')
     return
   }
-  currentAction.value = action
-  if (action.fields?.length) {
-    actionFormData.value = action.defaults?.() || {}
-    actionFormVisible.value = true
-    return
-  }
-  runAction(action)
-}
-
-/** 选择更多动作 */
-function handleSelectAction({ item }: { item: { value: string } }) {
-  openAction(item.value)
-}
-
-/** 关闭动作表单 */
-function closeActionForm() {
-  actionFormVisible.value = false
-  actionFormData.value = {}
-  currentAction.value = undefined
-}
-
-/** 提交动作表单 */
-async function submitActionForm() {
-  const result = await actionFormRef.value?.validate()
-  if (!result?.valid || !currentAction.value) {
-    return
-  }
-  await runAction(currentAction.value, actionFormData.value)
-  closeActionForm()
-}
-
-/** 执行动作 */
-async function runAction(action: DetailAction, data?: Record<string, any>) {
-  if (action.confirm) {
-    try {
-      await dialog.confirm({ title: '提示', msg: action.confirm })
-    } catch {
-      return
-    }
-  }
-  actionSubmitting.value = true
+  submitting.value = true
   try {
-    await action.handler(data)
-    toast.success('操作成功')
-    uni.$emit('mall:trade-order:reload')
-    await loadDetail()
+    await updateTradeOrderRemark({ id: detailId.value, remark: remarkForm.remark })
+    remarkVisible.value = false
+    await afterSubmit()
   } finally {
-    actionSubmitting.value = false
+    submitting.value = false
+  }
+}
+
+/** 打开改价弹窗 */
+function openPrice() {
+  priceForm.adjustPrice = fenToYuan(formData.value?.adjustPrice)
+  priceVisible.value = true
+}
+
+/** 订单改价 */
+async function handlePrice() {
+  submitting.value = true
+  try {
+    await updateTradeOrderPrice({ id: detailId.value, adjustPrice: yuanToFen(priceForm.adjustPrice) })
+    priceVisible.value = false
+    await afterSubmit()
+  } finally {
+    submitting.value = false
+  }
+}
+
+/** 打开发货弹窗 */
+function openDelivery() {
+  deliveryForm.logisticsId = formData.value?.logisticsId
+  deliveryForm.logisticsNo = formData.value?.logisticsNo || ''
+  deliveryVisible.value = true
+}
+
+/** 订单发货 */
+async function handleDelivery() {
+  if (!deliveryForm.logisticsId) {
+    toast.warning('请选择快递公司')
+    return
+  }
+  if (!deliveryForm.logisticsNo?.trim()) {
+    toast.warning('请输入快递单号')
+    return
+  }
+  submitting.value = true
+  try {
+    await deliveryTradeOrder({ id: detailId.value, logisticsId: deliveryForm.logisticsId ?? null, logisticsNo: deliveryForm.logisticsNo })
+    deliveryVisible.value = false
+    await afterSubmit()
+  } finally {
+    submitting.value = false
+  }
+}
+
+/** 打开改地址弹窗 */
+function openAddress() {
+  addressForm.receiverName = formData.value?.receiverName || ''
+  addressForm.receiverMobile = formData.value?.receiverMobile || ''
+  addressForm.receiverAreaId = formData.value?.receiverAreaId
+  addressForm.receiverDetailAddress = formData.value?.receiverDetailAddress || ''
+  addressVisible.value = true
+}
+
+/** 修改地址 */
+async function handleAddress() {
+  if (!addressForm.receiverName?.trim() || !addressForm.receiverMobile?.trim() || addressForm.receiverAreaId == null || !addressForm.receiverDetailAddress?.trim()) {
+    toast.warning('请完善收货信息')
+    return
+  }
+  submitting.value = true
+  try {
+    await updateTradeOrderAddress({ id: detailId.value, ...addressForm })
+    addressVisible.value = false
+    await afterSubmit()
+  } finally {
+    submitting.value = false
+  }
+}
+
+/** 订单核销（自提） */
+async function handlePickUp() {
+  try {
+    await dialog.confirm({ title: '提示', msg: '确定要核销该订单吗？' })
+  } catch {
+    return
+  }
+  submitting.value = true
+  try {
+    await pickUpTradeOrder(Number(detailId.value))
+    await afterSubmit()
+  } finally {
+    submitting.value = false
   }
 }
 
 /** 初始化 */
 onMounted(async () => {
-  const query = currRoute().query
-  // #ifdef H5
-  const hashQuery = new URLSearchParams(window.location.hash.split('?')[1] || '')
-  detailId.value = Number(hashQuery.get('id') || query.id || 0) || undefined
-  // #endif
-  // #ifndef H5
-  detailId.value = Number(query.id || 0) || undefined
-  // #endif
   await Promise.all([
     loadDetail(),
     getAreaTree().then((list) => {
       areaTree.value = list
+    }),
+    getSimpleDeliveryExpressList().then((list) => {
+      expressList.value = list
     }),
   ])
 })

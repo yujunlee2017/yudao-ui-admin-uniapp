@@ -31,7 +31,7 @@
             @click="handleOpenSku"
           />
           <wd-form-item title="用户头像" title-width="220rpx" prop="userAvatar">
-            <yd-upload-img v-model="formData.userAvatar" directory="mall/comment" />
+            <yd-upload-img v-model="formData.userAvatar" />
           </wd-form-item>
           <wd-form-item title="用户名称" title-width="220rpx" prop="userNickname">
             <wd-input v-model="formData.userNickname" clearable placeholder="请输入用户名称" />
@@ -46,7 +46,7 @@
             <wd-rate v-model="formData.benefitScores" />
           </wd-form-item>
           <wd-form-item title="评论图片" title-width="220rpx" prop="picUrls">
-            <yd-upload-imgs v-model="formData.picUrls" :limit="9" directory="mall/comment" />
+            <yd-upload-imgs v-model="formData.picUrls" :limit="9" />
           </wd-form-item>
         </wd-cell-group>
       </wd-form>
@@ -89,7 +89,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createProductComment } from '@/api/mall/product/comment'
 import { getProductSpu, getSimpleProductSpuList } from '@/api/mall/product/spu'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 
 definePage({
@@ -204,9 +204,7 @@ async function handleSubmit() {
     })
     toast.success('新增成功')
     uni.$emit('mall:product-comment:reload')
-    setTimeout(() => {
-      handleBack()
-    }, 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }
