@@ -11,20 +11,19 @@
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
     <!-- 状态筛选 -->
-    <!-- TODO @AI：进入首页时，全部的 tabs 没高亮 -->
     <view class="bg-white">
-      <wd-tabs v-model="statusTab" @change="reload">
-        <wd-tab title="全部" :name="-1" />
+      <wd-tabs v-model="statusTabIndex" @change="reload">
+        <wd-tab title="全部" />
         <wd-tab
           v-for="dict in statusOptions"
           :key="dict.value"
           :title="dict.label"
-          :name="dict.value"
         />
       </wd-tabs>
     </view>
 
     <!-- 发送优惠券 -->
+    <!-- pc 没有优惠劵的发送，可以考虑去掉 -->
     <view v-if="hasAccessByCodes(['promotion:coupon:send'])" class="bg-white px-24rpx py-16rpx">
       <wd-button size="small" type="primary" @click="sendVisible = true">
         发送优惠券
@@ -126,8 +125,8 @@ const toast = useToast()
 const list = ref<PromotionCoupon[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({}) // 查询参数（昵称 + 领取时间）
-const statusTab = ref(-1) // 状态筛选（-1 全部）
 const statusOptions = getIntDictOptions(DICT_TYPE.PROMOTION_COUPON_STATUS) // 优惠券状态选项
+const statusTabIndex = ref(0) // 状态筛选 tab 下标（0 全部，其余对应 statusOptions）
 const sendVisible = ref(false) // 发送弹窗
 const submitting = ref(false) // 发送提交状态
 const sendForm = reactive({ templateId: '' }) // 发送表单（模板编号）
@@ -143,7 +142,7 @@ async function queryList(pageNo: number, pageSize: number) {
   try {
     const data = await getPromotionCouponPage({
       ...queryParams.value,
-      status: statusTab.value === -1 ? undefined : statusTab.value,
+      status: statusTabIndex.value === 0 ? undefined : statusOptions[statusTabIndex.value - 1]?.value,
       pageNo,
       pageSize,
     })
@@ -189,21 +188,9 @@ async function handleSend() {
   }
 }
 
-/** 查看详情：优惠券接口无 get，详情字段经路由参数透传 */
+/** 查看详情 */
 function handleDetail(item: PromotionCoupon) {
-  const query = [
-    `id=${item.id}`,
-    item.name ? `name=${encodeURIComponent(item.name)}` : '',
-    item.templateId != null ? `templateId=${item.templateId}` : '',
-    item.userId != null ? `userId=${item.userId}` : '',
-    item.discountType != null ? `discountType=${item.discountType}` : '',
-    item.status != null ? `status=${item.status}` : '',
-    item.usePrice != null ? `usePrice=${item.usePrice}` : '',
-    item.discountPrice != null ? `discountPrice=${item.discountPrice}` : '',
-    item.useTime ? `useTime=${encodeURIComponent(item.useTime)}` : '',
-    item.createTime ? `createTime=${encodeURIComponent(item.createTime)}` : '',
-  ].filter(Boolean).join('&')
-  uni.navigateTo({ url: `/pages-mall/promotion/coupon/detail/index?${query}` })
+  uni.navigateTo({ url: `/pages-mall/promotion/coupon/detail/index?id=${item.id}` })
 }
 
 /** 初始化 */

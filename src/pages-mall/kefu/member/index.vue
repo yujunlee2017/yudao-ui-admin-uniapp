@@ -1,5 +1,5 @@
 <template>
-  <view class="yd-page-container">
+  <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="会员资料"
@@ -16,9 +16,9 @@
       </wd-tabs>
     </view>
 
-    <scroll-view class="min-h-0 flex-1" scroll-y @scrolltolower="handleReachBottom">
-      <!-- 会员信息 -->
-      <view v-show="activeTab === 0" class="p-24rpx">
+    <!-- 会员信息 -->
+    <scroll-view v-if="activeTab === 0" class="min-h-0 flex-1" scroll-y>
+      <view class="p-24rpx">
         <view class="mb-24rpx flex items-center gap-20rpx rounded-12rpx bg-white p-24rpx shadow-sm">
           <wd-img v-if="member.avatar" :src="member.avatar" width="112rpx" height="112rpx" radius="56rpx" mode="aspectFill" />
           <view v-else class="h-112rpx w-112rpx flex items-center justify-center rounded-full bg-[#e6f4ff]">
@@ -45,9 +45,9 @@
             </wd-cell>
             <wd-cell title="所在地" :value="member.areaName || '-'" />
             <wd-cell title="注册 IP" :value="member.registerIp || '-'" />
-            <wd-cell title="生日" :value="formatKefuDateTime(member.birthday) || '-'" />
-            <wd-cell title="注册时间" :value="formatKefuDateTime(member.createTime) || '-'" />
-            <wd-cell title="最后登录" :value="formatKefuDateTime(member.loginDate) || '-'" />
+            <wd-cell title="生日" :value="formatDate(member.birthday, 'YYYY-MM-DD HH:mm') || '-'" />
+            <wd-cell title="注册时间" :value="formatDate(member.createTime, 'YYYY-MM-DD HH:mm') || '-'" />
+            <wd-cell title="最后登录" :value="formatDate(member.loginDate, 'YYYY-MM-DD HH:mm') || '-'" />
             <wd-cell title="等级" :value="member.levelName || '-'" />
             <wd-cell title="成长值" :value="member.experience != null ? String(member.experience) : '-'" />
           </wd-cell-group>
@@ -66,10 +66,20 @@
           </wd-cell-group>
         </view>
       </view>
+    </scroll-view>
 
-      <!-- 最近浏览 -->
-      <!-- TODO @AI：z-page 把 -->
-      <view v-show="activeTab === 1" class="p-24rpx">
+    <!-- 最近浏览 -->
+    <z-paging
+      v-else-if="activeTab === 1"
+      ref="browsePaging"
+      v-model="browseList"
+      :fixed="false"
+      class="min-h-0 flex-1"
+      :default-page-size="10"
+      empty-view-text="暂无浏览记录"
+      @query="queryBrowse"
+    >
+      <view class="p-24rpx">
         <view
           v-for="row in browseList"
           :key="row.id"
@@ -85,18 +95,25 @@
               ￥{{ row.price }}
             </view>
             <view class="mt-8rpx text-22rpx text-[#999]">
-              浏览时间：{{ formatKefuDateTime(row.createTime) }}
+              浏览时间：{{ formatDate(row.createTime, 'YYYY-MM-DD HH:mm') }}
             </view>
           </view>
         </view>
-        <view class="py-24rpx text-center text-24rpx text-[#bbb]">
-          {{ listFooter(browseLoading, browseHasMore, browseList.length) }}
-        </view>
       </view>
+    </z-paging>
 
-      <!-- 交易订单 -->
-      <!-- TODO @AI：z-page 把 -->
-      <view v-show="activeTab === 2" class="p-24rpx">
+    <!-- 交易订单 -->
+    <z-paging
+      v-else
+      ref="orderPaging"
+      v-model="orderList"
+      :fixed="false"
+      class="min-h-0 flex-1"
+      :default-page-size="10"
+      empty-view-text="暂无交易订单"
+      @query="queryOrder"
+    >
+      <view class="p-24rpx">
         <view
           v-for="order in orderList"
           :key="order.id"
@@ -124,15 +141,12 @@
             </view>
           </view>
           <view class="mt-12rpx flex items-center justify-between border-t border-[#f5f5f5] pt-12rpx text-24rpx text-[#999]">
-            <text>{{ formatKefuDateTime(order.createTime) }}</text>
+            <text>{{ formatDate(order.createTime, 'YYYY-MM-DD HH:mm') }}</text>
             <text>共 {{ order.productCount || 0 }} 件 实付 <text class="text-[#ff3000]">￥{{ fenToYuan(order.payPrice).toFixed(2) }}</text></text>
           </view>
         </view>
-        <view class="py-24rpx text-center text-24rpx text-[#bbb]">
-          {{ listFooter(orderLoading, orderHasMore, orderList.length) }}
-        </view>
       </view>
-    </scroll-view>
+    </z-paging>
   </view>
 </template>
 
@@ -141,7 +155,7 @@ import type { PageParam } from '@/http/types'
 import type { MemberUser } from '@/api/member/user'
 import type { PayWallet } from '@/api/pay/wallet/balance'
 import type { TradeOrder } from '@/api/mall/trade/order'
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { getMemberUser } from '@/api/member/user'
 import { getPayWallet } from '@/api/pay/wallet/balance'
 import { getProductBrowseHistoryPage } from '@/api/mall/product/browse-history'
@@ -150,7 +164,7 @@ import { getTradeOrderPage } from '@/api/mall/trade/order'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { fenToYuan } from '@/utils/format'
-import { formatKefuDateTime } from '../composables/message'
+import { formatDate } from '@/utils/date'
 
 const props = defineProps<{ userId?: number | any }>()
 
@@ -161,8 +175,6 @@ definePage({
   },
 })
 
-const PAGE_SIZE = 10 // 列表每页条数
-
 const userId = computed(() => props.userId != null && props.userId !== '' ? Number(props.userId) : undefined) // 会员编号
 const activeTab = ref(0) // 当前 tab
 
@@ -171,27 +183,9 @@ const wallet = ref<PayWallet>({}) // 钱包信息
 
 interface BrowseRow { id?: number, spuId?: number, spuName?: string, picUrl?: string, price: string, createTime?: string }
 const browseList = ref<BrowseRow[]>([]) // 最近浏览
-const browsePage = ref(1)
-const browseHasMore = ref(true)
-const browseLoading = ref(false)
-const browseLoaded = ref(false)
-
+const browsePaging = ref<any>() // 最近浏览分页引用
 const orderList = ref<TradeOrder[]>([]) // 交易订单
-const orderPage = ref(1)
-const orderHasMore = ref(true)
-const orderLoading = ref(false)
-const orderLoaded = ref(false)
-
-/** 列表底部文案 */
-function listFooter(loading: boolean, hasMore: boolean, count: number) {
-  if (loading) {
-    return '加载中…'
-  }
-  if (!count) {
-    return '暂无数据'
-  }
-  return hasMore ? '上拉加载更多' : '没有更多了'
-}
+const orderPaging = ref<any>() // 交易订单分页引用
 
 /** 返回上一页 */
 function handleBack() {
@@ -215,15 +209,14 @@ async function loadMember() {
   }
 }
 
-/** 加载最近浏览（浏览记录仅含 spuId，按 ids 批量取商品详情补全图/名/价） */
-async function loadBrowse(reset = false) {
-  if (!userId.value || browseLoading.value || (!reset && !browseHasMore.value)) {
+/** 最近浏览分页查询（浏览记录仅含 spuId，按 ids 批量取商品详情补全图/名/价） */
+async function queryBrowse(pageNo: number, pageSize: number) {
+  if (!userId.value) {
+    browsePaging.value?.completeByTotal([], 0)
     return
   }
-  browseLoading.value = true
   try {
-    const pageNo = reset ? 1 : browsePage.value
-    const data = await getProductBrowseHistoryPage({ pageNo, pageSize: PAGE_SIZE, userId: userId.value, userDeleted: false })
+    const data = await getProductBrowseHistoryPage({ pageNo, pageSize, userId: userId.value, userDeleted: false })
     const records = data.list || []
     const spuIds = Array.from(new Set(records.map(item => item.spuId).filter(Boolean))) as number[]
     const spus = spuIds.length ? await getProductSpuDetailList(spuIds) : []
@@ -239,52 +232,26 @@ async function loadBrowse(reset = false) {
         createTime: record.createTime,
       }
     })
-    browseList.value = reset ? rows : [...browseList.value, ...rows]
-    browsePage.value = pageNo + 1
-    browseHasMore.value = records.length >= PAGE_SIZE
-    browseLoaded.value = true
-  } finally {
-    browseLoading.value = false
+    browsePaging.value?.completeByTotal(rows, data.total)
+  } catch {
+    browsePaging.value?.complete(false)
   }
 }
 
-/** 加载交易订单 */
-async function loadOrder(reset = false) {
-  if (!userId.value || orderLoading.value || (!reset && !orderHasMore.value)) {
+/** 交易订单分页查询 */
+async function queryOrder(pageNo: number, pageSize: number) {
+  if (!userId.value) {
+    orderPaging.value?.completeByTotal([], 0)
     return
   }
-  orderLoading.value = true
   try {
-    const pageNo = reset ? 1 : orderPage.value
     const query: Record<string, any> = { userId: userId.value }
-    const data = await getTradeOrderPage({ ...query, pageNo, pageSize: PAGE_SIZE } as PageParam)
-    const list = data.list || []
-    orderList.value = reset ? list : [...orderList.value, ...list]
-    orderPage.value = pageNo + 1
-    orderHasMore.value = list.length >= PAGE_SIZE
-    orderLoaded.value = true
-  } finally {
-    orderLoading.value = false
+    const data = await getTradeOrderPage({ ...query, pageNo, pageSize } as PageParam)
+    orderPaging.value?.completeByTotal(data.list, data.total)
+  } catch {
+    orderPaging.value?.complete(false)
   }
 }
-
-/** 触底加载当前 tab 下一页 */
-function handleReachBottom() {
-  if (activeTab.value === 1) {
-    loadBrowse()
-  } else if (activeTab.value === 2) {
-    loadOrder()
-  }
-}
-
-// 切到列表 tab 时懒加载首页
-watch(activeTab, (tab) => {
-  if (tab === 1 && !browseLoaded.value) {
-    loadBrowse(true)
-  } else if (tab === 2 && !orderLoaded.value) {
-    loadOrder(true)
-  }
-})
 
 loadMember()
 </script>

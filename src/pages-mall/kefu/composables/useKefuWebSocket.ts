@@ -83,35 +83,56 @@ function handleFrame(data: string) {
   }
 }
 
-/** 建立连接（幂等） */
+/** 建立连接（幂等：已连接或连接中则不重复建连） */
 export function connectKefuWebSocket() {
-  if (socketTask && connected) {
+  // socketTask 在 connectSocket 后同步赋值，故「连接中」也会拦住重复建连
+  if (socketTask) {
     return
   }
   manualClosed = false
   const url = buildUrl()
-  socketTask = uni.connectSocket({ url, fail: () => scheduleReconnect() })
-  if (!socketTask) {
+  const task = uni.connectSocket({
+    url,
+    fail: () => {
+      if (socketTask === task) {
+        socketTask = null
+      }
+      scheduleReconnect()
+    },
+  })
+  if (!task) {
     scheduleReconnect()
     return
   }
-  socketTask.onOpen(() => {
+  socketTask = task
+  task.onOpen(() => {
+    if (socketTask !== task) {
+      return
+    }
     connected = true
     reconnectAttempts = 0
     startHeartbeat()
   })
-  socketTask.onMessage((res) => {
-    handleFrame(res.data as string)
+  task.onMessage((res) => {
+    if (socketTask === task) {
+      handleFrame(res.data as string)
+    }
   })
-  socketTask.onClose(() => {
+  task.onClose(() => {
+    if (socketTask !== task) {
+      return
+    }
     connected = false
     socketTask = null
     stopHeartbeat()
     scheduleReconnect()
   })
-  socketTask.onError(() => {
+  task.onError(() => {
+    if (socketTask !== task) {
+      return
+    }
     connected = false
-    socketTask?.close({})
+    task.close({})
   })
 }
 

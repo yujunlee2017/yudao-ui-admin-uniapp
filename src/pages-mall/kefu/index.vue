@@ -40,7 +40,7 @@
                 {{ item.userNickname || `用户 ${item.userId}` }}
               </text>
               <text class="shrink-0 text-22rpx text-[#999]">
-                {{ formatKefuTime(item.lastMessageTime) }}
+                {{ formatChatTime(item.lastMessageTime) }}
               </text>
             </view>
             <text class="line-clamp-1 mt-8rpx text-26rpx text-[#999]">
@@ -60,8 +60,9 @@ import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, onUnmounted, ref } from 'vue'
 import { getPromotionKefuConversationList } from '@/api/mall/promotion/kefu/conversation'
 import { navigateBackPlus } from '@/utils'
+import { formatChatTime } from '@/utils/date'
 import { connectKefuWebSocket, disconnectKefuWebSocket } from './composables/useKefuWebSocket'
-import { formatKefuTime, kefuLastMessagePreview } from './composables/message'
+import { kefuLastMessagePreview } from './composables/message'
 
 definePage({
   style: {
@@ -92,12 +93,12 @@ function handleOpen(item: PromotionKefuConversation) {
   uni.navigateTo({ url: `/pages-mall/kefu/chat/index?${query}` })
 }
 
-/** 收到新消息 / 已读回执：刷新会话列表（未读数、最后消息） */
+/** 收到新消息 / 已读回执：刷新会话列表 */
 function handleWsRefresh() {
   loadConversations()
 }
 
-/** 初始化：加载会话 + 建立 WebSocket（单例，幂等） */
+/** 初始化：加载会话 + 建立 WebSocket + 监听 */
 onMounted(() => {
   loadConversations()
   connectKefuWebSocket()
@@ -105,8 +106,7 @@ onMounted(() => {
   uni.$on('mall:kefu:read', handleWsRefresh)
 })
 
-/** 卸载：离开客服功能时断开 WebSocket 与监听 */
-// TODO @AI：这个需要讨论，websocket 对象，可以 cache 在全局的一个 store 或者哪里么？通过 event 去通信？
+/** 卸载：断开 WebSocket 与移除监听 */
 function cleanup() {
   uni.$off('mall:kefu:message', handleWsRefresh)
   uni.$off('mall:kefu:read', handleWsRefresh)

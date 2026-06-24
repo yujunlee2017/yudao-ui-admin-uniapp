@@ -23,6 +23,11 @@ export function getPromotionCouponPage(params: PageParam) {
   return http.get<PageResult<PromotionCoupon>>('/promotion/coupon/page', params)
 }
 
+/** 获取优惠券详情 */
+export function getPromotionCoupon(id: number) {
+  return http.get<PromotionCoupon>(`/promotion/coupon/get?id=${id}`)
+}
+
 /** 回收优惠券 */
 export function deletePromotionCoupon(id: number) {
   return http.delete<boolean>(`/promotion/coupon/delete?id=${id}`)

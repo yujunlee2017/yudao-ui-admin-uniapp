@@ -48,6 +48,25 @@ export function formatDateRange(dateRange?: [any, any]) {
   return [formatDateTime(startDate), formatDateTime(endDate)]
 }
 
+/** 会话/消息列表时间：今天显示 HH:mm，今年显示 MM-DD，更早显示 YYYY-MM-DD */
+export function formatChatTime(time?: FormatDate): string {
+  if (!time) {
+    return ''
+  }
+  const date = dayjs.isDayjs(time) ? time : dayjs(time)
+  if (!date.isValid()) {
+    return ''
+  }
+  const now = dayjs()
+  if (date.isSame(now, 'day')) {
+    return date.format('HH:mm')
+  }
+  if (date.isSame(now, 'year')) {
+    return date.format('MM-DD')
+  }
+  return date.format('YYYY-MM-DD')
+}
+
 /** 格式化过去时间（如：3分钟前、2小时前、1天前） */
 export function formatPast(time?: FormatDate): string {
   if (!time) {
