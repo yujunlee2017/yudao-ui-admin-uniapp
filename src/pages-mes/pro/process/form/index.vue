@@ -33,11 +33,11 @@
       </wd-form>
       <view class="h-160rpx" />
     </scroll-view>
-    <view class="yd-detail-footer">
+    <MesFooterActions>
       <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
         保存
       </wd-button>
-    </view>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -50,6 +50,7 @@ import { createProcess, getProcess, updateProcess } from '@/api/mes/pro/process'
 import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'

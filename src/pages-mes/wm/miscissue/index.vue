@@ -19,12 +19,6 @@
         >
           新增出库单
         </wd-button>
-        <wd-button
-          v-if="hasAccessByCodes(['mes:wm-misc-issue:export'])"
-          block variant="plain" :loading="exportLoading" @click="handleExport"
-        >
-          导出当前筛选
-        </wd-button>
       </view>
     </view>
 
@@ -111,7 +105,6 @@ import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmMiscIssueStatusEnum } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
-import { downloadApiFile } from '@/utils/download'
 import SearchForm from './components/search-form.vue'
 
 definePage({
@@ -127,7 +120,6 @@ const toast = useToast()
 const list = ref<WmMiscIssueVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<WmMiscIssueVO>>() // 分页组件引用
 const queryParams = ref<WmMiscIssueQueryParams>({}) // 查询参数
-const exportLoading = ref(false) // 导出状态
 
 /** 返回上一页 */
 function handleBack() {
@@ -266,27 +258,6 @@ async function handleCancel(item: WmMiscIssueVO) {
   await cancelMiscIssue(item.id)
   toast.success('取消成功')
   reload()
-}
-
-/** 导出按钮操作 */
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选数据吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/wm/misc-issue/export-excel', queryParams.value, '杂项出库单.xls')
-    toast.success('导出成功')
-  } finally {
-    exportLoading.value = false
-  }
 }
 
 /** 初始化 */

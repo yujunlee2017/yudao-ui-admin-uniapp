@@ -6,21 +6,8 @@
       left-arrow placeholder safe-area-inset-top fixed
       @click-left="handleBack"
     />
-
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
-
-    <!-- 导出入口 -->
-    <view v-if="hasAccessByCodes(['mes:dv-check-plan:export'])" class="bg-white px-24rpx py-16rpx">
-      <view
-        class="h-64rpx flex items-center justify-center border-2rpx border-[#1677ff] rounded-8rpx text-26rpx text-[#1677ff]"
-        :class="exportLoading ? 'opacity-60' : ''"
-        @click="handleExport"
-      >
-        {{ exportLoading ? '导出中...' : '导出当前筛选数据' }}
-      </view>
-    </view>
-
     <!-- 列表 -->
     <z-paging
       ref="pagingRef"
@@ -114,7 +101,6 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { deleteCheckPlan, disableCheckPlan, enableCheckPlan, getCheckPlanPage } from '@/api/mes/dv/checkplan'
 import { useAccess } from '@/hooks/useAccess'
-import { downloadApiFile } from '@/utils/download'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesDvCheckPlanStatusEnum } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
@@ -133,7 +119,6 @@ const toast = useToast()
 const list = ref<DvCheckPlanVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<DvCheckPlanVO>>() // 分页组件引用
 const queryParams = ref<DvCheckPlanQueryParams>({}) // 查询参数
-const exportLoading = ref(false) // 导出状态
 const canUpdate = computed(() => hasAccessByCodes(['mes:dv-check-plan:update']))
 const canDelete = computed(() => hasAccessByCodes(['mes:dv-check-plan:delete']))
 
@@ -171,26 +156,6 @@ function handleReset() {
 /** 重新加载 */
 function reload() {
   pagingRef.value?.reload()
-}
-
-/** 导出按钮操作 */
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选数据吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/dv/check-plan/export-excel', queryParams.value, '点检保养方案.xls')
-  } finally {
-    exportLoading.value = false
-  }
 }
 
 /** 新增 */

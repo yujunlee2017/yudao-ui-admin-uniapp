@@ -106,50 +106,48 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view class="yd-detail-footer">
-      <view class="flex gap-24rpx text-28rpx">
-        <view
-          v-if="isEditable"
-          class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white"
-          :class="formLoading ? 'opacity-60' : ''"
-          @click="handleSubmit"
-        >
-          {{ formLoading ? '保存中...' : '保存' }}
-        </view>
-        <view
-          v-if="canSubmit"
-          class="flex-1 rounded-8rpx bg-[#faad14] py-20rpx text-center text-white"
-          :class="submitLoading ? 'opacity-60' : ''"
-          @click="handleSubmitReturnSales"
-        >
-          {{ submitLoading ? '提交中...' : '提交' }}
-        </view>
-        <view
-          v-if="isFinish"
-          class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white"
-          :class="actionLoading ? 'opacity-60' : ''"
-          @click="handleFinishReturnSales"
-        >
-          {{ actionLoading ? '处理中...' : '执行退货' }}
-        </view>
-        <view
-          v-if="isStock"
-          class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white"
-          :class="actionLoading ? 'opacity-60' : ''"
-          @click="handleStockReturnSales"
-        >
-          {{ actionLoading ? '处理中...' : '执行上架' }}
-        </view>
-        <view
-          v-if="isCancel"
-          class="flex-1 rounded-8rpx bg-[#f56c6c] py-20rpx text-center text-white"
-          :class="actionLoading ? 'opacity-60' : ''"
-          @click="handleCancelReturnSales"
-        >
-          {{ actionLoading ? '处理中...' : '确认取消' }}
-        </view>
+    <MesFooterActions content-class="flex gap-24rpx text-28rpx">
+      <view
+        v-if="isEditable"
+        class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white"
+        :class="formLoading ? 'opacity-60' : ''"
+        @click="handleSubmit"
+      >
+        {{ formLoading ? '保存中...' : '保存' }}
       </view>
-    </view>
+      <view
+        v-if="canSubmit"
+        class="flex-1 rounded-8rpx bg-[#faad14] py-20rpx text-center text-white"
+        :class="submitLoading ? 'opacity-60' : ''"
+        @click="handleSubmitReturnSales"
+      >
+        {{ submitLoading ? '提交中...' : '提交' }}
+      </view>
+      <view
+        v-if="isFinish"
+        class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white"
+        :class="actionLoading ? 'opacity-60' : ''"
+        @click="handleFinishReturnSales"
+      >
+        {{ actionLoading ? '处理中...' : '执行退货' }}
+      </view>
+      <view
+        v-if="isStock"
+        class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white"
+        :class="actionLoading ? 'opacity-60' : ''"
+        @click="handleStockReturnSales"
+      >
+        {{ actionLoading ? '处理中...' : '执行上架' }}
+      </view>
+      <view
+        v-if="isCancel"
+        class="flex-1 rounded-8rpx bg-[#f56c6c] py-20rpx text-center text-white"
+        :class="actionLoading ? 'opacity-60' : ''"
+        @click="handleCancelReturnSales"
+      >
+        {{ actionLoading ? '处理中...' : '确认取消' }}
+      </view>
+    </MesFooterActions>
 
     <ClientSelector ref="clientSelectorRef" @confirm="handleClientConfirm" />
   </view>
@@ -159,6 +157,7 @@
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { MdClientVO } from '@/api/mes/md/client'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import type { WmReturnSalesCreateReqVO } from '@/api/mes/wm/returnsales'
 import { onShow } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'

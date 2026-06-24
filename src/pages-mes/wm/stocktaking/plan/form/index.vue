@@ -110,11 +110,11 @@
     </scroll-view>
 
     <!-- 底部保存按钮 -->
-    <view class="yd-detail-footer">
+    <MesFooterActions>
       <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
         保存
       </wd-button>
-    </view>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -131,6 +131,7 @@ import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { createStockTakingPlan, getStockTakingPlan, updateStockTakingPlan } from '@/api/mes/wm/stocktaking/plan'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE, MesAutoCodeRuleCode, MesWmStockTakingTypeEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'

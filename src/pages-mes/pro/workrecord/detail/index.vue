@@ -64,7 +64,13 @@ async function getDetail() {
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getWorkRecordLog(currentId.value)
+    const detailData = await getWorkRecordLog(currentId.value)
+    if (!detailData) {
+      uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+      setTimeout(() => handleBack(), 300)
+      return
+    }
+    formData.value = detailData
   } finally {
     toast.close()
   }

@@ -112,11 +112,11 @@
     </scroll-view>
 
     <!-- 底部保存按钮 -->
-    <view v-if="!isHeaderReadonly" class="yd-detail-footer">
+    <MesFooterActions v-if="!isHeaderReadonly">
       <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
         保存
       </wd-button>
-    </view>
+    </MesFooterActions>
   </view>
 
   <!-- 盘点方案选择 -->
@@ -133,6 +133,7 @@
 <script lang="ts" setup>
 import type { User } from '@/api/system/user'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type {
   StockTakingTaskCreateReqVO,

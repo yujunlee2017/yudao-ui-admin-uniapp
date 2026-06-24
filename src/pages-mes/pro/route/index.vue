@@ -2,11 +2,6 @@
   <view class="yd-page-container yd-page-container-paging">
     <wd-navbar title="工艺路线" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
     <SearchForm ref="searchFormRef" @search="handleQuery" @reset="handleReset" />
-    <view v-if="hasAccessByCodes(['mes:pro-route:export'])" class="bg-white px-24rpx py-16rpx">
-      <view class="h-64rpx flex items-center justify-center border-2rpx border-[#1677ff] rounded-8rpx text-26rpx text-[#1677ff]" :class="exportLoading ? 'opacity-60' : ''" @click="handleExport">
-        {{ exportLoading ? '导出中...' : '导出当前筛选数据' }}
-      </view>
-    </view>
     <z-paging ref="pagingRef" v-model="list" :fixed="false" class="min-h-0 flex-1" :default-page-size="10" :refresher-enabled="true" :inside-more="true" :loading-more-default-as-loading="true" empty-view-text="暂无工艺路线数据" @query="queryList">
       <view class="p-24rpx">
         <view v-for="item in list" :key="item.id" class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
@@ -51,7 +46,6 @@ import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { deleteRoute, getRoutePage, updateRouteStatus } from '@/api/mes/pro/route'
-import { downloadApiFile } from '@/utils/download'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
@@ -72,7 +66,6 @@ const list = ref<ProRouteVO[]>([])
 const pagingRef = ref<ZPagingRef<ProRouteVO>>()
 const queryParams = ref<Partial<ProRouteQueryParams>>({})
 const searchFormRef = ref<InstanceType<typeof SearchForm>>()
-const exportLoading = ref(false)
 const canUpdate = computed(() => hasAccessByCodes(['mes:pro-route:update']))
 const canDelete = computed(() => hasAccessByCodes(['mes:pro-route:delete']))
 
@@ -112,26 +105,6 @@ function handleReset() {
 /** 重新加载 */
 function reload() {
   pagingRef.value?.reload()
-}
-
-/** 导出工艺路线 */
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选数据吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/pro/route/export-excel', queryParams.value, '工艺路线.xls')
-  } finally {
-    exportLoading.value = false
-  }
 }
 
 /** 新增工艺路线 */

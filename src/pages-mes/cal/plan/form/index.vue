@@ -65,16 +65,14 @@
     </scroll-view>
 
     <!-- 底部保存按钮 -->
-    <view class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button v-if="currentId && isPrepare" class="flex-1" type="warning" :loading="confirmLoading" @click="handleConfirm">
-          确认计划
-        </wd-button>
-        <wd-button class="flex-1" type="primary" :loading="formLoading" @click="handleSubmit">
-          保存
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions content-class="yd-detail-footer-actions">
+      <wd-button v-if="currentId && isPrepare" class="flex-1" type="warning" :loading="confirmLoading" @click="handleConfirm">
+        确认计划
+      </wd-button>
+      <wd-button class="flex-1" type="primary" :loading="formLoading" @click="handleSubmit">
+        保存
+      </wd-button>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -89,6 +87,7 @@ import { confirmPlan, createPlan, getPlan, updatePlan } from '@/api/mes/cal/plan
 import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'

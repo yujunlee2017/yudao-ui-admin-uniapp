@@ -6,13 +6,6 @@
     <!-- 搜索组件 -->
     <SearchForm ref="searchFormRef" @search="handleQuery" @reset="handleReset" />
 
-    <!-- 导出入口 -->
-    <view v-if="hasAccessByCodes(['mes:pro-work-order:export'])" class="bg-white px-24rpx py-16rpx">
-      <view class="h-64rpx flex items-center justify-center border-2rpx border-[#1677ff] rounded-8rpx text-26rpx text-[#1677ff]" :class="exportLoading ? 'opacity-60' : ''" @click="handleExport">
-        {{ exportLoading ? '导出中...' : '导出当前筛选数据' }}
-      </view>
-    </view>
-
     <!-- 分页列表 -->
     <z-paging ref="pagingRef" v-model="list" :fixed="false" class="min-h-0 flex-1" :default-page-size="10" :refresher-enabled="true" :inside-more="true" :loading-more-default-as-loading="true" empty-view-text="暂无生产工单数据" @query="queryList">
       <view class="p-24rpx">
@@ -85,7 +78,6 @@ import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { cancelWorkOrder, deleteWorkOrder, finishWorkOrder, getWorkOrderPage } from '@/api/mes/pro/workorder'
-import { downloadApiFile } from '@/utils/download'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -123,7 +115,6 @@ const list = ref<ProWorkOrderVO[]>([])
 const pagingRef = ref<ZPagingRef<ProWorkOrderVO>>()
 const queryParams = ref<Partial<ProWorkOrderQueryParams>>({})
 const searchFormRef = ref<InstanceType<typeof SearchForm>>()
-const exportLoading = ref(false)
 const canCreate = computed(() => hasAccessByCodes(['mes:pro-work-order:create']))
 const canUpdate = computed(() => hasAccessByCodes(['mes:pro-work-order:update']))
 const canDelete = computed(() => hasAccessByCodes(['mes:pro-work-order:delete']))
@@ -187,26 +178,6 @@ function handleReset() {
 /** 重新加载 */
 function reload() {
   pagingRef.value?.reload()
-}
-
-/** 导出生产工单 */
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选数据吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/pro/work-order/export-excel', queryParams.value, '生产工单.xls')
-  } finally {
-    exportLoading.value = false
-  }
 }
 
 /** 新增生产工单 */

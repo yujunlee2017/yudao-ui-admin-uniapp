@@ -3,13 +3,8 @@
     <!-- 顶部导航栏 -->
     <wd-navbar title="质检方案" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
 
-    <!-- 搜索与导出 -->
+    <!-- 搜索组件 -->
     <SearchForm ref="searchFormRef" @search="handleQuery" @reset="handleReset" />
-    <view v-if="canExport" class="bg-white px-24rpx pb-16rpx">
-      <wd-button block variant="plain" :loading="exportLoading" @click="handleExport">
-        导出当前筛选数据
-      </wd-button>
-    </view>
 
     <!-- 质检方案列表 -->
     <z-paging
@@ -82,13 +77,12 @@
 import type { QcTemplatePageParam, QcTemplateVO } from '@/api/mes/qc/template'
 import { onUnload } from '@dcloudio/uni-app'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { getTemplatePage } from '@/api/mes/qc/template'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import { downloadApiFile } from '@/utils/download'
 import SearchForm from './components/search-form.vue'
 
 definePage({
@@ -103,11 +97,7 @@ const toast = useToast()
 const list = ref<QcTemplateVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<QcTemplateVO>>() // 分页组件引用
 const queryParams = ref<Partial<QcTemplatePageParam>>({}) // 查询参数
-const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索组件引用
-const exportLoading = ref(false) // 导出状态
-const canExport = computed(() => hasAccessByCodes(['mes:qc-template:export']))
-
-/** 返回上一页 */
+const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索组件引用/** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
 }
@@ -138,27 +128,6 @@ function handleReset() {
 /** 重新加载 */
 function reload() {
   pagingRef.value?.reload()
-}
-
-/** 导出质检方案 */
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选条件下的质检方案吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/qc/template/export-excel', queryParams.value, '质检方案.xls')
-    toast.success('导出成功')
-  } finally {
-    exportLoading.value = false
-  }
 }
 
 /** 新增质检方案 */

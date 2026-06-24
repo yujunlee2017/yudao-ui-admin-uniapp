@@ -17,28 +17,25 @@
         <view class="yd-search-form-label">
           工作站
         </view>
-        <view class="yd-search-form-selector" @click="openWorkstationSelector">
-          <text v-if="selectedWorkstationText" class="text-[#333]">
-            {{ selectedWorkstationText }}
-          </text>
-          <text v-else class="text-[#999]">
-            请选择工作站
-          </text>
-        </view>
+        <MesSearchSelectorField
+          :model-value="selectedWorkstationText"
+          placeholder="请选择工作站"
+          clearable
+          @click="openWorkstationSelector"
+          @clear="clearWorkstation"
+        />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           发起人
         </view>
         <UserPicker v-model="formData.userId" type="radio" placeholder="请选择发起人" use-default-slot @confirm="handleUserConfirm">
-          <view class="yd-search-form-selector">
-            <text v-if="selectedUserName" class="text-[#333]">
-              {{ selectedUserName }}
-            </text>
-            <text v-else class="text-[#999]">
-              请选择发起人
-            </text>
-          </view>
+          <MesSearchSelectorField
+            :model-value="selectedUserName"
+            placeholder="请选择发起人"
+            clearable
+            @clear="clearUser"
+          />
         </UserPicker>
       </view>
       <view class="yd-search-form-item">
@@ -46,14 +43,12 @@
           处置人
         </view>
         <UserPicker v-model="formData.handlerUserId" type="radio" placeholder="请选择处置人" use-default-slot @confirm="handleHandlerConfirm">
-          <view class="yd-search-form-selector">
-            <text v-if="selectedHandlerName" class="text-[#333]">
-              {{ selectedHandlerName }}
-            </text>
-            <text v-else class="text-[#999]">
-              请选择处置人
-            </text>
-          </view>
+          <MesSearchSelectorField
+            :model-value="selectedHandlerName"
+            placeholder="请选择处置人"
+            clearable
+            @clear="clearHandler"
+          />
         </UserPicker>
       </view>
       <view class="yd-search-form-item">
@@ -96,6 +91,7 @@ import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateRange } from '@/utils/date'
 import UserPicker from '@/components/system-select/user-picker.vue'
+import MesSearchSelectorField from '@/pages-mes/components/mes-search-selector-field.vue'
 import WorkstationSelector from '@/pages-mes/pro/task/components/workstation-selector.vue'
 
 const emit = defineEmits<{
@@ -163,6 +159,24 @@ function handleHandlerConfirm(users: User[]) {
   selectedHandlerName.value = users[0]?.nickname || ''
 }
 
+/** 清空工作站 */
+function clearWorkstation() {
+  selectedWorkstation.value = undefined
+  formData.workstationId = undefined
+}
+
+/** 清空发起人 */
+function clearUser() {
+  selectedUserName.value = ''
+  formData.userId = undefined
+}
+
+/** 清空处置人 */
+function clearHandler() {
+  selectedHandlerName.value = ''
+  formData.handlerUserId = undefined
+}
+
 /** 构造搜索参数 */
 function buildParams(): Partial<ProAndonRecordQueryParams> {
   const params: Partial<ProAndonRecordQueryParams> = {}
@@ -212,15 +226,3 @@ function handleReset() {
 
 defineExpose({ resetFields })
 </script>
-
-<style lang="scss" scoped>
-.yd-search-form-selector {
-  min-height: 72rpx;
-  display: flex;
-  align-items: center;
-  padding: 0 24rpx;
-  border-radius: 8rpx;
-  background: #f7f8fa;
-  font-size: 28rpx;
-}
-</style>

@@ -79,11 +79,11 @@
     </scroll-view>
 
     <!-- 底部保存按钮 -->
-    <view class="yd-detail-footer">
+    <MesFooterActions>
       <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
         保存
       </wd-button>
-    </view>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -95,6 +95,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { createBarcodeConfig, getBarcodeConfig, updateBarcodeConfig } from '@/api/mes/wm/barcode/config'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'

@@ -120,16 +120,14 @@
     </scroll-view>
 
     <!-- 底部保存按钮 -->
-    <view class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button class="flex-1" variant="plain" @click="handleConfig">
-          条码设置
-        </wd-button>
-        <wd-button class="flex-1" type="primary" :loading="formLoading" @click="handleSubmit">
-          保存
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions content-class="yd-detail-footer-actions">
+      <wd-button class="flex-1" variant="plain" @click="handleConfig">
+        条码设置
+      </wd-button>
+      <wd-button class="flex-1" type="primary" :loading="formLoading" @click="handleSubmit">
+        保存
+      </wd-button>
+    </MesFooterActions>
 
     <!-- 业务对象选择器 -->
     <ItemSelector ref="itemSelectorRef" :multiple="false" @confirm="handleItemConfirm" />
@@ -208,6 +206,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref, watch } from 'vue'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import MachinerySelector from '@/pages-mes/dv/machinery/components/machinery-selector.vue'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import ClientSelector from '@/pages-mes/md/client/components/client-selector.vue'
 import ItemSelector from '@/pages-mes/md/item/components/item-selector.vue'
 import VendorSelector from '@/pages-mes/md/vendor/components/vendor-selector.vue'

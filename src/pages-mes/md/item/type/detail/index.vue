@@ -27,28 +27,26 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="hasFooter" class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button
-          v-if="canCreate"
-          class="flex-1" type="success" @click="handleAddChild"
-        >
-          新增子分类
-        </wd-button>
-        <wd-button
-          v-if="canUpdate"
-          class="flex-1" type="warning" @click="handleEdit"
-        >
-          编辑
-        </wd-button>
-        <wd-button
-          v-if="canDelete && (formData?.parentId ?? 0) !== 0"
-          class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
-        >
-          删除
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions v-if="hasFooter" content-class="yd-detail-footer-actions">
+      <wd-button
+        v-if="canCreate"
+        class="flex-1" type="success" @click="handleAddChild"
+      >
+        新增子分类
+      </wd-button>
+      <wd-button
+        v-if="canUpdate"
+        class="flex-1" type="warning" @click="handleEdit"
+      >
+        编辑
+      </wd-button>
+      <wd-button
+        v-if="canDelete && (formData?.parentId ?? 0) !== 0"
+        class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
+      >
+        删除
+      </wd-button>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -61,6 +59,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteItemType, getItemType, getItemTypeList } from '@/api/mes/md/item/type'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'

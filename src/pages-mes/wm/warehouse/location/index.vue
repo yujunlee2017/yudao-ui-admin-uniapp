@@ -26,17 +26,15 @@
         </ListCardWrapper>
       </view>
     </z-paging>
-    <view v-if="selecting" class="yd-detail-footer">
-      <view class="flex items-center justify-between px-24rpx">
-        <wd-button variant="plain" size="small" @click="exitSelectMode">
-          取消
-        </wd-button>
-        <text class="text-28rpx text-[#666]">已选 {{ selectedIds.size }} 项</text>
-        <wd-button type="danger" size="small" :loading="batchDeleting" :disabled="selectedIds.size === 0" @click="handleBatchDelete">
-          删除
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions v-if="selecting" content-class="flex items-center justify-between px-24rpx">
+      <wd-button variant="plain" size="small" @click="exitSelectMode">
+        取消
+      </wd-button>
+      <text class="text-28rpx text-[#666]">已选 {{ selectedIds.size }} 项</text>
+      <wd-button type="danger" size="small" :loading="batchDeleting" :disabled="selectedIds.size === 0" @click="handleBatchDelete">
+        删除
+      </wd-button>
+    </MesFooterActions>
     <wd-fab v-if="hasAccessByCodes(['mes:wm-warehouse:create'])" position="right-bottom" type="primary" :expandable="false" @click="handleAdd" />
   </view>
 </template>
@@ -47,9 +45,10 @@ import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { deleteWarehouseLocation, getWarehouseLocationPage } from '@/api/mes/wm/warehouse/location'
 import { useAccess } from '@/hooks/useAccess'
-import { useBatchSelect } from '@/pages-erp/hooks/useBatchSelect'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { useMesBatchSelect } from '@/pages-mes/hooks/useMesBatchSelect'
 import { navigateBackPlus } from '@/utils'
-import ListCardWrapper from '@/pages-erp/components/list-card-wrapper.vue'
+import ListCardWrapper from '@/pages-mes/components/list-card-wrapper.vue'
 import SearchForm from './components/search-form.vue'
 
 definePage({ style: { navigationBarTitleText: '', navigationStyle: 'custom' } })
@@ -70,7 +69,7 @@ const {
   exitSelectMode,
   handleSwipeDelete,
   handleBatchDelete,
-} = useBatchSelect({
+} = useMesBatchSelect({
   permission: 'mes:wm-warehouse:delete',
   deleteApi: (ids: number[]) => Promise.all(ids.map(id => deleteWarehouseLocation(id))).then(() => {}),
   reloadEvent: 'mes:wm:warehouse-location:reload',

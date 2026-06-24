@@ -6,21 +6,8 @@
       left-arrow placeholder safe-area-inset-top fixed
       @click-left="handleBack"
     />
-
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
-
-    <!-- 导出入口 -->
-    <view v-if="hasAccessByCodes(['mes:wm-return-issue:export'])" class="bg-white px-24rpx py-16rpx">
-      <view
-        class="h-64rpx flex items-center justify-center border-2rpx border-[#1677ff] rounded-8rpx text-26rpx text-[#1677ff]"
-        :class="exportLoading ? 'opacity-60' : ''"
-        @click="handleExport"
-      >
-        {{ exportLoading ? '导出中...' : '导出当前筛选数据' }}
-      </view>
-    </view>
-
     <!-- 列表 -->
     <z-paging
       ref="pagingRef"
@@ -122,7 +109,6 @@ import {
   submitReturnIssue,
 } from '@/api/mes/wm/returnissue'
 import { useAccess } from '@/hooks/useAccess'
-import { downloadApiFile } from '@/utils/download'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmReturnIssueStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
@@ -141,7 +127,6 @@ const toast = useToast()
 const list = ref<WmReturnIssueVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<WmReturnIssueVO>>() // 分页组件引用
 const queryParams = ref<WmReturnIssueQueryParams>({}) // 查询参数
-const exportLoading = ref(false) // 导出状态
 
 /** 返回上一页 */
 function handleBack() {
@@ -177,26 +162,6 @@ function handleReset() {
 /** 重新加载 */
 function reload() {
   pagingRef.value?.reload()
-}
-
-/** 导出按钮操作 */
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选数据吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/wm/return-issue/export-excel', queryParams.value, '生产退料单.xls')
-  } finally {
-    exportLoading.value = false
-  }
 }
 
 /** 新增 */

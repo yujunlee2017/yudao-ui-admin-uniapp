@@ -65,11 +65,11 @@
     </scroll-view>
 
     <!-- 添加按钮 -->
-    <view v-if="isEdit && canCreate" class="yd-detail-footer">
+    <MesFooterActions v-if="isEdit && canCreate">
       <wd-button type="primary" block @click="openForm('create')">
         添加 SIP
       </wd-button>
-    </view>
+    </MesFooterActions>
 
     <!-- 新增/编辑弹层 -->
     <wd-popup v-model="formVisible" position="bottom" safe-area-inset-bottom custom-style="border-radius: 24rpx 24rpx 0 0; max-height: 85vh;">
@@ -129,6 +129,7 @@ import { computed, onMounted, ref } from 'vue'
 import { createProductSip, deleteProductSip, getProductSipListByItemId, updateProductSip } from '@/api/mes/md/item/productSip'
 import { getProcessSimpleList } from '@/api/mes/pro/process'
 import { useAccess } from '@/hooks/useAccess'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'

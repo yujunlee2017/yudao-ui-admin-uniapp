@@ -33,11 +33,11 @@
     </view>
 
     <!-- 底部生成按钮 -->
-    <view class="yd-detail-footer">
+    <MesFooterActions>
       <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
         生成 SN 码
       </wd-button>
-    </view>
+    </MesFooterActions>
 
     <ItemSelector ref="itemSelectorRef" :multiple="false" @confirm="handleItemConfirm" />
   </view>
@@ -50,6 +50,7 @@ import type { WmSnGenerateVO } from '@/api/mes/wm/sn'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, ref } from 'vue'
 import { generateSnCodes } from '@/api/mes/wm/sn'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import { navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 import ItemSelector from '../../../md/item/components/item-selector.vue'

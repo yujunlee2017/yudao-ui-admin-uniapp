@@ -6,7 +6,6 @@
       left-arrow placeholder safe-area-inset-top fixed
       @click-left="handleBack"
     />
-
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
@@ -18,12 +17,6 @@
           block variant="plain" @click="handleGenerate"
         >
           生成 SN 码
-        </wd-button>
-        <wd-button
-          v-if="hasAccessByCodes(['mes:wm-sn:export'])"
-          block variant="plain" :loading="exportLoading" @click="handleExport"
-        >
-          导出当前筛选
         </wd-button>
       </view>
     </view>
@@ -138,9 +131,8 @@ const toast = useToast()
 const list = ref<WmSnGroupVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<WmSnGroupVO>>() // 分页组件引用
 const queryParams = ref<WmSnQueryParams>({}) // 查询参数
-const exportLoading = ref(false) // 导出状态
 const hasTopActions = computed(() => {
-  return hasAccessByCodes(['mes:wm-sn:create']) || hasAccessByCodes(['mes:wm-sn:export'])
+  return hasAccessByCodes(['mes:wm-sn:create'])
 })
 const hasRowActions = computed(() => {
   return hasAccessByCodes(['mes:wm-sn:query'])
@@ -218,27 +210,6 @@ async function handleDelete(item: WmSnGroupVO) {
   await deleteSnBatch(item.uuid)
   toast.success('删除成功')
   reload()
-}
-
-/** 导出分组 */
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选的 SN 码分组吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/wm/sn/group-export-excel', queryParams.value, 'SN码分组.xls')
-    toast.success('导出成功')
-  } finally {
-    exportLoading.value = false
-  }
 }
 
 /** 导出批次明细 */

@@ -6,19 +6,8 @@
       left-arrow placeholder safe-area-inset-top fixed
       @click-left="handleBack"
     />
-
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
-
-    <!-- 顶部操作 -->
-    <view
-      v-if="hasAccessByCodes(['mes:wm-stock-taking-plan:export'])"
-      class="bg-white px-24rpx py-16rpx"
-    >
-      <wd-button block variant="plain" :loading="exportLoading" @click="handleExport">
-        导出当前筛选
-      </wd-button>
-    </view>
 
     <!-- 列表 -->
     <z-paging
@@ -123,7 +112,6 @@ import {
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
-import { downloadApiFile } from '@/utils/download'
 import { formatDateTime } from '@/utils/date'
 import SearchForm from './components/search-form.vue'
 
@@ -140,7 +128,6 @@ const toast = useToast()
 const list = ref<StockTakingPlanVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingInstance<StockTakingPlanVO>>() // 分页组件引用
 const queryParams = ref<Partial<StockTakingPlanQueryParams>>({}) // 查询参数
-const exportLoading = ref(false) // 导出状态
 const canUpdateStatus = computed(() => hasAccessByCodes(['mes:wm-stock-taking-plan:update']))
 
 /** 返回上一页 */
@@ -245,24 +232,6 @@ async function handleDelete(item: StockTakingPlanVO) {
   reload()
 }
 
-/** 导出 */
-async function handleExport() {
-  try {
-    await dialog.confirm({
-      title: '提示',
-      msg: '确定要导出当前筛选的盘点方案吗？',
-    })
-  } catch {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/wm/stocktaking-plan/export-excel', queryParams.value, '盘点方案.xls')
-  } finally {
-    exportLoading.value = false
-  }
-}
-
 /** 初始化 */
 onMounted(() => {
   uni.$on('mes:wm:stocktaking:plan:reload', reload)
@@ -272,6 +241,4 @@ onMounted(() => {
 onUnload(() => {
   uni.$off('mes:wm:stocktaking:plan:reload', reload)
 })
-
-defineExpose({ handleExport })
 </script>

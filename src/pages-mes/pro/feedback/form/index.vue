@@ -91,22 +91,20 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view class="yd-detail-footer">
-      <view class="flex gap-16rpx">
-        <wd-button v-if="isEditable" class="flex-1" type="primary" :loading="formLoading" @click="handleSave">
-          保存
-        </wd-button>
-        <wd-button v-if="canSubmit" class="flex-1" type="warning" :loading="formLoading" @click="handleSubmitFeedback">
-          提交
-        </wd-button>
-        <wd-button v-if="isApproveMode" class="flex-1" type="success" :loading="formLoading" @click="handleApprove">
-          通过
-        </wd-button>
-        <wd-button v-if="isApproveMode" class="flex-1" type="danger" :loading="formLoading" @click="handleReject">
-          不通过
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions content-class="flex gap-16rpx">
+      <wd-button v-if="isEditable" class="flex-1" type="primary" :loading="formLoading" @click="handleSave">
+        保存
+      </wd-button>
+      <wd-button v-if="canSubmit" class="flex-1" type="warning" :loading="formLoading" @click="handleSubmitFeedback">
+        提交
+      </wd-button>
+      <wd-button v-if="isApproveMode" class="flex-1" type="success" :loading="formLoading" @click="handleApprove">
+        通过
+      </wd-button>
+      <wd-button v-if="isApproveMode" class="flex-1" type="danger" :loading="formLoading" @click="handleReject">
+        不通过
+      </wd-button>
+    </MesFooterActions>
 
     <WorkOrderSelector ref="workOrderSelectorRef" @confirm="handleWorkOrderConfirm" />
     <WorkstationSelector ref="workstationSelectorRef" @confirm="handleWorkstationConfirm" />
@@ -138,6 +136,7 @@ import { getWorkOrder } from '@/api/mes/pro/workorder'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { useUserStore } from '@/store/user'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'

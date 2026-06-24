@@ -2,21 +2,8 @@
   <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar title="班组设置" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
-
     <!-- 搜索组件 -->
     <SearchForm ref="searchFormRef" @search="handleQuery" @reset="handleReset" />
-
-    <!-- 导出入口 -->
-    <view v-if="hasAccessByCodes(['mes:cal-team:export'])" class="bg-white px-24rpx py-16rpx">
-      <view
-        class="h-64rpx flex items-center justify-center border-2rpx border-[#1677ff] rounded-8rpx text-26rpx text-[#1677ff]"
-        :class="exportLoading ? 'opacity-60' : ''"
-        @click="handleExport"
-      >
-        {{ exportLoading ? '导出中...' : '导出当前筛选数据' }}
-      </view>
-    </view>
-
     <!-- 分页列表 -->
     <z-paging
       ref="pagingRef"
@@ -85,7 +72,6 @@ import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { deleteTeam, getTeamPage } from '@/api/mes/cal/team'
-import { downloadApiFile } from '@/utils/download'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -106,7 +92,6 @@ const list = ref<CalTeamVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<CalTeamVO>>() // 分页组件引用
 const queryParams = ref<Partial<CalTeamQueryParams>>({}) // 查询参数
 const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索组件引用
-const exportLoading = ref(false) // 导出状态
 const canUpdate = computed(() => hasAccessByCodes(['mes:cal-team:update']))
 const canDelete = computed(() => hasAccessByCodes(['mes:cal-team:delete']))
 
@@ -141,26 +126,6 @@ function handleReset() {
 /** 重新加载 */
 function reload() {
   pagingRef.value?.reload()
-}
-
-/** 导出班组 */
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选数据吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/cal/team/export-excel', queryParams.value, '班组.xls')
-  } finally {
-    exportLoading.value = false
-  }
 }
 
 /** 新增班组 */

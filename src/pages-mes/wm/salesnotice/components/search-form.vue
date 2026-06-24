@@ -47,15 +47,13 @@
         <view class="yd-search-form-label">
           客户
         </view>
-        <view class="yd-search-form-selector" @click="openClientSelector">
-          <text v-if="selectedClientText" class="text-[#333]">
-            {{ selectedClientText }}
-          </text>
-          <text v-else class="text-[#999]">
-            请选择客户
-          </text>
-          <wd-icon v-if="formData.clientId" name="close" size="28rpx" color="#999" @click.stop="clearClient" />
-        </view>
+        <MesSearchSelectorField
+          :model-value="selectedClientText"
+          placeholder="请选择客户"
+          clearable
+          @click="openClientSelector"
+          @clear="clearClient"
+        />
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -76,6 +74,7 @@ import type { MdClientVO } from '@/api/mes/md/client'
 import type { WmSalesNoticeQueryParams } from '@/api/mes/wm/salesnotice'
 import { computed, reactive, ref } from 'vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import MesSearchSelectorField from '@/pages-mes/components/mes-search-selector-field.vue'
 import ClientSelector from '../../../md/client/components/client-selector.vue'
 
 const emit = defineEmits<{

@@ -100,7 +100,13 @@ async function getDetail() {
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getBatch(currentId.value)
+    const detailData = await getBatch(currentId.value)
+    if (!detailData) {
+      uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+      setTimeout(() => handleBack(), 300)
+      return
+    }
+    formData.value = detailData
   } finally {
     toast.close()
   }

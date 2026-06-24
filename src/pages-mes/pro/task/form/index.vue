@@ -43,11 +43,11 @@
     </scroll-view>
 
     <!-- 底部保存按钮 -->
-    <view v-if="!readonly" class="yd-detail-footer">
+    <MesFooterActions v-if="!readonly">
       <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
         保存
       </wd-button>
-    </view>
+    </MesFooterActions>
 
     <WorkstationSelector ref="workstationSelectorRef" @confirm="handleWorkstationConfirm" />
   </view>
@@ -64,6 +64,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { getWorkstation } from '@/api/mes/md/workstation'
 import { createTask, getTask, updateTask } from '@/api/mes/pro/task'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'

@@ -67,16 +67,14 @@
     </scroll-view>
 
     <!-- 底部按钮 -->
-    <view class="yd-detail-footer">
-      <view class="flex gap-16rpx">
-        <wd-button class="flex-1" type="primary" :loading="formLoading" @click="handleSubmit">
-          保存
-        </wd-button>
-        <wd-button v-if="canConfirm" class="flex-1" type="warning" :loading="formLoading" @click="handleConfirm">
-          确认
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions content-class="flex gap-16rpx">
+      <wd-button class="flex-1" type="primary" :loading="formLoading" @click="handleSubmit">
+        保存
+      </wd-button>
+      <wd-button v-if="canConfirm" class="flex-1" type="warning" :loading="formLoading" @click="handleConfirm">
+        确认
+      </wd-button>
+    </MesFooterActions>
 
     <ItemSelector ref="productSelectorRef" item-or-product="PRODUCT" title="选择产品" :multiple="false" @confirm="handleProductConfirm" />
     <wd-picker v-model:visible="clientPickerVisible" :model-value="clientPickerValue" title="选择客户" :columns="clientOptions" label-key="label" value-key="value" @confirm="handleClientConfirm" />
@@ -101,6 +99,7 @@ import { getVendorPage } from '@/api/mes/md/vendor'
 import { confirmWorkOrder, createWorkOrder, getWorkOrder, updateWorkOrder } from '@/api/mes/pro/workorder'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'

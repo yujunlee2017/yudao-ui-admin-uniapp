@@ -3,13 +3,8 @@
     <!-- 顶部导航栏 -->
     <wd-navbar title="退料检验单（RQC）" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
 
-    <!-- 搜索与导出 -->
+    <!-- 搜索组件 -->
     <SearchForm ref="searchFormRef" @search="handleQuery" @reset="handleReset" />
-    <view v-if="canExport" class="bg-white px-24rpx pb-16rpx">
-      <wd-button block variant="plain" :loading="exportLoading" @click="handleExport">
-        导出当前筛选数据
-      </wd-button>
-    </view>
 
     <!-- 退料检验单列表 -->
     <z-paging
@@ -117,7 +112,6 @@ import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import { downloadApiFile } from '@/utils/download'
 import SearchForm from './components/search-form.vue'
 
 definePage({
@@ -137,10 +131,7 @@ const toast = useToast()
 const list = ref<QcRqcVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<QcRqcVO>>() // 分页组件引用
 const queryParams = ref<Partial<QcRqcPageParam>>({}) // 查询参数
-const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索组件引用
-const exportLoading = ref(false) // 导出状态
-const canExport = computed(() => hasAccessByCodes(['mes:qc-rqc:export']))
-const canUpdate = computed(() => hasAccessByCodes(['mes:qc-rqc:update']))
+const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索组件引用const canUpdate = computed(() => hasAccessByCodes(['mes:qc-rqc:update']))
 const canDelete = computed(() => hasAccessByCodes(['mes:qc-rqc:delete']))
 
 /** 返回上一页 */
@@ -209,27 +200,6 @@ async function handleDelete(item: QcRqcVO) {
   await deleteRqc(item.id)
   toast.success('删除成功')
   reload()
-}
-
-/** 导出 */
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选条件下的退料检验单吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/qc/rqc/export-excel', queryParams.value, '退料检验单.xls')
-    toast.success('导出成功')
-  } finally {
-    exportLoading.value = false
-  }
 }
 
 /** 初始化 */

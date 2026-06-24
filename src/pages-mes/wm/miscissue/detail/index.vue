@@ -55,19 +55,17 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="hasFooter" class="yd-detail-footer">
-      <view class="flex gap-24rpx text-28rpx">
-        <view v-if="canUpdatePrepare" class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white" @click="handleEdit">
-          编辑
-        </view>
-        <view v-if="canSubmitPrepare" class="flex-1 rounded-8rpx bg-[#faad14] py-20rpx text-center text-white" :class="submitting ? 'opacity-60' : ''" @click="handleSubmitIssue">
-          {{ submitting ? '提交中...' : '提交' }}
-        </view>
-        <view v-if="canFinishApproved" class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white" @click="handleFinish">
-          执行出库
-        </view>
+    <MesFooterActions v-if="hasFooter" content-class="flex gap-24rpx text-28rpx">
+      <view v-if="canUpdatePrepare" class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white" @click="handleEdit">
+        编辑
       </view>
-    </view>
+      <view v-if="canSubmitPrepare" class="flex-1 rounded-8rpx bg-[#faad14] py-20rpx text-center text-white" :class="submitting ? 'opacity-60' : ''" @click="handleSubmitIssue">
+        {{ submitting ? '提交中...' : '提交' }}
+      </view>
+      <view v-if="canFinishApproved" class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white" @click="handleFinish">
+        执行出库
+      </view>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -80,6 +78,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { cancelMiscIssue, deleteMiscIssue, getMiscIssue, submitMiscIssue } from '@/api/mes/wm/miscissue'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmMiscIssueStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
@@ -145,7 +144,13 @@ async function getDetail() {
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getMiscIssue(currentId.value)
+    const detailData = await getMiscIssue(currentId.value)
+    if (!detailData) {
+      uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+      setTimeout(() => handleBack(), 300)
+      return
+    }
+    formData.value = detailData
   } finally {
     toast.close()
   }

@@ -89,11 +89,11 @@
     </scroll-view>
 
     <!-- 底部保存按钮 -->
-    <view class="yd-detail-footer">
+    <MesFooterActions>
       <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
         保存
       </wd-button>
-    </view>
+    </MesFooterActions>
 
     <ClientSelector ref="clientSelectorRef" title="选择客户" :multiple="false" @confirm="handleClientConfirm" />
     <ItemSelector ref="itemSelectorRef" title="选择产品物料" :multiple="false" @confirm="handleItemConfirm" />
@@ -115,6 +115,7 @@ import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { createOqc, getOqc, updateOqc } from '@/api/mes/qc/oqc'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'

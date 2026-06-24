@@ -10,13 +10,6 @@
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
-    <!-- 导出入口 -->
-    <view v-if="hasAccessByCodes(['mes:wm-outsource-receipt:export'])" class="bg-white px-24rpx py-16rpx">
-      <wd-button block variant="plain" :loading="exportLoading" @click="handleExport">
-        导出当前筛选数据
-      </wd-button>
-    </view>
-
     <!-- 分页列表 -->
     <z-paging
       ref="pagingRef"
@@ -106,7 +99,6 @@ import { onMounted, ref } from 'vue'
 import {
   cancelOutsourceReceipt,
   deleteOutsourceReceipt,
-  exportOutsourceReceipt,
   getOutsourceReceiptPage,
   submitOutsourceReceipt,
 } from '@/api/mes/wm/outsourcereceipt'
@@ -132,7 +124,6 @@ const queryParams = ref<WmOutsourceReceiptQueryParams>({
   pageNo: 1,
   pageSize: 10,
 }) // 查询参数
-const exportLoading = ref(false) // 导出状态
 
 /** 返回上一页 */
 function handleBack() {
@@ -281,25 +272,6 @@ async function handleCancelIssue(item: WmOutsourceReceiptVO) {
   await cancelOutsourceReceipt(item.id)
   toast.success('取消成功')
   reload()
-}
-
-/** 导出 */
-async function handleExport() {
-  try {
-    await dialog.confirm({
-      title: '导出确认',
-      msg: '确定要导出当前筛选数据吗？',
-    })
-  } catch {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await exportOutsourceReceipt(queryParams.value)
-    toast.success('导出请求已提交')
-  } finally {
-    exportLoading.value = false
-  }
 }
 
 /** 初始化 */

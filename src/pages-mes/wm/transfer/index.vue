@@ -19,12 +19,6 @@
         >
           新增转移单
         </wd-button>
-        <wd-button
-          v-if="hasAccessByCodes(['mes:wm-transfer:export'])"
-          block variant="plain" :loading="exportLoading" @click="handleExport"
-        >
-          导出当前筛选
-        </wd-button>
       </view>
     </view>
 
@@ -122,7 +116,6 @@ import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmTransferStatusEnum } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
-import { downloadApiFile } from '@/utils/download'
 import SearchForm from './components/search-form.vue'
 
 definePage({
@@ -138,7 +131,6 @@ const toast = useToast()
 const list = ref<WmTransferVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<WmTransferVO>>() // 分页组件引用
 const queryParams = ref<WmTransferQueryParams>({}) // 查询参数
-const exportLoading = ref(false) // 导出状态
 
 /** 返回上一页 */
 function handleBack() {
@@ -312,27 +304,6 @@ async function handleCancel(item: WmTransferVO) {
   await cancelTransfer(item.id)
   toast.success('取消成功')
   reload()
-}
-
-/** 导出按钮操作 */
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选数据吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/wm/transfer/export-excel', queryParams.value, '转移单.xls')
-    toast.success('导出成功')
-  } finally {
-    exportLoading.value = false
-  }
 }
 
 /** 初始化 */

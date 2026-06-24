@@ -23,27 +23,25 @@
         <view class="yd-search-form-label">
           生产工单
         </view>
-        <view class="yd-search-form-selector" @click="openWorkOrderSelector">
-          <text v-if="selectedWorkOrderText" class="text-[#333]">
-            {{ selectedWorkOrderText }}
-          </text>
-          <text v-else class="text-[#999]">
-            请选择生产工单
-          </text>
-        </view>
+        <MesSearchSelectorField
+          :model-value="selectedWorkOrderText"
+          placeholder="请选择生产工单"
+          clearable
+          @click="openWorkOrderSelector"
+          @clear="clearWorkOrder"
+        />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           产品
         </view>
-        <view class="yd-search-form-selector" @click="openItemSelector">
-          <text v-if="selectedItemText" class="text-[#333]">
-            {{ selectedItemText }}
-          </text>
-          <text v-else class="text-[#999]">
-            请选择产品
-          </text>
-        </view>
+        <MesSearchSelectorField
+          :model-value="selectedItemText"
+          placeholder="请选择产品"
+          clearable
+          @click="openItemSelector"
+          @clear="clearItem"
+        />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
@@ -73,6 +71,7 @@ import type { ProWorkOrderVO } from '@/api/mes/pro/workorder'
 import { computed, reactive, ref } from 'vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import ItemSelector from '@/pages-mes/md/item/components/item-selector.vue'
+import MesSearchSelectorField from '@/pages-mes/components/mes-search-selector-field.vue'
 import WorkOrderSelector from './workorder-selector.vue'
 
 const emit = defineEmits<{
@@ -138,6 +137,18 @@ function handleItemConfirm(items: MdItemVO[]) {
   formData.itemId = item.id
 }
 
+/** 清空工单 */
+function clearWorkOrder() {
+  selectedWorkOrder.value = undefined
+  formData.workOrderId = undefined
+}
+
+/** 清空产品 */
+function clearItem() {
+  selectedItem.value = undefined
+  formData.itemId = undefined
+}
+
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
@@ -161,15 +172,3 @@ function handleReset() {
   emit('reset')
 }
 </script>
-
-<style lang="scss" scoped>
-.yd-search-form-selector {
-  min-height: 72rpx;
-  display: flex;
-  align-items: center;
-  padding: 0 24rpx;
-  border-radius: 8rpx;
-  background: #f7f8fa;
-  font-size: 28rpx;
-}
-</style>

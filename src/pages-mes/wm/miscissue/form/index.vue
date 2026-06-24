@@ -84,34 +84,32 @@
     </scroll-view>
 
     <!-- 底部保存按钮 -->
-    <view class="yd-detail-footer">
-      <view class="flex gap-24rpx text-28rpx">
-        <view
-          v-if="isEditable"
-          class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white"
-          :class="formLoading ? 'opacity-60' : ''"
-          @click="handleSubmit"
-        >
-          {{ formLoading ? '保存中...' : '保存' }}
-        </view>
-        <view
-          v-if="canSubmit"
-          class="flex-1 rounded-8rpx bg-[#faad14] py-20rpx text-center text-white"
-          :class="submitLoading ? 'opacity-60' : ''"
-          @click="handleSubmitIssue"
-        >
-          {{ submitLoading ? '提交中...' : '提交' }}
-        </view>
-        <view
-          v-if="isFinish"
-          class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white"
-          :class="finishLoading ? 'opacity-60' : ''"
-          @click="handleFinishIssue"
-        >
-          {{ finishLoading ? '出库中...' : '执行出库' }}
-        </view>
+    <MesFooterActions content-class="flex gap-24rpx text-28rpx">
+      <view
+        v-if="isEditable"
+        class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white"
+        :class="formLoading ? 'opacity-60' : ''"
+        @click="handleSubmit"
+      >
+        {{ formLoading ? '保存中...' : '保存' }}
       </view>
-    </view>
+      <view
+        v-if="canSubmit"
+        class="flex-1 rounded-8rpx bg-[#faad14] py-20rpx text-center text-white"
+        :class="submitLoading ? 'opacity-60' : ''"
+        @click="handleSubmitIssue"
+      >
+        {{ submitLoading ? '提交中...' : '提交' }}
+      </view>
+      <view
+        v-if="isFinish"
+        class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white"
+        :class="finishLoading ? 'opacity-60' : ''"
+        @click="handleFinishIssue"
+      >
+        {{ finishLoading ? '出库中...' : '执行出库' }}
+      </view>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -132,6 +130,7 @@ import {
 } from '@/api/mes/wm/miscissue'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesAutoCodeRuleCode, MesWmMiscIssueStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'

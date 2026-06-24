@@ -49,15 +49,13 @@
         <view class="yd-search-form-label">
           供应商
         </view>
-        <view class="yd-search-form-selector" @click="openVendorSelector">
-          <text v-if="selectedVendorText" class="text-[#333]">
-            {{ selectedVendorText }}
-          </text>
-          <text v-else class="text-[#999]">
-            请选择供应商
-          </text>
-          <wd-icon v-if="formData.vendorId" name="close" size="28rpx" color="#999" @click.stop="clearVendor" />
-        </view>
+        <MesSearchSelectorField
+          :model-value="selectedVendorText"
+          placeholder="请选择供应商"
+          clearable
+          @click="openVendorSelector"
+          @clear="clearVendor"
+        />
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -78,6 +76,7 @@ import type { MdVendorVO } from '@/api/mes/md/vendor'
 import type { WmReturnVendorQueryParams } from '@/api/mes/wm/returnvendor'
 import { computed, reactive, ref } from 'vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import MesSearchSelectorField from '@/pages-mes/components/mes-search-selector-field.vue'
 import VendorSelector from '../../../md/vendor/components/vendor-selector.vue'
 
 const emit = defineEmits<{

@@ -40,28 +40,26 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="canOperate" class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button
-          v-if="canUpdate"
-          class="flex-1" type="warning" @click="handleEdit"
-        >
-          编辑
-        </wd-button>
-        <wd-button
-          v-if="canUpdate"
-          class="flex-1" type="success" :loading="finishLoading" @click="handleFinish"
-        >
-          完成
-        </wd-button>
-        <wd-button
-          v-if="canDelete"
-          class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
-        >
-          删除
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions v-if="canOperate" content-class="yd-detail-footer-actions">
+      <wd-button
+        v-if="canUpdate"
+        class="flex-1" type="warning" @click="handleEdit"
+      >
+        编辑
+      </wd-button>
+      <wd-button
+        v-if="canUpdate"
+        class="flex-1" type="success" :loading="finishLoading" @click="handleFinish"
+      >
+        完成
+      </wd-button>
+      <wd-button
+        v-if="canDelete"
+        class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
+      >
+        删除
+      </wd-button>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -73,6 +71,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deletePackage, finishPackage, getPackage } from '@/api/mes/wm/packages'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmPackageStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
@@ -124,7 +123,13 @@ async function getDetail() {
   if (!packageId.value) {
     return
   }
-  formData.value = await getPackage(packageId.value)
+  const detailData = await getPackage(packageId.value)
+    if (!detailData) {
+      uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+      setTimeout(() => handleBack(), 300)
+      return
+    }
+    formData.value = detailData
 }
 
 /** 初始化页面数据 */

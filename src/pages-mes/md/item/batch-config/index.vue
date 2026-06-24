@@ -148,11 +148,11 @@
     </scroll-view>
 
     <!-- 保存按钮（仅 edit 模式） -->
-    <view v-if="isEdit && canUpdate" class="yd-detail-footer">
+    <MesFooterActions v-if="isEdit && canUpdate">
       <wd-button type="primary" block :loading="saving" @click="handleSave">
         保存批次属性
       </wd-button>
-    </view>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -163,6 +163,7 @@ import { computed, onMounted, ref } from 'vue'
 import { getItem } from '@/api/mes/md/item'
 import { getBatchConfigByItemId, saveBatchConfig } from '@/api/mes/md/item/batchConfig'
 import { useAccess } from '@/hooks/useAccess'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 

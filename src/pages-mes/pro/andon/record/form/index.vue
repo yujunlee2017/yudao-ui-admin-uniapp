@@ -113,19 +113,17 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view class="yd-detail-footer">
-      <view class="flex gap-16rpx">
-        <wd-button v-if="isCreateMode" class="flex-1" type="primary" :loading="formLoading" @click="handleCreate">
-          确定
-        </wd-button>
-        <wd-button v-if="isUpdateMode" class="flex-1" type="primary" :loading="formLoading" @click="handleSave">
-          保存
-        </wd-button>
-        <wd-button v-if="isUpdateMode" class="flex-1" type="success" :loading="formLoading" @click="handleFinish">
-          已处置
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions content-class="flex gap-16rpx">
+      <wd-button v-if="isCreateMode" class="flex-1" type="primary" :loading="formLoading" @click="handleCreate">
+        确定
+      </wd-button>
+      <wd-button v-if="isUpdateMode" class="flex-1" type="primary" :loading="formLoading" @click="handleSave">
+        保存
+      </wd-button>
+      <wd-button v-if="isUpdateMode" class="flex-1" type="success" :loading="formLoading" @click="handleFinish">
+        已处置
+      </wd-button>
+    </MesFooterActions>
 
     <WorkstationSelector ref="workstationSelectorRef" @confirm="handleWorkstationConfirm" />
     <WorkOrderSelector ref="workOrderSelectorRef" @confirm="handleWorkOrderConfirm" />
@@ -147,6 +145,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref, watch } from 'vue'
 import { createAndonRecord, getAndonRecord, updateAndonRecord } from '@/api/mes/pro/andon/record'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import { useUserStore } from '@/store/user'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
