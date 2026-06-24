@@ -1,5 +1,4 @@
 <!-- 素材选择弹层：按 type（图片 / 语音 / 视频 / 图文）从素材库 / 草稿 / 已发布分页选择素材 -->
-<!-- TODO @AI：是不是应该挪到对应的模块？？？ -->
 <template>
   <wd-popup v-model="innerVisible" position="bottom" safe-area-inset-bottom>
     <view class="h-[80vh] bg-white">
@@ -70,7 +69,7 @@ import { computed, ref, watch } from 'vue'
 import { getDraftPage } from '@/api/mp/draft'
 import { getFreePublishPage } from '@/api/mp/freePublish'
 import { getMaterialPage } from '@/api/mp/material'
-import NewsCard from './news-card.vue'
+import NewsCard from '@/pages-mp/components/news-card.vue'
 
 const props = withDefaults(defineProps<{
   accountId?: number
@@ -125,18 +124,11 @@ async function queryList(pageNo: number, pageSize: number) {
       pageNo,
       pageSize,
     }
-    // TODO @AI：这里有个 linter 报错；data
-    // TODO @AI：是不是要拆分成多个？？？
-    let data
-    if (props.type === 'news' && props.newsType === 'draft') {
-      data = await getDraftPage(params)
-    } else if (props.type === 'news') {
-      data = await getFreePublishPage(params)
+    let data: { list: any[], total: number }
+    if (props.type === 'news') {
+      data = await (props.newsType === 'draft' ? getDraftPage(params) : getFreePublishPage(params))
     } else {
-      data = await getMaterialPage({
-        ...params,
-        type: props.type,
-      })
+      data = await getMaterialPage({ ...params, type: props.type })
     }
     pagingRef.value?.completeByTotal(data.list || [], data.total || 0)
   } catch {

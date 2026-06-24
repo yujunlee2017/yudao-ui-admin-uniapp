@@ -99,7 +99,7 @@ import { computed, ref } from 'vue'
 import { createDraft, createEmptyNewsItem, updateDraft } from '@/api/mp/draft'
 import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
-import MaterialPicker from '../../components/material-picker.vue'
+import MaterialPicker from '@/pages-mp/material/components/material-picker.vue'
 import { getMpRouteNumber, getMpRouteString, useMpRouteParams } from '../../utils/route'
 
 const props = defineProps<{

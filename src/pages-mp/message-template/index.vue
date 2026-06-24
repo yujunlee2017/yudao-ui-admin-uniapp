@@ -81,7 +81,7 @@ import { deleteMessageTemplate, getMessageTemplateList, syncMessageTemplate } fr
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
-import AccountPicker from '../components/account-picker.vue'
+import AccountPicker from '@/pages-mp/account/components/account-picker.vue'
 
 definePage({
   style: {
@@ -100,7 +100,7 @@ const syncing = ref(false) // 同步状态
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-mp/index/index')
+  navigateBackPlus()
 }
 
 /** 公众号切换 */
@@ -148,7 +148,6 @@ async function handleSync() {
 }
 
 /** 发送模板消息 */
-// TODO @AI：后端有详情接口么？搞个吧。。。然后交互做成和别的短信模板之类的类似；
 function handleSend(item: MsgTemplate) {
   uni.navigateTo({
     url: `/pages-mp/message-template/send/index?id=${item.id}&accountId=${accountId.value}&title=${encodeURIComponent(item.title || '')}`,

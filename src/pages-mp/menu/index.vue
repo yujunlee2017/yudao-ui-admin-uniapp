@@ -251,8 +251,8 @@ import { deleteMenu, getMenuList, saveMenu } from '@/api/mp/menu'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { handleTree } from '@/utils/tree'
-import AccountPicker from '../components/account-picker.vue'
-import MaterialPicker from '../components/material-picker.vue'
+import AccountPicker from '@/pages-mp/account/components/account-picker.vue'
+import MaterialPicker from '@/pages-mp/material/components/material-picker.vue'
 
 definePage({
   style: {
@@ -320,7 +320,7 @@ const materialPickerType = computed(() => {
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-mp/index/index')
+  navigateBackPlus()
 }
 
 /** 获取菜单类型标签 */

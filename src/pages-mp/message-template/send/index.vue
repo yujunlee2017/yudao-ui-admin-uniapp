@@ -32,15 +32,18 @@
             filterable
             @confirm="handleUserConfirm"
           />
-          <wd-form-item title="模板数据" title-width="220rpx" prop="data">
-            <wd-textarea
-              v-model="formData.data"
-              placeholder="请输入 JSON，例如：{&quot;keyword1&quot;:{&quot;value&quot;:&quot;测试内容&quot;}}"
-              :maxlength="2000"
-              show-word-limit
-              clearable
-            />
+          <wd-cell v-if="template?.content" title="模板内容">
+            <text class="whitespace-pre-wrap break-all text-26rpx text-[#666]">{{ template.content }}</text>
+          </wd-cell>
+          <wd-form-item
+            v-for="param in templateParams"
+            :key="param"
+            :title="param"
+            title-width="220rpx"
+          >
+            <wd-input v-model="paramValues[param]" clearable :placeholder="`请输入「${param}」的值`" />
           </wd-form-item>
+          <wd-cell v-if="template && !templateParams.length" title="模板数据" value="该模板无需填写参数" />
           <wd-form-item title="跳转链接" title-width="220rpx" prop="url">
             <wd-input v-model="formData.url" clearable placeholder="请输入跳转链接" />
           </wd-form-item>
@@ -65,12 +68,12 @@
 
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
-import type { MsgTemplateSend } from '@/api/mp/messageTemplate'
+import type { MsgTemplate, MsgTemplateSend } from '@/api/mp/messageTemplate'
 import type { MpUser } from '@/api/mp/user'
 import { onLoad } from '@dcloudio/uni-app'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, ref } from 'vue'
-import { sendMessageTemplate } from '@/api/mp/messageTemplate'
+import { computed, reactive, ref } from 'vue'
+import { getMessageTemplate, sendMessageTemplate } from '@/api/mp/messageTemplate'
 import { getUserPage } from '@/api/mp/user'
 import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
@@ -93,7 +96,13 @@ definePage({
 const toast = useToast()
 const id = computed(() => getMpRouteNumber(routeParams.id))
 const accountId = computed(() => getMpRouteNumber(routeParams.accountId))
+const template = ref<MsgTemplate>() // 模板详情
+const templateParams = ref<string[]>([]) // 模板内容里的参数名（{{xxx.DATA}}）
+const paramValues = reactive<Record<string, string>>({}) // 各参数填写值
 const templateTitle = computed(() => {
+  if (template.value?.title) {
+    return template.value.title
+  }
   const title = getMpRouteString(routeParams.title)
   try {
     return decodeURIComponent(title)
@@ -107,7 +116,7 @@ const userList = ref<MpUser[]>([]) // 用户列表
 const formData = ref<MsgTemplateSend>({
   id: id.value,
   userId: undefined!,
-  data: '',
+  data: {},
   url: '',
   miniProgramAppId: '',
   miniProgramPagePath: '',
@@ -125,6 +134,21 @@ const selectedUserLabel = computed(() => {
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mp/message-template/index')
+}
+
+/** 加载模板详情：解析内容里的参数占位 {{xxx.DATA}} */
+async function loadTemplate() {
+  if (!id.value) {
+    return
+  }
+  template.value = await getMessageTemplate(id.value)
+  const content = template.value?.content || ''
+  const names = Array.from(content.matchAll(/\{\{(\w+)\.DATA\}\}/g), match => match[1])
+  const params = Array.from(new Set(names))
+  templateParams.value = params
+  params.forEach((param) => {
+    paramValues[param] = paramValues[param] || ''
+  })
 }
 
 /** 加载用户列表 */
@@ -164,14 +188,8 @@ async function handleSubmit() {
   }
 
   const data: MsgTemplateSend = { ...formData.value, id: id.value }
-  if (data.data) {
-    try {
-      data.data = JSON.parse(String(data.data))
-    } catch {
-      toast.show('模板数据不是有效 JSON')
-      return
-    }
-  }
+  // 按模板参数构建微信 data：{ 参数名: 参数值 }
+  data.data = Object.fromEntries(templateParams.value.map(param => [param, paramValues[param] || '']))
   if (data.miniProgramAppId && data.miniProgramPagePath) {
     data.miniprogram = JSON.stringify({
       appid: data.miniProgramAppId,
@@ -193,6 +211,7 @@ async function handleSubmit() {
 onLoad((query) => {
   syncRouteParams(query)
   formData.value.id = id.value
+  loadTemplate()
   loadUserList()
 })
 </script>

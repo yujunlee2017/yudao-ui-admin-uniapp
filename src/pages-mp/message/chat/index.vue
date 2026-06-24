@@ -122,7 +122,7 @@
       </view>
       <wd-picker
         v-model:visible="sendTypePickerVisible"
-        :model-value="sendForm.type"
+        :model-value="[sendForm.type]"
         :columns="sendTypeOptions"
         @confirm="handleSendTypeConfirm"
       />
@@ -183,7 +183,7 @@ import { getMessagePage, sendMessage } from '@/api/mp/message'
 import { getUser } from '@/api/mp/user'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
-import MaterialPicker from '../../components/material-picker.vue'
+import MaterialPicker from '@/pages-mp/material/components/material-picker.vue'
 import ReplyContent from '../../components/reply-content.vue'
 import { getMpRouteNumber, getMpRouteString, useMpRouteParams } from '../../utils/route'
 

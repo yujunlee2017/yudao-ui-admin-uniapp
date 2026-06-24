@@ -1,4 +1,3 @@
-<!-- TODO @AI：挪到 /Users/yunai/Java/yudao-ui-admin-uniapp-next-v4/src/pages-statistics 里；然后功能对齐 vue3 + ep，代码风格参考下其他 statistics -->
 <template>
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
@@ -98,7 +97,7 @@ import {
 } from '@/api/mp/statistics'
 import { navigateBackPlus } from '@/utils'
 import { formatDate, formatDateTime } from '@/utils/date'
-import AccountPicker from '../components/account-picker.vue'
+import AccountPicker from '@/pages-mp/account/components/account-picker.vue'
 
 definePage({
   style: {
@@ -168,7 +167,7 @@ const sections = computed(() => [
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-mp/index/index')
+  navigateBackPlus()
 }
 
 /** 公众号切换 */

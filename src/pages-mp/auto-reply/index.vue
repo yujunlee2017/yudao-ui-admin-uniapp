@@ -106,7 +106,7 @@ import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import AccountPicker from '../components/account-picker.vue'
+import AccountPicker from '@/pages-mp/account/components/account-picker.vue'
 import ReplyContent from '../components/reply-content.vue'
 
 definePage({
@@ -135,7 +135,7 @@ const canCreate = computed(() => {
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-mp/index/index')
+  navigateBackPlus()
 }
 
 /** 公众号切换 */

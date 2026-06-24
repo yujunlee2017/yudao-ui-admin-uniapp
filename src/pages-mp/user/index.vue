@@ -89,7 +89,7 @@ import { getUserPage, syncUser } from '@/api/mp/user'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
-import AccountPicker from '../components/account-picker.vue'
+import AccountPicker from '@/pages-mp/account/components/account-picker.vue'
 import SearchForm from './components/search-form.vue'
 
 definePage({
@@ -111,7 +111,7 @@ const syncing = ref(false) // 同步状态
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-mp/index/index')
+  navigateBackPlus()
 }
 
 /** 获取标签名称 */

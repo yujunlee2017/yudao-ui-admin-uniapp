@@ -17,26 +17,7 @@
           <wd-form-item title="备注" title-width="180rpx" prop="remark">
             <wd-input v-model="formData.remark" clearable placeholder="请输入备注" />
           </wd-form-item>
-          <!-- TODO @AI：标签，是不是要挪到 /Users/yunai/Java/yudao-ui-admin-uniapp-next-v4/src/pages-mp/user/components -->
-          <wd-form-item
-            title="标签"
-            title-width="180rpx"
-            is-link
-            :value="selectedTagLabel"
-            placeholder="请选择标签"
-            @click="tagPickerVisible = true"
-          />
-          <wd-select-picker
-            v-model="formData.tagIds"
-            v-model:visible="tagPickerVisible"
-            title="请选择标签"
-            :columns="tagList"
-            :value-key="tagValueKey"
-            label-key="name"
-            type="checkbox"
-            filterable
-            @update:model-value="handleTagChange"
-          />
+          <TagPicker v-model="formData.tagIds" />
         </wd-cell-group>
       </wd-form>
     </view>
@@ -52,14 +33,13 @@
 
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
-import type { Tag } from '@/api/mp/tag'
 import type { MpUser } from '@/api/mp/user'
 import { onLoad } from '@dcloudio/uni-app'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, ref } from 'vue'
-import { getSimpleTagList } from '@/api/mp/tag'
 import { getUser, updateUser } from '@/api/mp/user'
 import { delay, navigateBackPlus } from '@/utils'
+import TagPicker from '@/pages-mp/tag/components/tag-picker.vue'
 import { getMpRouteNumber, useMpRouteParams } from '../../utils/route'
 
 const props = defineProps<{
@@ -84,20 +64,6 @@ const formData = ref<MpUser>({
   tagIds: [],
 }) // 表单数据
 const formRef = ref<FormInstance>() // 表单组件引用
-const tagList = ref<Tag[]>([]) // 标签列表
-const tagPickerVisible = ref(false) // 标签选择弹窗
-const tagValueKey = 'tagId'
-
-const selectedTagLabel = computed(() => {
-  const tagIds = formData.value.tagIds || []
-  if (tagIds.length === 0) {
-    return ''
-  }
-  return tagIds
-    .map(id => tagList.value.find(tag => tag.tagId === id)?.name)
-    .filter(Boolean)
-    .join('、')
-})
 
 /** 返回上一页 */
 function handleBack() {
@@ -114,21 +80,6 @@ async function getDetail() {
     formData.value.tagIds = formData.value.tagIds || []
   } catch {
     // 请求层已提示错误，保留默认表单
-  }
-}
-
-/** 标签变化 */
-function handleTagChange(value: Array<boolean | number | string>) {
-  formData.value.tagIds = value.map(Number)
-}
-
-/** 加载标签列表 */
-async function loadTagList() {
-  try {
-    tagList.value = await getSimpleTagList()
-  } catch {
-    // 标签只是辅助展示，失败时保留已选编号
-    tagList.value = []
   }
 }
 
@@ -157,7 +108,6 @@ async function handleSubmit() {
 /** 初始化 */
 onLoad((query) => {
   syncRouteParams(query)
-  loadTagList()
   getDetail()
 })
 </script>

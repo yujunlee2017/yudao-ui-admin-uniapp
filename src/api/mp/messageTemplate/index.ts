@@ -20,7 +20,7 @@ export interface MsgTemplate {
 export interface MsgTemplateSend {
   id: number
   userId: number
-  data?: string | Record<string, any>
+  data?: Record<string, string>
   url?: string
   miniProgramAppId?: string
   miniProgramPagePath?: string
@@ -30,6 +30,11 @@ export interface MsgTemplateSend {
 /** 获取消息模板列表 */
 export function getMessageTemplateList(params: Record<string, any>) {
   return http.get<MsgTemplate[]>(`${baseUrl}/list`, params)
+}
+
+/** 获取消息模板详情 */
+export function getMessageTemplate(id: number) {
+  return http.get<MsgTemplate>(`${baseUrl}/get?id=${id}`)
 }
 
 /** 删除消息模板 */

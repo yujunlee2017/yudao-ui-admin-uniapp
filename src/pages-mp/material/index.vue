@@ -129,7 +129,7 @@ import { deletePermanentMaterial, getMaterialPage, uploadPermanentMaterial } fro
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
-import AccountPicker from '../components/account-picker.vue'
+import AccountPicker from '@/pages-mp/account/components/account-picker.vue'
 
 definePage({
   style: {
@@ -194,7 +194,7 @@ const uploadButtonText = computed(() => {
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-mp/index/index')
+  navigateBackPlus()
 }
 
 /** 公众号切换 */

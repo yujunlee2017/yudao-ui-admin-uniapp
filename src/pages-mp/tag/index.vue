@@ -10,6 +10,13 @@
     <!-- 公众号选择 -->
     <AccountPicker v-model="accountId" @change="handleAccountChange" />
 
+    <!-- 同步标签 -->
+    <view v-if="hasAccessByCodes(['mp:tag:sync'])" class="flex justify-end bg-white px-24rpx py-16rpx">
+      <wd-button type="success" size="small" :loading="syncing" @click="handleSync">
+        同步标签
+      </wd-button>
+    </view>
+
     <!-- 标签列表 -->
     <z-paging
       ref="pagingRef"
@@ -66,17 +73,6 @@
       :expandable="false"
       @click="handleAdd"
     />
-
-    <!-- 同步按钮 -->
-    <view
-      v-if="hasAccessByCodes(['mp:tag:sync'])"
-      class="fixed bottom-140rpx right-32rpx z-10"
-    >
-      <!-- TODO @AI：同步是不是放在 search 下面哪一行？ -->
-      <wd-button type="success" size="small" :loading="syncing" @click="handleSync">
-        同步
-      </wd-button>
-    </view>
   </view>
 </template>
 
@@ -90,7 +86,7 @@ import { deleteTag, getTagPage, syncTag } from '@/api/mp/tag'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
-import AccountPicker from '../components/account-picker.vue'
+import AccountPicker from '@/pages-mp/account/components/account-picker.vue'
 
 definePage({
   style: {
@@ -109,7 +105,7 @@ const syncing = ref(false) // 同步状态
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-mp/index/index')
+  navigateBackPlus()
 }
 
 /** 公众号切换 */

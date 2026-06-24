@@ -84,7 +84,7 @@ import { submitFreePublish } from '@/api/mp/freePublish'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
-import AccountPicker from '../components/account-picker.vue'
+import AccountPicker from '@/pages-mp/account/components/account-picker.vue'
 import NewsCard from '../components/news-card.vue'
 
 definePage({
@@ -103,7 +103,7 @@ const pagingRef = ref<any>() // 分页组件引用
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-mp/index/index')
+  navigateBackPlus()
 }
 
 /** 获取图文列表 */
