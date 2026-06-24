@@ -1,4 +1,3 @@
-<!-- TODO @AI：从对齐 vue3 + ep 功能来看，还缺什么么？ -->
 <template>
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
@@ -8,7 +7,6 @@
       @click-left="handleBack"
     />
 
-    <!-- TODO @AI：tabs？避免过长？ -->
     <scroll-view scroll-y class="min-h-0 flex-1">
       <view class="p-24rpx">
         <!-- 搜索组件 -->
@@ -26,17 +24,23 @@
           </wd-button>
         </view>
 
-        <!-- 商品概况：浏览量等 6 项 -->
+        <!-- 商品概况 -->
         <view class="mb-24rpx rounded-12rpx bg-white p-24rpx shadow-sm">
           <text class="mb-20rpx block text-30rpx text-[#333] font-semibold">商品概况</text>
           <SummaryGrid :items="summaryItems" reference-label="较前一周期" />
         </view>
 
-        <!-- 商品趋势折线图 -->
-        <StatisticsCard :section="trendSection" :rows="trendRows" />
-
-        <!-- 商品排行 -->
-        <StatisticsCard rank :section="rankSection" :rows="rankRows" />
+        <!-- 分组切换 -->
+        <wd-tabs v-model="activeTab" @change="handleTabChange">
+          <wd-tab title="商品趋势" />
+          <wd-tab title="商品排行" />
+        </wd-tabs>
+        <view v-if="activeTab === 0" class="pt-24rpx">
+          <StatisticsCard :section="trendSection" :rows="trendRows" />
+        </view>
+        <view v-if="activeTab === 1" class="pt-24rpx">
+          <StatisticsCard rank :section="rankSection" :rows="rankRows" />
+        </view>
       </view>
     </scroll-view>
   </view>
@@ -74,11 +78,16 @@ const filters = reactive({
   endTime: defaultEndTime,
 }) // 筛选条件
 const loading = ref(false) // 统计加载状态
-const summary = ref<Record<string, any>>({ value: {}, reference: {} }) // 商品概况
-const trendRows = ref<Record<string, any>[]>([]) // 商品趋势明细（已转元）
-const rankRows = ref<Record<string, any>[]>([]) // 商品排行明细（已转元）
+const activeTab = ref(0) // 当前分组：0 趋势 / 1 排行
+const cache = reactive<Record<string, any>>({}) // 数据缓存：key=`分组@时间区间`
 
 const times = computed(() => formatDateRange([filters.startTime, filters.endTime])) // 查询时间区间
+function cacheKey(name: string | number) {
+  return `${name}@${times.value}`
+}
+const summary = computed<Record<string, any>>(() => cache[cacheKey('summary')] ?? { value: {}, reference: {} }) // 商品概况
+const trendRows = computed<Record<string, any>[]>(() => cache[cacheKey(0)] ?? []) // 商品趋势明细（已转元）
+const rankRows = computed<Record<string, any>[]>(() => cache[cacheKey(1)] ?? []) // 商品排行明细（已转元）
 
 const summaryItems = computed<SummaryItem[]>(() => {
   const value = summary.value.value || {}
@@ -120,8 +129,11 @@ const rankSection: StatisticsSection = {
     { prop: 'name', label: '商品' },
     { prop: 'browseCount', label: '浏览量' },
     { prop: 'browseUserCount', label: '访客数' },
+    { prop: 'cartCount', label: '加购件数' },
+    { prop: 'orderCount', label: '下单件数' },
     { prop: 'orderPayCount', label: '支付件数' },
     { prop: 'orderPayPrice', label: '支付金额', type: 'money' },
+    { prop: 'favoriteCount', label: '收藏数' },
     { prop: 'browseConvertPercent', label: '访客-支付转化率', type: 'percent' },
   ],
   chart: {
@@ -137,27 +149,53 @@ function handleBack() {
   navigateBackPlus()
 }
 
-/** 加载统计数据 */
-async function loadData() {
-  loading.value = true
-  try {
-    const params = { times: times.value }
-    const [summaryData, listData, rankData] = await Promise.all([
-      getProductStatisticsAnalyse(params).catch(() => ({ value: {}, reference: {} })),
-      getProductStatisticsList(params).catch(() => []),
-      getProductStatisticsRankPage({ pageNo: 1, pageSize: 20, times: times.value }).catch(() => ({ list: [] })),
-    ])
-    summary.value = summaryData || { value: {}, reference: {} }
-    // 明细金额由分转元，避免金额 ×100
-    trendRows.value = normalizeRows(listData).map(item => ({
+/** 加载商品概况 */
+async function loadSummary() {
+  const key = cacheKey('summary')
+  const data = await getProductStatisticsAnalyse({ times: times.value }).catch(() => ({ value: {}, reference: {} }))
+  cache[key] = data || { value: {}, reference: {} }
+}
+
+/** 加载指定分组数据（按时间区间缓存，命中则跳过） */
+async function loadTab(tab: number) {
+  const key = cacheKey(tab)
+  if (cache[key] !== undefined) {
+    return
+  }
+  // 明细金额由分转元，避免金额 ×100
+  if (tab === 0) {
+    const listData = await getProductStatisticsList({ times: times.value }).catch(() => [])
+    cache[key] = normalizeRows(listData).map(item => ({
       ...item,
       orderPayPrice: fenToYuan(item.orderPayPrice),
       afterSaleRefundPrice: fenToYuan(item.afterSaleRefundPrice),
     }))
-    rankRows.value = normalizeRows(rankData?.list).map(item => ({
-      ...item,
-      orderPayPrice: fenToYuan(item.orderPayPrice),
-    }))
+    return
+  }
+  const rankData = await getProductStatisticsRankPage({ pageNo: 1, pageSize: 20, times: times.value }).catch(() => ({ list: [] }))
+  cache[key] = normalizeRows(rankData?.list).map(item => ({
+    ...item,
+    orderPayPrice: fenToYuan(item.orderPayPrice),
+  }))
+}
+
+/** 切换分组 */
+async function handleTabChange({ index }: { index: number }) {
+  activeTab.value = index
+  loading.value = true
+  try {
+    await loadTab(index)
+  } finally {
+    loading.value = false
+  }
+}
+
+/** 搜索 / 刷新：强制刷新当前分组并重载概况 */
+async function loadData() {
+  delete cache[cacheKey(activeTab.value)]
+  loading.value = true
+  try {
+    await Promise.all([loadSummary(), loadTab(activeTab.value)])
   } finally {
     loading.value = false
   }

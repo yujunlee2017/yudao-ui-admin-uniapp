@@ -1,10 +1,12 @@
 import type { Dept } from '@/api/system/dept'
 import { getDictLabel } from '@/hooks/useDict'
+import { formatMoney } from '@/utils/format'
+import { isEmptyValue } from '@/utils/is'
 
 export const DEFAULT_VISIBLE_ROWS = 10 // 默认展示行数（折叠态）
 export const MAX_VISIBLE_ROWS = 50 // 展开后的最大展示行数，避免渲染超大列表
 
-// TODO @AI：最好注释下。
+/** 统计表格列定义 */
 export interface StatisticsColumn {
   prop: string
   label: string
@@ -12,20 +14,20 @@ export interface StatisticsColumn {
   type?: 'money' | 'percent'
 }
 
-// TODO @AI：最好注释下。
+/** 统计图表系列定义（多系列折线 / 柱状） */
 export interface StatisticsChartSeries {
   name: string
   prop: string
   type?: 'bar' | 'line'
 }
 
-// TODO @AI：最好注释下。
+/** 漏斗图数据项 */
 export interface StatisticsFunnelItem {
   name: string
   value: number
 }
 
-// TODO @AI：最好注释下。
+/** 统计图表配置（折线 / 柱状 / 饼图 / 漏斗） */
 export interface StatisticsChart {
   type: 'line' | 'bar' | 'pie' | 'funnel'
   categoryProp?: string
@@ -35,7 +37,7 @@ export interface StatisticsChart {
   funnelData?: StatisticsFunnelItem[]
 }
 
-// TODO @AI：最好注释下。
+/** 统计区块配置（表格列 + 图表 + 数据加载） */
 export interface StatisticsSection {
   title: string
   columns?: StatisticsColumn[]
@@ -44,7 +46,6 @@ export interface StatisticsSection {
 }
 
 /** 统一转换统计结果（数组原样返回，对象包成单元素数组） */
-// TODO @AI：这种，貌似改到全局的某个 utils 更好？
 export function normalizeRows(data: any) {
   if (Array.isArray(data)) {
     return data
@@ -79,7 +80,7 @@ export function getChartHeight(section: StatisticsSection, options: { rank?: boo
 /** 格式化字段值（字典/金额/百分比/普通） */
 export function formatColumnValue(row: Record<string, any>, column: StatisticsColumn) {
   const value = row[column.prop]
-  if (value === undefined || value === null || value === '') {
+  if (isEmptyValue(value)) {
     return '-'
   }
   if (column.dictType) {
@@ -99,19 +100,10 @@ export function formatColumnValue(row: Record<string, any>, column: StatisticsCo
 export function formatEntries(row: Record<string, any>) {
   return Object.entries(row)
     .filter(([, value]) => typeof value !== 'object')
-    // TODO @AI：看看全局有没判断空的。如果有，value === undefined || value === null || value === '' 可以简化下呀。
-    .map(([label, value]) => ({ label, value: value === undefined || value === null || value === '' ? '-' : String(value) }))
+    .map(([label, value]) => ({ label, value: isEmptyValue(value) ? '-' : String(value) }))
 }
 
-/** 格式化金额数值 */
-// TODO @AI：有没可能全局有方法，基础目录的 utils 下
-export function formatMoneyValue(value: any) {
-  const numberValue = Number(value || 0)
-  return Number.isNaN(numberValue) ? String(value ?? '-') : numberValue.toFixed(2)
-}
-
-/** 转换为数字 */
-// TODO @AI：有没可能全局有方法，基础目录的 utils 下；改成 toNumberOrZero？
+/** 转换为数字（空值 / 非数字回退 0） */
 export function toNumber(value: any) {
   const numberValue = Number(value || 0)
   return Number.isNaN(numberValue) ? 0 : numberValue
@@ -142,7 +134,7 @@ export function buildAxisOption(section: StatisticsSection, rows: Record<string,
     tooltip: {
       trigger: 'axis',
       confine: true,
-      valueFormatter: (value: any) => chart.money ? formatMoneyValue(value) : String(value ?? '-'),
+      valueFormatter: (value: any) => chart.money ? formatMoney(value) : String(value ?? '-'),
     },
     legend: {
       top: 0,

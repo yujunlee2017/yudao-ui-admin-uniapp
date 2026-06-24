@@ -1,4 +1,3 @@
-<!-- TODO @AI：从对齐 vue3 + ep 功能来看，还缺什么么？ -->
 <template>
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
@@ -8,13 +7,12 @@
       @click-left="handleBack"
     />
 
-    <!-- TODO @AI：tabs？避免过长？类似 crm 的 -->
     <scroll-view scroll-y class="min-h-0 flex-1">
       <view class="p-24rpx">
-        <!-- 会员概览：累计会员数等 4 项（累计值，无环比） -->
+        <!-- 会员累计 -->
         <SummaryGrid class="mb-24rpx" :items="summaryItems" />
 
-        <!-- 搜索组件（用于会员漏斗的时间区间） -->
+        <!-- 搜索组件 -->
         <SearchForm
           class="mb-24rpx"
           :initial-start-time="defaultStartTime"
@@ -29,24 +27,46 @@
           </wd-button>
         </view>
 
-        <!-- 会员漏斗：访客→下单→成交，附客单价 -->
-        <view class="mb-24rpx rounded-12rpx bg-white p-24rpx shadow-sm">
+        <!-- 分组切换 -->
+        <wd-tabs v-model="activeTab" @change="handleTabChange">
+          <wd-tab title="会员概览" />
+          <wd-tab title="终端性别" />
+          <wd-tab title="地域分布" />
+        </wd-tabs>
+
+        <!-- 会员概览 -->
+        <view v-if="activeTab === 0" class="mt-24rpx rounded-12rpx bg-white p-24rpx shadow-sm">
           <view class="mb-20rpx flex items-center justify-between">
-            <text class="text-30rpx text-[#333] font-semibold">会员漏斗</text>
+            <text class="text-30rpx text-[#333] font-semibold">会员概览</text>
             <text class="text-26rpx text-[#999]">客单价 ￥{{ atvText }}</text>
+          </view>
+          <view class="mb-20rpx flex gap-16rpx">
+            <view
+              v-for="item in overviewItems"
+              :key="item.label"
+              class="flex-1 rounded-12rpx bg-[#f7f8fa] px-16rpx py-20rpx"
+            >
+              <text class="block text-24rpx text-[#999]">{{ item.label }}</text>
+              <text class="mt-8rpx block text-36rpx text-[#333] font-semibold">{{ item.value }}</text>
+              <text class="mt-4rpx block text-22rpx" :class="item.rate >= 0 ? 'text-[#f5222d]' : 'text-[#52c41a]'">
+                环比 {{ item.rate >= 0 ? '+' : '' }}{{ item.rate }}%
+              </text>
+            </view>
           </view>
           <YdChart v-if="funnelOption" :option="funnelOption" height="480rpx" />
           <wd-empty v-else icon="content" tip="暂无统计数据" />
         </view>
 
-        <!-- 终端分布 -->
-        <StatisticsCard :section="terminalSection" :rows="terminalRows" />
-
-        <!-- 性别比例 -->
-        <StatisticsCard :section="sexSection" :rows="sexRows" />
+        <!-- 终端分布 + 性别比例 -->
+        <view v-if="activeTab === 1" class="pt-24rpx">
+          <StatisticsCard :section="terminalSection" :rows="terminalRows" />
+          <StatisticsCard :section="sexSection" :rows="sexRows" />
+        </view>
 
         <!-- 地域分布（移动端以排行表呈现，不渲染地图） -->
-        <StatisticsCard :section="areaSection" :rows="areaRows" />
+        <view v-if="activeTab === 2" class="pt-24rpx">
+          <StatisticsCard :section="areaSection" :rows="areaRows" />
+        </view>
       </view>
     </scroll-view>
   </view>
@@ -70,7 +90,7 @@ import { formatDateRange } from '@/utils/date'
 import YdChart from '../../components/yd-chart/yd-chart.vue'
 import SearchForm from '../components/search-form.vue'
 import { fenToYuan } from '@/utils/format'
-import { buildFunnelOption, normalizeRows } from '@/pages-statistics/utils/statistics'
+import { buildFunnelOption, calculateRelativeRate, normalizeRows } from '@/pages-statistics/utils/statistics'
 import StatisticsCard from '@/pages-statistics/components/card/statistics-card.vue'
 import SummaryGrid from '@/pages-statistics/components/card/summary-grid.vue'
 
@@ -89,14 +109,29 @@ const filters = reactive({
   endTime: defaultEndTime,
 }) // 筛选条件
 const loading = ref(false) // 统计加载状态
-const summary = ref<Record<string, any>>({}) // 会员累计概览
-const analyse = ref<Record<string, any>>({}) // 会员漏斗分析
-const terminalRows = ref<Record<string, any>[]>([]) // 终端分布（含字典标签）
-const sexRows = ref<Record<string, any>[]>([]) // 性别分布（含字典标签）
-const areaRows = ref<Record<string, any>[]>([]) // 地域分布（已转元）
+const activeTab = ref(0) // 当前分组：0 概览 / 1 终端性别 / 2 地域
+const summary = ref<Record<string, any>>({}) // 会员累计概览（累计值）
+const cache = reactive<Record<string, any>>({}) // 分组数据缓存：key=`分组@时间区间`
 
 const times = computed(() => formatDateRange([filters.startTime, filters.endTime])) // 查询时间区间
+function tabCacheKey(tab: number) {
+  return `${tab}@${times.value}`
+}
+const analyse = computed<Record<string, any>>(() => cache[tabCacheKey(0)] ?? {}) // 会员漏斗分析
+const terminalRows = computed<Record<string, any>[]>(() => cache[tabCacheKey(1)]?.terminal ?? []) // 终端分布（含字典标签）
+const sexRows = computed<Record<string, any>[]>(() => cache[tabCacheKey(1)]?.sex ?? []) // 性别分布（含字典标签）
+const areaRows = computed<Record<string, any>[]>(() => cache[tabCacheKey(2)] ?? []) // 地域分布（已转元）
 const atvText = computed(() => fenToYuan(analyse.value.atv).toFixed(2)) // 客单价（分转元）
+const overviewItems = computed(() => {
+  const comparison = analyse.value.comparison || {}
+  const value = comparison.value || {}
+  const reference = comparison.reference || {}
+  return [
+    { label: '注册用户数', value: value.registerUserCount || 0, rate: calculateRelativeRate(value.registerUserCount, reference.registerUserCount) },
+    { label: '活跃用户数', value: value.visitUserCount || 0, rate: calculateRelativeRate(value.visitUserCount, reference.visitUserCount) },
+    { label: '充值用户数', value: value.rechargeUserCount || 0, rate: calculateRelativeRate(value.rechargeUserCount, reference.rechargeUserCount) },
+  ]
+}) // 会员概览：注册/活跃/充值用户数 + 环比
 
 const summaryItems = computed<SummaryItem[]>(() => [
   { label: '累计会员数', value: summary.value.userCount || 0 },
@@ -152,33 +187,65 @@ function handleBack() {
   navigateBackPlus()
 }
 
-/** 加载统计数据 */
-async function loadData() {
-  loading.value = true
-  try {
-    const [summaryData, analyseData, terminalData, sexData, areaData] = await Promise.all([
-      getMemberSummary().catch(() => ({})),
-      getMemberAnalyse({ times: times.value }).catch(() => ({})),
+/** 加载会员累计概览 */
+async function loadSummary() {
+  const data = await getMemberSummary().catch(() => ({}))
+  summary.value = data || {}
+}
+
+/** 加载指定分组数据（按时间区间缓存，命中则跳过） */
+async function loadTab(tab: number) {
+  const key = tabCacheKey(tab)
+  if (cache[key] !== undefined) {
+    return
+  }
+  if (tab === 0) {
+    cache[key] = await getMemberAnalyse({ times: times.value }).catch(() => ({})) || {}
+    return
+  }
+  if (tab === 1) {
+    const [terminalData, sexData] = await Promise.all([
       getMemberTerminalStatisticsList().catch(() => []),
       getMemberSexStatisticsList().catch(() => []),
-      getMemberAreaStatisticsList().catch(() => []),
     ])
-    summary.value = summaryData || {}
-    analyse.value = analyseData || {}
-    // 终端、性别使用字典标签，而非原始 code
-    terminalRows.value = normalizeRows(terminalData).map(item => ({
-      ...item,
-      terminalName: getDictLabel(DICT_TYPE.TERMINAL, item.terminal) || '未知',
-    }))
-    sexRows.value = normalizeRows(sexData).map(item => ({
-      ...item,
-      sexName: getDictLabel(DICT_TYPE.SYSTEM_USER_SEX, item.sex) || '未知',
-    }))
-    // 地域支付金额由分转元
-    areaRows.value = normalizeRows(areaData).map(item => ({
-      ...item,
-      orderPayPrice: fenToYuan(item.orderPayPrice),
-    }))
+    // 终端/性别用字典标签，而非原始 code
+    cache[key] = {
+      terminal: normalizeRows(terminalData).map(item => ({
+        ...item,
+        terminalName: getDictLabel(DICT_TYPE.TERMINAL, item.terminal) || '未知',
+      })),
+      sex: normalizeRows(sexData).map(item => ({
+        ...item,
+        sexName: getDictLabel(DICT_TYPE.SYSTEM_USER_SEX, item.sex) || '未知',
+      })),
+    }
+    return
+  }
+  // 地域支付金额由分转元
+  const areaData = await getMemberAreaStatisticsList().catch(() => [])
+  cache[key] = normalizeRows(areaData).map(item => ({
+    ...item,
+    orderPayPrice: fenToYuan(item.orderPayPrice),
+  }))
+}
+
+/** 切换分组 */
+async function handleTabChange({ index }: { index: number }) {
+  activeTab.value = index
+  loading.value = true
+  try {
+    await loadTab(index)
+  } finally {
+    loading.value = false
+  }
+}
+
+/** 搜索 / 刷新：强制刷新当前分组并重载概览 */
+async function loadData() {
+  delete cache[tabCacheKey(activeTab.value)]
+  loading.value = true
+  try {
+    await Promise.all([loadSummary(), loadTab(activeTab.value)])
   } finally {
     loading.value = false
   }

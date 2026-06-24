@@ -1,4 +1,3 @@
-<!-- TODO @AI：从对齐 vue3 + ep 功能来看，还缺什么么？ -->
 <template>
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
@@ -8,10 +7,9 @@
       @click-left="handleBack"
     />
 
-    <!-- TODO @AI：tabs？避免过长？类似 crm 的 -->
     <scroll-view scroll-y class="min-h-0 flex-1">
       <view class="p-24rpx">
-        <!-- 交易概览：昨日/本月 订单数与支付金额 -->
+        <!-- 交易概览 -->
         <SummaryGrid class="mb-24rpx" :items="summaryItems" reference-label="较前一周期" />
 
         <!-- 搜索组件 -->
@@ -29,14 +27,20 @@
           </wd-button>
         </view>
 
-        <!-- 交易状况：营业额等 7 项金额 -->
-        <view class="mb-24rpx rounded-12rpx bg-white p-24rpx shadow-sm">
+        <!-- 分组切换 -->
+        <wd-tabs v-model="activeTab" @change="handleTabChange">
+          <wd-tab title="交易状况" />
+          <wd-tab title="交易趋势" />
+        </wd-tabs>
+        <!-- 交易状况 -->
+        <view v-if="activeTab === 0" class="mt-24rpx rounded-12rpx bg-white p-24rpx shadow-sm">
           <text class="mb-20rpx block text-30rpx text-[#333] font-semibold">交易状况</text>
           <SummaryGrid :items="trendItems" reference-label="较前一周期" />
         </view>
-
         <!-- 交易趋势折线图 -->
-        <StatisticsCard :section="trendSection" :rows="trendRows" />
+        <view v-if="activeTab === 1" class="pt-24rpx">
+          <StatisticsCard :section="trendSection" :rows="trendRows" />
+        </view>
       </view>
     </scroll-view>
   </view>
@@ -74,11 +78,16 @@ const filters = reactive({
   endTime: defaultEndTime,
 }) // 筛选条件
 const loading = ref(false) // 统计加载状态
+const activeTab = ref(0) // 当前分组：0 交易状况 / 1 交易趋势
 const summary = ref<Record<string, any>>({ value: {}, reference: {} }) // 交易概览（昨日/本月）
-const trend = ref<Record<string, any>>({ value: {}, reference: {} }) // 交易状况概览
-const trendRows = ref<Record<string, any>[]>([]) // 交易趋势明细（已转元）
+const cache = reactive<Record<string, any>>({}) // 分组数据缓存：key=`分组@时间区间`
 
 const times = computed(() => formatDateRange([filters.startTime, filters.endTime])) // 查询时间区间
+function tabCacheKey(tab: number) {
+  return `${tab}@${times.value}`
+}
+const trend = computed<Record<string, any>>(() => cache[tabCacheKey(0)] ?? { value: {}, reference: {} }) // 交易状况概览
+const trendRows = computed<Record<string, any>[]>(() => cache[tabCacheKey(1)] ?? []) // 交易趋势明细（已转元）
 
 const summaryItems = computed<SummaryItem[]>(() => [
   { label: '昨日订单数', value: summary.value.value?.yesterdayOrderCount || 0, reference: summary.value.reference?.yesterdayOrderCount },
@@ -127,26 +136,51 @@ function handleBack() {
   navigateBackPlus()
 }
 
-/** 加载统计数据 */
-async function loadData() {
+/** 加载交易概览 */
+async function loadSummary() {
+  const data = await getTradeStatisticsSummary().catch(() => ({ value: {}, reference: {} }))
+  summary.value = data || { value: {}, reference: {} }
+}
+
+/** 加载指定分组数据（按时间区间缓存，命中则跳过） */
+async function loadTab(tab: number) {
+  const key = tabCacheKey(tab)
+  if (cache[key] !== undefined) {
+    return
+  }
+  const params = { times: times.value }
+  if (tab === 0) {
+    cache[key] = await getTradeStatisticsAnalyse(params).catch(() => ({ value: {}, reference: {} })) || { value: {}, reference: {} }
+    return
+  }
+  // 明细金额由分转元，避免折线图金额 ×100
+  const listData = await getTradeStatisticsList(params).catch(() => [])
+  cache[key] = normalizeRows(listData).map(item => ({
+    ...item,
+    turnoverPrice: fenToYuan(item.turnoverPrice),
+    orderPayPrice: fenToYuan(item.orderPayPrice),
+    rechargePrice: fenToYuan(item.rechargePrice),
+    expensePrice: fenToYuan(item.expensePrice),
+  }))
+}
+
+/** 切换分组 */
+async function handleTabChange({ index }: { index: number }) {
+  activeTab.value = index
   loading.value = true
   try {
-    const params = { times: times.value }
-    const [summaryData, trendData, listData] = await Promise.all([
-      getTradeStatisticsSummary().catch(() => ({ value: {}, reference: {} })),
-      getTradeStatisticsAnalyse(params).catch(() => ({ value: {}, reference: {} })),
-      getTradeStatisticsList(params).catch(() => []),
-    ])
-    summary.value = summaryData || { value: {}, reference: {} }
-    trend.value = trendData || { value: {}, reference: {} }
-    // 明细金额由分转元，避免折线图金额 ×100
-    trendRows.value = normalizeRows(listData).map(item => ({
-      ...item,
-      turnoverPrice: fenToYuan(item.turnoverPrice),
-      orderPayPrice: fenToYuan(item.orderPayPrice),
-      rechargePrice: fenToYuan(item.rechargePrice),
-      expensePrice: fenToYuan(item.expensePrice),
-    }))
+    await loadTab(index)
+  } finally {
+    loading.value = false
+  }
+}
+
+/** 搜索 / 刷新：强制刷新当前分组并重载概览 */
+async function loadData() {
+  delete cache[tabCacheKey(activeTab.value)]
+  loading.value = true
+  try {
+    await Promise.all([loadSummary(), loadTab(activeTab.value)])
   } finally {
     loading.value = false
   }
