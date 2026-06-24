@@ -12,14 +12,32 @@
       <wd-search v-model="searchKeyword" placeholder="搜索" hide-cancel />
     </view>
 
-    <!-- 常用区域 -->
+    <!-- 工作台布局 -->
     <view class="mx-20rpx mt-20rpx overflow-hidden rounded-16rpx bg-white">
       <view class="section-header">
-        <text class="text-28rpx text-#333 font-500">常用</text>
+        <text class="text-28rpx text-#333 font-500">工作台布局</text>
+      </view>
+      <view class="flex gap-16rpx px-30rpx pb-24rpx">
+        <view
+          v-for="opt in layoutOptions"
+          :key="opt.value"
+          class="flex-1 rounded-12rpx py-16rpx text-center text-26rpx"
+          :class="menuLayout === opt.value ? 'bg-#3370ff text-white' : 'bg-#f5f5f5 text-#666'"
+          @click="setMenuLayout(opt.value)"
+        >
+          {{ opt.label }}
+        </view>
+      </view>
+    </view>
+
+    <!-- 我的常用区域 -->
+    <view class="mx-20rpx mt-20rpx overflow-hidden rounded-16rpx bg-white">
+      <view class="section-header">
+        <text class="text-28rpx text-#333 font-500">我的常用</text>
       </view>
       <!-- 常用分组 -->
       <view v-if="favoriteMenus.length > 0" class="menu-list">
-        <view v-for="menu in favoriteMenus" :key="menu.key" class="menu-item">
+        <view v-for="(menu, idx) in favoriteMenus" :key="menu.key" class="menu-item">
           <view class="menu-item__left">
             <view class="menu-item__icon" :style="{ backgroundColor: menu.iconColor ? `${menu.iconColor}20` : '#f5f5f5' }">
               <wd-icon :name="menu.icon" size="40rpx" :color="menu.iconColor" />
@@ -27,17 +45,22 @@
             <text class="menu-item__name">{{ menu.name }}</text>
           </view>
           <view class="menu-item__right">
-            <wd-button size="small" type="warning" variant="plain" custom-class="mr-16rpx" @click="handleRemoveFavorite(menu)">
-              从常用移除
-            </wd-button>
-            <wd-icon name="menu" size="40rpx" color="#ccc" />
+            <view class="p-6rpx" @click="moveFavorite(menu, -1)">
+              <wd-icon name="arrow-up" size="36rpx" :color="idx === 0 ? '#dcdcdc' : '#999'" />
+            </view>
+            <view class="p-6rpx" @click="moveFavorite(menu, 1)">
+              <wd-icon name="arrow-down" size="36rpx" :color="idx === favoriteMenus.length - 1 ? '#dcdcdc' : '#999'" />
+            </view>
+            <view class="toggle-btn toggle-remove" @click="handleRemoveFavorite(menu)">
+              <view class="toggle-bar-h" />
+            </view>
           </view>
         </view>
       </view>
       <view v-else class="flex flex-col items-center justify-center py-60rpx">
         <wd-button type="primary" variant="plain" @click="scrollToGroups">
           <wd-icon name="plus" size="28rpx" />
-          添加我常用的
+          添加我的常用
         </wd-button>
       </view>
     </view>
@@ -57,12 +80,13 @@
               <text class="menu-item__name">{{ menu.name }}</text>
             </view>
             <view class="menu-item__right">
-              <wd-button v-if="isInFavorites(menu)" size="small" type="warning" variant="plain" @click="handleRemoveFavorite(menu)">
-                从常用移除
-              </wd-button>
-              <wd-button v-else size="small" type="primary" variant="plain" @click="handleAddFavorite(menu)">
-                添加至常用
-              </wd-button>
+              <view v-if="isInFavorites(menu)" class="toggle-btn toggle-remove" @click="handleRemoveFavorite(menu)">
+                <view class="toggle-bar-h" />
+              </view>
+              <view v-else class="toggle-btn toggle-add" @click="handleAddFavorite(menu)">
+                <view class="toggle-bar-h" />
+                <view class="toggle-bar-v" />
+              </view>
             </view>
           </view>
         </view>
@@ -75,11 +99,11 @@
 </template>
 
 <script lang="ts" setup>
-import type { MenuGroup, MenuItem } from '../index'
+import type { MenuGroup, MenuItem, MenuLayout } from '../index'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { useUserStore } from '@/store/user'
 import { navigateBackPlus } from '@/utils'
-import { getMenuGroups, getMenuItemByKey } from '../index'
+import { getMenuGroups, getMenuItemByKey, menuLayout, setMenuLayout } from '../index'
 
 defineOptions({
   name: 'FavoriteSettings',
@@ -96,13 +120,14 @@ const toast = useToast()
 
 const searchKeyword = ref('') // 搜索关键词
 const menuGroups = ref<MenuGroup[]>([]) // 菜单分组列表
+/** 常用服务菜单（从 store 中计算得出） */
 const favoriteMenus = computed<MenuItem[]>(() => {
   const keys = userStore.favoriteMenus
   if (!keys || keys.length === 0) {
     return []
   }
   return keys.map(key => getMenuItemByKey(key)).filter(Boolean) as MenuItem[]
-}) // 常用服务菜单（从 store 中计算得出）
+})
 
 /** 过滤后的菜单分组 */
 const filteredMenuGroups = computed(() => {
@@ -147,6 +172,20 @@ function handleRemoveFavorite(menu: MenuItem) {
     userStore.setFavoriteMenus(keys)
   }
   toast.success('已移除')
+}
+
+/** 上下移动常用菜单 */
+function moveFavorite(menu: MenuItem, dir: number) {
+  const keys = [...userStore.favoriteMenus]
+  const i = keys.indexOf(menu.key)
+  const j = i + dir
+  if (i < 0 || j < 0 || j >= keys.length) {
+    return
+  }
+  const tmp = keys[i]
+  keys[i] = keys[j]
+  keys[j] = tmp
+  userStore.setFavoriteMenus(keys)
 }
 
 /** 检查菜单是否已添加到常用服务 */
@@ -210,6 +249,52 @@ onLoad(() => {
   &__right {
     display: flex;
     align-items: center;
+    gap: 16rpx;
   }
+}
+
+/* 圆形 加号/减号 切换按钮 */
+.toggle-btn {
+  position: relative;
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+}
+
+.toggle-add {
+  background: #3370ff;
+}
+
+.toggle-remove {
+  background: #f2f3f5;
+}
+
+.toggle-bar-h,
+.toggle-bar-v {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 2rpx;
+}
+
+.toggle-bar-h {
+  width: 22rpx;
+  height: 4rpx;
+  transform: translate(-50%, -50%);
+}
+
+.toggle-bar-v {
+  width: 4rpx;
+  height: 22rpx;
+  transform: translate(-50%, -50%);
+}
+
+.toggle-add .toggle-bar-h,
+.toggle-add .toggle-bar-v {
+  background: #fff;
+}
+
+.toggle-remove .toggle-bar-h {
+  background: #bbb;
 }
 </style>

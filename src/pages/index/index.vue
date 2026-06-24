@@ -1,10 +1,16 @@
 <template>
-  <view class="yd-page-container">
+  <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="工作台"
       placeholder safe-area-inset-top fixed
-    />
+    >
+      <template #right>
+        <view class="pr-10rpx" @click="gotoSearch">
+          <wd-icon name="search-line" size="40rpx" color="#333" />
+        </view>
+      </template>
+    </wd-navbar>
     <!-- 用户信息头部 -->
     <UserHeader />
     <!-- Banner 轮播图 -->
@@ -29,4 +35,11 @@ definePage({
     navigationStyle: 'custom',
   },
 })
+
+/** 跳转到菜单搜索页 */
+function gotoSearch() {
+  uni.navigateTo({
+    url: '/pages/index/search/index',
+  })
+}
 </script>

@@ -1,11 +1,11 @@
 <template>
-  <view>
-    <wd-grid :column="4" clickable :border="false">
+  <view style="--wot-grid-item-padding: 12rpx 8rpx; --wot-grid-item-bg: transparent">
+    <wd-grid :column="column" clickable :border="false">
       <wd-grid-item
         v-for="menu in menus"
         :key="menu.key"
         :text="menu.name"
-        @click="handleClick(menu)"
+        @click="navigateToMenu(menu)"
       >
         <template #icon>
           <view
@@ -22,53 +22,20 @@
 
 <script lang="ts" setup>
 import type { MenuItem } from '../index'
-import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { isTabBarPage } from '@/tabbar/config'
-import { parseUrl, setTabParams } from '@/utils/url'
+import { useMenuNavigate } from '../index'
 
 defineOptions({
   name: 'MenuGrid',
 })
 
-defineProps<{
+withDefaults(defineProps<{
   menus: MenuItem[] // 菜单列表
-}>()
+  column?: number // 每行列数
+}>(), {
+  column: 4,
+})
 
-const toast = useToast()
-
-/** 处理菜单点击 */
-function handleClick(menu: MenuItem) {
-  console.log('点击菜单：', menu)
-  if (!menu.url) {
-    toast.show('功能开发中')
-    return
-  }
-
-  // 解析 URL，提取路径和参数
-  const { path, query } = parseUrl(menu.url)
-
-  // 判断是否是 tabBar 页面
-  if (isTabBarPage(path)) {
-    // tabBar 页面：通过 globalData 传参，使用 switchTab 跳转
-    if (Object.keys(query).length > 0) {
-      setTabParams(query)
-    }
-    uni.switchTab({
-      url: path,
-      fail: () => {
-        toast.show('页面不存在')
-      },
-    })
-  } else {
-    // 普通页面：使用 navigateTo 跳转
-    uni.navigateTo({
-      url: menu.url,
-      fail: () => {
-        toast.show('页面不存在')
-      },
-    })
-  }
-}
+const { navigateToMenu } = useMenuNavigate()
 
 /** 获取图标样式 */
 function getIconStyle(menu: MenuItem) {
@@ -82,7 +49,7 @@ function getIconStyle(menu: MenuItem) {
 <style lang="scss" scoped>
 :deep(.wd-grid-item__text) {
   width: 100%;
-  min-height: 64rpx;
+  min-height: 40rpx;
   font-size: 24rpx;
   line-height: 32rpx;
   color: #333;

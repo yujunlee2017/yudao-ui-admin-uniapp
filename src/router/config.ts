@@ -14,7 +14,7 @@ export const REGISTER_PAGE = '/pages-core/auth/register' // edit by 芋艿：自
 export const CODE_LOGIN_PAGE = '/pages-core/auth/code-login' // edit by 芋艿：自定义了短信登录页路径
 export const FORGET_PASSWORD_PAGE = '/pages-core/auth/forget-password' // edit by 芋艿：自定义了忘记密码页路径
 export const NOT_FOUND_PAGE = '/pages-core/error/404' // edit by 芋艿：调整 404 页面路径
-export const ONLY_PC_PAGE = '/pages-core/error/only-pc' // edit by 芋艿：新增仅 PC 端访问提示页面路径
+export const ONLY_PC_PAGE = '/pages-core/error/pc-only' // edit by 芋艿：新增仅 PC 端访问提示页面路径
 
 // TODO @芋艿：【优化】貌似 unibest 这个变量没用？！
 export const LOGIN_PAGE_LIST = [
