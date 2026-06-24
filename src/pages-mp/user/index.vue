@@ -206,6 +206,7 @@ onMounted(() => {
   uni.$on('mp:user:reload', reload)
 })
 
+/** 卸载 */
 onUnload(() => {
   uni.$off('mp:user:reload', reload)
 })

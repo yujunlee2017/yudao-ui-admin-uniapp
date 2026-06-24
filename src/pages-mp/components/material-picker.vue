@@ -1,4 +1,4 @@
-<!-- TODO @AI：注释下作用 -->
+<!-- 素材选择弹层：按 type（图片 / 语音 / 视频 / 图文）从素材库 / 草稿 / 已发布分页选择素材 -->
 <!-- TODO @AI：是不是应该挪到对应的模块？？？ -->
 <template>
   <wd-popup v-model="innerVisible" position="bottom" safe-area-inset-bottom>

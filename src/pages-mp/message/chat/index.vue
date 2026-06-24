@@ -10,11 +10,13 @@
     <!-- 粉丝信息 -->
     <view class="bg-white px-24rpx py-20rpx">
       <view class="flex items-center gap-16rpx">
-        <image
+        <wd-img
           v-if="userInfo.headImageUrl"
           :src="userInfo.headImageUrl"
-          class="h-72rpx w-72rpx rounded-full"
+          width="72rpx"
+          height="72rpx"
           mode="aspectFill"
+          round
         />
         <view
           v-else
@@ -389,6 +391,28 @@ async function handleSend() {
     return
   }
 
+  let articles: any[] | undefined
+  if (sendForm.type === 'news') {
+    if (!sendForm.articlesText) {
+      toast.show('请选择或输入图文素材')
+      return
+    }
+    try {
+      articles = JSON.parse(sendForm.articlesText)
+    } catch {
+      toast.show('图文 JSON 格式不正确')
+      return
+    }
+    if (!Array.isArray(articles) || articles.length === 0) {
+      toast.show('请选择或输入图文素材')
+      return
+    }
+    if (articles.length > 1) {
+      articles = [articles[0]]
+      toast.show('客服图文消息最多发送 1 条，已保留第一条')
+    }
+  }
+
   const data: any = {
     userId: userId.value,
     accountId: accountId.value,
@@ -402,17 +426,8 @@ async function handleSend() {
     musicUrl: sendForm.musicUrl,
     hqMusicUrl: sendForm.hqMusicUrl,
   }
-  if (sendForm.type === 'news' && sendForm.articlesText) {
-    try {
-      data.articles = JSON.parse(sendForm.articlesText)
-      if (data.articles.length > 1) {
-        data.articles = [data.articles[0]]
-        toast.show('客服图文消息最多发送 1 条，已保留第一条')
-      }
-    } catch {
-      toast.show('图文 JSON 格式不正确')
-      return
-    }
+  if (articles) {
+    data.articles = articles
   }
 
   sending.value = true

@@ -1,4 +1,4 @@
-<!-- TODO @AI：注释下作用 -->
+<!-- 公众号消息内容展示：按消息 type 渲染文本 / 图片 / 语音 / 视频 / 图文 / 音乐 -->
 <template>
   <view>
     <text v-if="type === 'text'">{{ content || '-' }}</text>

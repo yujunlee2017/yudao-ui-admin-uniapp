@@ -58,6 +58,7 @@
               :title="item.responseTitle"
               :description="item.responseDescription"
               :articles="item.responseArticles"
+              :thumb-media-url="item.responseThumbMediaUrl"
               :music-url="item.responseMusicUrl"
               :hq-music-url="item.responseHqMusicUrl"
             />

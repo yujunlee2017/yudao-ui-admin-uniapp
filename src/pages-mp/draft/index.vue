@@ -194,10 +194,12 @@ async function handleDelete(item: Draft) {
   reload()
 }
 
+/** 初始化 */
 onMounted(() => {
   uni.$on('mp:draft:reload', reload)
 })
 
+/** 卸载 */
 onUnload(() => {
   uni.$off('mp:draft:reload', reload)
 })

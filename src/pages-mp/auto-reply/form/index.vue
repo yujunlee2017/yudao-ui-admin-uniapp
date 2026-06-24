@@ -191,6 +191,7 @@ const formSchema = createFormSchema({
   responseTitle: [{ required: () => formData.value.responseMessageType === 'video', message: '视频标题不能为空' }],
   responseDescription: [{ required: () => formData.value.responseMessageType === 'video', message: '视频描述不能为空' }],
   responseThumbMediaId: [{ required: () => formData.value.responseMessageType === 'music', message: '请选择音乐缩略图' }],
+  responseThumbMediaUrl: [{ required: () => formData.value.responseMessageType === 'music', message: '请选择音乐缩略图' }],
   responseMusicUrl: [{ required: () => formData.value.responseMessageType === 'music', message: '音乐链接不能为空' }],
   responseHqMusicUrl: [{ required: () => formData.value.responseMessageType === 'music', message: '高质量音乐链接不能为空' }],
 })
@@ -199,18 +200,9 @@ const formRef = ref<FormInstance>() // 表单组件引用
 const requestMessageOptions = computed(() => getStrDictOptions(DICT_TYPE.MP_MESSAGE_TYPE).filter(item => requestMessageTypes.includes(String(item.value))))
 const responseMessageOptions = computed(() => getStrDictOptions(DICT_TYPE.MP_MESSAGE_TYPE).filter(item => ['text', 'image', 'voice', 'video', 'news', 'music'].includes(String(item.value))))
 const canPickMaterial = computed(() => ['image', 'voice', 'video', 'news', 'music'].includes(String(formData.value.responseMessageType)))
-const materialPickerType = computed(() => {
-  // TODO @AI：是不是 includes 简化？
-  if (formData.value.responseMessageType === 'news') {
-    return 'news'
-  }
-  if (formData.value.responseMessageType === 'voice') {
-    return 'voice'
-  }
-  if (formData.value.responseMessageType === 'video') {
-    return 'video'
-  }
-  return 'image'
+const materialPickerType = computed<'image' | 'voice' | 'video' | 'news'>(() => {
+  const type = formData.value.responseMessageType
+  return type === 'voice' || type === 'video' || type === 'news' ? type : 'image'
 })
 
 /** 返回上一页 */
@@ -223,13 +215,8 @@ async function getDetail() {
   if (!id.value) {
     return
   }
-  // TODO @AI：是不是不用 try catch 呀？
-  try {
-    formData.value = await getAutoReply(id.value)
-    responseArticlesText.value = formData.value.responseArticles ? JSON.stringify(formData.value.responseArticles) : ''
-  } catch {
-    // 请求层已提示错误，保留默认表单
-  }
+  formData.value = await getAutoReply(id.value)
+  responseArticlesText.value = formData.value.responseArticles ? JSON.stringify(formData.value.responseArticles) : ''
 }
 
 /** 选择素材 */
@@ -259,13 +246,23 @@ async function handleSubmit() {
     return
   }
   const data: AutoReply = { ...formData.value }
-  if (data.responseMessageType === 'news' && responseArticlesText.value) {
+  if (data.responseMessageType === 'news') {
+    if (!responseArticlesText.value) {
+      toast.show('请选择图文素材')
+      return
+    }
+    let articles: any[]
     try {
-      data.responseArticles = JSON.parse(responseArticlesText.value)
+      articles = JSON.parse(responseArticlesText.value)
     } catch {
       toast.show('图文 JSON 格式不正确')
       return
     }
+    if (!Array.isArray(articles) || articles.length === 0) {
+      toast.show('请选择图文素材')
+      return
+    }
+    data.responseArticles = articles
   }
   data.id = id.value || data.id
   data.accountId = data.accountId || accountId.value || 0

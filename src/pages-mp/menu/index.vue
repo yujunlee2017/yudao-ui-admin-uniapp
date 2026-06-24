@@ -132,7 +132,7 @@
                 />
                 <wd-picker
                   v-model:visible="pickerVisible.type"
-                  :model-value="activeMenu.type"
+                  :model-value="[activeMenu.type]"
                   :columns="menuTypeOptions"
                   @confirm="handleTypeConfirm"
                 />
@@ -175,7 +175,7 @@
                   />
                   <wd-picker
                     v-model:visible="pickerVisible.replyType"
-                    :model-value="activeMenu.reply?.type"
+                    :model-value="[activeMenu.reply?.type]"
                     :columns="replyTypeOptions"
                     @confirm="handleReplyTypeConfirm"
                   />
@@ -243,7 +243,7 @@
 </template>
 
 <script lang="ts" setup>
-import type { MpMenu } from '@/api/mp/menu'
+import type { MenuReply, MpMenu } from '@/api/mp/menu'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, reactive, ref } from 'vue'
@@ -301,6 +301,7 @@ const pickerVisible = reactive({
 }) // 选择器状态
 const materialPickerVisible = ref(false) // 素材选择弹窗
 const replyArticlesText = ref('') // 图文 JSON
+const replyCache: Record<string, MenuReply> = {} // 按回复类型缓存已填内容，切换类型时保留
 
 const isLeafMenu = computed(() => !(activeMenu.value.children && activeMenu.value.children.length > 0))
 const canPickReplyMaterial = computed(() => ['image', 'voice', 'video', 'news', 'music'].includes(String(activeMenu.value.reply?.type)))
@@ -358,7 +359,7 @@ function menuToFrontend(item: MpMenu): MpMenu {
   return {
     ...item,
     reply: {
-      type: item.replyMessageType || 'text',
+      type: item.replyMessageType,
       accountId: item.accountId,
       content: item.replyContent,
       mediaId: item.replyMediaId,
@@ -397,10 +398,46 @@ function menuToBackend(menu: MpMenu): MpMenu {
   }
 }
 
+/** 校验单个菜单的图文必填，返回错误提示（无错误返回空串） */
+function validateMenuArticles(menu: MpMenu): string {
+  // 图文跳转：需选择素材库（articleId）并填好图文数组
+  if (menu.type === 'article_view_limited') {
+    if (!menu.articleId || !menu.replyArticles?.length) {
+      return `菜单「${menu.name || '未命名菜单'}」请选择图文素材`
+    }
+    return ''
+  }
+  // 点击 / 扫码回复 + 图文回复：需填好图文数组
+  if ((menu.type === 'click' || menu.type === 'scancode_waitmsg') && menu.reply?.type === 'news') {
+    if (!menu.reply.articles?.length) {
+      return `菜单「${menu.name || '未命名菜单'}」请选择图文回复素材`
+    }
+  }
+  return ''
+}
+
 /** 保存菜单 */
 async function handleSave() {
   if (!accountId.value) {
     toast.show('请先选择公众号')
+    return
+  }
+  // 图文必填校验，对齐后端 NewsMessageGroup / ViewLimitedButtonGroup，避免提交后 400
+  for (const parent of menuList.value) {
+    const errorMessages = [validateMenuArticles(parent), ...(parent.children || []).map(validateMenuArticles)]
+    const errorMessage = errorMessages.find(Boolean)
+    if (errorMessage) {
+      toast.show(errorMessage)
+      return
+    }
+  }
+  // 保存即真实下发到公众号，二次确认防呆
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: '确定要保存并发布菜单吗？',
+    })
+  } catch {
     return
   }
   const menus = menuList.value.map((item) => {
@@ -464,9 +501,9 @@ function handleAddParent() {
 /** 新增子菜单 */
 function handleAddChild(parent: MpMenu, parentIndex: number) {
   parent.children = parent.children || []
+  // 不预设 type，由用户主动选择菜单内容，避免空内容直接 400（对齐 PC）
   const menu: MpMenu = {
     name: '子菜单名称',
-    type: 'click',
     reply: {
       type: 'text',
       accountId: accountId.value,
@@ -522,6 +559,8 @@ function handleEditChild(menu: MpMenu, parentIndex: number, childIndex: number) 
 function ensureMenu(menu: MpMenu) {
   menu.reply = menu.reply || { type: 'text', accountId: accountId.value }
   menu.children = menu.children || []
+  // 回复类型缓存按当前编辑的菜单隔离，避免跨菜单串数据
+  Object.keys(replyCache).forEach(key => delete replyCache[key])
   return menu
 }
 
@@ -532,12 +571,21 @@ function handleTypeConfirm({ value }: { value: string[] }) {
 
 /** 回复类型选择 */
 function handleReplyTypeConfirm({ value }: { value: string[] }) {
-  // 切换回复类型时重置为仅含类型的回复，避免跨类型字段残留
-  activeMenu.value.reply = {
-    type: value[0],
-    accountId: accountId.value,
+  const nextType = value[0]
+  const current = activeMenu.value.reply || {}
+  if (current.type === nextType) {
+    return
   }
-  replyArticlesText.value = ''
+  // 缓存当前类型已填内容，切回时恢复，避免跨类型来回切丢失数据（对齐 PC tabCache）
+  if (current.type) {
+    replyCache[current.type] = current
+  }
+  const cached = replyCache[nextType]
+  activeMenu.value.reply = cached || { type: nextType, accountId: accountId.value }
+  // 同步图文 JSON 文本框
+  replyArticlesText.value = activeMenu.value.reply.articles?.length
+    ? JSON.stringify(activeMenu.value.reply.articles)
+    : ''
 }
 
 /** 图文素材转后端 Article 结构（title/description/picUrl/url） */
@@ -610,9 +658,6 @@ async function handleDeleteActive() {
   }
   editorVisible.value = false
 }
-// TODO @AI：对比下 pc，是不是完整了实现了？
-// TODO @AI：是不是要拆下 components 更好维护？？？
-// TODO @AI：一些地方需要 upload 等组件，是不是没弄？其他模块，你也检查下。特别是自动回复那。
 </script>
 
 <style lang="scss" scoped>

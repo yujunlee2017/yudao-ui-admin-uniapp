@@ -36,6 +36,9 @@
           <view class="mb-12rpx whitespace-pre-wrap text-26rpx text-[#666]">
             {{ item.content || '-' }}
           </view>
+          <view class="mb-12rpx whitespace-pre-wrap text-26rpx text-[#666]">
+            示例：{{ item.example || '-' }}
+          </view>
           <view class="mb-20rpx text-24rpx text-[#999]">
             创建时间：{{ formatDateTime(item.createTime) || '-' }}
           </view>

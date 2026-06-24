@@ -1,4 +1,4 @@
-<!-- TODO @AI：注释下作用 -->
+<!-- 图文消息卡片：展示一组图文 articles（封面图 + 标题） -->
 <template>
   <view class="overflow-hidden border border-[#eee] rounded-12rpx bg-white">
     <view

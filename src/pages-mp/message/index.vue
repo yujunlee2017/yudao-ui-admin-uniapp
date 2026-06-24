@@ -61,6 +61,8 @@
               :event-key="item.eventKey"
               :articles="item.articles"
               :thumb-media-url="item.thumbMediaUrl"
+              :music-url="item.musicUrl"
+              :hq-music-url="item.hqMusicUrl"
               :location-x="item.locationX"
               :location-y="item.locationY"
               :label="item.label"

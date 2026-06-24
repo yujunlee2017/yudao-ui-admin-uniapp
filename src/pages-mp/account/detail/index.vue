@@ -107,17 +107,10 @@ function handleBack() {
 
 /** 加载详情 */
 async function getDetail() {
-  if (!id.value || deleting.value) {
+  if (!id.value) {
     return
   }
-  try {
-    toast.loading('加载中...')
-    formData.value = await getAccount(id.value)
-  } catch {
-    formData.value = undefined
-  } finally {
-    toast.close()
-  }
+  formData.value = await getAccount(id.value)
 }
 
 /** 编辑账号 */
