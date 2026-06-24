@@ -20,10 +20,12 @@
           </wd-form-item>
           <wd-form-item title="支付金额" title-width="220rpx" prop="payPrice" center>
             <wd-input-number v-model="formData.payPrice" :min="0" :step="0.01" />
+            <!-- TODO @AI：应该在一行，目前换行了 -->
             <text class="ml-12rpx text-26rpx text-[#999]">元</text>
           </wd-form-item>
           <wd-form-item title="赠送金额" title-width="220rpx" prop="bonusPrice" center>
             <wd-input-number v-model="formData.bonusPrice" :min="0" :step="0.01" />
+            <!-- TODO @AI：应该在一行，目前换行了 -->
             <text class="ml-12rpx text-26rpx text-[#999]">元</text>
           </wd-form-item>
           <wd-form-item title="开启状态" title-width="220rpx" prop="status" center>

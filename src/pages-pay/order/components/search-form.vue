@@ -19,6 +19,7 @@
         </view>
         <wd-input v-model="formData.appId" type="number" placeholder="请输入应用编号" clearable />
       </view>
+      <!-- TODO @AI：select 更好，太长了 -->
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           支付渠道
@@ -54,6 +55,7 @@
         </view>
         <wd-input v-model="formData.channelOrderNo" placeholder="请输入渠道单号" clearable />
       </view>
+      <!-- TODO @AI：select 更好，太长了 -->
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           支付状态

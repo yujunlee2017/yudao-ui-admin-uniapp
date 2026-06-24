@@ -1,4 +1,5 @@
 <template>
+  <!-- TODO @AI：不用单独出一个菜单哈；在首页；去掉首页的菜单，就是； -->
   <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
