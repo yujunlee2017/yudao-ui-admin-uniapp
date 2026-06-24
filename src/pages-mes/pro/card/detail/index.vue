@@ -37,25 +37,23 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="formData" class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button v-if="canEdit" class="flex-1" type="warning" @click="handleEdit">
-          编辑
-        </wd-button>
-        <wd-button v-if="canSubmit" class="flex-1" type="primary" @click="handleSubmitCard">
-          提交
-        </wd-button>
-        <wd-button v-if="canFinish" class="flex-1" type="success" @click="handleFinish">
-          完成
-        </wd-button>
-        <wd-button v-if="canCancel" class="flex-1" type="danger" @click="handleCancel">
-          取消
-        </wd-button>
-        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
-          删除
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions v-if="formData" content-class="yd-detail-footer-actions">
+      <wd-button v-if="canEdit" class="flex-1" type="warning" @click="handleEdit">
+        编辑
+      </wd-button>
+      <wd-button v-if="canSubmit" class="flex-1" type="primary" @click="handleSubmitCard">
+        提交
+      </wd-button>
+      <wd-button v-if="canFinish" class="flex-1" type="success" @click="handleFinish">
+        完成
+      </wd-button>
+      <wd-button v-if="canCancel" class="flex-1" type="danger" @click="handleCancel">
+        取消
+      </wd-button>
+      <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        删除
+      </wd-button>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -69,7 +67,8 @@ import { cancelCard, deleteCard, finishCard, getCard, submitCard } from '@/api/m
 import { getBarcodeByBusiness } from '@/api/mes/wm/barcode'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import CardProcessList from '../components/card-process-list.vue'
@@ -123,7 +122,13 @@ async function getDetail() {
     barcodeData.value = undefined
     return
   }
-  formData.value = await getCard(cardId.value)
+  const detailData = await getCard(cardId.value)
+    if (!detailData) {
+      uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+      setTimeout(() => handleBack(), 300)
+      return
+    }
+    formData.value = detailData
   await getBarcodeDetail()
 }
 
@@ -210,7 +215,7 @@ async function handleDelete() {
     await deleteCard(formData.value.id)
     toast.success('删除成功')
     uni.$emit('mes:pro:card:reload')
-    delay(handleBack)
+    setTimeout(() => handleBack(), 500)
   } finally {
     deleting.value = false
   }

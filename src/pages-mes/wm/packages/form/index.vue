@@ -134,26 +134,24 @@
     </scroll-view>
 
     <!-- 底部保存按钮 -->
-    <view v-if="hasFooterActions" class="yd-detail-footer">
-      <view class="flex gap-24rpx text-28rpx">
-        <view
-          v-if="isEditable"
-          class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white"
-          :class="formLoading ? 'opacity-60' : ''"
-          @click="handleSubmit"
-        >
-          {{ formLoading ? '保存中...' : '保存' }}
-        </view>
-        <view
-          v-if="canFinish"
-          class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white"
-          :class="finishLoading ? 'opacity-60' : ''"
-          @click="handleFinishPackage"
-        >
-          {{ finishLoading ? '完成中...' : '完成' }}
-        </view>
+    <MesFooterActions v-if="hasFooterActions" content-class="flex gap-24rpx text-28rpx">
+      <view
+        v-if="isEditable"
+        class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white"
+        :class="formLoading ? 'opacity-60' : ''"
+        @click="handleSubmit"
+      >
+        {{ formLoading ? '保存中...' : '保存' }}
       </view>
-    </view>
+      <view
+        v-if="canFinish"
+        class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white"
+        :class="finishLoading ? 'opacity-60' : ''"
+        @click="handleFinishPackage"
+      >
+        {{ finishLoading ? '完成中...' : '完成' }}
+      </view>
+    </MesFooterActions>
 
     <ClientSelector ref="clientSelectorRef" :multiple="false" @confirm="handleClientConfirm" />
     <wd-picker
@@ -171,6 +169,7 @@
 <script lang="ts" setup>
 import type { MdClientVO } from '@/api/mes/md/client'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import type { MdUnitMeasureVO } from '@/api/mes/md/unitmeasure'
 import type { WmPackageCreateReqVO } from '@/api/mes/wm/packages'
 import type { User } from '@/api/system/user'

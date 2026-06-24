@@ -63,11 +63,11 @@
     </view>
 
     <!-- 底部保存按钮 -->
-    <view class="yd-detail-footer">
+    <MesFooterActions>
       <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
         保存
       </wd-button>
-    </view>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -86,6 +86,7 @@ import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum } from '@/utils/constants'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 
 const props = defineProps<{ id?: number | string }>()
 

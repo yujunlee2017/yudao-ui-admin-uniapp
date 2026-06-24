@@ -86,11 +86,11 @@
     </scroll-view>
 
     <!-- 添加按钮（仅 edit 模式） -->
-    <view v-if="canCreate" class="yd-detail-footer">
+    <MesFooterActions v-if="canCreate">
       <wd-button type="primary" block :loading="creating" @click="handleAdd">
         {{ creating ? '创建中...' : '添加 BOM 物料' }}
       </wd-button>
-    </view>
+    </MesFooterActions>
 
     <!-- 物料选择器 -->
     <ItemSelector v-if="canCreate" ref="itemSelectorRef" :item-id="itemId" :existing-ids="existingBomItemIds" @confirm="handleItemConfirm" />
@@ -104,7 +104,8 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createProductBom, deleteProductBom, getProductBomListByItemId, updateProductBom } from '@/api/mes/md/item/productBom'
 import { useAccess } from '@/hooks/useAccess'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import ItemSelector from '../components/item-selector.vue'
 
@@ -278,7 +279,7 @@ async function handleDelete(bom: MdProductBomVO) {
 onMounted(() => {
   if (!itemId.value) {
     uni.showToast({ icon: 'none', title: '缺少物料编号' })
-    delay(handleBack, 1000)
+    setTimeout(() => handleBack(), 1000)
     return
   }
   loadList()

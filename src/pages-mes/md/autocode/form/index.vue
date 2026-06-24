@@ -90,11 +90,11 @@
     </view>
 
     <!-- 底部保存按钮 -->
-    <view class="yd-detail-footer">
+    <MesFooterActions>
       <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
         保存
       </wd-button>
-    </view>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -107,7 +107,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { createAutoCodeRule, getAutoCodeRule, updateAutoCodeRule } from '@/api/mes/md/autocode/rule'
 import { getBoolDictOptions, getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import AutoCodePartSection from '../components/auto-code-part-section.vue'
@@ -206,7 +207,9 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:md:autocode:reload')
-    delay(handleBack)
+    setTimeout(() => {
+      handleBack()
+    }, 500)
   } finally {
     formLoading.value = false
   }

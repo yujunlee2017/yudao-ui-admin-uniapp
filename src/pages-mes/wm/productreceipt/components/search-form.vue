@@ -29,29 +29,25 @@
         <view class="yd-search-form-label">
           生产工单
         </view>
-        <view class="yd-search-form-selector" @click="openWorkOrderSelector">
-          <text v-if="selectedWorkOrderText" class="text-[#333]">
-            {{ selectedWorkOrderText }}
-          </text>
-          <text v-else class="text-[#999]">
-            请选择生产工单
-          </text>
-          <wd-icon v-if="formData.workOrderId" name="close" size="28rpx" color="#999" @click.stop="clearWorkOrder" />
-        </view>
+        <MesSearchSelectorField
+          :model-value="selectedWorkOrderText"
+          placeholder="请选择生产工单"
+          clearable
+          @click="openWorkOrderSelector"
+          @clear="clearWorkOrder"
+        />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           产品物料
         </view>
-        <view class="yd-search-form-selector" @click="openItemSelector">
-          <text v-if="selectedItemText" class="text-[#333]">
-            {{ selectedItemText }}
-          </text>
-          <text v-else class="text-[#999]">
-            请选择产品物料
-          </text>
-          <wd-icon v-if="formData.itemId" name="close" size="28rpx" color="#999" @click.stop="clearItem" />
-        </view>
+        <MesSearchSelectorField
+          :model-value="selectedItemText"
+          placeholder="请选择产品物料"
+          clearable
+          @click="openItemSelector"
+          @clear="clearItem"
+        />
       </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -74,6 +70,7 @@ import type { ProWorkOrderVO } from '@/api/mes/pro/workorder'
 import type { WmProductReceiptQueryParams } from '@/api/mes/wm/productreceipt'
 import { computed, reactive, ref } from 'vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import MesSearchSelectorField from '@/pages-mes/components/mes-search-selector-field.vue'
 import WorkOrderSelector from '../../../pro/card/components/workorder-selector.vue'
 import ItemSelector from '../../../md/item/components/item-selector.vue'
 
@@ -176,17 +173,3 @@ function handleReset() {
   emit('reset')
 }
 </script>
-
-<style lang="scss" scoped>
-.yd-search-form-selector {
-  min-height: 72rpx;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16rpx;
-  padding: 0 24rpx;
-  border-radius: 8rpx;
-  background: #f7f8fa;
-  font-size: 28rpx;
-}
-</style>

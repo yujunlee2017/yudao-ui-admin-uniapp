@@ -50,19 +50,17 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="hasFooter" class="yd-detail-footer">
-      <view class="flex gap-24rpx text-28rpx">
-        <view v-if="canUpdatePrepare" class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white" @click="handleEdit">
-          编辑
-        </view>
-        <view v-if="canSubmitPrepare" class="flex-1 rounded-8rpx bg-[#faad14] py-20rpx text-center text-white" :class="submitting ? 'opacity-60' : ''" @click="handleSubmitSalesNotice">
-          {{ submitting ? '提交中...' : '提交' }}
-        </view>
-        <view v-if="canFinishApproved" class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white" @click="handleFinish">
-          执行出库
-        </view>
+    <MesFooterActions v-if="hasFooter" content-class="flex gap-24rpx text-28rpx">
+      <view v-if="canUpdatePrepare" class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white" @click="handleEdit">
+        编辑
       </view>
-    </view>
+      <view v-if="canSubmitPrepare" class="flex-1 rounded-8rpx bg-[#faad14] py-20rpx text-center text-white" :class="submitting ? 'opacity-60' : ''" @click="handleSubmitSalesNotice">
+        {{ submitting ? '提交中...' : '提交' }}
+      </view>
+      <view v-if="canFinishApproved" class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white" @click="handleFinish">
+        执行出库
+      </view>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -74,7 +72,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteSalesNotice, getSalesNotice, submitSalesNotice } from '@/api/mes/wm/salesnotice'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmSalesNoticeStatusEnum } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
 import SalesNoticeLineList from '../components/sales-notice-line-list.vue'
@@ -133,7 +132,13 @@ async function getDetail() {
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getSalesNotice(currentId.value)
+    const detailData = await getSalesNotice(currentId.value)
+    if (!detailData) {
+      uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+      setTimeout(() => handleBack(), 300)
+      return
+    }
+    formData.value = detailData
   } finally {
     toast.close()
   }
@@ -180,7 +185,9 @@ async function handleDelete() {
     await deleteSalesNotice(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:wm:salesnotice:reload')
-    delay(handleBack)
+    setTimeout(() => {
+      handleBack()
+    }, 500)
   } finally {
     deleting.value = false
   }

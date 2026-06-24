@@ -38,22 +38,20 @@
     </view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="hasFooter" class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button v-if="hasAccessByCodes(['mes:md-unit-measure:update'])" class="flex-1" type="warning" @click="handleEdit">
-          编辑
-        </wd-button>
-        <wd-button
-          v-if="hasAccessByCodes(['mes:md-unit-measure:delete'])"
-          class="flex-1"
-          type="danger"
-          :loading="deleting"
-          @click="handleDelete"
-        >
-          删除
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions v-if="hasFooter" content-class="yd-detail-footer-actions">
+      <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        编辑
+      </wd-button>
+      <wd-button
+        v-if="canDelete"
+        class="flex-1"
+        type="danger"
+        :loading="deleting"
+        @click="handleDelete"
+      >
+        删除
+      </wd-button>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -66,9 +64,10 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteUnitMeasure, getUnitMeasure, getUnitMeasureSimpleList } from '@/api/mes/md/unitmeasure'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { delay, navigateBackPlus } from '@/utils'
+import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 
 const props = defineProps<{ id?: number | string }>()
 
@@ -87,7 +86,9 @@ const formData = ref<MdUnitMeasureVO>() // 详情数据
 const unitOptions = ref<MdUnitMeasureVO[]>([]) // 单位选项
 const currentId = computed(() => getRouteQueryNumber('id')) // 当前详情编号
 const deleting = ref(false) // 删除状态
-const hasFooter = computed(() => hasAccessByCodes(['mes:md-unit-measure:update']) || hasAccessByCodes(['mes:md-unit-measure:delete']))
+const canUpdate = computed(() => hasAccessByCodes(['mes:md-unit-measure:update']))
+const canDelete = computed(() => hasAccessByCodes(['mes:md-unit-measure:delete']))
+const hasFooter = computed(() => canUpdate.value || canDelete.value)
 const primaryUnitName = computed(() => {
   const primaryId = formData.value?.primaryId
   if (!primaryId) {
@@ -160,7 +161,7 @@ async function handleDelete() {
     toast.close()
     toast.success('删除成功')
     uni.$emit('mes:md:unitmeasure:reload')
-    delay(handleBack)
+    setTimeout(() => handleBack(), 500)
   } catch {
     toast.close()
   } finally {

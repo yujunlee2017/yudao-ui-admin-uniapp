@@ -1,16 +1,19 @@
 <template>
-  <view class="mt-24rpx bg-white">
-    <view class="flex items-center justify-between border-b border-b-[#f0f0f0] px-24rpx py-20rpx">
-      <view class="text-30rpx text-[#333] font-semibold">
-        调拨物料
-      </view>
+  <MesLineListShell
+    title="调拨物料"
+    :loading="loading"
+    :empty="list.length === 0"
+    empty-text="暂无调拨物料"
+    :readonly="readonly"
+    add-text="添加物料"
+    :show-add="!stockMode"
+    @add="openCreateLineForm"
+  >
+    <template #action>
       <view v-if="readonly" class="text-24rpx text-[#999]">
         只读
       </view>
-      <view
-        v-else-if="stockMode"
-        class="text-24rpx text-[#999]"
-      >
+      <view v-else-if="stockMode" class="text-24rpx text-[#999]">
         上架模式
       </view>
       <view
@@ -20,113 +23,104 @@
       >
         添加物料
       </view>
-    </view>
-
-    <view v-if="loading" class="px-24rpx py-32rpx text-center text-26rpx text-[#999]">
-      加载中...
-    </view>
-    <view v-else-if="list.length === 0" class="px-24rpx py-32rpx text-center text-26rpx text-[#999]">
-      暂无调拨物料
-    </view>
-    <view v-else class="px-24rpx py-8rpx">
-      <view
-        v-for="item in list"
-        :key="item.id"
-        class="border-b border-b-[#f5f5f5] py-20rpx last:border-b-0"
-      >
-        <view class="mb-12rpx flex items-start justify-between gap-16rpx">
-          <view class="min-w-0 flex-1">
-            <view class="truncate text-28rpx text-[#333] font-medium">
-              {{ item.itemCode || `物料 #${item.itemId}` }}
-            </view>
-            <view class="mt-4rpx truncate text-26rpx text-[#666]">
-              {{ item.itemName || '-' }}
-            </view>
+    </template>
+    <view
+      v-for="item in list"
+      :key="item.id"
+      class="border-b border-b-[#f5f5f5] py-20rpx last:border-b-0"
+    >
+      <view class="mb-12rpx flex items-start justify-between gap-16rpx">
+        <view class="min-w-0 flex-1">
+          <view class="truncate text-28rpx text-[#333] font-medium">
+            {{ item.itemCode || `物料 #${item.itemId}` }}
           </view>
-          <view class="shrink-0 text-right">
-            <view class="text-24rpx text-[#999]">
-              {{ item.unitMeasureName || '-' }}
+          <view class="mt-4rpx truncate text-26rpx text-[#666]">
+            {{ item.itemName || '-' }}
+          </view>
+        </view>
+        <view class="shrink-0 text-right">
+          <view class="text-24rpx text-[#999]">
+            {{ item.unitMeasureName || '-' }}
+          </view>
+          <view v-if="!readonly && !stockMode" class="mt-8rpx flex gap-16rpx text-24rpx">
+            <text class="text-[#1677ff]" @click.stop="openUpdateLineForm(item)">
+              编辑
+            </text>
+            <text class="text-[#f56c6c]" @click.stop="handleDeleteLine(item)">
+              删除
+            </text>
+          </view>
+          <view v-if="stockMode" class="mt-8rpx flex justify-end gap-16rpx text-24rpx">
+            <text class="text-[#52c41a]" @click.stop="openCreateDetailForm(item)">
+              上架
+            </text>
+          </view>
+        </view>
+      </view>
+      <view class="mb-8rpx flex text-26rpx text-[#666]">
+        <text class="mr-8rpx shrink-0 text-[#999]">规格型号：</text>
+        <text class="min-w-0 flex-1 truncate">{{ item.specification || '-' }}</text>
+      </view>
+      <view class="mb-8rpx flex text-26rpx text-[#666]">
+        <text class="mr-8rpx shrink-0 text-[#999]">转移数量：</text>
+        <text class="min-w-0 flex-1 truncate">{{ item.quantity ?? '-' }}</text>
+      </view>
+      <view class="mb-8rpx flex text-26rpx text-[#666]">
+        <text class="mr-8rpx shrink-0 text-[#999]">批次号：</text>
+        <text class="min-w-0 flex-1 truncate">{{ item.batchCode || '-' }}</text>
+      </view>
+      <view class="mb-8rpx flex text-26rpx text-[#666]">
+        <text class="mr-8rpx shrink-0 text-[#999]">移出位置：</text>
+        <text class="min-w-0 flex-1 truncate">
+          {{ item.fromWarehouseName || '-' }} / {{ item.fromLocationName || '-' }} / {{ item.fromAreaName || '-' }}
+        </text>
+      </view>
+      <view class="mb-16rpx flex text-26rpx text-[#666]">
+        <text class="mr-8rpx shrink-0 text-[#999]">备注：</text>
+        <text class="min-w-0 flex-1 truncate">{{ item.remark || '-' }}</text>
+      </view>
+
+      <view class="rounded-10rpx bg-[#fafafa] px-20rpx py-16rpx">
+        <view class="mb-12rpx flex items-center justify-between">
+          <view class="text-26rpx text-[#333] font-medium">
+            上架明细
+          </view>
+          <view class="text-24rpx text-[#999]">
+            合计 {{ getDetailQuantityTotal(item.id) }} / {{ item.quantity ?? '-' }}
+          </view>
+        </view>
+        <view v-if="getDetailList(item.id).length === 0" class="py-12rpx text-24rpx text-[#999]">
+          暂无上架明细
+        </view>
+        <view
+          v-for="detail in getDetailList(item.id)"
+          :key="detail.id"
+          class="border-t border-t-[#eee] py-12rpx first:border-t-0"
+        >
+          <view class="mb-8rpx flex items-start justify-between gap-16rpx">
+            <view class="min-w-0 flex-1 text-26rpx text-[#666]">
+              <text class="text-[#999]">移入位置：</text>
+              {{ detail.toWarehouseName || '-' }} / {{ detail.toLocationName || '-' }} / {{ detail.toAreaName || '-' }}
             </view>
-            <view v-if="!readonly && !stockMode" class="mt-8rpx flex gap-16rpx text-24rpx">
-              <text class="text-[#1677ff]" @click.stop="openUpdateLineForm(item)">
+            <view v-if="stockMode" class="flex shrink-0 gap-16rpx text-24rpx">
+              <text class="text-[#1677ff]" @click.stop="openUpdateDetailForm(item, detail)">
                 编辑
               </text>
-              <text class="text-[#f56c6c]" @click.stop="handleDeleteLine(item)">
+              <text class="text-[#f56c6c]" @click.stop="handleDeleteDetail(item, detail)">
                 删除
               </text>
             </view>
-            <view v-if="stockMode" class="mt-8rpx flex justify-end gap-16rpx text-24rpx">
-              <text class="text-[#52c41a]" @click.stop="openCreateDetailForm(item)">
-                上架
-              </text>
-            </view>
           </view>
-        </view>
-        <view class="mb-8rpx flex text-26rpx text-[#666]">
-          <text class="mr-8rpx shrink-0 text-[#999]">规格型号：</text>
-          <text class="min-w-0 flex-1 truncate">{{ item.specification || '-' }}</text>
-        </view>
-        <view class="mb-8rpx flex text-26rpx text-[#666]">
-          <text class="mr-8rpx shrink-0 text-[#999]">转移数量：</text>
-          <text class="min-w-0 flex-1 truncate">{{ item.quantity ?? '-' }}</text>
-        </view>
-        <view class="mb-8rpx flex text-26rpx text-[#666]">
-          <text class="mr-8rpx shrink-0 text-[#999]">批次号：</text>
-          <text class="min-w-0 flex-1 truncate">{{ item.batchCode || '-' }}</text>
-        </view>
-        <view class="mb-8rpx flex text-26rpx text-[#666]">
-          <text class="mr-8rpx shrink-0 text-[#999]">移出位置：</text>
-          <text class="min-w-0 flex-1 truncate">
-            {{ item.fromWarehouseName || '-' }} / {{ item.fromLocationName || '-' }} / {{ item.fromAreaName || '-' }}
-          </text>
-        </view>
-        <view class="mb-16rpx flex text-26rpx text-[#666]">
-          <text class="mr-8rpx shrink-0 text-[#999]">备注：</text>
-          <text class="min-w-0 flex-1 truncate">{{ item.remark || '-' }}</text>
-        </view>
-
-        <view class="rounded-10rpx bg-[#fafafa] px-20rpx py-16rpx">
-          <view class="mb-12rpx flex items-center justify-between">
-            <view class="text-26rpx text-[#333] font-medium">
-              上架明细
-            </view>
-            <view class="text-24rpx text-[#999]">
-              合计 {{ getDetailQuantityTotal(item.id) }} / {{ item.quantity ?? '-' }}
-            </view>
+          <view class="mb-8rpx text-26rpx text-[#666]">
+            <text class="text-[#999]">上架数量：</text>{{ detail.quantity ?? '-' }}
           </view>
-          <view v-if="getDetailList(item.id).length === 0" class="py-12rpx text-24rpx text-[#999]">
-            暂无上架明细
-          </view>
-          <view
-            v-for="detail in getDetailList(item.id)"
-            :key="detail.id"
-            class="border-t border-t-[#eee] py-12rpx first:border-t-0"
-          >
-            <view class="mb-8rpx flex items-start justify-between gap-16rpx">
-              <view class="min-w-0 flex-1 text-26rpx text-[#666]">
-                <text class="text-[#999]">移入位置：</text>
-                {{ detail.toWarehouseName || '-' }} / {{ detail.toLocationName || '-' }} / {{ detail.toAreaName || '-' }}
-              </view>
-              <view v-if="stockMode" class="flex shrink-0 gap-16rpx text-24rpx">
-                <text class="text-[#1677ff]" @click.stop="openUpdateDetailForm(item, detail)">
-                  编辑
-                </text>
-                <text class="text-[#f56c6c]" @click.stop="handleDeleteDetail(item, detail)">
-                  删除
-                </text>
-              </view>
-            </view>
-            <view class="mb-8rpx text-26rpx text-[#666]">
-              <text class="text-[#999]">上架数量：</text>{{ detail.quantity ?? '-' }}
-            </view>
-            <view class="text-26rpx text-[#666]">
-              <text class="text-[#999]">备注：</text>{{ detail.remark || '-' }}
-            </view>
+          <view class="text-26rpx text-[#666]">
+            <text class="text-[#999]">备注：</text>{{ detail.remark || '-' }}
           </view>
         </view>
       </view>
     </view>
-  </view>
+  </MesLineListShell>
 
   <!-- 调拨物料表单弹窗 -->
   <wd-popup
@@ -350,6 +344,7 @@ import { getWarehouseLocationSimpleList } from '@/api/mes/wm/warehouse/location'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { formatDate } from '@/utils/date'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
+import MesLineListShell from '@/pages-mes/components/mes-line-list-shell.vue'
 
 interface WmTransferLineFormData extends Partial<WmTransferLineCreateReqVO> {
   id?: number

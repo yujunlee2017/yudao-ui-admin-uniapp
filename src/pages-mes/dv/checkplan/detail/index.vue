@@ -36,34 +36,32 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="hasFooter" class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button
-          v-if="canUpdatePrepare"
-          class="flex-1" type="warning" @click="handleEdit"
-        >
-          编辑
-        </wd-button>
-        <wd-button
-          v-if="canDeletePrepare"
-          class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
-        >
-          删除
-        </wd-button>
-        <wd-button
-          v-if="canEnable"
-          class="flex-1" type="success" @click="handleEnable"
-        >
-          启用
-        </wd-button>
-        <wd-button
-          v-if="canDisable"
-          class="flex-1" type="warning" @click="handleDisable"
-        >
-          停用
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions v-if="hasFooter" content-class="yd-detail-footer-actions">
+      <wd-button
+        v-if="canUpdatePrepare"
+        class="flex-1" type="warning" @click="handleEdit"
+      >
+        编辑
+      </wd-button>
+      <wd-button
+        v-if="canDeletePrepare"
+        class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
+      >
+        删除
+      </wd-button>
+      <wd-button
+        v-if="canEnable"
+        class="flex-1" type="success" @click="handleEnable"
+      >
+        启用
+      </wd-button>
+      <wd-button
+        v-if="canDisable"
+        class="flex-1" type="warning" @click="handleDisable"
+      >
+        停用
+      </wd-button>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -76,7 +74,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteCheckPlan, disableCheckPlan, enableCheckPlan, getCheckPlan } from '@/api/mes/dv/checkplan'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesDvCheckPlanStatusEnum } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
 import MachineryList from '../components/machinery-list.vue'
@@ -132,7 +131,13 @@ async function getDetail() {
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getCheckPlan(currentId.value)
+    const detailData = await getCheckPlan(currentId.value)
+    if (!detailData) {
+      uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+      setTimeout(() => handleBack(), 300)
+      return
+    }
+    formData.value = detailData
   } finally {
     toast.close()
   }
@@ -174,7 +179,9 @@ async function handleDelete() {
     await deleteCheckPlan(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:dv:checkplan:reload')
-    delay(handleBack)
+    setTimeout(() => {
+      handleBack()
+    }, 500)
   } finally {
     deleting.value = false
   }

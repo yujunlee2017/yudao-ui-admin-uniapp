@@ -23,16 +23,14 @@
       </wd-cell-group>
       <view class="h-160rpx" />
     </scroll-view>
-    <view v-if="hasFooter" class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button v-if="hasAccessByCodes(['mes:tm-tool:update'])" class="flex-1" type="warning" @click="handleEdit">
-          编辑
-        </wd-button>
-        <wd-button v-if="hasAccessByCodes(['mes:tm-tool:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
-          删除
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions v-if="hasFooter" content-class="yd-detail-footer-actions">
+      <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        编辑
+      </wd-button>
+      <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        删除
+      </wd-button>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -45,7 +43,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteTool, getTool } from '@/api/mes/tm/tool'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
 
@@ -69,7 +68,9 @@ const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/tm/tool/detail/
 const currentId = computed(() => getRouteQueryNumber('id'))
 const formData = ref<TmToolVO>()
 const deleting = ref(false)
-const hasFooter = computed(() => hasAccessByCodes(['mes:tm-tool:update']) || hasAccessByCodes(['mes:tm-tool:delete']))
+const canUpdate = computed(() => hasAccessByCodes(['mes:tm-tool:update']))
+const canDelete = computed(() => hasAccessByCodes(['mes:tm-tool:delete']))
+const hasFooter = computed(() => canUpdate.value || canDelete.value)
 
 function handleBack() {
   navigateBackPlus('/pages-mes/tm/tool/index')
@@ -81,7 +82,13 @@ async function getDetail() {
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getTool(currentId.value)
+    const detailData = await getTool(currentId.value)
+    if (!detailData) {
+      uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+      setTimeout(() => handleBack(), 300)
+      return
+    }
+    formData.value = detailData
   } finally {
     toast.close()
   }
@@ -127,7 +134,7 @@ async function handleDelete() {
     toast.close()
     toast.success('删除成功')
     uni.$emit('mes:tm:tool:reload')
-    delay(handleBack)
+    setTimeout(() => handleBack(), 500)
   } catch {
     toast.close()
   } finally {

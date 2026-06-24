@@ -42,11 +42,11 @@
     </scroll-view>
 
     <!-- 底部保存按钮 -->
-    <view class="yd-detail-footer">
+    <MesFooterActions>
       <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
         保存
       </wd-button>
-    </view>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -57,7 +57,8 @@ import { onMounted, reactive, ref } from 'vue'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { getHolidayByDay, saveHoliday } from '@/api/mes/cal/holiday'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -141,7 +142,7 @@ async function handleSubmit() {
     })
     toast.success('设置成功')
     uni.$emit('mes:cal:holiday:reload')
-    delay(handleBack)
+    setTimeout(() => handleBack(), 500)
   } finally {
     formLoading.value = false
   }

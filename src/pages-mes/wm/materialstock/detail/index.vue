@@ -33,19 +33,17 @@
     </view>
 
     <!-- 底部操作按钮 -->
-    <view class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button
-          v-if="hasAccessByCodes(['mes:wm-material-stock:update'])"
-          class="flex-1"
-          :type="formData?.frozen ? 'success' : 'warning'"
-          :loading="frozenLoading"
-          @click="handleFrozenChange"
-        >
-          {{ formData?.frozen ? '解除冻结' : '冻结库存' }}
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions content-class="yd-detail-footer-actions">
+      <wd-button
+        v-if="hasAccessByCodes(['mes:wm-material-stock:update'])"
+        class="flex-1"
+        :type="formData?.frozen ? 'success' : 'warning'"
+        :loading="frozenLoading"
+        @click="handleFrozenChange"
+      >
+        {{ formData?.frozen ? '解除冻结' : '冻结库存' }}
+      </wd-button>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -56,6 +54,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { getMaterialStock, updateMaterialStockFrozen } from '@/api/mes/wm/materialstock'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import { navigateBackPlus } from '@/utils'
 import { formatDate, formatDateTime } from '@/utils/date'
 
@@ -95,7 +94,13 @@ async function getDetail() {
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getMaterialStock(currentId.value)
+    const detailData = await getMaterialStock(currentId.value)
+    if (!detailData) {
+      uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+      setTimeout(() => handleBack(), 300)
+      return
+    }
+    formData.value = detailData
   } finally {
     toast.close()
   }

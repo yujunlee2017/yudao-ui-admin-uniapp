@@ -42,16 +42,14 @@
     </scroll-view>
 
     <!-- 底部保存按钮 -->
-    <view class="yd-detail-footer">
-      <view class="flex gap-16rpx">
-        <wd-button v-if="isEditable" class="flex-1" type="primary" :loading="formLoading" @click="handleSubmit">
-          保存
-        </wd-button>
-        <wd-button v-if="canSubmit" class="flex-1" type="warning" :loading="formLoading" @click="handleSubmitCard">
-          提交
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions content-class="flex gap-16rpx">
+      <wd-button v-if="isEditable" class="flex-1" type="primary" :loading="formLoading" @click="handleSubmit">
+        保存
+      </wd-button>
+      <wd-button v-if="canSubmit" class="flex-1" type="warning" :loading="formLoading" @click="handleSubmitCard">
+        提交
+      </wd-button>
+    </MesFooterActions>
 
     <WorkOrderSelector ref="workOrderSelectorRef" @confirm="handleWorkOrderConfirm" />
     <ItemSelector ref="itemSelectorRef" item-or-product="PRODUCT" title="选择产品" :multiple="false" @confirm="handleItemConfirm" />
@@ -70,7 +68,8 @@ import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { createCard, getCard, submitCard, updateCard } from '@/api/mes/pro/card'
 import { getWorkOrder } from '@/api/mes/pro/workorder'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import ItemSelector from '@/pages-mes/md/item/components/item-selector.vue'
@@ -342,7 +341,7 @@ async function handleSubmitCard() {
     await submitCard(formData.value.id)
     toast.success('提交成功')
     uni.$emit('mes:pro:card:reload')
-    delay(handleBack)
+    setTimeout(() => handleBack(), 500)
   } finally {
     formLoading.value = false
   }

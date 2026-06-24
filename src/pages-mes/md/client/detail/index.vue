@@ -12,7 +12,7 @@
         </wd-cell>
         <wd-cell title="客户简介" :value="formData?.description || '-'" />
         <wd-cell title="客户 LOGO">
-          <wd-img v-if="formData?.logo" :src="formData.logo" width="96rpx" height="96rpx" radius="8rpx" mode="aspectFit" enable-preview />
+          <image v-if="formData?.logo" :src="formData.logo" mode="aspectFit" class="h-96rpx w-96rpx rounded-8rpx" @click="handlePreviewLogo" />
           <text v-else>-</text>
         </wd-cell>
         <wd-cell title="客户地址" :value="formData?.address || '-'" />
@@ -35,16 +35,14 @@
       <ClientProductSalesList :client-id="currentId" />
       <view class="h-160rpx" />
     </scroll-view>
-    <view v-if="hasFooter" class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button v-if="hasAccessByCodes(['mes:md-client:update'])" class="flex-1" type="warning" @click="handleEdit">
-          编辑
-        </wd-button>
-        <wd-button v-if="hasAccessByCodes(['mes:md-client:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
-          删除
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions v-if="hasFooter" content-class="yd-detail-footer-actions">
+      <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+        编辑
+      </wd-button>
+      <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        删除
+      </wd-button>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -57,9 +55,10 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteClient, getClient } from '@/api/mes/md/client'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { delay, navigateBackPlus } from '@/utils'
+import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import ClientProductSalesList from '../components/client-product-sales-list.vue'
 
 const props = defineProps<{ id?: number | string }>()
@@ -71,7 +70,9 @@ const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/md/client/detai
 const formData = ref<MdClientVO>()
 const currentId = computed(() => getRouteQueryNumber('id'))
 const deleting = ref(false)
-const hasFooter = computed(() => hasAccessByCodes(['mes:md-client:update']) || hasAccessByCodes(['mes:md-client:delete']))
+const canUpdate = computed(() => hasAccessByCodes(['mes:md-client:update']))
+const canDelete = computed(() => hasAccessByCodes(['mes:md-client:delete']))
+const hasFooter = computed(() => canUpdate.value || canDelete.value)
 
 function handleBack() {
   navigateBackPlus('/pages-mes/md/client/index')
@@ -83,7 +84,13 @@ async function getDetail() {
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getClient(currentId.value)
+    const detailData = await getClient(currentId.value)
+    if (!detailData) {
+      uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+      setTimeout(() => handleBack(), 300)
+      return
+    }
+    formData.value = detailData
   } finally {
     toast.close()
   }
@@ -103,6 +110,12 @@ function handleEdit() {
   uni.navigateTo({ url: `/pages-mes/md/client/form/index?id=${currentId.value}` })
 }
 
+/** 预览客户 LOGO */
+function handlePreviewLogo() {
+  if (formData.value?.logo)
+    uni.previewImage({ urls: [formData.value.logo], current: formData.value.logo })
+}
+
 async function handleDelete() {
   if (!currentId.value) {
     return
@@ -119,7 +132,7 @@ async function handleDelete() {
     toast.close()
     toast.success('删除成功')
     uni.$emit('mes:md:client:reload')
-    delay(handleBack)
+    setTimeout(() => handleBack(), 500)
   } catch {
     toast.close()
   } finally {

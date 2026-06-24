@@ -47,13 +47,11 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="!isReadonly && formData?.id" class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button class="flex-1" type="success" :loading="finishing" @click="handleFinish">
-          完成工单
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions v-if="!isReadonly && formData?.id" content-class="yd-detail-footer-actions">
+      <wd-button class="flex-1" type="success" :loading="finishing" @click="handleFinish">
+        完成工单
+      </wd-button>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -66,7 +64,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { getRouteProcessListByProduct } from '@/api/mes/pro/route/process'
 import { finishWorkOrder, getWorkOrder } from '@/api/mes/pro/workorder'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
 import ProcessTaskList from '../components/process-task-list.vue'
@@ -117,7 +116,13 @@ async function getDetail() {
   }
   loading.value = true
   try {
-    formData.value = await getWorkOrder(workOrderId.value)
+    const detailData = await getWorkOrder(workOrderId.value)
+    if (!detailData) {
+      uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+      setTimeout(() => handleBack(), 300)
+      return
+    }
+    formData.value = detailData
     if (formData.value.productId) {
       const processes = await getRouteProcessListByProduct(formData.value.productId)
       const sorted = [...processes].sort((a, b) => a.sort - b.sort)
@@ -155,7 +160,7 @@ async function handleFinish() {
     await finishWorkOrder(formData.value.id)
     toast.success('工单已完成')
     uni.$emit('mes:pro:task:reload')
-    delay(handleBack)
+    setTimeout(() => handleBack(), 500)
   } finally {
     finishing.value = false
   }

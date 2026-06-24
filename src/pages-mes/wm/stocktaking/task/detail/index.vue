@@ -44,40 +44,38 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="hasFooterActions" class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button
-          v-if="canUpdate"
-          class="flex-1" type="warning" @click="handleEdit"
-        >
-          编辑
-        </wd-button>
-        <wd-button
-          v-if="canSubmit"
-          class="flex-1" type="success" @click="handleSubmitTask"
-        >
-          提交
-        </wd-button>
-        <wd-button
-          v-if="canExecute"
-          class="flex-1" type="primary" @click="handleExecute"
-        >
-          执行盘点
-        </wd-button>
-        <wd-button
-          v-if="canCancel"
-          class="flex-1" type="warning" @click="handleCancelTask"
-        >
-          取消
-        </wd-button>
-        <wd-button
-          v-if="canDelete"
-          class="flex-1" type="error" :loading="deleting" @click="handleDelete"
-        >
-          删除
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions v-if="hasFooterActions" content-class="yd-detail-footer-actions">
+      <wd-button
+        v-if="canUpdate"
+        class="flex-1" type="warning" @click="handleEdit"
+      >
+        编辑
+      </wd-button>
+      <wd-button
+        v-if="canSubmit"
+        class="flex-1" type="success" @click="handleSubmitTask"
+      >
+        提交
+      </wd-button>
+      <wd-button
+        v-if="canExecute"
+        class="flex-1" type="primary" @click="handleExecute"
+      >
+        执行盘点
+      </wd-button>
+      <wd-button
+        v-if="canCancel"
+        class="flex-1" type="warning" @click="handleCancelTask"
+      >
+        取消
+      </wd-button>
+      <wd-button
+        v-if="canDelete"
+        class="flex-1" type="error" :loading="deleting" @click="handleDelete"
+      >
+        删除
+      </wd-button>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -95,7 +93,8 @@ import {
 } from '@/api/mes/wm/stocktaking/task'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmStockTakingTaskStatusEnum } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
 import TaskLinePreview from '../components/task-line-preview.vue'
@@ -119,13 +118,15 @@ const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/wm/stocktaking/
 const currentId = computed(() => getRouteQueryNumber('id')) // 当前详情编号
 const formData = ref<StockTakingTaskVO>() // 详情数据
 const deleting = ref(false) // 删除状态
+const canUpdatePermission = computed(() => hasAccessByCodes(['mes:wm-stock-taking-task:update']))
+const canDeletePermission = computed(() => hasAccessByCodes(['mes:wm-stock-taking-task:delete']))
 const isPrepare = computed(() => formData.value?.status === MesWmStockTakingTaskStatusEnum.PREPARE)
 const isApproving = computed(() => formData.value?.status === MesWmStockTakingTaskStatusEnum.APPROVING)
-const canUpdate = computed(() => hasAccessByCodes(['mes:wm-stock-taking-task:update']) && isPrepare.value)
-const canSubmit = computed(() => hasAccessByCodes(['mes:wm-stock-taking-task:update']) && isPrepare.value)
-const canExecute = computed(() => hasAccessByCodes(['mes:wm-stock-taking-task:update']) && isApproving.value)
-const canCancel = computed(() => hasAccessByCodes(['mes:wm-stock-taking-task:update']) && isApproving.value)
-const canDelete = computed(() => hasAccessByCodes(['mes:wm-stock-taking-task:delete']) && isPrepare.value)
+const canUpdate = computed(() => canUpdatePermission.value && isPrepare.value)
+const canSubmit = computed(() => canUpdatePermission.value && isPrepare.value)
+const canExecute = computed(() => canUpdatePermission.value && isApproving.value)
+const canCancel = computed(() => canUpdatePermission.value && isApproving.value)
+const canDelete = computed(() => canDeletePermission.value && isPrepare.value)
 const hasFooterActions = computed(() => {
   return canUpdate.value || canSubmit.value || canExecute.value || canCancel.value || canDelete.value
 })
@@ -153,7 +154,13 @@ async function getDetail() {
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getStockTaking(currentId.value)
+    const detailData = await getStockTaking(currentId.value)
+    if (!detailData) {
+      uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+      setTimeout(() => handleBack(), 300)
+      return
+    }
+    formData.value = detailData
   } finally {
     toast.close()
   }
@@ -231,7 +238,9 @@ async function handleDelete() {
     await deleteStockTaking(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:wm:stocktaking:task:reload')
-    delay(handleBack)
+    setTimeout(() => {
+      handleBack()
+    }, 500)
   } finally {
     deleting.value = false
   }

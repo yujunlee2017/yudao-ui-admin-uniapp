@@ -31,14 +31,13 @@
         <view class="yd-search-form-label">
           供应商
         </view>
-        <view class="yd-search-form-selector" @click="openVendorSelector">
-          <text v-if="selectedVendorText" class="text-[#333]">
-            {{ selectedVendorText }}
-          </text>
-          <text v-else class="text-[#999]">
-            请选择供应商
-          </text>
-        </view>
+        <MesSearchSelectorField
+          :model-value="selectedVendorText"
+          placeholder="请选择供应商"
+          clearable
+          @click="openVendorSelector"
+          @clear="clearVendor"
+        />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
@@ -70,6 +69,7 @@ import type { WmItemReceiptQueryParams } from '@/api/mes/wm/itemreceipt'
 import { computed, reactive, ref } from 'vue'
 import { formatDateRange } from '@/utils/date'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import MesSearchSelectorField from '@/pages-mes/components/mes-search-selector-field.vue'
 import VendorSelector from '../../../md/vendor/components/vendor-selector.vue'
 
 const emit = defineEmits<{
@@ -121,6 +121,12 @@ function handleVendorConfirm(vendors: MdVendorVO[]) {
   formData.vendorId = vendors[0]?.id
 }
 
+/** 清空供应商 */
+function clearVendor() {
+  selectedVendor.value = undefined
+  formData.vendorId = undefined
+}
+
 /** 构造搜索参数 */
 function buildParams() {
   const params: WmItemReceiptQueryParams = {}
@@ -164,15 +170,3 @@ function handleReset() {
 
 defineExpose({ resetFields })
 </script>
-
-<style lang="scss" scoped>
-.yd-search-form-selector {
-  min-height: 72rpx;
-  display: flex;
-  align-items: center;
-  padding: 0 24rpx;
-  border-radius: 8rpx;
-  background: #f7f8fa;
-  font-size: 28rpx;
-}
-</style>

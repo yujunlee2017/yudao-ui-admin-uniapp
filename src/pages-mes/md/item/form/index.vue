@@ -88,11 +88,11 @@
     </scroll-view>
 
     <!-- 底部保存按钮 -->
-    <view class="yd-detail-footer">
+    <MesFooterActions>
       <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
         保存
       </wd-button>
-    </view>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -108,7 +108,8 @@ import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { getItemTypeList } from '@/api/mes/md/item/type'
 import { getUnitMeasureSimpleList } from '@/api/mes/md/unitmeasure'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { handleTree } from '@/utils/tree'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
@@ -309,7 +310,7 @@ async function handleSubmit() {
       await updateItem(updateReq)
       toast.success('修改成功')
       uni.$emit('mes:md:item:reload')
-      delay(handleBack)
+      setTimeout(() => handleBack(), 500)
     } else {
       const id = await createItem(req)
       toast.success('新增成功')

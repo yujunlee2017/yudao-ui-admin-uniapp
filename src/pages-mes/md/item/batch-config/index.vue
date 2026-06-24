@@ -148,11 +148,11 @@
     </scroll-view>
 
     <!-- 保存按钮（仅 edit 模式） -->
-    <view v-if="isEdit && hasAccessByCodes(['mes:md-item:update'])" class="yd-detail-footer">
+    <MesFooterActions v-if="isEdit && canUpdate">
       <wd-button type="primary" block :loading="saving" @click="handleSave">
         保存批次属性
       </wd-button>
-    </view>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -163,7 +163,8 @@ import { computed, onMounted, ref } from 'vue'
 import { getItem } from '@/api/mes/md/item'
 import { getBatchConfigByItemId, saveBatchConfig } from '@/api/mes/md/item/batchConfig'
 import { useAccess } from '@/hooks/useAccess'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 
 const props = defineProps<{ itemId?: number | string, mode?: string }>()
@@ -174,6 +175,7 @@ definePage({
 
 const { hasAccessByCodes } = useAccess()
 const isEdit = computed(() => props.mode === 'edit')
+const canUpdate = computed(() => hasAccessByCodes(['mes:md-item:update']))
 const item = ref<MdItemVO>()
 const itemOrProduct = computed(() => String(item.value?.itemOrProduct || '').toUpperCase())
 const isItem = computed(() => itemOrProduct.value === 'ITEM')
@@ -243,7 +245,7 @@ async function loadAll() {
     item.value = itemData
     if (!itemData.batchFlag) {
       uni.showToast({ icon: 'none', title: '该物料未启用批次管理' })
-      delay(handleBack, 1500)
+      setTimeout(() => handleBack(), 1500)
       return
     }
     formData.value = hydrateConfig(config)
@@ -313,7 +315,7 @@ async function handleSave() {
 onMounted(() => {
   if (!props.itemId) {
     uni.showToast({ icon: 'none', title: '缺少物料编号' })
-    delay(handleBack, 1000)
+    setTimeout(() => handleBack(), 1000)
     return
   }
   loadAll()

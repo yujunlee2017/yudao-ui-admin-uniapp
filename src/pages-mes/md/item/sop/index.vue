@@ -22,8 +22,8 @@
         <!-- SOP 卡片列表 -->
         <view class="p-24rpx">
           <view v-for="sop in list" :key="sop.id" class="mb-20rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
-            <view class="h-320rpx bg-[#f5f7fa]">
-              <wd-img v-if="sop.url" :src="sop.url" width="100%" height="320rpx" mode="aspectFill" enable-preview />
+            <view class="h-320rpx bg-[#f5f7fa]" @click="handlePreview(sop.url)">
+              <image v-if="sop.url" :src="sop.url" mode="aspectFill" class="h-full w-full" />
               <view v-else class="h-full flex items-center justify-center">
                 <wd-icon name="picture" size="64rpx" color="#c0c4cc" />
               </view>
@@ -64,11 +64,11 @@
     </scroll-view>
 
     <!-- 添加按钮 -->
-    <view v-if="isEdit && canCreate" class="yd-detail-footer">
+    <MesFooterActions v-if="isEdit && canCreate">
       <wd-button type="primary" block @click="openForm('create')">
         添加 SOP
       </wd-button>
-    </view>
+    </MesFooterActions>
 
     <!-- 新增/编辑弹层 -->
     <wd-popup v-model="formVisible" position="bottom" safe-area-inset-bottom custom-style="border-radius: 24rpx 24rpx 0 0; max-height: 85vh;">
@@ -128,7 +128,8 @@ import { computed, onMounted, ref } from 'vue'
 import { createProductSop, deleteProductSop, getProductSopListByItemId, updateProductSop } from '@/api/mes/md/item/productSop'
 import { getProcessSimpleList } from '@/api/mes/pro/process'
 import { useAccess } from '@/hooks/useAccess'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 
@@ -190,6 +191,14 @@ function getProcessLabel(sop: MdProductSopVO): string {
     return `${name} (${code})`
   }
   return name || code || '-'
+}
+
+/** 预览图片 */
+function handlePreview(url?: string) {
+  if (!url) {
+    return
+  }
+  uni.previewImage({ urls: [url] })
 }
 
 /** 加载工序选项 */
@@ -341,7 +350,7 @@ async function handleDelete(sop: MdProductSopVO) {
 onMounted(async () => {
   if (!props.itemId) {
     uni.showToast({ icon: 'none', title: '缺少物料编号' })
-    delay(handleBack, 1000)
+    setTimeout(() => handleBack(), 1000)
     return
   }
   await Promise.all([loadProcessOptions(), loadList()])

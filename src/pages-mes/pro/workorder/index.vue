@@ -6,13 +6,6 @@
     <!-- 搜索组件 -->
     <SearchForm ref="searchFormRef" @search="handleQuery" @reset="handleReset" />
 
-    <!-- 导出入口 -->
-    <view v-if="hasAccessByCodes(['mes:pro-work-order:export'])" class="bg-white px-24rpx py-16rpx">
-      <view class="h-64rpx flex items-center justify-center border-2rpx border-[#1677ff] rounded-8rpx text-26rpx text-[#1677ff]" :class="exportLoading ? 'opacity-60' : ''" @click="handleExport">
-        {{ exportLoading ? '导出中...' : '导出当前筛选数据' }}
-      </view>
-    </view>
-
     <!-- 分页列表 -->
     <z-paging ref="pagingRef" v-model="list" :fixed="false" class="min-h-0 flex-1" :default-page-size="10" :refresher-enabled="true" :inside-more="true" :loading-more-default-as-loading="true" empty-view-text="暂无生产工单数据" @query="queryList">
       <view class="p-24rpx">
@@ -50,19 +43,19 @@
             </view>
           </view>
           <view class="flex border-t border-[#f3f4f6] text-26rpx">
-            <view v-if="hasAccessByCodes(['mes:pro-work-order:update']) && item.status === MesProWorkOrderStatusEnum.PREPARE" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
+            <view v-if="canUpdate && item.status === MesProWorkOrderStatusEnum.PREPARE" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
               编辑
             </view>
-            <view v-if="hasAccessByCodes(['mes:pro-work-order:delete']) && item.status === MesProWorkOrderStatusEnum.PREPARE" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
+            <view v-if="canDelete && item.status === MesProWorkOrderStatusEnum.PREPARE" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
               删除
             </view>
-            <view v-if="hasAccessByCodes(['mes:pro-work-order:create']) && item.status === MesProWorkOrderStatusEnum.CONFIRMED && item.type === MesProWorkOrderTypeEnum.SELF" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleAddChild(item)">
+            <view v-if="canCreate && item.status === MesProWorkOrderStatusEnum.CONFIRMED && item.type === MesProWorkOrderTypeEnum.SELF" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleAddChild(item)">
               子工单
             </view>
-            <view v-if="hasAccessByCodes(['mes:pro-work-order:update']) && item.status === MesProWorkOrderStatusEnum.CONFIRMED" class="flex-1 py-18rpx text-center text-[#52c41a]" @click="handleFinish(item)">
+            <view v-if="canUpdate && item.status === MesProWorkOrderStatusEnum.CONFIRMED" class="flex-1 py-18rpx text-center text-[#52c41a]" @click="handleFinish(item)">
               完成
             </view>
-            <view v-if="hasAccessByCodes(['mes:pro-work-order:update']) && item.status === MesProWorkOrderStatusEnum.CONFIRMED" class="flex-1 py-18rpx text-center text-[#e6a23c]" @click="handleCancel(item)">
+            <view v-if="canUpdate && item.status === MesProWorkOrderStatusEnum.CONFIRMED" class="flex-1 py-18rpx text-center text-[#e6a23c]" @click="handleCancel(item)">
               取消
             </view>
             <view class="flex-1 py-18rpx text-center text-[#666]" @click="handleBarcode(item)">
@@ -74,7 +67,7 @@
     </z-paging>
 
     <!-- 新增按钮 -->
-    <wd-fab v-if="hasAccessByCodes(['mes:pro-work-order:create'])" position="right-bottom" type="primary" :expandable="false" @click="handleAdd" />
+    <wd-fab v-if="canCreate" position="right-bottom" type="primary" :expandable="false" @click="handleAdd" />
   </view>
 </template>
 
@@ -83,9 +76,8 @@ import type { ProWorkOrderQueryParams, ProWorkOrderVO } from '@/api/mes/pro/work
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { cancelWorkOrder, deleteWorkOrder, finishWorkOrder, getWorkOrderPage } from '@/api/mes/pro/workorder'
-import { downloadApiFile } from '@/utils/download'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -123,7 +115,9 @@ const list = ref<ProWorkOrderVO[]>([])
 const pagingRef = ref<ZPagingRef<ProWorkOrderVO>>()
 const queryParams = ref<Partial<ProWorkOrderQueryParams>>({})
 const searchFormRef = ref<InstanceType<typeof SearchForm>>()
-const exportLoading = ref(false)
+const canCreate = computed(() => hasAccessByCodes(['mes:pro-work-order:create']))
+const canUpdate = computed(() => hasAccessByCodes(['mes:pro-work-order:update']))
+const canDelete = computed(() => hasAccessByCodes(['mes:pro-work-order:delete']))
 const flatList = computed<FlatWorkOrder[]>(() => flattenWorkOrders(list.value))
 
 /** 返回上一页 */
@@ -184,26 +178,6 @@ function handleReset() {
 /** 重新加载 */
 function reload() {
   pagingRef.value?.reload()
-}
-
-/** 导出生产工单 */
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选数据吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/pro/work-order/export-excel', queryParams.value, '生产工单.xls')
-  } finally {
-    exportLoading.value = false
-  }
 }
 
 /** 新增生产工单 */

@@ -80,47 +80,45 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="hasFooter" class="yd-detail-footer">
-      <view class="flex gap-24rpx text-28rpx">
-        <view
-          v-if="canUpdatePrepare"
-          class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white"
-          @click="handleEdit"
-        >
-          编辑
-        </view>
-        <view
-          v-if="canDeletePrepare"
-          class="flex-1 rounded-8rpx bg-[#f56c6c] py-20rpx text-center text-white"
-          :class="deleting ? 'opacity-60' : ''"
-          @click="handleDelete"
-        >
-          {{ deleting ? '删除中...' : '删除' }}
-        </view>
-        <view
-          v-if="canSubmitPrepare"
-          class="flex-1 rounded-8rpx bg-[#faad14] py-20rpx text-center text-white"
-          :class="submitting ? 'opacity-60' : ''"
-          @click="handleSubmitRepair"
-        >
-          {{ submitting ? '提交中...' : '提交' }}
-        </view>
-        <view
-          v-if="canConfirmRepair"
-          class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white"
-          @click="handleConfirm"
-        >
-          完成维修
-        </view>
-        <view
-          v-if="canFinishRepair"
-          class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white"
-          @click="handleFinish"
-        >
-          验收
-        </view>
+    <MesFooterActions v-if="hasFooter">
+      <view
+        v-if="canUpdatePrepare"
+        class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white"
+        @click="handleEdit"
+      >
+        编辑
       </view>
-    </view>
+      <view
+        v-if="canDeletePrepare"
+        class="flex-1 rounded-8rpx bg-[#f56c6c] py-20rpx text-center text-white"
+        :class="deleting ? 'opacity-60' : ''"
+        @click="handleDelete"
+      >
+        {{ deleting ? '删除中...' : '删除' }}
+      </view>
+      <view
+        v-if="canSubmitPrepare"
+        class="flex-1 rounded-8rpx bg-[#faad14] py-20rpx text-center text-white"
+        :class="submitting ? 'opacity-60' : ''"
+        @click="handleSubmitRepair"
+      >
+        {{ submitting ? '提交中...' : '提交' }}
+      </view>
+      <view
+        v-if="canConfirmRepair"
+        class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white"
+        @click="handleConfirm"
+      >
+        完成维修
+      </view>
+      <view
+        v-if="canFinishRepair"
+        class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white"
+        @click="handleFinish"
+      >
+        验收
+      </view>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -136,6 +134,7 @@ import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesDvRepairStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import RepairLineList from '../components/repair-line-list.vue'
 
 const props = defineProps<{
@@ -197,7 +196,13 @@ async function getDetail() {
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getRepair(currentId.value)
+    const detailData = await getRepair(currentId.value)
+    if (!detailData) {
+      uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+      setTimeout(() => handleBack(), 300)
+      return
+    }
+    formData.value = detailData
   } finally {
     toast.close()
   }

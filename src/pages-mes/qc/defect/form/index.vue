@@ -42,11 +42,11 @@
     </scroll-view>
 
     <!-- 底部保存按钮 -->
-    <view class="yd-detail-footer">
+    <MesFooterActions>
       <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
         保存
       </wd-button>
-    </view>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -59,7 +59,8 @@ import { createDefect, getDefect, updateDefect } from '@/api/mes/qc/defect'
 import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -169,7 +170,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:qc:defect:reload')
-    delay(handleBack)
+    setTimeout(() => handleBack(), 500)
   } finally {
     formLoading.value = false
   }

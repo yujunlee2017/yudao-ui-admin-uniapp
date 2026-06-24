@@ -10,13 +10,6 @@
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
-    <!-- 导出入口 -->
-    <view v-if="hasAccessByCodes(['mes:wm-material-stock:export'])" class="bg-white px-24rpx py-16rpx">
-      <wd-button block variant="plain" :loading="exportLoading" @click="handleExport">
-        导出当前筛选数据
-      </wd-button>
-    </view>
-
     <!-- 库存列表 -->
     <z-paging
       ref="pagingRef"
@@ -100,7 +93,6 @@ import { getMaterialStockPage, updateMaterialStockFrozen } from '@/api/mes/wm/ma
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
-import { downloadApiFile } from '@/utils/download'
 import SearchForm from './components/search-form.vue'
 
 definePage({
@@ -115,7 +107,6 @@ const toast = useToast()
 const list = ref<WmMaterialStockVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<WmMaterialStockVO>>() // 分页组件引用
 const queryParams = ref<WmMaterialStockQueryParams>({}) // 查询参数
-const exportLoading = ref(false) // 导出状态
 const frozenLoadingId = ref<number>() // 冻结操作中的库存编号
 
 /** 返回上一页 */
@@ -192,27 +183,6 @@ async function handleFrozenChange(item: WmMaterialStockVO) {
     uni.$emit('mes:wm:materialstock:reload')
   } finally {
     frozenLoadingId.value = undefined
-  }
-}
-
-/** 导出按钮操作 */
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选数据吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/wm/material-stock/export-excel', queryParams.value, '库存台账.xls')
-    toast.success('导出成功')
-  } finally {
-    exportLoading.value = false
   }
 }
 

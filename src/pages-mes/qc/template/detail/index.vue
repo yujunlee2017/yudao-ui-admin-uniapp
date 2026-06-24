@@ -35,27 +35,25 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button
-          v-if="hasAccessByCodes(['mes:qc-template:update'])"
-          class="flex-1"
-          type="warning"
-          @click="handleEdit"
-        >
-          编辑
-        </wd-button>
-        <wd-button
-          v-if="hasAccessByCodes(['mes:qc-template:delete'])"
-          class="flex-1"
-          type="danger"
-          :loading="deleting"
-          @click="handleDelete"
-        >
-          删除
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions content-class="yd-detail-footer-actions">
+      <wd-button
+        v-if="canUpdate"
+        class="flex-1"
+        type="warning"
+        @click="handleEdit"
+      >
+        编辑
+      </wd-button>
+      <wd-button
+        v-if="canDelete"
+        class="flex-1"
+        type="danger"
+        :loading="deleting"
+        @click="handleDelete"
+      >
+        删除
+      </wd-button>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -68,7 +66,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteTemplate, getTemplate } from '@/api/mes/qc/template'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import TemplateIndicatorSection from '../components/template-indicator-section.vue'
@@ -91,6 +90,8 @@ const currentId = computed(() => getRouteQueryNumber('id')) // 当前详情编�
 const formData = ref<QcTemplateVO>() // 详情数据
 const deleting = ref(false) // 删除状态
 const templateId = computed(() => currentId.value || 0)
+const canUpdate = computed(() => hasAccessByCodes(['mes:qc-template:update']))
+const canDelete = computed(() => hasAccessByCodes(['mes:qc-template:delete']))
 
 /** 返回上一页 */
 function handleBack() {
@@ -104,7 +105,13 @@ async function getDetail() {
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getTemplate(currentId.value)
+    const detailData = await getTemplate(currentId.value)
+    if (!detailData) {
+      uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+      setTimeout(() => handleBack(), 300)
+      return
+    }
+    formData.value = detailData
   } finally {
     toast.close()
   }
@@ -144,7 +151,7 @@ async function handleDelete() {
     await deleteTemplate(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:qc:template:reload')
-    delay(handleBack)
+    setTimeout(() => handleBack(), 500)
   } finally {
     deleting.value = false
   }

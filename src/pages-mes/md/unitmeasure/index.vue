@@ -7,13 +7,8 @@
       @click-left="handleBack"
     />
 
-    <!-- 搜索与导出 -->
+    <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
-    <view v-if="hasAccessByCodes(['mes:md-unit-measure:export'])" class="bg-white px-24rpx pb-16rpx">
-      <wd-button block variant="plain" :loading="exportLoading" @click="handleExport">
-        导出当前筛选数据
-      </wd-button>
-    </view>
 
     <!-- 计量单位列表 -->
     <z-paging
@@ -85,7 +80,6 @@ import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import { downloadApiFile } from '@/utils/download'
 import SearchForm from './components/search-form.vue'
 
 definePage({
@@ -99,10 +93,7 @@ const { hasAccessByCodes } = useAccess()
 const toast = useToast()
 const list = ref<MdUnitMeasureVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<MdUnitMeasureVO>>() // 分页组件引用
-const queryParams = ref<MdUnitMeasurePageParam>({}) // 查询参数
-const exportLoading = ref(false) // 导出状态
-
-/** 返回上一页 */
+const queryParams = ref<MdUnitMeasurePageParam>({}) // 查询参数/** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
 }
@@ -144,31 +135,6 @@ function handleReset() {
 /** 重新加载 */
 function reload() {
   pagingRef.value?.reload()
-}
-
-/** 导出计量单位 */
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选条件下的计量单位吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  const params = { ...queryParams.value }
-  if (params.status === -1) {
-    delete params.status
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/md/unit-measure/export-excel', params, '计量单位.xls')
-    toast.success('导出成功')
-  } finally {
-    exportLoading.value = false
-  }
 }
 
 /** 新增计量单位 */

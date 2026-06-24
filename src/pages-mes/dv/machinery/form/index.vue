@@ -44,11 +44,11 @@
       </view>
       <view class="h-160rpx" />
     </scroll-view>
-    <view class="yd-detail-footer">
+    <MesFooterActions>
       <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
         保存
       </wd-button>
-    </view>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -68,6 +68,7 @@ import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import MachineryRecordList from '../components/machinery-record-list.vue'
 
 const props = defineProps<{ id?: number | string }>()

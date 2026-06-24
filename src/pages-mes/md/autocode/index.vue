@@ -10,16 +10,6 @@
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
-    <!-- 顶部操作 -->
-    <view
-      v-if="hasAccessByCodes(['mes:auto-code-rule:export'])"
-      class="bg-white px-24rpx py-16rpx"
-    >
-      <wd-button block variant="plain" :loading="exportLoading" @click="handleExport">
-        导出当前筛选
-      </wd-button>
-    </view>
-
     <!-- 列表 -->
     <z-paging
       ref="pagingRef"
@@ -97,7 +87,6 @@ import { getAutoCodeRulePage } from '@/api/mes/md/autocode/rule'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
-import { downloadApiFile } from '@/utils/download'
 import SearchForm from './components/search-form.vue'
 
 definePage({
@@ -112,7 +101,6 @@ const toast = useToast()
 const list = ref<AutoCodeRuleVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<AutoCodeRuleVO>>() // 分页组件引用
 const queryParams = ref<AutoCodeRuleQueryParams>({}) // 查询参数
-const exportLoading = ref(false) // 导出状态
 
 /** 返回上一页 */
 function handleBack() {
@@ -148,27 +136,6 @@ function handleReset() {
 /** 重新加载 */
 function reload() {
   pagingRef.value?.reload()
-}
-
-/** 导出编码规则 */
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选条件下的编码规则吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/md/auto-code-rule/export-excel', queryParams.value, '编码规则.xls')
-    toast.success('导出成功')
-  } finally {
-    exportLoading.value = false
-  }
 }
 
 /** 新增 */

@@ -6,21 +6,8 @@
       left-arrow placeholder safe-area-inset-top fixed
       @click-left="handleBack"
     />
-
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
-
-    <!-- 导出入口 -->
-    <view v-if="hasAccessByCodes(['mes:dv-check-plan:export'])" class="bg-white px-24rpx py-16rpx">
-      <view
-        class="h-64rpx flex items-center justify-center border-2rpx border-[#1677ff] rounded-8rpx text-26rpx text-[#1677ff]"
-        :class="exportLoading ? 'opacity-60' : ''"
-        @click="handleExport"
-      >
-        {{ exportLoading ? '导出中...' : '导出当前筛选数据' }}
-      </view>
-    </view>
-
     <!-- 列表 -->
     <z-paging
       ref="pagingRef"
@@ -78,16 +65,16 @@
             </view>
           </view>
           <view v-if="hasRowActions(item)" class="flex border-t border-t-[#f0f0f0] text-28rpx" @click.stop>
-            <view v-if="hasAccessByCodes(['mes:dv-check-plan:update']) && item.status === MesDvCheckPlanStatusEnum.PREPARE" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
+            <view v-if="canUpdate && item.status === MesDvCheckPlanStatusEnum.PREPARE" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
               编辑
             </view>
-            <view v-if="hasAccessByCodes(['mes:dv-check-plan:delete']) && item.status === MesDvCheckPlanStatusEnum.PREPARE" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
+            <view v-if="canDelete && item.status === MesDvCheckPlanStatusEnum.PREPARE" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
               删除
             </view>
-            <view v-if="hasAccessByCodes(['mes:dv-check-plan:update']) && item.status === MesDvCheckPlanStatusEnum.PREPARE" class="flex-1 py-18rpx text-center text-[#52c41a]" @click="handleEnable(item)">
+            <view v-if="canUpdate && item.status === MesDvCheckPlanStatusEnum.PREPARE" class="flex-1 py-18rpx text-center text-[#52c41a]" @click="handleEnable(item)">
               启用
             </view>
-            <view v-if="hasAccessByCodes(['mes:dv-check-plan:update']) && item.status === MesDvCheckPlanStatusEnum.ENABLED" class="flex-1 py-18rpx text-center text-[#faad14]" @click="handleDisable(item)">
+            <view v-if="canUpdate && item.status === MesDvCheckPlanStatusEnum.ENABLED" class="flex-1 py-18rpx text-center text-[#faad14]" @click="handleDisable(item)">
               停用
             </view>
           </view>
@@ -111,10 +98,9 @@ import type { DvCheckPlanQueryParams, DvCheckPlanVO } from '@/api/mes/dv/checkpl
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { deleteCheckPlan, disableCheckPlan, enableCheckPlan, getCheckPlanPage } from '@/api/mes/dv/checkplan'
 import { useAccess } from '@/hooks/useAccess'
-import { downloadApiFile } from '@/utils/download'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesDvCheckPlanStatusEnum } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
@@ -133,7 +119,8 @@ const toast = useToast()
 const list = ref<DvCheckPlanVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<DvCheckPlanVO>>() // 分页组件引用
 const queryParams = ref<DvCheckPlanQueryParams>({}) // 查询参数
-const exportLoading = ref(false) // 导出状态
+const canUpdate = computed(() => hasAccessByCodes(['mes:dv-check-plan:update']))
+const canDelete = computed(() => hasAccessByCodes(['mes:dv-check-plan:delete']))
 
 /** 返回上一页 */
 function handleBack() {
@@ -171,26 +158,6 @@ function reload() {
   pagingRef.value?.reload()
 }
 
-/** 导出按钮操作 */
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选数据吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/dv/check-plan/export-excel', queryParams.value, '点检保养方案.xls')
-  } finally {
-    exportLoading.value = false
-  }
-}
-
 /** 新增 */
 function handleAdd() {
   uni.navigateTo({
@@ -208,11 +175,11 @@ function handleDetail(item: DvCheckPlanVO) {
 /** 是否显示行操作 */
 function hasRowActions(item: DvCheckPlanVO) {
   return (
-    hasAccessByCodes(['mes:dv-check-plan:update']) && item.status === MesDvCheckPlanStatusEnum.PREPARE
+    canUpdate.value && item.status === MesDvCheckPlanStatusEnum.PREPARE
   ) || (
-    hasAccessByCodes(['mes:dv-check-plan:delete']) && item.status === MesDvCheckPlanStatusEnum.PREPARE
+    canDelete.value && item.status === MesDvCheckPlanStatusEnum.PREPARE
   ) || (
-    hasAccessByCodes(['mes:dv-check-plan:update']) && item.status === MesDvCheckPlanStatusEnum.ENABLED
+    canUpdate.value && item.status === MesDvCheckPlanStatusEnum.ENABLED
   )
 }
 

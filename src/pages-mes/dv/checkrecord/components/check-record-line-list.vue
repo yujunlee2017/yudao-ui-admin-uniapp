@@ -1,69 +1,53 @@
 <template>
-  <view class="mt-24rpx bg-white">
-    <view class="flex items-center justify-between border-b border-b-[#f0f0f0] px-24rpx py-20rpx">
-      <view class="text-30rpx text-[#333] font-semibold">
-        点检项目明细
+  <MesLineListShell
+    title="点检项目明细"
+    :loading="loading"
+    :empty="list.length === 0"
+    empty-text="暂无点检项目明细"
+    :readonly="readonly"
+    @add="openCreateForm"
+  >
+    <view
+      v-for="item in list"
+      :key="item.id"
+      class="border-b border-b-[#f5f5f5] py-20rpx last:border-b-0"
+    >
+      <view class="mb-12rpx flex items-center justify-between gap-16rpx">
+        <view class="min-w-0 flex-1 truncate text-28rpx text-[#333] font-medium">
+          {{ item.subjectName || item.subjectCode || '-' }}
+        </view>
+        <dict-tag v-if="item.checkStatus != null" :type="DICT_TYPE.MES_DV_CHECK_RESULT" :value="item.checkStatus" />
       </view>
-      <view v-if="readonly" class="text-24rpx text-[#999]">
-        只读
+      <view class="mb-8rpx flex text-26rpx text-[#666]">
+        <text class="mr-8rpx shrink-0 text-[#999]">项目编码：</text>
+        <text class="min-w-0 flex-1 truncate">{{ item.subjectCode || '-' }}</text>
       </view>
-      <view
-        v-else
-        class="border border-[#1677ff] rounded-8rpx px-20rpx py-8rpx text-24rpx text-[#1677ff]"
-        @click="openCreateForm"
-      >
-        添加明细
+      <view class="mb-8rpx flex text-26rpx text-[#666]">
+        <text class="mr-8rpx shrink-0 text-[#999]">检查内容：</text>
+        <text class="min-w-0 flex-1 truncate">{{ item.subjectContent || '-' }}</text>
       </view>
-    </view>
-    <view v-if="loading" class="px-24rpx py-32rpx text-center text-26rpx text-[#999]">
-      加载中...
-    </view>
-    <view v-else-if="list.length === 0" class="px-24rpx py-32rpx text-center text-26rpx text-[#999]">
-      暂无点检项目明细
-    </view>
-    <view v-else class="px-24rpx py-8rpx">
-      <view
-        v-for="item in list"
-        :key="item.id"
-        class="border-b border-b-[#f5f5f5] py-20rpx last:border-b-0"
-      >
-        <view class="mb-12rpx flex items-center justify-between gap-16rpx">
-          <view class="min-w-0 flex-1 truncate text-28rpx text-[#333] font-medium">
-            {{ item.subjectName || item.subjectCode || '-' }}
-          </view>
-          <dict-tag v-if="item.checkStatus != null" :type="DICT_TYPE.MES_DV_CHECK_RESULT" :value="item.checkStatus" />
+      <view class="mb-8rpx flex text-26rpx text-[#666]">
+        <text class="mr-8rpx shrink-0 text-[#999]">检查标准：</text>
+        <text class="min-w-0 flex-1 truncate">{{ item.subjectStandard || '-' }}</text>
+      </view>
+      <view v-if="item.checkResult" class="mb-8rpx flex text-26rpx text-[#666]">
+        <text class="mr-8rpx shrink-0 text-[#999]">异常描述：</text>
+        <text class="min-w-0 flex-1 truncate">{{ item.checkResult }}</text>
+      </view>
+      <view class="flex text-26rpx text-[#666]">
+        <text class="mr-8rpx shrink-0 text-[#999]">备注：</text>
+        <text class="min-w-0 flex-1 truncate">{{ item.remark || '-' }}</text>
+      </view>
+      <view v-if="!readonly" class="mt-16rpx flex rounded-8rpx bg-[#f7f8fa] text-26rpx">
+        <view class="flex-1 py-16rpx text-center text-[#1677ff]" @click="openUpdateForm(item)">
+          编辑
         </view>
-        <view class="mb-8rpx flex text-26rpx text-[#666]">
-          <text class="mr-8rpx shrink-0 text-[#999]">项目编码：</text>
-          <text class="min-w-0 flex-1 truncate">{{ item.subjectCode || '-' }}</text>
-        </view>
-        <view class="mb-8rpx flex text-26rpx text-[#666]">
-          <text class="mr-8rpx shrink-0 text-[#999]">检查内容：</text>
-          <text class="min-w-0 flex-1 truncate">{{ item.subjectContent || '-' }}</text>
-        </view>
-        <view class="mb-8rpx flex text-26rpx text-[#666]">
-          <text class="mr-8rpx shrink-0 text-[#999]">检查标准：</text>
-          <text class="min-w-0 flex-1 truncate">{{ item.subjectStandard || '-' }}</text>
-        </view>
-        <view v-if="item.checkResult" class="mb-8rpx flex text-26rpx text-[#666]">
-          <text class="mr-8rpx shrink-0 text-[#999]">异常描述：</text>
-          <text class="min-w-0 flex-1 truncate">{{ item.checkResult }}</text>
-        </view>
-        <view class="flex text-26rpx text-[#666]">
-          <text class="mr-8rpx shrink-0 text-[#999]">备注：</text>
-          <text class="min-w-0 flex-1 truncate">{{ item.remark || '-' }}</text>
-        </view>
-        <view v-if="!readonly" class="mt-16rpx flex rounded-8rpx bg-[#f7f8fa] text-26rpx">
-          <view class="flex-1 py-16rpx text-center text-[#1677ff]" @click="openUpdateForm(item)">
-            编辑
-          </view>
-          <view class="flex-1 py-16rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
-            删除
-          </view>
+        <view class="flex-1 py-16rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
+          删除
         </view>
       </view>
     </view>
-  </view>
+  </MesLineListShell>
 
   <!-- 明细表单弹窗 -->
   <wd-popup
@@ -143,6 +127,7 @@ import { getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE, MesDvCheckResultEnum } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
+import MesLineListShell from '@/pages-mes/components/mes-line-list-shell.vue'
 import SubjectSelector from '../../subject/components/subject-selector.vue'
 
 interface DvCheckRecordLineFormData extends DvCheckRecordLineCreateReqVO {

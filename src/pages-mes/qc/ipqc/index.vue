@@ -3,13 +3,8 @@
     <!-- 顶部导航栏 -->
     <wd-navbar title="过程检验单（IPQC）" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
 
-    <!-- 搜索与导出 -->
+    <!-- 搜索组件 -->
     <SearchForm ref="searchFormRef" @search="handleQuery" @reset="handleReset" />
-    <view v-if="hasAccessByCodes(['mes:qc-ipqc:export'])" class="bg-white px-24rpx pb-16rpx">
-      <wd-button block variant="plain" :loading="exportLoading" @click="handleExport">
-        导出当前筛选数据
-      </wd-button>
-    </view>
 
     <!-- 过程检验单列表 -->
     <z-paging
@@ -86,11 +81,11 @@
             <text class="mr-8rpx text-[#999]">检测人员：</text>{{ item.inspectorNickname }}
           </view>
 
-          <view v-if="isDraft(item) && (hasAccessByCodes(['mes:qc-ipqc:update']) || hasAccessByCodes(['mes:qc-ipqc:delete']))" class="flex justify-end gap-16rpx border-t border-t-[#f0f0f0] pt-20rpx" @click.stop>
-            <wd-button v-if="hasAccessByCodes(['mes:qc-ipqc:update'])" size="small" type="warning" @click="handleEdit(item)">
+          <view v-if="isDraft(item) && (canUpdate || canDelete)" class="flex justify-end gap-16rpx border-t border-t-[#f0f0f0] pt-20rpx" @click.stop>
+            <wd-button v-if="canUpdate" size="small" type="warning" @click="handleEdit(item)">
               编辑
             </wd-button>
-            <wd-button v-if="hasAccessByCodes(['mes:qc-ipqc:delete'])" size="small" type="danger" @click="handleDelete(item)">
+            <wd-button v-if="canDelete" size="small" type="danger" @click="handleDelete(item)">
               删除
             </wd-button>
           </view>
@@ -114,13 +109,12 @@ import type { QcIpqcPageParam, QcIpqcVO } from '@/api/mes/qc/ipqc'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { deleteIpqc, getIpqcPage } from '@/api/mes/qc/ipqc'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import { downloadApiFile } from '@/utils/download'
 import SearchForm from './components/search-form.vue'
 
 definePage({
@@ -140,8 +134,8 @@ const toast = useToast()
 const list = ref<QcIpqcVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<QcIpqcVO>>() // 分页组件引用
 const queryParams = ref<Partial<QcIpqcPageParam>>({}) // 查询参数
-const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索组件引用
-const exportLoading = ref(false) // 导出状态
+const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索组件引用const canUpdate = computed(() => hasAccessByCodes(['mes:qc-ipqc:update']))
+const canDelete = computed(() => hasAccessByCodes(['mes:qc-ipqc:delete']))
 
 /** 返回上一页 */
 function handleBack() {
@@ -209,27 +203,6 @@ async function handleDelete(item: QcIpqcVO) {
   await deleteIpqc(item.id)
   toast.success('删除成功')
   reload()
-}
-
-/** 导出 */
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选条件下的过程检验单吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/qc/ipqc/export-excel', queryParams.value, '过程检验单.xls')
-    toast.success('导出成功')
-  } finally {
-    exportLoading.value = false
-  }
 }
 
 /** 初始化 */

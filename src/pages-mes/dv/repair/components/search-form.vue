@@ -39,14 +39,13 @@
         <view class="yd-search-form-label">
           设备
         </view>
-        <view class="yd-search-form-selector" @click="openMachinerySelector">
-          <text v-if="selectedMachineryText" class="text-[#333]">
-            {{ selectedMachineryText }}
-          </text>
-          <text v-else class="text-[#999]">
-            请选择设备
-          </text>
-        </view>
+        <MesSearchSelectorField
+          :model-value="selectedMachineryText"
+          placeholder="请选择设备"
+          clearable
+          @click="openMachinerySelector"
+          @clear="clearMachinery"
+        />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
@@ -89,6 +88,7 @@ import { computed, reactive, ref } from 'vue'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
+import MesSearchSelectorField from '@/pages-mes/components/mes-search-selector-field.vue'
 import MachinerySelector from '../../machinery/components/machinery-selector.vue'
 
 const emit = defineEmits<{
@@ -144,6 +144,12 @@ function handleMachineryConfirm(item: DvMachineryVO) {
   formData.machineryId = item.id
 }
 
+/** 清空设备 */
+function clearMachinery() {
+  selectedMachinery.value = undefined
+  formData.machineryId = undefined
+}
+
 /** 构造搜索参数 */
 function buildParams() {
   const params: DvRepairQueryParams = {}
@@ -190,15 +196,3 @@ function handleReset() {
 
 defineExpose({ resetFields })
 </script>
-
-<style lang="scss" scoped>
-.yd-search-form-selector {
-  min-height: 72rpx;
-  display: flex;
-  align-items: center;
-  padding: 0 24rpx;
-  border-radius: 8rpx;
-  background: #f7f8fa;
-  font-size: 28rpx;
-}
-</style>

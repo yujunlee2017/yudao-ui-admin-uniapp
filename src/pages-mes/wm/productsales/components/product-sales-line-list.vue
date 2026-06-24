@@ -1,121 +1,106 @@
 <template>
-  <view class="mt-24rpx bg-white">
-    <view class="flex items-center justify-between border-b border-b-[#f0f0f0] px-24rpx py-20rpx">
-      <view class="text-30rpx text-[#333] font-semibold">
-        出库物料
+  <MesLineListShell
+    title="出库物料"
+    :loading="loading"
+    :empty="list.length === 0"
+    empty-text="暂无出库物料"
+    :readonly="readonly"
+    add-text="添加物料"
+    @add="openCreateForm"
+  >
+    <view
+      v-for="item in list"
+      :key="item.id"
+      class="border-b border-b-[#f5f5f5] py-20rpx last:border-b-0"
+    >
+      <view class="mb-12rpx flex items-start justify-between gap-16rpx">
+        <view class="min-w-0 flex-1">
+          <view class="truncate text-28rpx text-[#333] font-medium">
+            {{ item.itemCode || `物料 #${item.itemId}` }}
+          </view>
+          <view class="mt-4rpx truncate text-26rpx text-[#666]">
+            {{ item.itemName || '-' }}
+          </view>
+        </view>
+        <dict-tag :type="DICT_TYPE.INFRA_BOOLEAN_STRING" :value="String(Boolean(item.oqcCheckFlag))" />
       </view>
-      <view v-if="readonly" class="text-24rpx text-[#999]">
-        只读
+      <view class="mb-8rpx flex text-26rpx text-[#666]">
+        <text class="mr-8rpx shrink-0 text-[#999]">规格型号：</text>
+        <text class="min-w-0 flex-1 truncate">{{ item.specification || '-' }}</text>
       </view>
-      <view
-        v-else
-        class="border border-[#1677ff] rounded-8rpx px-20rpx py-8rpx text-24rpx text-[#1677ff]"
-        @click="openCreateForm"
-      >
-        添加物料
+      <view class="mb-8rpx flex text-26rpx text-[#666]">
+        <text class="mr-8rpx shrink-0 text-[#999]">单位：</text>
+        <text class="min-w-0 flex-1 truncate">{{ item.unitMeasureName || '-' }}</text>
       </view>
-    </view>
-    <view v-if="loading" class="px-24rpx py-32rpx text-center text-26rpx text-[#999]">
-      加载中...
-    </view>
-    <view v-else-if="list.length === 0" class="px-24rpx py-32rpx text-center text-26rpx text-[#999]">
-      暂无出库物料
-    </view>
-    <view v-else class="px-24rpx py-8rpx">
-      <view
-        v-for="item in list"
-        :key="item.id"
-        class="border-b border-b-[#f5f5f5] py-20rpx last:border-b-0"
-      >
-        <view class="mb-12rpx flex items-start justify-between gap-16rpx">
-          <view class="min-w-0 flex-1">
-            <view class="truncate text-28rpx text-[#333] font-medium">
-              {{ item.itemCode || `物料 #${item.itemId}` }}
-            </view>
-            <view class="mt-4rpx truncate text-26rpx text-[#666]">
-              {{ item.itemName || '-' }}
-            </view>
+      <view class="mb-8rpx flex text-26rpx text-[#666]">
+        <text class="mr-8rpx shrink-0 text-[#999]">出库数量：</text>
+        <text class="min-w-0 flex-1 truncate">{{ item.quantity ?? '-' }}</text>
+      </view>
+      <view class="mb-8rpx flex text-26rpx text-[#666]">
+        <text class="mr-8rpx shrink-0 text-[#999]">已拣货数量：</text>
+        <text class="min-w-0 flex-1 truncate">{{ item.pickedQuantity ?? '-' }}</text>
+      </view>
+      <view class="mb-8rpx flex text-26rpx text-[#666]">
+        <text class="mr-8rpx shrink-0 text-[#999]">批次号：</text>
+        <text class="min-w-0 flex-1 truncate">{{ item.batchCode || '-' }}</text>
+      </view>
+      <view class="flex text-26rpx text-[#666]">
+        <text class="mr-8rpx shrink-0 text-[#999]">备注：</text>
+        <text class="min-w-0 flex-1 truncate">{{ item.remark || '-' }}</text>
+      </view>
+      <view v-if="!readonly" class="mt-16rpx flex rounded-8rpx bg-[#f7f8fa] text-26rpx">
+        <view class="flex-1 py-16rpx text-center text-[#1677ff]" @click="openUpdateForm(item)">
+          编辑
+        </view>
+        <view class="flex-1 py-16rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
+          删除
+        </view>
+      </view>
+      <view v-if="stockMode" class="mt-16rpx rounded-12rpx bg-[#f8fafc] p-16rpx">
+        <view class="mb-12rpx flex items-center justify-between">
+          <view class="text-26rpx text-[#333] font-medium">
+            拣货明细
           </view>
-          <dict-tag :type="DICT_TYPE.INFRA_BOOLEAN_STRING" :value="String(Boolean(item.oqcCheckFlag))" />
-        </view>
-        <view class="mb-8rpx flex text-26rpx text-[#666]">
-          <text class="mr-8rpx shrink-0 text-[#999]">规格型号：</text>
-          <text class="min-w-0 flex-1 truncate">{{ item.specification || '-' }}</text>
-        </view>
-        <view class="mb-8rpx flex text-26rpx text-[#666]">
-          <text class="mr-8rpx shrink-0 text-[#999]">单位：</text>
-          <text class="min-w-0 flex-1 truncate">{{ item.unitMeasureName || '-' }}</text>
-        </view>
-        <view class="mb-8rpx flex text-26rpx text-[#666]">
-          <text class="mr-8rpx shrink-0 text-[#999]">出库数量：</text>
-          <text class="min-w-0 flex-1 truncate">{{ item.quantity ?? '-' }}</text>
-        </view>
-        <view class="mb-8rpx flex text-26rpx text-[#666]">
-          <text class="mr-8rpx shrink-0 text-[#999]">已拣货数量：</text>
-          <text class="min-w-0 flex-1 truncate">{{ item.pickedQuantity ?? '-' }}</text>
-        </view>
-        <view class="mb-8rpx flex text-26rpx text-[#666]">
-          <text class="mr-8rpx shrink-0 text-[#999]">批次号：</text>
-          <text class="min-w-0 flex-1 truncate">{{ item.batchCode || '-' }}</text>
-        </view>
-        <view class="flex text-26rpx text-[#666]">
-          <text class="mr-8rpx shrink-0 text-[#999]">备注：</text>
-          <text class="min-w-0 flex-1 truncate">{{ item.remark || '-' }}</text>
-        </view>
-        <view v-if="!readonly" class="mt-16rpx flex rounded-8rpx bg-[#f7f8fa] text-26rpx">
-          <view class="flex-1 py-16rpx text-center text-[#1677ff]" @click="openUpdateForm(item)">
-            编辑
-          </view>
-          <view class="flex-1 py-16rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
-            删除
+          <view class="text-24rpx text-[#1677ff]" @click.stop="openCreateDetailForm(item)">
+            添加拣货
           </view>
         </view>
-        <view v-if="stockMode" class="mt-16rpx rounded-12rpx bg-[#f8fafc] p-16rpx">
-          <view class="mb-12rpx flex items-center justify-between">
-            <view class="text-26rpx text-[#333] font-medium">
-              拣货明细
-            </view>
-            <view class="text-24rpx text-[#1677ff]" @click.stop="openCreateDetailForm(item)">
-              添加拣货
-            </view>
+        <view v-if="isDetailLoading(item.id)" class="py-12rpx text-24rpx text-[#999]">
+          加载中...
+        </view>
+        <view v-else-if="getDetailList(item.id).length === 0" class="py-12rpx text-24rpx text-[#999]">
+          暂无拣货明细
+        </view>
+        <view
+          v-for="detail in getDetailList(item.id)"
+          v-else
+          :key="detail.id"
+          class="mb-12rpx rounded-8rpx bg-white p-16rpx last:mb-0"
+        >
+          <view class="mb-8rpx text-26rpx text-[#333]">
+            {{ detail.warehouseName || '-' }} / {{ detail.locationName || '-' }} / {{ detail.areaName || '-' }}
           </view>
-          <view v-if="isDetailLoading(item.id)" class="py-12rpx text-24rpx text-[#999]">
-            加载中...
+          <view class="mb-8rpx text-24rpx text-[#666]">
+            批次号：{{ detail.batchCode || '-' }}
           </view>
-          <view v-else-if="getDetailList(item.id).length === 0" class="py-12rpx text-24rpx text-[#999]">
-            暂无拣货明细
+          <view class="mb-8rpx text-24rpx text-[#666]">
+            拣货数量：{{ detail.quantity ?? '-' }}
           </view>
-          <view
-            v-for="detail in getDetailList(item.id)"
-            v-else
-            :key="detail.id"
-            class="mb-12rpx rounded-8rpx bg-white p-16rpx last:mb-0"
-          >
-            <view class="mb-8rpx text-26rpx text-[#333]">
-              {{ detail.warehouseName || '-' }} / {{ detail.locationName || '-' }} / {{ detail.areaName || '-' }}
+          <view v-if="detail.remark" class="text-24rpx text-[#666]">
+            备注：{{ detail.remark }}
+          </view>
+          <view class="mt-12rpx flex rounded-8rpx bg-[#f7f8fa] text-24rpx">
+            <view class="flex-1 py-12rpx text-center text-[#1677ff]" @click.stop="openUpdateDetailForm(item, detail)">
+              编辑
             </view>
-            <view class="mb-8rpx text-24rpx text-[#666]">
-              批次号：{{ detail.batchCode || '-' }}
-            </view>
-            <view class="mb-8rpx text-24rpx text-[#666]">
-              拣货数量：{{ detail.quantity ?? '-' }}
-            </view>
-            <view v-if="detail.remark" class="text-24rpx text-[#666]">
-              备注：{{ detail.remark }}
-            </view>
-            <view class="mt-12rpx flex rounded-8rpx bg-[#f7f8fa] text-24rpx">
-              <view class="flex-1 py-12rpx text-center text-[#1677ff]" @click.stop="openUpdateDetailForm(item, detail)">
-                编辑
-              </view>
-              <view class="flex-1 py-12rpx text-center text-[#f56c6c]" @click.stop="handleDeleteDetail(detail)">
-                删除
-              </view>
+            <view class="flex-1 py-12rpx text-center text-[#f56c6c]" @click.stop="handleDeleteDetail(detail)">
+              删除
             </view>
           </view>
         </view>
       </view>
     </view>
-  </view>
+  </MesLineListShell>
 
   <!-- 出库物料表单弹窗 -->
   <wd-popup
@@ -348,6 +333,7 @@ import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
+import MesLineListShell from '@/pages-mes/components/mes-line-list-shell.vue'
 import ItemSelector from '../../../md/item/components/item-selector.vue'
 import SalesNoticeLineSelector from '../../salesnotice/components/sales-notice-line-selector.vue'
 

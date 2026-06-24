@@ -27,28 +27,26 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="hasFooter" class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button
-          v-if="hasAccessByCodes(['mes:md-item-type:create'])"
-          class="flex-1" type="success" @click="handleAddChild"
-        >
-          新增子分类
-        </wd-button>
-        <wd-button
-          v-if="hasAccessByCodes(['mes:md-item-type:update'])"
-          class="flex-1" type="warning" @click="handleEdit"
-        >
-          编辑
-        </wd-button>
-        <wd-button
-          v-if="hasAccessByCodes(['mes:md-item-type:delete']) && (formData?.parentId ?? 0) !== 0"
-          class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
-        >
-          删除
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions v-if="hasFooter" content-class="yd-detail-footer-actions">
+      <wd-button
+        v-if="canCreate"
+        class="flex-1" type="success" @click="handleAddChild"
+      >
+        新增子分类
+      </wd-button>
+      <wd-button
+        v-if="canUpdate"
+        class="flex-1" type="warning" @click="handleEdit"
+      >
+        编辑
+      </wd-button>
+      <wd-button
+        v-if="canDelete && (formData?.parentId ?? 0) !== 0"
+        class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
+      >
+        删除
+      </wd-button>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -61,7 +59,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteItemType, getItemType, getItemTypeList } from '@/api/mes/md/item/type'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -82,7 +81,10 @@ const currentId = computed(() => getRouteQueryNumber('id')) // 当前分类编�
 const formData = ref<MdItemTypeVO>() // 详情数据
 const deleting = ref(false) // 删除状态
 const parentName = ref<string>() // 上级分类名称
-const hasFooter = computed(() => hasAccessByCodes(['mes:md-item-type:create']) || hasAccessByCodes(['mes:md-item-type:update']) || hasAccessByCodes(['mes:md-item-type:delete']))
+const canCreate = computed(() => hasAccessByCodes(['mes:md-item-type:create']))
+const canUpdate = computed(() => hasAccessByCodes(['mes:md-item-type:update']))
+const canDelete = computed(() => hasAccessByCodes(['mes:md-item-type:delete']))
+const hasFooter = computed(() => canCreate.value || canUpdate.value || canDelete.value)
 
 /** 返回上一页 */
 function handleBack() {
@@ -169,7 +171,7 @@ async function handleDelete() {
     toast.close()
     toast.success('删除成功')
     uni.$emit('mes:md:item:type:reload')
-    delay(handleBack)
+    setTimeout(() => handleBack(), 500)
   } catch {
     toast.close()
   } finally {

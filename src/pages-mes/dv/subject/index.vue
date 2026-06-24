@@ -6,21 +6,8 @@
       left-arrow placeholder safe-area-inset-top fixed
       @click-left="handleBack"
     />
-
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
-
-    <!-- 导出入口 -->
-    <view v-if="hasAccessByCodes(['mes:dv-subject:export'])" class="bg-white px-24rpx py-16rpx">
-      <view
-        class="h-64rpx flex items-center justify-center border-2rpx border-[#1677ff] rounded-8rpx text-26rpx text-[#1677ff]"
-        :class="exportLoading ? 'opacity-60' : ''"
-        @click="handleExport"
-      >
-        {{ exportLoading ? '导出中...' : '导出当前筛选数据' }}
-      </view>
-    </view>
-
     <!-- 列表 -->
     <z-paging
       ref="pagingRef"
@@ -89,7 +76,6 @@ import type { DvSubjectQueryParams, DvSubjectVO } from '@/api/mes/dv/subject'
 import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { getSubjectPage } from '@/api/mes/dv/subject'
-import { downloadApiFile } from '@/utils/download'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -107,7 +93,6 @@ const { hasAccessByCodes } = useAccess()
 const list = ref<DvSubjectVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<DvSubjectVO>>() // 分页组件引用
 const queryParams = ref<DvSubjectQueryParams>({}) // 查询参数
-const exportLoading = ref(false) // 导出状态
 
 /** 返回上一页 */
 function handleBack() {
@@ -143,26 +128,6 @@ function handleReset() {
 /** 重新加载 */
 function reload() {
   pagingRef.value?.reload()
-}
-
-/** 导出按钮操作 */
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选数据吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/dv/subject/export-excel', queryParams.value, '点检保养项目.xls')
-  } finally {
-    exportLoading.value = false
-  }
 }
 
 /** 新增 */

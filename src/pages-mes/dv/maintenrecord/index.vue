@@ -6,21 +6,8 @@
       left-arrow placeholder safe-area-inset-top fixed
       @click-left="handleBack"
     />
-
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
-
-    <!-- 导出入口 -->
-    <view v-if="hasAccessByCodes(['mes:dv-mainten-record:export'])" class="bg-white px-24rpx py-16rpx">
-      <view
-        class="h-64rpx flex items-center justify-center border-2rpx border-[#1677ff] rounded-8rpx text-26rpx text-[#1677ff]"
-        :class="exportLoading ? 'opacity-60' : ''"
-        @click="handleExport"
-      >
-        {{ exportLoading ? '导出中...' : '导出当前筛选数据' }}
-      </view>
-    </view>
-
     <!-- 列表 -->
     <z-paging
       ref="pagingRef"
@@ -75,10 +62,10 @@
             </view>
           </view>
           <view v-if="hasRowActions(item)" class="flex border-t border-t-[#f0f0f0] text-28rpx" @click.stop>
-            <view v-if="hasAccessByCodes(['mes:dv-mainten-record:update'])" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
+            <view v-if="canUpdatePrepare" class="flex-1 py-18rpx text-center text-[#1677ff]" @click="handleEdit(item)">
               编辑
             </view>
-            <view v-if="hasAccessByCodes(['mes:dv-mainten-record:delete'])" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
+            <view v-if="canDeletePrepare" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
               删除
             </view>
           </view>
@@ -102,10 +89,9 @@ import type { DvMaintenRecordQueryParams, DvMaintenRecordVO } from '@/api/mes/dv
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { deleteMaintenRecord, getMaintenRecordPage } from '@/api/mes/dv/maintenrecord'
 import { useAccess } from '@/hooks/useAccess'
-import { downloadApiFile } from '@/utils/download'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesDvMaintenRecordStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
@@ -124,7 +110,8 @@ const toast = useToast()
 const list = ref<DvMaintenRecordVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<DvMaintenRecordVO>>() // 分页组件引用
 const queryParams = ref<DvMaintenRecordQueryParams>({}) // 查询参数
-const exportLoading = ref(false) // 导出状态
+const canUpdatePrepare = computed(() => hasAccessByCodes(['mes:dv-mainten-record:update']))
+const canDeletePrepare = computed(() => hasAccessByCodes(['mes:dv-mainten-record:delete']))
 
 /** 返回上一页 */
 function handleBack() {
@@ -162,26 +149,6 @@ function reload() {
   pagingRef.value?.reload()
 }
 
-/** 导出按钮操作 */
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选数据吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/dv/mainten-record/export-excel', queryParams.value, '设备保养记录.xls')
-  } finally {
-    exportLoading.value = false
-  }
-}
-
 /** 新增 */
 function handleAdd() {
   uni.navigateTo({
@@ -198,7 +165,7 @@ function handleDetail(item: DvMaintenRecordVO) {
 
 /** 是否显示行操作 */
 function hasRowActions(item: DvMaintenRecordVO) {
-  return item.status === MesDvMaintenRecordStatusEnum.PREPARE && (hasAccessByCodes(['mes:dv-mainten-record:update']) || hasAccessByCodes(['mes:dv-mainten-record:delete']))
+  return item.status === MesDvMaintenRecordStatusEnum.PREPARE && (canUpdatePrepare.value || canDeletePrepare.value)
 }
 
 /** 编辑 */

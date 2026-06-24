@@ -23,14 +23,13 @@
         <view class="yd-search-form-label">
           物料
         </view>
-        <view class="yd-search-form-selector" @click="openItemSelector">
-          <text v-if="selectedItemText" class="text-[#333]">
-            {{ selectedItemText }}
-          </text>
-          <text v-else class="text-[#999]">
-            请选择物料
-          </text>
-        </view>
+        <MesSearchSelectorField
+          :model-value="selectedItemText"
+          placeholder="请选择物料"
+          clearable
+          @click="openItemSelector"
+          @clear="clearItem"
+        />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
@@ -68,6 +67,7 @@ import type { WmSnQueryParams } from '@/api/mes/wm/sn'
 import { computed, reactive, ref } from 'vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { formatDateRange } from '@/utils/date'
+import MesSearchSelectorField from '@/pages-mes/components/mes-search-selector-field.vue'
 import ItemSelector from '../../../md/item/components/item-selector.vue'
 
 const emit = defineEmits<{
@@ -119,6 +119,12 @@ function handleItemConfirm(items: MdItemVO[]) {
   formData.itemId = item.id
 }
 
+/** 清空物料 */
+function clearItem() {
+  selectedItem.value = undefined
+  formData.itemId = undefined
+}
+
 /** 构造搜索参数 */
 function buildParams() {
   const params: WmSnQueryParams = {}
@@ -155,15 +161,3 @@ function handleReset() {
   emit('reset')
 }
 </script>
-
-<style lang="scss" scoped>
-.yd-search-form-selector {
-  min-height: 72rpx;
-  display: flex;
-  align-items: center;
-  padding: 0 24rpx;
-  border-radius: 8rpx;
-  background: #f7f8fa;
-  font-size: 28rpx;
-}
-</style>

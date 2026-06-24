@@ -102,42 +102,40 @@
     </scroll-view>
 
     <!-- 底部保存按钮 -->
-    <view class="yd-detail-footer">
-      <view class="flex gap-24rpx text-28rpx">
-        <view
-          v-if="isEditable"
-          class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white"
-          :class="formLoading ? 'opacity-60' : ''"
-          @click="handleSubmit"
-        >
-          {{ formLoading ? '保存中...' : '保存' }}
-        </view>
-        <view
-          v-if="canSubmit"
-          class="flex-1 rounded-8rpx bg-[#faad14] py-20rpx text-center text-white"
-          :class="submitLoading ? 'opacity-60' : ''"
-          @click="handleSubmitIssue"
-        >
-          {{ submitLoading ? '提交中...' : '提交' }}
-        </view>
-        <view
-          v-if="isStock"
-          class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white"
-          :class="stockLoading ? 'opacity-60' : ''"
-          @click="handleStockIssue"
-        >
-          {{ stockLoading ? '拣货中...' : '执行拣货' }}
-        </view>
-        <view
-          v-if="isFinish"
-          class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white"
-          :class="finishLoading ? 'opacity-60' : ''"
-          @click="handleFinishIssue"
-        >
-          {{ finishLoading ? '完成中...' : '完成' }}
-        </view>
+    <MesFooterActions content-class="flex gap-24rpx text-28rpx">
+      <view
+        v-if="isEditable"
+        class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white"
+        :class="formLoading ? 'opacity-60' : ''"
+        @click="handleSubmit"
+      >
+        {{ formLoading ? '保存中...' : '保存' }}
       </view>
-    </view>
+      <view
+        v-if="canSubmit"
+        class="flex-1 rounded-8rpx bg-[#faad14] py-20rpx text-center text-white"
+        :class="submitLoading ? 'opacity-60' : ''"
+        @click="handleSubmitIssue"
+      >
+        {{ submitLoading ? '提交中...' : '提交' }}
+      </view>
+      <view
+        v-if="isStock"
+        class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white"
+        :class="stockLoading ? 'opacity-60' : ''"
+        @click="handleStockIssue"
+      >
+        {{ stockLoading ? '拣货中...' : '执行拣货' }}
+      </view>
+      <view
+        v-if="isFinish"
+        class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white"
+        :class="finishLoading ? 'opacity-60' : ''"
+        @click="handleFinishIssue"
+      >
+        {{ finishLoading ? '完成中...' : '完成' }}
+      </view>
+    </MesFooterActions>
 
     <WorkOrderSelector ref="workOrderSelectorRef" @confirm="handleWorkOrderConfirm" />
     <WorkstationSelector ref="workstationSelectorRef" @confirm="handleWorkstationConfirm" />
@@ -148,6 +146,7 @@
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { ProWorkOrderVO } from '@/api/mes/pro/workorder'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import type { MdWorkstationVO } from '@/api/mes/md/workstation'
 import type { WmProductIssueCreateReqVO } from '@/api/mes/wm/productissue'
 import { onShow } from '@dcloudio/uni-app'

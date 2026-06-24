@@ -34,11 +34,11 @@
       </wd-form>
       <view class="h-160rpx" />
     </scroll-view>
-    <view class="yd-detail-footer">
+    <MesFooterActions>
       <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
         保存
       </wd-button>
-    </view>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -55,6 +55,7 @@ import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { handleTree } from '@/utils/tree'
 import { createFormSchema } from '@/utils/wot'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 
 const props = defineProps<{ id?: number | string, parentId?: number | string }>()
 definePage({ style: { navigationBarTitleText: '', navigationStyle: 'custom' } })

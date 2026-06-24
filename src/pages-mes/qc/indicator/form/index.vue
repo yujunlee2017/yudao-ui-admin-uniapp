@@ -72,11 +72,11 @@
     </scroll-view>
 
     <!-- 底部保存按钮 -->
-    <view class="yd-detail-footer">
+    <MesFooterActions>
       <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
         保存
       </wd-button>
-    </view>
+    </MesFooterActions>
 
     <!-- 字典类型选择器 -->
     <DictTypeSelector ref="dictTypeSelectorRef" @confirm="handleDictTypeConfirm" />
@@ -94,7 +94,8 @@ import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { getSimpleDictTypeList } from '@/api/system/dict/type'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import DictTypeSelector from '../components/dict-type-selector.vue'
@@ -264,7 +265,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:qc:indicator:reload')
-    delay(handleBack)
+    setTimeout(() => handleBack(), 500)
   } finally {
     formLoading.value = false
   }

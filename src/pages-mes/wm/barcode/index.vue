@@ -25,12 +25,6 @@
         >
           条码设置
         </wd-button>
-        <wd-button
-          v-if="hasAccessByCodes(['mes:wm-barcode:export'])"
-          block variant="plain" :loading="exportLoading" @click="handleExport"
-        >
-          导出当前筛选
-        </wd-button>
       </view>
     </view>
 
@@ -123,7 +117,6 @@ import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import { downloadApiFile } from '@/utils/download'
 import BarcodePreview from './components/barcode-preview.vue'
 import SearchForm from './components/search-form.vue'
 
@@ -147,7 +140,6 @@ const list = ref<WmBarcodeVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<WmBarcodeVO>>() // 分页组件引用
 const queryParams = ref<WmBarcodeQueryParams>({}) // 查询参数
 const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索组件引用
-const exportLoading = ref(false) // 导出状态
 const { getRouteQueryNumber, getRouteQueryValue } = useRouteQuery(props, '/pages-mes/wm/barcode/index')
 const routeBizType = computed(() => getRouteQueryNumber('bizType')) // 路由业务类型
 const routeBizId = computed(() => getRouteQueryNumber('bizId')) // 路由业务编号
@@ -155,7 +147,6 @@ const routeBizCode = computed(() => getRouteQueryValue('bizCode')) // 路由业�
 const hasTopActions = computed(() => {
   return hasAccessByCodes(['mes:wm-barcode:create'])
     || hasAccessByCodes(['mes:wm-barcode-config:query'])
-    || hasAccessByCodes(['mes:wm-barcode:export'])
 })
 const hasRowActions = computed(() => {
   return hasAccessByCodes(['mes:wm-barcode:update']) || hasAccessByCodes(['mes:wm-barcode:delete'])
@@ -262,27 +253,6 @@ function handleConfig() {
   uni.navigateTo({
     url: '/pages-mes/wm/barcode/config/index',
   })
-}
-
-/** 导出按钮操作 */
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选数据吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/wm/barcode/export-excel', queryParams.value, '条码清单.xls')
-    toast.success('导出成功')
-  } finally {
-    exportLoading.value = false
-  }
 }
 
 /** 初始化 */

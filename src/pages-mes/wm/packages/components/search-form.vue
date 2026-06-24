@@ -29,11 +29,13 @@
         <view class="yd-search-form-label">
           客户
         </view>
-        <view class="yd-search-form-selector" @click="openClientSelector">
-          <text :class="selectedClientText ? 'text-[#333]' : 'text-[#999]'">
-            {{ selectedClientText || '请选择客户' }}
-          </text>
-        </view>
+        <MesSearchSelectorField
+          :model-value="selectedClientText"
+          placeholder="请选择客户"
+          clearable
+          @click="openClientSelector"
+          @clear="clearClient"
+        />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
@@ -46,11 +48,12 @@
           use-default-slot
           @confirm="handleInspectorConfirm"
         >
-          <view class="yd-search-form-selector">
-            <text :class="selectedInspectorText ? 'text-[#333]' : 'text-[#999]'">
-              {{ selectedInspectorText || '请选择检查员' }}
-            </text>
-          </view>
+          <MesSearchSelectorField
+            :model-value="selectedInspectorText"
+            placeholder="请选择检查员"
+            clearable
+            @clear="clearInspector"
+          />
         </UserPicker>
       </view>
       <view class="yd-search-form-item">
@@ -85,6 +88,7 @@ import { computed, reactive, ref } from 'vue'
 import UserPicker from '@/components/system-select/user-picker.vue'
 import { getIntDictOptions } from '@/hooks/useDict'
 import ClientSelector from '@/pages-mes/md/client/components/client-selector.vue'
+import MesSearchSelectorField from '@/pages-mes/components/mes-search-selector-field.vue'
 import { DICT_TYPE } from '@/utils/constants'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 
@@ -148,6 +152,18 @@ function handleInspectorConfirm(users: User[]) {
   selectedInspectorText.value = users[0]?.nickname || ''
 }
 
+/** 清空客户 */
+function clearClient() {
+  selectedClient.value = undefined
+  formData.clientId = undefined
+}
+
+/** 清空检查员 */
+function clearInspector() {
+  selectedInspectorText.value = ''
+  formData.inspectorUserId = undefined
+}
+
 /** 构造搜索参数 */
 function buildParams() {
   const params: WmPackageQueryParams = {}
@@ -182,21 +198,9 @@ function handleReset() {
   formData.clientId = undefined
   formData.inspectorUserId = undefined
   formData.status = undefined
-  selectedClient.value = undefined
-  selectedInspectorText.value = ''
+  clearClient()
+  clearInspector()
   visible.value = false
   emit('reset')
 }
 </script>
-
-<style lang="scss" scoped>
-.yd-search-form-selector {
-  min-height: 72rpx;
-  display: flex;
-  align-items: center;
-  padding: 0 24rpx;
-  border-radius: 8rpx;
-  background: #f7f8fa;
-  font-size: 28rpx;
-}
-</style>

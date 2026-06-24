@@ -6,21 +6,8 @@
       left-arrow placeholder safe-area-inset-top fixed
       @click-left="handleBack"
     />
-
     <!-- 搜索组件 -->
     <SearchForm ref="searchFormRef" @search="handleQuery" @reset="handleReset" />
-
-    <!-- 导出入口 -->
-    <view v-if="hasAccessByCodes(['mes:pro-andon-record:export'])" class="bg-white px-24rpx py-16rpx">
-      <view
-        class="h-64rpx flex items-center justify-center border-2rpx border-[#1677ff] rounded-8rpx text-26rpx text-[#1677ff]"
-        :class="exportLoading ? 'opacity-60' : ''"
-        @click="handleExport"
-      >
-        {{ exportLoading ? '导出中...' : '导出当前筛选数据' }}
-      </view>
-    </view>
-
     <!-- 分页列表 -->
     <z-paging
       ref="pagingRef"
@@ -71,10 +58,10 @@
             class="flex border-t border-[#f0f0f0] text-28rpx"
             @click.stop
           >
-            <view v-if="hasAccessByCodes(['mes:pro-andon-record:update'])" class="flex-1 py-18rpx text-center text-[#52c41a]" @click="handleDispose(item)">
+            <view v-if="canUpdate" class="flex-1 py-18rpx text-center text-[#52c41a]" @click="handleDispose(item)">
               处置
             </view>
-            <view v-if="hasAccessByCodes(['mes:pro-andon-record:delete'])" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
+            <view v-if="canDelete" class="flex-1 py-18rpx text-center text-[#f56c6c]" @click="handleDelete(item)">
               删除
             </view>
           </view>
@@ -83,7 +70,7 @@
     </z-paging>
 
     <!-- 新增按钮 -->
-    <wd-fab v-if="hasAccessByCodes(['mes:pro-andon-record:create'])" position="right-bottom" type="primary" :expandable="false" @click="handleAdd" />
+    <wd-fab v-if="canCreate" position="right-bottom" type="primary" :expandable="false" @click="handleAdd" />
   </view>
 </template>
 
@@ -92,9 +79,8 @@ import type { ProAndonRecordQueryParams, ProAndonRecordVO } from '@/api/mes/pro/
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { deleteAndonRecord, getAndonRecordPage } from '@/api/mes/pro/andon/record'
-import { downloadApiFile } from '@/utils/download'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -120,9 +106,9 @@ const list = ref<ProAndonRecordVO[]>([]) // 列表数据
 const pagingRef = ref() // 分页组件引用
 const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索表单引用
 const queryParams = ref<Partial<ProAndonRecordQueryParams>>({}) // 查询参数
-const exportLoading = ref(false) // 导出状态
-
-/** 返回上一页 */
+const canCreate = computed(() => hasAccessByCodes(['mes:pro-andon-record:create']))
+const canUpdate = computed(() => hasAccessByCodes(['mes:pro-andon-record:update']))
+const canDelete = computed(() => hasAccessByCodes(['mes:pro-andon-record:delete']))/** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
 }
@@ -143,7 +129,7 @@ async function queryList(pageNo: number, pageSize: number) {
 
 /** 是否显示未处置动作 */
 function hasActiveActions(item: ProAndonRecordVO) {
-  return item.status === MesProAndonStatusEnum.ACTIVE && (hasAccessByCodes(['mes:pro-andon-record:update']) || hasAccessByCodes(['mes:pro-andon-record:delete']))
+  return item.status === MesProAndonStatusEnum.ACTIVE && (canUpdate.value || canDelete.value)
 }
 
 /** 搜索按钮操作 */
@@ -162,26 +148,6 @@ function handleReset() {
 /** 重新加载 */
 function reload() {
   pagingRef.value?.reload()
-}
-
-/** 导出安灯记录 */
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选数据吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/pro/andon-record/export-excel', queryParams.value, '安灯呼叫记录.xls')
-  } finally {
-    exportLoading.value = false
-  }
 }
 
 /** 新增 */

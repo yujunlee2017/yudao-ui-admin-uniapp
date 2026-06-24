@@ -29,11 +29,11 @@
       </view>
       <view class="h-160rpx" />
     </scroll-view>
-    <view class="yd-detail-footer">
+    <MesFooterActions>
       <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
         保存
       </wd-button>
-    </view>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -45,7 +45,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { createRoute, getRoute, updateRoute } from '@/api/mes/pro/route'
 import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{ id?: number | string }>()
@@ -147,7 +148,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:pro:route:reload')
-    delay(handleBack)
+    setTimeout(() => handleBack(), 500)
   } finally {
     formLoading.value = false
   }

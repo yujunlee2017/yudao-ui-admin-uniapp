@@ -9,21 +9,8 @@
 
     <!-- 当前工作状态 -->
     <WorkRecordStatusBar ref="statusBarRef" @change="reload" />
-
     <!-- 搜索组件 -->
     <SearchForm ref="searchFormRef" @search="handleQuery" @reset="handleReset" />
-
-    <!-- 导出入口 -->
-    <view v-if="hasAccessByCodes(['mes:pro-workrecord:export'])" class="bg-white px-24rpx py-16rpx">
-      <view
-        class="h-64rpx flex items-center justify-center border-2rpx border-[#1677ff] rounded-8rpx text-26rpx text-[#1677ff]"
-        :class="exportLoading ? 'opacity-60' : ''"
-        @click="handleExport"
-      >
-        {{ exportLoading ? '导出中...' : '导出当前筛选数据' }}
-      </view>
-    </view>
-
     <!-- 分页列表 -->
     <z-paging
       ref="pagingRef"
@@ -73,9 +60,8 @@
 <script lang="ts" setup>
 import type { ProWorkRecordLogQueryParams, ProWorkRecordLogVO } from '@/api/mes/pro/workrecord'
 import { onUnload } from '@dcloudio/uni-app'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { getWorkRecordLogPage } from '@/api/mes/pro/workrecord'
-import { downloadApiFile } from '@/utils/download'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -96,8 +82,6 @@ const pagingRef = ref() // 分页组件引用
 const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索表单引用
 const statusBarRef = ref<InstanceType<typeof WorkRecordStatusBar>>() // 当前状态引用
 const queryParams = ref<Partial<ProWorkRecordLogQueryParams>>({}) // 查询参数
-const exportLoading = ref(false) // 导出状态
-const exportParams = computed(() => ({ ...queryParams.value })) // 导出参数
 
 /** 返回上一页 */
 function handleBack() {
@@ -135,26 +119,6 @@ function handleReset() {
 function reload() {
   pagingRef.value?.reload()
   statusBarRef.value?.loadCurrent()
-}
-
-/** 导出工作记录 */
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选数据吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/pro/workrecord/log/export-excel', exportParams.value, '工作记录.xls')
-  } finally {
-    exportLoading.value = false
-  }
 }
 
 /** 查看详情 */

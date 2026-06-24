@@ -40,19 +40,17 @@
       <view class="h-180rpx" />
     </scroll-view>
 
-    <view v-if="hasFooter" class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button v-if="hasAccessByCodes(['mes:pro-route:update'])" class="flex-1" type="primary" variant="plain" @click="handleStatusChange">
-          {{ formData?.status === CommonStatusEnum.ENABLE ? '停用' : '启用' }}
-        </wd-button>
-        <wd-button v-if="hasAccessByCodes(['mes:pro-route:update'])" class="flex-1" type="warning" :disabled="!isDisabled" @click="handleEdit">
-          编辑
-        </wd-button>
-        <wd-button v-if="hasAccessByCodes(['mes:pro-route:delete'])" class="flex-1" type="danger" :loading="deleting" :disabled="!isDisabled" @click="handleDelete">
-          删除
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions v-if="hasFooter" content-class="yd-detail-footer-actions">
+      <wd-button v-if="canUpdate" class="flex-1" type="primary" variant="plain" @click="handleStatusChange">
+        {{ formData?.status === CommonStatusEnum.ENABLE ? '停用' : '启用' }}
+      </wd-button>
+      <wd-button v-if="canUpdate" class="flex-1" type="warning" :disabled="!isDisabled" @click="handleEdit">
+        编辑
+      </wd-button>
+      <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" :disabled="!isDisabled" @click="handleDelete">
+        删除
+      </wd-button>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -68,7 +66,8 @@ import { getRouteProductListByRoute } from '@/api/mes/pro/route/product'
 import { getRouteProductBomList } from '@/api/mes/pro/route/productbom'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import RouteProcessList from '../components/route-process-list.vue'
@@ -93,7 +92,9 @@ const routeProductCount = ref(0)
 const routeBomCount = ref(0)
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/pro/route/detail/index')
 const routeId = computed(() => getRouteQueryNumber('id'))
-const hasFooter = computed(() => hasAccessByCodes(['mes:pro-route:update']) || hasAccessByCodes(['mes:pro-route:delete']))
+const canUpdate = computed(() => hasAccessByCodes(['mes:pro-route:update']))
+const canDelete = computed(() => hasAccessByCodes(['mes:pro-route:delete']))
+const hasFooter = computed(() => canUpdate.value || canDelete.value)
 const isDisabled = computed(() => formData.value?.status === CommonStatusEnum.DISABLE)
 
 /** 返回上一页 */
@@ -108,7 +109,13 @@ async function getDetail() {
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getRoute(routeId.value)
+    const detailData = await getRoute(routeId.value)
+    if (!detailData) {
+      uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+      setTimeout(() => handleBack(), 300)
+      return
+    }
+    formData.value = detailData
     await loadOverview(routeId.value)
   } finally {
     toast.close()
@@ -192,7 +199,7 @@ async function handleDelete() {
     toast.close()
     toast.success('删除成功')
     uni.$emit('mes:pro:route:reload')
-    delay(handleBack)
+    setTimeout(() => handleBack(), 500)
   } catch {
     toast.close()
   } finally {

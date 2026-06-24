@@ -36,16 +36,14 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button v-if="isPrepare && hasAccessByCodes(['mes:cal-plan:update'])" class="flex-1" type="warning" @click="handleEdit">
-          编辑
-        </wd-button>
-        <wd-button v-if="isPrepare && hasAccessByCodes(['mes:cal-plan:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
-          删除
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions content-class="yd-detail-footer-actions">
+      <wd-button v-if="isPrepare && hasAccessByCodes(['mes:cal-plan:update'])" class="flex-1" type="warning" @click="handleEdit">
+        编辑
+      </wd-button>
+      <wd-button v-if="isPrepare && hasAccessByCodes(['mes:cal-plan:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        删除
+      </wd-button>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -57,7 +55,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deletePlan, getPlan } from '@/api/mes/cal/plan'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
 import PlanShiftList from '../components/plan-shift-list.vue'
@@ -96,7 +95,13 @@ async function getDetail() {
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getPlan(planId.value)
+    const detailData = await getPlan(planId.value)
+    if (!detailData) {
+      uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+      setTimeout(() => handleBack(), 300)
+      return
+    }
+    formData.value = detailData
   } finally {
     toast.close()
   }
@@ -128,7 +133,7 @@ async function handleDelete() {
     await deletePlan(planId.value)
     toast.success('删除成功')
     uni.$emit('mes:cal:plan:reload')
-    delay(handleBack)
+    setTimeout(() => handleBack(), 500)
   } finally {
     deleting.value = false
   }

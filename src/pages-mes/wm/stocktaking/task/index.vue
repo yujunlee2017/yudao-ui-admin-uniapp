@@ -10,16 +10,6 @@
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
-    <!-- 顶部操作 -->
-    <view
-      v-if="hasAccessByCodes(['mes:wm-stock-taking-task:export'])"
-      class="bg-white px-24rpx py-16rpx"
-    >
-      <wd-button block variant="plain" :loading="exportLoading" @click="handleExport">
-        导出当前筛选
-      </wd-button>
-    </view>
-
     <!-- 列表 -->
     <z-paging
       ref="pagingRef"
@@ -140,7 +130,6 @@ import {
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmStockTakingTaskStatusEnum } from '@/utils/constants'
-import { downloadApiFile } from '@/utils/download'
 import { formatDate, formatDateTime } from '@/utils/date'
 import SearchForm from './components/search-form.vue'
 
@@ -157,7 +146,6 @@ const toast = useToast()
 const list = ref<StockTakingTaskVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingInstance<StockTakingTaskVO>>() // 分页组件引用
 const queryParams = ref<Partial<StockTakingTaskQueryParams>>({}) // 查询参数
-const exportLoading = ref(false) // 导出状态
 
 /** 返回上一页 */
 function handleBack() {
@@ -292,25 +280,6 @@ async function handleDelete(item: StockTakingTaskVO) {
   await deleteStockTaking(item.id)
   toast.success('删除成功')
   reload()
-}
-
-/** 导出 */
-async function handleExport() {
-  try {
-    await dialog.confirm({
-      title: '提示',
-      msg: '确定要导出当前筛选的盘点任务吗？',
-    })
-  } catch {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile('/mes/wm/stocktaking-task/export-excel', queryParams.value, '盘点任务.xls')
-    toast.success('导出成功')
-  } finally {
-    exportLoading.value = false
-  }
 }
 
 /** 完成盘点，供执行页面后续复用 */

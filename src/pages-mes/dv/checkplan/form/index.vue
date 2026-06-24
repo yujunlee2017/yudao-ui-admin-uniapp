@@ -84,11 +84,11 @@
     </view>
 
     <!-- 底部保存按钮 -->
-    <view class="yd-detail-footer">
+    <MesFooterActions>
       <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
         保存
       </wd-button>
-    </view>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -102,7 +102,8 @@ import { createCheckPlan, getCheckPlan, updateCheckPlan } from '@/api/mes/dv/che
 import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesAutoCodeRuleCode, MesDvCheckPlanStatusEnum } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import MachineryList from '../components/machinery-list.vue'
@@ -229,7 +230,9 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:dv:checkplan:reload')
-    delay(handleBack)
+    setTimeout(() => {
+      handleBack()
+    }, 500)
   } finally {
     formLoading.value = false
   }

@@ -91,22 +91,20 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view class="yd-detail-footer">
-      <view class="flex gap-16rpx">
-        <wd-button v-if="isEditable" class="flex-1" type="primary" :loading="formLoading" @click="handleSave">
-          保存
-        </wd-button>
-        <wd-button v-if="canSubmit" class="flex-1" type="warning" :loading="formLoading" @click="handleSubmitFeedback">
-          提交
-        </wd-button>
-        <wd-button v-if="isApproveMode" class="flex-1" type="success" :loading="formLoading" @click="handleApprove">
-          通过
-        </wd-button>
-        <wd-button v-if="isApproveMode" class="flex-1" type="danger" :loading="formLoading" @click="handleReject">
-          不通过
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions content-class="flex gap-16rpx">
+      <wd-button v-if="isEditable" class="flex-1" type="primary" :loading="formLoading" @click="handleSave">
+        保存
+      </wd-button>
+      <wd-button v-if="canSubmit" class="flex-1" type="warning" :loading="formLoading" @click="handleSubmitFeedback">
+        提交
+      </wd-button>
+      <wd-button v-if="isApproveMode" class="flex-1" type="success" :loading="formLoading" @click="handleApprove">
+        通过
+      </wd-button>
+      <wd-button v-if="isApproveMode" class="flex-1" type="danger" :loading="formLoading" @click="handleReject">
+        不通过
+      </wd-button>
+    </MesFooterActions>
 
     <WorkOrderSelector ref="workOrderSelectorRef" @confirm="handleWorkOrderConfirm" />
     <WorkstationSelector ref="workstationSelectorRef" @confirm="handleWorkstationConfirm" />
@@ -138,7 +136,8 @@ import { getWorkOrder } from '@/api/mes/pro/workorder'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { useUserStore } from '@/store/user'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import ItemConsumeList from '../components/item-consume-list.vue'
@@ -577,7 +576,7 @@ async function handleSubmitFeedback() {
     }
     toast.success('报工单已提交')
     uni.$emit('mes:pro:feedback:reload')
-    delay(handleBack)
+    setTimeout(() => handleBack(), 500)
   } finally {
     formLoading.value = false
   }
@@ -598,7 +597,7 @@ async function handleApprove() {
     const finished = await approveFeedback(formData.value.id)
     toast.success(finished ? '报工单已审批完成' : '报工成功，请等待质量检验完成')
     uni.$emit('mes:pro:feedback:reload')
-    delay(handleBack)
+    setTimeout(() => handleBack(), 500)
   } finally {
     formLoading.value = false
   }
@@ -619,7 +618,7 @@ async function handleReject() {
     await rejectFeedback(formData.value.id)
     toast.success('报工单已驳回')
     uni.$emit('mes:pro:feedback:reload')
-    delay(handleBack)
+    setTimeout(() => handleBack(), 500)
   } finally {
     formLoading.value = false
   }

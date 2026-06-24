@@ -57,22 +57,20 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="hasFooter" class="yd-detail-footer">
-      <view class="flex gap-24rpx text-28rpx">
-        <view v-if="canUpdatePrepare" class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white" @click="handleEdit">
-          编辑
-        </view>
-        <view v-if="canSubmitPrepare" class="flex-1 rounded-8rpx bg-[#faad14] py-20rpx text-center text-white" :class="submitting ? 'opacity-60' : ''" @click="handleSubmitReceipt">
-          {{ submitting ? '提交中...' : '提交' }}
-        </view>
-        <view v-if="canStockApproving" class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white" @click="handleStock">
-          执行上架
-        </view>
-        <view v-if="canFinishApproved" class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white" @click="handleFinish">
-          执行入库
-        </view>
+    <MesFooterActions v-if="hasFooter" content-class="flex gap-24rpx text-28rpx">
+      <view v-if="canUpdatePrepare" class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white" @click="handleEdit">
+        编辑
       </view>
-    </view>
+      <view v-if="canSubmitPrepare" class="flex-1 rounded-8rpx bg-[#faad14] py-20rpx text-center text-white" :class="submitting ? 'opacity-60' : ''" @click="handleSubmitReceipt">
+        {{ submitting ? '提交中...' : '提交' }}
+      </view>
+      <view v-if="canStockApproving" class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white" @click="handleStock">
+        执行上架
+      </view>
+      <view v-if="canFinishApproved" class="flex-1 rounded-8rpx bg-[#52c41a] py-20rpx text-center text-white" @click="handleFinish">
+        执行入库
+      </view>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -85,7 +83,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { cancelProductReceipt, deleteProductReceipt, getProductReceipt, submitProductReceipt } from '@/api/mes/wm/productreceipt'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmProductReceiptStatusEnum } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
 import ProductReceiptLineList from '../components/product-receipt-line-list.vue'
@@ -155,7 +154,13 @@ async function getDetail() {
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getProductReceipt(currentId.value)
+    const detailData = await getProductReceipt(currentId.value)
+    if (!detailData) {
+      uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+      setTimeout(() => handleBack(), 300)
+      return
+    }
+    formData.value = detailData
   } finally {
     toast.close()
   }
@@ -211,7 +216,9 @@ async function handleDelete() {
     await deleteProductReceipt(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:wm:productreceipt:reload')
-    delay(handleBack)
+    setTimeout(() => {
+      handleBack()
+    }, 500)
   } finally {
     deleting.value = false
   }

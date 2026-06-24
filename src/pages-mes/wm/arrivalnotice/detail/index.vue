@@ -60,33 +60,31 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="hasFooter" class="yd-detail-footer">
-      <view class="flex gap-24rpx text-28rpx">
-        <view
-          v-if="canUpdatePrepare"
-          class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white"
-          @click="handleEdit"
-        >
-          编辑
-        </view>
-        <view
-          v-if="canDeletePrepare"
-          class="flex-1 rounded-8rpx bg-[#f56c6c] py-20rpx text-center text-white"
-          :class="deleting ? 'opacity-60' : ''"
-          @click="handleDelete"
-        >
-          {{ deleting ? '删除中...' : '删除' }}
-        </view>
-        <view
-          v-if="canSubmitPrepare"
-          class="flex-1 rounded-8rpx bg-[#faad14] py-20rpx text-center text-white"
-          :class="submitting ? 'opacity-60' : ''"
-          @click="handleSubmitNotice"
-        >
-          {{ submitting ? '提交中...' : '提交' }}
-        </view>
+    <MesFooterActions v-if="hasFooter" content-class="flex gap-24rpx text-28rpx">
+      <view
+        v-if="canUpdatePrepare"
+        class="flex-1 rounded-8rpx bg-[#1677ff] py-20rpx text-center text-white"
+        @click="handleEdit"
+      >
+        编辑
       </view>
-    </view>
+      <view
+        v-if="canDeletePrepare"
+        class="flex-1 rounded-8rpx bg-[#f56c6c] py-20rpx text-center text-white"
+        :class="deleting ? 'opacity-60' : ''"
+        @click="handleDelete"
+      >
+        {{ deleting ? '删除中...' : '删除' }}
+      </view>
+      <view
+        v-if="canSubmitPrepare"
+        class="flex-1 rounded-8rpx bg-[#faad14] py-20rpx text-center text-white"
+        :class="submitting ? 'opacity-60' : ''"
+        @click="handleSubmitNotice"
+      >
+        {{ submitting ? '提交中...' : '提交' }}
+      </view>
+    </MesFooterActions>
   </view>
 </template>
 
@@ -99,7 +97,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { deleteArrivalNotice, getArrivalNotice, submitArrivalNotice } from '@/api/mes/wm/arrivalnotice'
 import { useAccess } from '@/hooks/useAccess'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { delay, navigateBackPlus } from '@/utils'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
+import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmArrivalNoticeStatusEnum } from '@/utils/constants'
 import { formatDate, formatDateTime } from '@/utils/date'
 import ArrivalNoticeLineList from '../components/arrival-notice-line-list.vue'
@@ -149,7 +148,13 @@ async function getDetail() {
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getArrivalNotice(currentId.value)
+    const detailData = await getArrivalNotice(currentId.value)
+    if (!detailData) {
+      uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+      setTimeout(() => handleBack(), 300)
+      return
+    }
+    formData.value = detailData
   } finally {
     toast.close()
   }
@@ -191,7 +196,9 @@ async function handleDelete() {
     await deleteArrivalNotice(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:wm:arrivalnotice:reload')
-    delay(handleBack)
+    setTimeout(() => {
+      handleBack()
+    }, 500)
   } finally {
     deleting.value = false
   }

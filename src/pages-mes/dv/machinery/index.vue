@@ -2,11 +2,6 @@
   <view class="yd-page-container yd-page-container-paging">
     <wd-navbar title="设备台账" left-arrow placeholder safe-area-inset-top fixed @click-left="handleBack" />
     <SearchForm ref="searchFormRef" @search="handleQuery" @reset="handleReset" />
-    <view v-if="hasAccessByCodes(['mes:dv-machinery:export'])" class="bg-white px-24rpx py-16rpx">
-      <view class="h-64rpx flex items-center justify-center border-2rpx border-[#1677ff] rounded-8rpx text-26rpx text-[#1677ff]" :class="exportLoading ? 'opacity-60' : ''" @click="handleExport">
-        {{ exportLoading ? '导出中...' : '导出当前筛选数据' }}
-      </view>
-    </view>
     <z-paging ref="pagingRef" v-model="list" :fixed="false" class="min-h-0 flex-1" :default-page-size="10" :refresher-enabled="true" :inside-more="true" :loading-more-default-as-loading="true" empty-view-text="暂无设备数据" @query="queryList">
       <view class="p-24rpx">
         <ListCardWrapper v-for="item in list" :key="item.id" :item="item" :item-id="item.id" :selecting="selecting" :selected="isSelected(item.id)" :can-delete="canDelete" @click="handleDetail" @longpress="enterSelectMode" @toggle-select="toggleSelect" @swipe-delete="handleSwipeDelete">
@@ -30,17 +25,15 @@
         </ListCardWrapper>
       </view>
     </z-paging>
-    <view v-if="selecting" class="yd-detail-footer">
-      <view class="flex items-center justify-between px-24rpx">
-        <wd-button variant="plain" size="small" @click="exitSelectMode">
-          取消
-        </wd-button>
-        <text class="text-28rpx text-[#666]">已选 {{ selectedIds.size }} 项</text>
-        <wd-button type="danger" size="small" :loading="batchDeleting" :disabled="selectedIds.size === 0" @click="handleBatchDelete">
-          删除
-        </wd-button>
-      </view>
-    </view>
+    <MesFooterActions v-if="selecting" content-class="flex items-center justify-between px-24rpx">
+      <wd-button variant="plain" size="small" @click="exitSelectMode">
+        取消
+      </wd-button>
+      <text class="text-28rpx text-[#666]">已选 {{ selectedIds.size }} 项</text>
+      <wd-button type="danger" size="small" :loading="batchDeleting" :disabled="selectedIds.size === 0" @click="handleBatchDelete">
+        删除
+      </wd-button>
+    </MesFooterActions>
     <wd-fab v-if="hasAccessByCodes(['mes:dv-machinery:create'])" position="right-bottom" type="primary" :expandable="false" @click="handleAdd" />
   </view>
 </template>
@@ -50,12 +43,12 @@ import type { DvMachineryQueryParams, DvMachineryVO } from '@/api/mes/dv/machine
 import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { deleteMachinery, getMachineryPage } from '@/api/mes/dv/machinery'
-import { downloadApiFile } from '@/utils/download'
 import { useAccess } from '@/hooks/useAccess'
-import { useBatchSelect } from '@/pages-erp/hooks/useBatchSelect'
+import { useMesBatchSelect } from '@/pages-mes/hooks/useMesBatchSelect'
+import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
-import ListCardWrapper from '@/pages-erp/components/list-card-wrapper.vue'
+import ListCardWrapper from '@/pages-mes/components/list-card-wrapper.vue'
 import SearchForm from './components/search-form.vue'
 
 definePage({ style: { navigationBarTitleText: '', navigationStyle: 'custom' } })
@@ -65,8 +58,6 @@ const list = ref<DvMachineryVO[]>([])
 const pagingRef = ref<ZPagingRef<DvMachineryVO>>()
 const queryParams = ref<DvMachineryQueryParams>({})
 const searchFormRef = ref<InstanceType<typeof SearchForm>>()
-const exportLoading = ref(false)
-
 const {
   selecting,
   selectedIds,
@@ -78,7 +69,7 @@ const {
   exitSelectMode,
   handleSwipeDelete,
   handleBatchDelete,
-} = useBatchSelect({
+} = useMesBatchSelect({
   permission: 'mes:dv-machinery:delete',
   deleteApi: (ids: number[]) => Promise.all(ids.map(id => deleteMachinery(id))).then(() => {}),
   reloadEvent: 'mes:dv:machinery:reload',
@@ -109,25 +100,6 @@ function handleReset() {
 
 function reload() {
   pagingRef.value?.reload()
-}
-
-async function handleExport() {
-  if (exportLoading.value) {
-    return
-  }
-  const { confirm } = await uni.showModal({
-    title: '导出确认',
-    content: '确定要导出当前筛选数据吗？',
-  })
-  if (!confirm) {
-    return
-  }
-  exportLoading.value = true
-  try {
-    await downloadApiFile(`/mes/dv/machinery/export-excel`, queryParams.value, '设备台账.xls')
-  } finally {
-    exportLoading.value = false
-  }
 }
 
 function handleAdd() {
