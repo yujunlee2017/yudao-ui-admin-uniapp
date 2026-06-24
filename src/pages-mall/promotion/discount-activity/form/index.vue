@@ -82,6 +82,7 @@ import {
 import SpuSkuEditor from '@/pages-mall/promotion/components/spu-sku-editor.vue'
 import { fenToYuan, yuanToFen } from '@/utils/format'
 import { delay, navigateBackPlus } from '@/utils'
+import { PromotionDiscountTypeEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 
@@ -117,13 +118,13 @@ const formSchema = createFormSchema({
 
 /** 创建单个 SKU 的优惠配置默认值 */
 function createConfig(_sku: ProductSku) {
-  return { discountType: 1, discountPrice: 0, discountPercent: 0 }
+  return { discountType: PromotionDiscountTypeEnum.PRICE, discountPrice: 0, discountPercent: 0 }
 }
 
 /** 编辑回显：后端 product（分）→ 配置（元） */
 function mergeConfig(_config: Record<string, any>, product: Record<string, any>) {
   return {
-    discountType: product.discountType ?? 1,
+    discountType: product.discountType ?? PromotionDiscountTypeEnum.PRICE,
     discountPrice: fenToYuan(product.discountPrice),
     discountPercent: product.discountPercent ?? 0,
   }
@@ -163,7 +164,7 @@ async function handleSubmit() {
   // 根据当前编辑的优惠类型，自动判定每个 SKU 的 discountType；金额元转分
   const submitProducts = products.value.map((row) => {
     const discountPercent = Number(row.discountPercent) || 0
-    const discountType = discountPercent > 0 ? 2 : 1
+    const discountType = discountPercent > 0 ? PromotionDiscountTypeEnum.PERCENT : PromotionDiscountTypeEnum.PRICE
     return {
       spuId: spuId.value,
       skuId: row.skuId,

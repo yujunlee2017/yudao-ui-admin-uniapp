@@ -65,6 +65,7 @@
 <script lang="ts" setup>
 import type { Area } from '@/api/system/area'
 import { computed } from 'vue'
+import { DeliveryExpressChargeModeEnum } from '@/utils/constants'
 
 const props = defineProps<{
   modelValue: Record<string, any>[] // 区域规则（金额单位元）
@@ -78,7 +79,7 @@ const emit = defineEmits<{
 }>()
 
 const rules = computed(() => props.modelValue || []) // 区域规则（直接编辑元素）
-const unitLabel = computed(() => ({ 1: '件', 2: '重量', 3: '体积' } as Record<number, string>)[props.chargeMode ?? 1] || '件') // 计量单位文案
+const unitLabel = computed(() => ({ [DeliveryExpressChargeModeEnum.COUNT]: '件', [DeliveryExpressChargeModeEnum.WEIGHT]: '重量', [DeliveryExpressChargeModeEnum.VOLUME]: '体积' } as Record<number, string>)[props.chargeMode ?? DeliveryExpressChargeModeEnum.COUNT] || '件') // 计量单位文案
 
 /** 通知父级变化 */
 function emitChange() {

@@ -34,11 +34,11 @@
         <dict-tag v-if="formData.validityType != null" :type="DICT_TYPE.PROMOTION_COUPON_TEMPLATE_VALIDITY_TYPE" :value="formData.validityType" />
         <text v-else>-</text>
       </wd-cell>
-      <template v-if="formData.validityType === 1">
+      <template v-if="formData.validityType === CouponTemplateValidityTypeEnum.DATE">
         <wd-cell title="固定开始" :value="formatDateTime(formData.validStartTime) || '-'" />
         <wd-cell title="固定结束" :value="formatDateTime(formData.validEndTime) || '-'" />
       </template>
-      <template v-else-if="formData.validityType === 2">
+      <template v-else-if="formData.validityType === CouponTemplateValidityTypeEnum.TERM">
         <wd-cell title="领取后生效" :value="formData.fixedStartTerm != null ? `第 ${formData.fixedStartTerm} 天` : '-'" />
         <wd-cell title="有效天数" :value="formData.fixedEndTerm != null ? `${formData.fixedEndTerm} 天` : '-'" />
       </template>
@@ -79,7 +79,7 @@ import {
 import { useAccess } from '@/hooks/useAccess'
 import { formatDisplayMoney } from '@/utils/format'
 import { delay, navigateBackPlus } from '@/utils'
-import { CommonStatusEnum, DICT_TYPE, PromotionDiscountTypeEnum } from '@/utils/constants'
+import { CommonStatusEnum, CouponTemplateValidityTypeEnum, DICT_TYPE, PromotionDiscountTypeEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()

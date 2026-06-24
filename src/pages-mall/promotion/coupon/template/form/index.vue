@@ -84,13 +84,13 @@
               </wd-radio>
             </wd-radio-group>
           </wd-form-item>
-          <template v-if="formData.validityType === 1">
+          <template v-if="formData.validityType === CouponTemplateValidityTypeEnum.DATE">
             <wd-form-item title="固定开始" title-width="200rpx" prop="validStartTime" is-link placeholder="请选择固定开始时间" :value="formatDateTime(formData.validStartTime)" @click="pickerVisible.validStartTime = true" />
             <wd-datetime-picker v-model="formData.validStartTime" v-model:visible="pickerVisible.validStartTime" title="请选择固定开始时间" type="datetime" />
             <wd-form-item title="固定结束" title-width="200rpx" prop="validEndTime" is-link placeholder="请选择固定结束时间" :value="formatDateTime(formData.validEndTime)" @click="pickerVisible.validEndTime = true" />
             <wd-datetime-picker v-model="formData.validEndTime" v-model:visible="pickerVisible.validEndTime" title="请选择固定结束时间" type="datetime" />
           </template>
-          <template v-else-if="formData.validityType === 2">
+          <template v-else-if="formData.validityType === CouponTemplateValidityTypeEnum.TERM">
             <wd-form-item title="领取后生效(天)" title-width="200rpx" prop="fixedStartTerm" center>
               <wd-input-number v-model="formData.fixedStartTerm" :min="0" />
             </wd-form-item>
@@ -137,7 +137,7 @@ import { getIntDictOptions } from '@/hooks/useDict'
 import ScopePicker from '@/pages-mall/promotion/components/scope-picker.vue'
 import { fenToYuan, yuanToFen } from '@/utils/format'
 import { delay, navigateBackPlus } from '@/utils'
-import { CommonStatusEnum, DICT_TYPE, PromotionDiscountTypeEnum, PromotionProductScopeEnum } from '@/utils/constants'
+import { CommonStatusEnum, CouponTemplateTakeTypeEnum, CouponTemplateValidityTypeEnum, DICT_TYPE, PromotionDiscountTypeEnum, PromotionProductScopeEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 
@@ -160,15 +160,15 @@ const formData = ref<PromotionCouponTemplate>({
   name: '',
   totalCount: -1,
   takeLimitCount: 1,
-  takeType: 1,
+  takeType: CouponTemplateTakeTypeEnum.USER,
   usePrice: 0,
-  productScope: 1,
+  productScope: PromotionProductScopeEnum.ALL,
   productScopeValues: [],
-  discountType: 1,
+  discountType: PromotionDiscountTypeEnum.PRICE,
   discountPrice: 0,
   discountPercent: 0,
   discountLimitPrice: 0,
-  validityType: 1,
+  validityType: CouponTemplateValidityTypeEnum.DATE,
   validStartTime: undefined,
   validEndTime: undefined,
   fixedStartTerm: 0,
@@ -181,8 +181,8 @@ const formSchema = createFormSchema({
   takeType: [{ required: true, message: '领取方式不能为空' }],
   discountType: [{ required: true, message: '优惠类型不能为空' }],
   validityType: [{ required: true, message: '有效期类型不能为空' }],
-  validStartTime: [{ required: (model: Record<string, any>) => model.validityType === 1, message: '固定开始时间不能为空' }],
-  validEndTime: [{ required: (model: Record<string, any>) => model.validityType === 1, message: '固定结束时间不能为空' }],
+  validStartTime: [{ required: (model: Record<string, any>) => model.validityType === CouponTemplateValidityTypeEnum.DATE, message: '固定开始时间不能为空' }],
+  validEndTime: [{ required: (model: Record<string, any>) => model.validityType === CouponTemplateValidityTypeEnum.DATE, message: '固定结束时间不能为空' }],
   status: [{ required: true, message: '状态不能为空' }],
 })
 

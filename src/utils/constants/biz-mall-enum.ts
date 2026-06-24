@@ -86,6 +86,23 @@ export const PromotionConditionTypeEnum = {
 }
 
 /**
+ * 优惠券模板有效期类型枚举
+ */
+export const CouponTemplateValidityTypeEnum = {
+  DATE: 1, // 固定日期
+  TERM: 2, // 领取之后
+}
+
+/**
+ * 优惠券模板领取方式枚举
+ */
+export const CouponTemplateTakeTypeEnum = {
+  USER: 1, // 直接领取
+  ADMIN: 2, // 指定发放
+  REGISTER: 3, // 新人券
+}
+
+/**
  * 客服消息内容类型枚举
  */
 export const KeFuMessageContentTypeEnum = {

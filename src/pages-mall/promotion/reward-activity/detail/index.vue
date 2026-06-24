@@ -77,7 +77,7 @@ import {
 import { useAccess } from '@/hooks/useAccess'
 import { fenToYuan, formatDisplayMoney } from '@/utils/format'
 import { delay, navigateBackPlus } from '@/utils'
-import { DICT_TYPE } from '@/utils/constants'
+import { DICT_TYPE, PromotionConditionTypeEnum, PromotionProductScopeEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()
@@ -96,8 +96,8 @@ const formData = ref<PromotionRewardActivity>({}) // 详情数据
 const couponTemplates = ref<PromotionCouponTemplate[]>([]) // 优惠券模板列表（用于赠券名称回显）
 const deleting = ref(false) // 删除状态
 const closing = ref(false) // 关闭状态
-const conditionTypeLabel = computed(() => formData.value.conditionType === 20 ? '满件数' : '满金额') // 条件类型文案
-const productScopeLabel = computed(() => ({ 1: '全部商品', 2: '指定商品', 3: '指定分类' } as Record<number, string>)[formData.value.productScope ?? 1] || '-') // 商品范围文案
+const conditionTypeLabel = computed(() => formData.value.conditionType === PromotionConditionTypeEnum.COUNT ? '满件数' : '满金额') // 条件类型文案
+const productScopeLabel = computed(() => ({ [PromotionProductScopeEnum.ALL]: '全部商品', [PromotionProductScopeEnum.SPU]: '指定商品', [PromotionProductScopeEnum.CATEGORY]: '指定分类' } as Record<number, string>)[formData.value.productScope ?? PromotionProductScopeEnum.ALL] || '-') // 商品范围文案
 
 /** 返回上一页 */
 function handleBack() {
@@ -109,7 +109,7 @@ function formatLimit(limit?: number) {
   if (limit == null) {
     return '-'
   }
-  return formData.value.conditionType === 20 ? `${limit} 件` : `${fenToYuan(limit).toFixed(2)} 元`
+  return formData.value.conditionType === PromotionConditionTypeEnum.COUNT ? `${limit} 件` : `${fenToYuan(limit).toFixed(2)} 元`
 }
 
 /** 规则赠送的优惠券（模板编号 + 数量）数组 */
