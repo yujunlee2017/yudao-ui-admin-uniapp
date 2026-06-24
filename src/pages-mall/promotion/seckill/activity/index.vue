@@ -35,16 +35,15 @@
               {{ item.name || `活动 #${item.id}` }}
             </view>
             <view class="flex shrink-0 items-center gap-12rpx">
-              <!-- TODO @AI：不会为空的呀？！ -->
-              <dict-tag v-if="item.status != null" :type="DICT_TYPE.COMMON_STATUS" :value="item.status" />
-              <!-- TODO @AI：貌似会为空？？？！！！分析下，是数据问题，还是就是这样的？ -->
-              <text class="text-26rpx text-[#fa8c16]">{{ formatDisplayMoney(item.seckillPrice) }}</text>
+              <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="item.status" />
+              <text class="text-26rpx text-[#fa8c16]">{{ seckillPriceText(item) }}</text>
             </view>
           </view>
-          <!-- TODO @AI：要不就开始时间、结束时间？不然会折行 -->
-          <view class="flex items-center text-26rpx text-[#666]">
-            <text class="mr-8rpx shrink-0 text-[#999]">活动时间：</text>
-            <text>{{ formatDateTime(item.startTime) || '-' }} ~ {{ formatDateTime(item.endTime) || '-' }}</text>
+          <view class="text-26rpx text-[#666]">
+            <text class="text-[#999]">开始时间：</text>{{ formatDateTime(item.startTime) || '-' }}
+          </view>
+          <view class="mt-4rpx text-26rpx text-[#666]">
+            <text class="text-[#999]">结束时间：</text>{{ formatDateTime(item.endTime) || '-' }}
           </view>
         </view>
       </view>
@@ -84,6 +83,12 @@ const { hasAccessByCodes } = useAccess()
 const list = ref<PromotionSeckillActivity[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({}) // 查询参数
+
+/** 秒杀价：取商品中最低秒杀价（活动级 seckillPrice 列表接口不返回） */
+function seckillPriceText(item: PromotionSeckillActivity) {
+  const prices = (item.products || []).map(product => product.seckillPrice).filter((price): price is number => price != null)
+  return prices.length ? formatDisplayMoney(Math.min(...prices)) : '-'
+}
 
 /** 返回上一页 */
 function handleBack() {

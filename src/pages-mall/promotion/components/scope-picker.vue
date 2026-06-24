@@ -1,18 +1,17 @@
-<!-- todo @AI：是不是要写下作用？类似别的 components -->
+<!-- 商品范围选择器：优惠券模板「指定商品/指定分类」复用，多选商品 SPU 或商品分类编号回写父组件 -->
 <template>
   <view>
     <!-- 已选项 + 打开按钮 -->
     <view class="flex flex-wrap items-center gap-12rpx">
       <wd-tag
         v-for="item in selectedOptions"
-        :key="item.value"
+        :key="item.id"
         plain
         closable
-        @close="handleRemove(item.value)"
+        @close="handleRemove(item.id)"
       >
-        {{ item.label }}
+        {{ item.name }}
       </wd-tag>
-      <!-- TODO @AI：scopeLabel 的渲染不太对，没出具体的名字。 -->
       <wd-button size="small" variant="plain" @click="handleOpen">
         选择{{ scopeLabel }}
       </wd-button>
@@ -35,11 +34,11 @@
           <wd-checkbox-group v-model="tempSelected">
             <wd-checkbox
               v-for="item in filteredOptions"
-              :key="item.value"
-              :name="item.value"
+              :key="item.id"
+              :name="item.id"
               class="border-b border-[#f5f5f5] py-16rpx"
             >
-              {{ item.label }}
+              {{ item.name }}
             </wd-checkbox>
           </wd-checkbox-group>
           <view v-if="!filteredOptions.length" class="py-48rpx text-center text-26rpx text-[#999]">
@@ -60,15 +59,14 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { getProductCategoryList } from '@/api/mall/product/category'
 import { getSimpleProductSpuList } from '@/api/mall/product/spu'
-
-interface ScopeOption { label: string, value: number }
+import { PromotionProductScopeEnum } from '@/utils/constants'
 
 const props = defineProps<{
   modelValue?: number[] // 已选编号
-  scope: number // 商品范围：2 指定商品、3 指定分类
+  scope: number // 商品范围：PromotionProductScopeEnum.SPU 指定商品、CATEGORY 指定分类
 }>()
 
 const emit = defineEmits<{
@@ -77,35 +75,27 @@ const emit = defineEmits<{
 
 const visible = ref(false) // 弹窗显示状态
 const keyword = ref('') // 搜索关键字
-const options = ref<ScopeOption[]>([]) // 全部可选项
+const options = ref<{ id?: number, name?: string }[]>([]) // 全部可选项（商品或分类）
 const tempSelected = ref<number[]>([]) // 弹窗内临时选中
 
-const scopeLabel = computed(() => props.scope === 3 ? '分类' : '商品') // 范围文案
-const selectedOptions = computed(() => { // 已选项（用于标签展示）
-  return (props.modelValue || []).map(value => ({
-    value,
-    label: options.value.find(item => item.value === value)?.label || String(value),
-  }))
-})
+const scopeLabel = computed(() => props.scope === PromotionProductScopeEnum.CATEGORY ? '分类' : '商品') // 范围文案
+const selectedOptions = computed(() => (props.modelValue || []).map(id => ({
+  id,
+  name: options.value.find(item => item.id === id)?.name || String(id),
+}))) // 已选项（用于标签展示）
 const filteredOptions = computed(() => { // 按关键字过滤
   const word = keyword.value.trim()
   if (!word) {
     return options.value
   }
-  return options.value.filter(item => item.label.includes(word))
+  return options.value.filter(item => (item.name || '').includes(word))
 })
 
 /** 加载范围选项（商品或分类） */
-// TODO @AI：是不是枚举没使用？？？
 async function loadOptions() {
-  // TODO @AI：如果按照 category、product spu，是不是直接 list 就好了？不用搞的太复杂？
-  if (props.scope === 3) {
-    const list = await getProductCategoryList()
-    options.value = list.filter(item => item.id != null).map(item => ({ value: item.id as number, label: item.name }))
-  } else {
-    const list = await getSimpleProductSpuList()
-    options.value = list.filter(item => item.id != null).map(item => ({ value: item.id as number, label: item.name || `商品 #${item.id}` }))
-  }
+  options.value = props.scope === PromotionProductScopeEnum.CATEGORY
+    ? await getProductCategoryList()
+    : await getSimpleProductSpuList()
 }
 
 /** 打开弹窗 */
@@ -124,14 +114,21 @@ function handleConfirm() {
 }
 
 /** 移除单个已选项 */
-function handleRemove(value: number) {
-  emit('update:modelValue', (props.modelValue || []).filter(item => item !== value))
+function handleRemove(id?: number) {
+  emit('update:modelValue', (props.modelValue || []).filter(item => item !== id))
 }
 
-// TODO @AI：/** */ 注释，更合适？
-// 范围切换时重置选项缓存（商品↔分类编号语义不同）
+/** 进入即加载选项：存在回显值时，已选标签需显示具体名称而非编号 */
+onMounted(() => {
+  if (props.modelValue?.length) {
+    loadOptions()
+  }
+})
+
+/** 范围切换时重置选项缓存与已选项（商品↔分类编号语义不同，避免旧 ID 当作新范围提交） */
 watch(() => props.scope, () => {
   options.value = []
   keyword.value = ''
+  emit('update:modelValue', [])
 })
 </script>

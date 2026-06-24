@@ -67,3 +67,20 @@ export const PromotionDiscountTypeEnum = {
   PRICE: 1, // 满减（具体金额）
   PERCENT: 2, // 折扣（百分比）
 }
+
+/**
+ * 营销商品范围枚举
+ */
+export const PromotionProductScopeEnum = {
+  ALL: 1, // 通用券（全部商品）
+  SPU: 2, // 指定商品
+  CATEGORY: 3, // 指定分类
+}
+
+/**
+ * 营销满减送条件类型枚举
+ */
+export const PromotionConditionTypeEnum = {
+  PRICE: 10, // 满 N 元
+  COUNT: 20, // 满 N 件
+}

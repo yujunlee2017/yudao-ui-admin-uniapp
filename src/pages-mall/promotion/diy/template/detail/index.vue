@@ -43,7 +43,7 @@
         装修属性
       </view>
       <view class="whitespace-pre-wrap break-all rounded-8rpx bg-[#f7f7f7] p-16rpx text-24rpx text-[#666]">
-        {{ propertyText }}
+        {{ formatProperty(formData.property) }}
       </view>
     </view>
 
@@ -73,6 +73,7 @@ import { computed, onMounted, ref } from 'vue'
 import {
   deletePromotionDiyTemplate,
   getPromotionDiyTemplate,
+  getPromotionDiyTemplateProperty,
   usePromotionDiyTemplate,
 } from '@/api/mall/promotion/diy/template'
 import { useAccess } from '@/hooks/useAccess'
@@ -95,7 +96,6 @@ const formData = ref<PromotionDiyTemplate>({} as PromotionDiyTemplate) // 详情
 const deleting = ref(false) // 删除状态
 const using = ref(false) // 使用模板状态
 const canUse = computed(() => !formData.value.used && hasAccessByCodes(['promotion:diy-template:update']))
-const propertyText = computed(() => formatProperty(formData.value.property)) // 装修属性文本
 
 /** 格式化装修属性 */
 function formatProperty(value: any) {
@@ -124,7 +124,9 @@ async function getDetail() {
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getPromotionDiyTemplate(Number(props.id))
+    const detail = await getPromotionDiyTemplate(Number(props.id))
+    const property = await getPromotionDiyTemplateProperty(Number(props.id))
+    formData.value = { ...detail, property: property.property ?? detail.property }
   } finally {
     toast.close()
   }

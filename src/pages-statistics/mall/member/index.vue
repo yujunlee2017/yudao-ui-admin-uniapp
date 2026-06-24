@@ -1,3 +1,4 @@
+<!-- TODO @AI：从对齐 vue3 + ep 功能来看，还缺什么么？ -->
 <template>
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
@@ -7,6 +8,7 @@
       @click-left="handleBack"
     />
 
+    <!-- TODO @AI：tabs？避免过长？类似 crm 的 -->
     <scroll-view scroll-y class="min-h-0 flex-1">
       <view class="p-24rpx">
         <!-- 会员概览：累计会员数等 4 项（累计值，无环比） -->

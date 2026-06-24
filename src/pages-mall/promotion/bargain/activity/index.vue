@@ -1,4 +1,3 @@
-<!-- TODO @AI：砍价的接口貌似不对？！ -->
 <template>
   <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->

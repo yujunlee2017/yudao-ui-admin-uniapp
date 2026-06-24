@@ -1,4 +1,3 @@
-<!-- TODO @AI：它是不是不用 search-form.vue？按照 vue3 + ep，它可以被访问，是不是就 ok 了哈？传递砍价记录？ -->
 <template>
   <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
@@ -7,9 +6,6 @@
       left-arrow placeholder safe-area-inset-top fixed
       @click-left="handleBack"
     />
-
-    <!-- 搜索组件 -->
-    <SearchForm @search="handleQuery" @reset="handleReset" />
 
     <!-- 分页列表 -->
     <z-paging
@@ -55,7 +51,8 @@ import { getPromotionBargainHelpPage } from '@/api/mall/promotion/bargain'
 import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
-import SearchForm from './components/search-form.vue'
+
+const props = defineProps<{ recordId?: number | any }>()
 
 definePage({
   style: {
@@ -66,32 +63,24 @@ definePage({
 
 const list = ref<PromotionBargainHelp[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus()
 }
 
-/** 查询砍价助力列表 */
+/** 查询砍价助力列表（按砍价记录过滤） */
 async function queryList(pageNo: number, pageSize: number) {
   try {
-    const data = await getPromotionBargainHelpPage({ ...queryParams.value, pageNo, pageSize })
+    const query: Record<string, any> = {}
+    if (props.recordId != null && props.recordId !== '') {
+      query.recordId = Number(props.recordId)
+    }
+    const data = await getPromotionBargainHelpPage({ ...query, pageNo, pageSize })
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
     pagingRef.value?.complete(false)
   }
-}
-
-/** 搜索按钮操作 */
-function handleQuery(data?: Record<string, any>) {
-  queryParams.value = { ...data }
-  reload()
-}
-
-/** 重置按钮操作 */
-function handleReset() {
-  handleQuery()
 }
 
 /** 重新加载 */

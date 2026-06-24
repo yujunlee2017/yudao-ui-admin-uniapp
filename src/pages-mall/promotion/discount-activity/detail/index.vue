@@ -25,28 +25,14 @@
           </wd-cell-group>
         </view>
 
-        <!-- 商品规则 -->
-        <!-- TODO @AI：有没更好的展示？类似 sku、spu 界面？注意：实现的时候联系下拼团、砍价、秒杀活动的处理； -->
+        <!-- 优惠商品 -->
         <view v-if="formData.products?.length" class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
           <view class="border-b border-[#f0f0f0] px-24rpx py-18rpx text-30rpx text-[#333] font-semibold">
             优惠商品
           </view>
-          <wd-cell-group border>
-            <view v-for="(product, index) in formData.products" :key="index" class="px-24rpx py-16rpx">
-              <view class="mb-8rpx text-28rpx text-[#333]">
-                SKU 编号：{{ product.skuId }}
-              </view>
-              <view class="flex flex-wrap items-center gap-24rpx text-26rpx text-[#666]">
-                <view class="flex items-center gap-8rpx">
-                  <text>优惠类型：</text>
-                  <dict-tag v-if="product.discountType != null" :type="DICT_TYPE.PROMOTION_DISCOUNT_TYPE" :value="product.discountType" />
-                  <text v-else>-</text>
-                </view>
-                <text v-if="product.discountType === PromotionDiscountTypeEnum.PRICE">优惠金额：{{ formatDisplayMoney(product.discountPrice) }}</text>
-                <text v-if="product.discountType === PromotionDiscountTypeEnum.PERCENT">折扣：{{ product.discountPercent ?? '-' }}%</text>
-              </view>
-            </view>
-          </wd-cell-group>
+          <view class="p-16rpx">
+            <SpuSkuView :products="formData.products" :fields="productFields" />
+          </view>
         </view>
       </view>
     </scroll-view>
@@ -70,6 +56,7 @@
 
 <script lang="ts" setup>
 import type { PromotionDiscountActivity } from '@/api/mall/promotion/discount'
+import type { SpuSkuViewField } from '@/pages-mall/promotion/components/spu-sku-view.vue'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
@@ -79,11 +66,12 @@ import {
   deletePromotionDiscountActivity,
   getPromotionDiscountActivity,
 } from '@/api/mall/promotion/discount'
+import { getDictLabel } from '@/hooks/useDict'
 import { useAccess } from '@/hooks/useAccess'
-import { formatDisplayMoney } from '@/utils/format'
 import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, PromotionDiscountTypeEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
+import SpuSkuView from '@/pages-mall/promotion/components/spu-sku-view.vue'
 
 const props = defineProps<{ id?: number | any }>()
 
@@ -100,6 +88,12 @@ const toast = useToast()
 const formData = ref<PromotionDiscountActivity>({}) // 详情数据
 const deleting = ref(false) // 删除状态
 const closing = ref(false) // 关闭状态
+
+const productFields: SpuSkuViewField[] = [
+  { label: '优惠类型', formatter: product => getDictLabel(DICT_TYPE.PROMOTION_DISCOUNT_TYPE, product.discountType) || '-' },
+  { label: '优惠金额', prop: 'discountPrice', type: 'money', show: product => product.discountType === PromotionDiscountTypeEnum.PRICE },
+  { label: '折扣', prop: 'discountPercent', type: 'percent', show: product => product.discountType === PromotionDiscountTypeEnum.PERCENT },
+] // 优惠商品每个 SKU 展示的活动字段
 
 /** 返回上一页 */
 function handleBack() {

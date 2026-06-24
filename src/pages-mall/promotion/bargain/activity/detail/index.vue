@@ -8,27 +8,36 @@
     />
 
     <!-- 详情内容 -->
-    <wd-cell-group border>
-      <wd-cell title="活动名称" :value="formData.name || '-'" />
-      <wd-cell title="活动状态">
-        <dict-tag v-if="formData.status != null" :type="DICT_TYPE.COMMON_STATUS" :value="formData.status" />
-        <text v-else>-</text>
-      </wd-cell>
-      <wd-cell title="商品编号" :value="formData.spuId != null ? String(formData.spuId) : '-'" />
-      <wd-cell title="SKU 编号" :value="formData.skuId != null ? String(formData.skuId) : '-'" />
-      <wd-cell title="起始价" :value="formatDisplayMoney(formData.bargainFirstPrice)" />
-      <wd-cell title="底价" :value="formatDisplayMoney(formData.bargainMinPrice)" />
-      <wd-cell title="随机最小金额" :value="formatDisplayMoney(formData.randomMinPrice)" />
-      <wd-cell title="随机最大金额" :value="formatDisplayMoney(formData.randomMaxPrice)" />
-      <wd-cell title="库存" :value="formData.stock != null ? String(formData.stock) : '-'" />
-      <wd-cell title="总限购" :value="formData.totalLimitCount != null ? String(formData.totalLimitCount) : '-'" />
-      <wd-cell title="助力人数" :value="formData.helpMaxCount != null ? String(formData.helpMaxCount) : '-'" />
-      <wd-cell title="帮砍次数" :value="formData.bargainCount != null ? String(formData.bargainCount) : '-'" />
-      <wd-cell title="开始时间" :value="formatDateTime(formData.startTime) || '-'" />
-      <wd-cell title="结束时间" :value="formatDateTime(formData.endTime) || '-'" />
-    </wd-cell-group>
+    <scroll-view class="min-h-0 flex-1" scroll-y>
+      <view class="p-24rpx">
+        <view class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
+          <wd-cell-group border>
+            <wd-cell title="活动名称" :value="formData.name || '-'" />
+            <wd-cell title="活动状态">
+              <dict-tag v-if="formData.status != null" :type="DICT_TYPE.COMMON_STATUS" :value="formData.status" />
+              <text v-else>-</text>
+            </wd-cell>
+            <wd-cell title="随机最小金额" :value="formatDisplayMoney(formData.randomMinPrice)" />
+            <wd-cell title="随机最大金额" :value="formatDisplayMoney(formData.randomMaxPrice)" />
+            <wd-cell title="总限购" :value="formData.totalLimitCount != null ? String(formData.totalLimitCount) : '-'" />
+            <wd-cell title="助力人数" :value="formData.helpMaxCount != null ? String(formData.helpMaxCount) : '-'" />
+            <wd-cell title="帮砍次数" :value="formData.bargainCount != null ? String(formData.bargainCount) : '-'" />
+            <wd-cell title="开始时间" :value="formatDateTime(formData.startTime) || '-'" />
+            <wd-cell title="结束时间" :value="formatDateTime(formData.endTime) || '-'" />
+          </wd-cell-group>
+        </view>
 
-    <!-- TODO @AI：需要展示下商品信息么？ -->
+        <!-- 砍价商品 -->
+        <view v-if="formData.spuId != null" class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
+          <view class="border-b border-[#f0f0f0] px-24rpx py-18rpx text-30rpx text-[#333] font-semibold">
+            砍价商品
+          </view>
+          <view class="p-16rpx">
+            <SpuSkuView :products="bargainProducts" :fields="productFields" />
+          </view>
+        </view>
+      </view>
+    </scroll-view>
 
     <!-- 底部操作按钮 -->
     <view v-if="hasAccessByCodes(['promotion:bargain-activity:update', 'promotion:bargain-activity:delete', 'promotion:bargain-activity:close'])" class="yd-detail-footer">
@@ -49,10 +58,11 @@
 
 <script lang="ts" setup>
 import type { PromotionBargainActivity } from '@/api/mall/promotion/bargain'
+import type { SpuSkuViewField } from '@/pages-mall/promotion/components/spu-sku-view.vue'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import {
   closePromotionBargainActivity,
   deletePromotionBargainActivity,
@@ -63,6 +73,7 @@ import { formatDisplayMoney } from '@/utils/format'
 import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
+import SpuSkuView from '@/pages-mall/promotion/components/spu-sku-view.vue'
 
 const props = defineProps<{ id?: number | any }>()
 
@@ -79,6 +90,21 @@ const toast = useToast()
 const formData = ref<PromotionBargainActivity>({}) // 详情数据
 const deleting = ref(false) // 删除状态
 const closing = ref(false) // 关闭状态
+
+const bargainProducts = computed(() => formData.value.spuId == null
+  ? []
+  : [{
+      spuId: formData.value.spuId,
+      skuId: formData.value.skuId,
+      bargainFirstPrice: formData.value.bargainFirstPrice,
+      bargainMinPrice: formData.value.bargainMinPrice,
+      stock: formData.value.stock,
+    }]) // 砍价为单品、价格/库存在活动级，构造单条 product 复用商品展示
+const productFields: SpuSkuViewField[] = [
+  { label: '起始价', prop: 'bargainFirstPrice', type: 'money' },
+  { label: '底价', prop: 'bargainMinPrice', type: 'money' },
+  { label: '库存', prop: 'stock' },
+] // 砍价商品每个 SKU 展示的活动字段
 
 /** 返回上一页 */
 function handleBack() {

@@ -1,4 +1,3 @@
-<!-- TODO @AI：是不是要支持，跳转到砍价助力？ -->
 <template>
   <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
@@ -45,6 +44,11 @@
           <view class="mt-8rpx text-24rpx text-[#999]">
             结束时间：{{ formatDateTime(item.endTime) || '-' }}
           </view>
+          <view v-if="hasAccessByCodes(['promotion:bargain-help:query'])" class="mt-12rpx flex justify-end">
+            <wd-button size="small" type="primary" variant="plain" @click="handleHelp(item)">
+              查看助力
+            </wd-button>
+          </view>
         </view>
       </view>
     </z-paging>
@@ -56,6 +60,7 @@ import type { PromotionBargainRecord } from '@/api/mall/promotion/bargain'
 import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { getPromotionBargainRecordPage } from '@/api/mall/promotion/bargain'
+import { useAccess } from '@/hooks/useAccess'
 import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -69,6 +74,7 @@ definePage({
   },
 })
 
+const { hasAccessByCodes } = useAccess()
 const list = ref<PromotionBargainRecord[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({}) // 查询参数
@@ -76,6 +82,11 @@ const queryParams = ref<Record<string, any>>({}) // 查询参数
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus()
+}
+
+/** 查看砍价助力 */
+function handleHelp(item: PromotionBargainRecord) {
+  uni.navigateTo({ url: `/pages-mall/promotion/bargain/help/index?recordId=${item.id}` })
 }
 
 /** 查询砍价记录列表 */

@@ -41,9 +41,8 @@
       <view class="mb-16rpx text-28rpx text-[#999]">
         装修属性
       </view>
-      <!-- TODO @AI：貌似渲染不出来；ps：是不是直接 format ，不用愁一个 compute 方法 -->
       <view class="whitespace-pre-wrap break-all rounded-8rpx bg-[#f7f7f7] p-16rpx text-24rpx text-[#666]">
-        {{ propertyText }}
+        {{ formatProperty(formData.property) }}
       </view>
     </view>
 
@@ -66,8 +65,8 @@ import type { PromotionDiyPage } from '@/api/mall/promotion/diy/page'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
-import { deletePromotionDiyPage, getPromotionDiyPage } from '@/api/mall/promotion/diy/page'
+import { onMounted, ref } from 'vue'
+import { deletePromotionDiyPage, getPromotionDiyPage, getPromotionDiyPageProperty } from '@/api/mall/promotion/diy/page'
 import { useAccess } from '@/hooks/useAccess'
 import { delay, navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
@@ -86,7 +85,6 @@ const dialog = useDialog()
 const toast = useToast()
 const formData = ref<PromotionDiyPage>({} as PromotionDiyPage) // 详情数据
 const deleting = ref(false) // 删除状态
-const propertyText = computed(() => formatProperty(formData.value.property)) // 装修属性文本
 
 /** 格式化装修属性 */
 function formatProperty(value: any) {
@@ -115,7 +113,9 @@ async function getDetail() {
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getPromotionDiyPage(Number(props.id))
+    const detail = await getPromotionDiyPage(Number(props.id))
+    const property = await getPromotionDiyPageProperty(Number(props.id))
+    formData.value = { ...detail, property: property.property ?? detail.property }
   } finally {
     toast.close()
   }

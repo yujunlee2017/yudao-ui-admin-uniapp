@@ -24,24 +24,8 @@
               <wd-form-item title="商品名称" title-width="200rpx" prop="name">
                 <wd-input v-model="formData.name" clearable placeholder="请输入商品名称" />
               </wd-form-item>
-              <wd-form-item
-                title="商品分类"
-                title-width="200rpx"
-                prop="categoryId"
-                is-link
-                :value="getOptionText(categoryOptions, formData.categoryId)"
-                placeholder="请选择商品分类"
-                @click="pickerVisible.category = true"
-              />
-              <wd-form-item
-                title="商品品牌"
-                title-width="200rpx"
-                prop="brandId"
-                is-link
-                :value="getOptionText(brandOptions, formData.brandId)"
-                placeholder="请选择商品品牌"
-                @click="pickerVisible.brand = true"
-              />
+              <CategorySelect v-model="formData.categoryId" label="商品分类" label-width="200rpx" prop="categoryId" />
+              <BrandSelect v-model="formData.brandId" label="商品品牌" label-width="200rpx" prop="brandId" />
               <wd-form-item title="关键字" title-width="200rpx" prop="keyword">
                 <wd-input v-model="formData.keyword" clearable placeholder="请输入关键字" />
               </wd-form-item>
@@ -107,15 +91,12 @@
                   </wd-checkbox>
                 </wd-checkbox-group>
               </wd-form-item>
-              <wd-form-item
-                v-if="formData.deliveryTypes?.includes(1)"
-                title="运费模板"
-                title-width="200rpx"
+              <TemplateSelect
+                v-if="formData.deliveryTypes?.includes(DeliveryTypeEnum.EXPRESS)"
+                v-model="formData.deliveryTemplateId"
+                label="运费模板"
+                label-width="200rpx"
                 prop="deliveryTemplateId"
-                is-link
-                :value="getOptionText(templateOptions, formData.deliveryTemplateId)"
-                placeholder="请选择运费模板"
-                @click="pickerVisible.template = true"
               />
             </wd-cell-group>
           </view>
@@ -158,26 +139,6 @@
       </wd-form>
     </scroll-view>
 
-    <!-- 选择器 -->
-    <wd-picker
-      v-model:visible="pickerVisible.category"
-      :model-value="formData.categoryId"
-      :columns="categoryOptions"
-      @confirm="({ value }) => formData.categoryId = Number(value[0])"
-    />
-    <wd-picker
-      v-model:visible="pickerVisible.brand"
-      :model-value="formData.brandId"
-      :columns="brandOptions"
-      @confirm="({ value }) => formData.brandId = Number(value[0])"
-    />
-    <wd-picker
-      v-model:visible="pickerVisible.template"
-      :model-value="formData.deliveryTemplateId"
-      :columns="templateOptions"
-      @confirm="({ value }) => formData.deliveryTemplateId = Number(value[0])"
-    />
-
     <!-- 底部保存按钮 -->
     <view class="yd-detail-footer">
       <wd-button type="primary" block :loading="formLoading" @click="handleSubmit">
@@ -193,14 +154,17 @@ import type { ProductSku, ProductSpu } from '@/api/mall/product/spu'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createProductSpu, getProductSpu, updateProductSpu } from '@/api/mall/product/spu'
-import { getSimpleProductBrandList } from '@/api/mall/product/brand'
-import { getProductCategoryList } from '@/api/mall/product/category'
-import { getSimpleDeliveryExpressTemplateList } from '@/api/mall/trade/delivery/express-template'
-import { currRoute, delay, navigateBackPlus } from '@/utils'
-import { DICT_TYPE } from '@/utils/constants'
+import { delay, navigateBackPlus } from '@/utils'
+import { DeliveryTypeEnum, DICT_TYPE } from '@/utils/constants'
+import BrandSelect from '@/pages-mall/product/brand/components/brand-select.vue'
+import CategorySelect from '@/pages-mall/product/category/components/category-select.vue'
 import SkuEditor from '@/pages-mall/product/spu/components/sku-editor.vue'
+import TemplateSelect from '@/pages-mall/trade/delivery/express-template/components/template-select.vue'
 import { getIntDictOptions } from '@/hooks/useDict'
+import { fenToYuan, yuanToFen } from '@/utils/format'
 import { createFormSchema } from '@/utils/wot'
+
+const props = defineProps<{ id?: number | any }>()
 
 definePage({
   style: {
@@ -212,13 +176,9 @@ definePage({
 const toast = useToast()
 const formRef = ref<FormInstance>() // 表单组件引用
 const formLoading = ref(false) // 表单提交状态
-const formId = ref<number>() // 商品编号
+const formId = computed(() => props.id != null && props.id !== '' ? Number(props.id) : undefined) // 商品编号（路由透传）
 const activeTab = ref(0) // 当前分组 tab 下标
 const SPU_FORM_TABS = ['基础设置', '价格库存', '物流设置', '商品详情', '其它设置'] // 分组 tab
-const pickerVisible = ref({ category: false, brand: false, template: false }) // 选择器状态
-const categoryOptions = ref<{ label: string, value: number }[]>([]) // 分类选项
-const brandOptions = ref<{ label: string, value: number }[]>([]) // 品牌选项
-const templateOptions = ref<{ label: string, value: number }[]>([]) // 运费模板选项
 const statusOptions = getIntDictOptions(DICT_TYPE.PRODUCT_SPU_STATUS)
 const getTitle = computed(() => `${formId.value ? '编辑' : '新增'}商品`)
 const formData = ref<ProductSpu>({
@@ -228,7 +188,7 @@ const formData = ref<ProductSpu>({
   picUrl: '',
   sliderPicUrls: [],
   introduction: '',
-  deliveryTypes: [1],
+  deliveryTypes: [DeliveryTypeEnum.EXPRESS],
   deliveryTemplateId: undefined,
   brandId: undefined,
   specType: false,
@@ -249,8 +209,7 @@ const formSchema = createFormSchema({
   picUrl: [{ required: true, message: '商品封面不能为空' }],
   sliderPicUrls: [{ required: true, message: '轮播图不能为空' }],
   deliveryTypes: [{ required: true, message: '配送方式不能为空' }],
-  // TODO @AI：1 需要使用枚举值；
-  deliveryTemplateId: [{ required: (model: Record<string, any>) => !!model?.deliveryTypes?.includes(1), message: '运费模板不能为空' }], // 仅选快递配送时必填（与字段 v-if 一致），避免自提-only 商品卡在隐藏字段
+  deliveryTemplateId: [{ required: (model: Record<string, any>) => !!model?.deliveryTypes?.includes(DeliveryTypeEnum.EXPRESS), message: '运费模板不能为空' }],
   specType: [{ required: true, message: '多规格不能为空' }],
   subCommissionType: [{ required: true, message: '单独分佣不能为空' }],
   description: [{ required: true, message: '商品详情不能为空' }],
@@ -279,39 +238,15 @@ function handleBack() {
   navigateBackPlus('/pages-mall/product/spu/index')
 }
 
-/** 获取选项文本 */
-function getOptionText(options: { label: string, value: number }[], value?: number) {
-  if (value === undefined || value === null) {
-    return ''
-  }
-  return options.find(item => Number(item.value) === Number(value))?.label || String(value)
-}
-
-/** 分转元 */
-function centToYuan(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return undefined
-  }
-  return Number((Number(value) / 100).toFixed(2))
-}
-
-/** 元转分 */
-function yuanToCent(value: any) {
-  if (value === undefined || value === null || value === '') {
-    return undefined
-  }
-  return Math.round(Number(value) * 100)
-}
-
 /** SKU 分→元 */
 function toYuanSku(sku: ProductSku): ProductSku {
   return {
     ...sku,
-    price: centToYuan(sku.price),
-    marketPrice: centToYuan(sku.marketPrice),
-    costPrice: centToYuan(sku.costPrice),
-    firstBrokeragePrice: centToYuan(sku.firstBrokeragePrice),
-    secondBrokeragePrice: centToYuan(sku.secondBrokeragePrice),
+    price: fenToYuan(sku.price),
+    marketPrice: fenToYuan(sku.marketPrice),
+    costPrice: fenToYuan(sku.costPrice),
+    firstBrokeragePrice: fenToYuan(sku.firstBrokeragePrice),
+    secondBrokeragePrice: fenToYuan(sku.secondBrokeragePrice),
   }
 }
 
@@ -321,29 +256,17 @@ function toCentSku(sku: ProductSku): ProductSku {
     ...sku,
     name: sku.name || formData.value.name, // SKU 名称取商品名称
     picUrl: sku.picUrl || formData.value.picUrl || '', // SKU 图片默认取商品封面
-    price: yuanToCent(sku.price),
-    marketPrice: yuanToCent(sku.marketPrice),
-    costPrice: yuanToCent(sku.costPrice),
-    firstBrokeragePrice: yuanToCent(sku.firstBrokeragePrice),
-    secondBrokeragePrice: yuanToCent(sku.secondBrokeragePrice),
+    price: yuanToFen(sku.price),
+    marketPrice: yuanToFen(sku.marketPrice),
+    costPrice: yuanToFen(sku.costPrice),
+    firstBrokeragePrice: yuanToFen(sku.firstBrokeragePrice),
+    secondBrokeragePrice: yuanToFen(sku.secondBrokeragePrice),
   }
 }
 
 /** 默认单规格 SKU（元） */
 function createDefaultSku(): ProductSku {
   return { price: 0, marketPrice: 0, costPrice: 0, stock: 0, barCode: '', weight: 0, volume: 0, picUrl: '', properties: [] }
-}
-
-/** 加载选项 */
-async function loadOptions() {
-  const [categories, brands, templates] = await Promise.all([
-    getProductCategoryList({}),
-    getSimpleProductBrandList(),
-    getSimpleDeliveryExpressTemplateList(),
-  ])
-  categoryOptions.value = categories.map(item => ({ label: item.name || String(item.id), value: Number(item.id) }))
-  brandOptions.value = brands.map(item => ({ label: item.name || String(item.id), value: Number(item.id) }))
-  templateOptions.value = templates.map(item => ({ label: item.name || String(item.id), value: Number(item.id) }))
 }
 
 /** 加载详情 */
@@ -407,17 +330,8 @@ async function handleSubmit() {
 }
 
 /** 初始化 */
-onMounted(async () => {
-  const query = currRoute().query
-  // #ifdef H5
-  const hashQuery = new URLSearchParams(window.location.hash.split('?')[1] || '')
-  formId.value = Number(hashQuery.get('id') || query.id || 0) || undefined
-  // #endif
-  // #ifndef H5
-  formId.value = Number(query.id || 0) || undefined
-  // #endif
-  await loadOptions()
-  await loadDetail()
+onMounted(() => {
+  loadDetail()
 })
 </script>
 

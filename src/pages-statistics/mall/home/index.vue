@@ -1,3 +1,4 @@
+<!-- TODO @AI：从对齐 vue3 + ep 功能来看，还缺什么么？ -->
 <template>
   <!-- TODO @AI：会员概览，可以有么？ -->
   <view class="yd-page-container">
@@ -8,6 +9,7 @@
       @click-left="handleBack"
     />
 
+    <!-- TODO @AI：tabs？避免过长？类似 crm 的 -->
     <scroll-view scroll-y class="min-h-0 flex-1">
       <view class="p-24rpx">
         <!-- 核心数据：今日销售额 / 访问量 / 订单量 / 新增用户（今日 vs 昨日） -->

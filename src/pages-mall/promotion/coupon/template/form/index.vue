@@ -15,47 +15,36 @@
             <wd-input v-model="formData.name" clearable placeholder="请输入模板名称" />
           </wd-form-item>
           <wd-form-item title="发放数量" title-width="200rpx" prop="totalCount" center>
-            <wd-input-number v-model="formData.totalCount" :min="-1" />
-            <!-- TODO @AI：能不能在尾部。 -->
-            <text class="ml-12rpx text-24rpx text-[#999]">-1 不限</text>
+            <view class="w-full flex items-center justify-between">
+              <wd-input-number v-model="formData.totalCount" :min="-1" />
+              <text class="text-24rpx text-[#999]">-1 不限</text>
+            </view>
           </wd-form-item>
           <wd-form-item title="每人限领" title-width="200rpx" prop="takeLimitCount" center>
             <wd-input-number v-model="formData.takeLimitCount" :min="-1" />
           </wd-form-item>
-          <!-- TODO @AI：select -->
-          <wd-form-item title="领取方式" title-width="200rpx" prop="takeType" center>
-            <wd-radio-group v-model="formData.takeType" type="button">
-              <wd-radio
-                v-for="dict in getIntDictOptions(DICT_TYPE.PROMOTION_COUPON_TAKE_TYPE)"
-                :key="dict.value"
-                :value="dict.value"
-              >
-                {{ dict.label }}
-              </wd-radio>
-            </wd-radio-group>
-          </wd-form-item>
+          <yd-form-picker
+            v-model="formData.takeType"
+            label="领取方式"
+            label-width="200rpx"
+            prop="takeType"
+            :dict-type="DICT_TYPE.PROMOTION_COUPON_TAKE_TYPE"
+            placeholder="请选择领取方式"
+          />
           <wd-form-item title="使用门槛(元)" title-width="200rpx" prop="usePrice" center>
             <wd-input-number v-model="formData.usePrice" :min="0" :step="0.01" :precision="2" />
           </wd-form-item>
 
           <!-- 商品范围 -->
-          <!-- TODO @AI：select -->
-          <!-- TODO @AI：这个有数据字典么？ -->
-          <wd-form-item title="商品范围" title-width="200rpx" prop="productScope" center>
-            <wd-radio-group v-model="formData.productScope" type="button">
-              <wd-radio :value="1">
-                全部
-              </wd-radio>
-              <wd-radio :value="2">
-                指定商品
-              </wd-radio>
-              <wd-radio :value="3">
-                指定分类
-              </wd-radio>
-            </wd-radio-group>
-          </wd-form-item>
-          <!-- TODO @AI：是不是应该使用枚举类 -->
-          <wd-form-item v-if="formData.productScope !== 1" :title="formData.productScope === 3 ? '指定分类' : '指定商品'" title-width="200rpx">
+          <yd-form-picker
+            v-model="formData.productScope"
+            label="商品范围"
+            label-width="200rpx"
+            prop="productScope"
+            :dict-type="DICT_TYPE.PROMOTION_PRODUCT_SCOPE"
+            placeholder="请选择商品范围"
+          />
+          <wd-form-item v-if="formData.productScope !== PromotionProductScopeEnum.ALL" :title="formData.productScope === PromotionProductScopeEnum.CATEGORY ? '指定分类' : '指定商品'" title-width="200rpx">
             <ScopePicker v-model="formData.productScopeValues" :scope="formData.productScope!" />
           </wd-form-item>
 
@@ -71,10 +60,10 @@
               </wd-radio>
             </wd-radio-group>
           </wd-form-item>
-          <wd-form-item v-if="formData.discountType === 1" title="优惠金额(元)" title-width="200rpx" prop="discountPrice" center>
+          <wd-form-item v-if="formData.discountType === PromotionDiscountTypeEnum.PRICE" title="优惠金额(元)" title-width="200rpx" prop="discountPrice" center>
             <wd-input-number v-model="formData.discountPrice" :min="0" :step="0.01" :precision="2" />
           </wd-form-item>
-          <template v-else-if="formData.discountType === 2">
+          <template v-else-if="formData.discountType === PromotionDiscountTypeEnum.PERCENT">
             <wd-form-item title="折扣百分比" title-width="200rpx" prop="discountPercent" center>
               <wd-input-number v-model="formData.discountPercent" :min="0" :max="100" />
             </wd-form-item>
@@ -148,7 +137,7 @@ import { getIntDictOptions } from '@/hooks/useDict'
 import ScopePicker from '@/pages-mall/promotion/components/scope-picker.vue'
 import { fenToYuan, yuanToFen } from '@/utils/format'
 import { delay, navigateBackPlus } from '@/utils'
-import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
+import { CommonStatusEnum, DICT_TYPE, PromotionDiscountTypeEnum, PromotionProductScopeEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 
@@ -192,6 +181,8 @@ const formSchema = createFormSchema({
   takeType: [{ required: true, message: '领取方式不能为空' }],
   discountType: [{ required: true, message: '优惠类型不能为空' }],
   validityType: [{ required: true, message: '有效期类型不能为空' }],
+  validStartTime: [{ required: (model: Record<string, any>) => model.validityType === 1, message: '固定开始时间不能为空' }],
+  validEndTime: [{ required: (model: Record<string, any>) => model.validityType === 1, message: '固定结束时间不能为空' }],
   status: [{ required: true, message: '状态不能为空' }],
 })
 
@@ -221,9 +212,9 @@ async function handleSubmit() {
   if (!valid) {
     return
   }
-  // 固定日期有效期时，开始/结束时间必填
-  if (formData.value.validityType === 1 && (!formData.value.validStartTime || !formData.value.validEndTime)) {
-    toast.warning('请选择固定有效期的开始与结束时间')
+  // 非「全部」商品范围时，必须选择至少一个指定商品/分类
+  if (formData.value.productScope !== PromotionProductScopeEnum.ALL && !formData.value.productScopeValues?.length) {
+    toast.warning(formData.value.productScope === PromotionProductScopeEnum.CATEGORY ? '请选择指定分类' : '请选择指定商品')
     return
   }
   formLoading.value = true

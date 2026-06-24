@@ -13,7 +13,6 @@
         <view class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
           <wd-cell-group border>
             <wd-cell title="活动名称" :value="formData.name || '-'" />
-            <wd-cell title="商品编号" :value="formData.spuId != null ? String(formData.spuId) : '-'" />
             <wd-cell title="开始时间" :value="formatDateTime(formData.startTime) || '-'" />
             <wd-cell title="结束时间" :value="formatDateTime(formData.endTime) || '-'" />
             <wd-cell title="总限购" :value="formData.totalLimitCount != null ? String(formData.totalLimitCount) : '-'" />
@@ -24,19 +23,12 @@
         </view>
 
         <!-- 秒杀商品 -->
-        <!-- TODO @AI：有没更好的展示？类似 sku、spu 界面？注意：实现的时候联系下拼团、砍价、秒杀活动的处理； -->
         <view v-if="formData.products?.length" class="mb-24rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
           <view class="border-b border-[#f0f0f0] px-24rpx py-18rpx text-30rpx text-[#333] font-semibold">
             秒杀商品
           </view>
-          <view v-for="(product, index) in formData.products" :key="index" class="px-24rpx py-16rpx">
-            <view class="mb-8rpx text-28rpx text-[#333]">
-              SKU 编号：{{ product.skuId }}
-            </view>
-            <view class="flex flex-wrap gap-24rpx text-26rpx text-[#666]">
-              <text>秒杀价：{{ formatDisplayMoney(product.seckillPrice) }}</text>
-              <text>库存：{{ product.stock ?? '-' }}</text>
-            </view>
+          <view class="p-16rpx">
+            <SpuSkuView :products="formData.products" :fields="productFields" />
           </view>
         </view>
       </view>
@@ -61,6 +53,7 @@
 
 <script lang="ts" setup>
 import type { PromotionSeckillActivity } from '@/api/mall/promotion/seckill'
+import type { SpuSkuViewField } from '@/pages-mall/promotion/components/spu-sku-view.vue'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
@@ -71,9 +64,9 @@ import {
   getPromotionSeckillActivity,
 } from '@/api/mall/promotion/seckill'
 import { useAccess } from '@/hooks/useAccess'
-import { formatDisplayMoney } from '@/utils/format'
 import { delay, navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
+import SpuSkuView from '@/pages-mall/promotion/components/spu-sku-view.vue'
 
 const props = defineProps<{ id?: number | any }>()
 
@@ -90,6 +83,11 @@ const toast = useToast()
 const formData = ref<PromotionSeckillActivity>({}) // 详情数据
 const deleting = ref(false) // 删除状态
 const closing = ref(false) // 关闭状态
+
+const productFields: SpuSkuViewField[] = [
+  { label: '秒杀价', prop: 'seckillPrice', type: 'money' },
+  { label: '库存', prop: 'stock' },
+] // 秒杀商品每个 SKU 展示的活动字段
 
 /** 返回上一页 */
 function handleBack() {

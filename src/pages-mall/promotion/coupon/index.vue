@@ -10,8 +10,21 @@
     <!-- 搜索组件 -->
     <SearchForm @search="handleQuery" @reset="handleReset" />
 
-    <!-- 列表操作 -->
-    <!-- TODO @AI：pc 没有发送这个逻辑么把？！ -->
+    <!-- 状态筛选 -->
+    <!-- TODO @AI：进入首页时，全部的 tabs 没高亮 -->
+    <view class="bg-white">
+      <wd-tabs v-model="statusTab" @change="reload">
+        <wd-tab title="全部" :name="-1" />
+        <wd-tab
+          v-for="dict in statusOptions"
+          :key="dict.value"
+          :title="dict.label"
+          :name="dict.value"
+        />
+      </wd-tabs>
+    </view>
+
+    <!-- 发送优惠券 -->
     <view v-if="hasAccessByCodes(['promotion:coupon:send'])" class="bg-white px-24rpx py-16rpx">
       <wd-button size="small" type="primary" @click="sendVisible = true">
         发送优惠券
@@ -73,9 +86,7 @@
           <wd-form-item title="模板编号" title-width="200rpx">
             <wd-input v-model="sendForm.templateId" type="number" clearable placeholder="请输入优惠券模板编号" />
           </wd-form-item>
-          <wd-form-item title="用户编号" title-width="200rpx">
-            <wd-input v-model="sendForm.userIds" clearable placeholder="多个用户编号用英文逗号分隔" />
-          </wd-form-item>
+          <UserPicker v-model="sendUserIds" type="checkbox" label="选择用户" label-width="200rpx" placeholder="请选择用户" />
         </wd-cell-group>
         <view class="mt-24rpx flex gap-20rpx">
           <wd-button class="flex-1" variant="plain" @click="sendVisible = false">
@@ -96,6 +107,7 @@ import { onUnload } from '@dcloudio/uni-app'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, reactive, ref } from 'vue'
 import { getPromotionCouponPage, sendPromotionCoupon } from '@/api/mall/promotion/coupon/coupon'
+import { getIntDictOptions } from '@/hooks/useDict'
 import { useAccess } from '@/hooks/useAccess'
 import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
@@ -113,10 +125,13 @@ const { hasAccessByCodes } = useAccess()
 const toast = useToast()
 const list = ref<PromotionCoupon[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
-const queryParams = ref<Record<string, any>>({}) // 查询参数
+const queryParams = ref<Record<string, any>>({}) // 查询参数（昵称 + 领取时间）
+const statusTab = ref(-1) // 状态筛选（-1 全部）
+const statusOptions = getIntDictOptions(DICT_TYPE.PROMOTION_COUPON_STATUS) // 优惠券状态选项
 const sendVisible = ref(false) // 发送弹窗
 const submitting = ref(false) // 发送提交状态
-const sendForm = reactive({ templateId: '', userIds: '' }) // 发送表单
+const sendForm = reactive({ templateId: '' }) // 发送表单（模板编号）
+const sendUserIds = ref<number[]>([]) // 发送目标用户编号
 
 /** 返回上一页 */
 function handleBack() {
@@ -126,7 +141,12 @@ function handleBack() {
 /** 查询优惠券列表 */
 async function queryList(pageNo: number, pageSize: number) {
   try {
-    const data = await getPromotionCouponPage({ ...queryParams.value, pageNo, pageSize })
+    const data = await getPromotionCouponPage({
+      ...queryParams.value,
+      status: statusTab.value === -1 ? undefined : statusTab.value,
+      pageNo,
+      pageSize,
+    })
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
     pagingRef.value?.complete(false)
@@ -152,18 +172,17 @@ function reload() {
 /** 发送优惠券 */
 async function handleSend() {
   const templateId = Number(sendForm.templateId)
-  const userIds = String(sendForm.userIds).split(/[,，]/).map(item => Number(item.trim())).filter(item => !Number.isNaN(item))
-  if (!templateId || !userIds.length) {
-    toast.warning('请填写模板编号与用户编号')
+  if (!templateId || !sendUserIds.value.length) {
+    toast.warning('请填写模板编号并选择用户')
     return
   }
   submitting.value = true
   try {
-    await sendPromotionCoupon({ templateId, userIds })
+    await sendPromotionCoupon({ templateId, userIds: sendUserIds.value })
     toast.success('发送成功')
     sendVisible.value = false
     sendForm.templateId = ''
-    sendForm.userIds = ''
+    sendUserIds.value = []
     reload()
   } finally {
     submitting.value = false

@@ -34,20 +34,15 @@
                   </wd-radio>
                 </wd-radio-group>
               </wd-form-item>
-              <!-- TODO @AI：下拉选择 -->
-              <wd-form-item title="商品范围" title-width="200rpx" prop="productScope" center>
-                <wd-radio-group v-model="formData.productScope" type="button">
-                  <wd-radio
-                    v-for="dict in getIntDictOptions(DICT_TYPE.PROMOTION_PRODUCT_SCOPE)"
-                    :key="dict.value"
-                    :value="dict.value"
-                  >
-                    {{ dict.label }}
-                  </wd-radio>
-                </wd-radio-group>
-              </wd-form-item>
-              <!-- TODO @AI：枚举； -->
-              <wd-form-item v-if="formData.productScope !== 1" :title="formData.productScope === 3 ? '指定分类' : '指定商品'" title-width="200rpx">
+              <yd-form-picker
+                v-model="formData.productScope"
+                label="商品范围"
+                label-width="200rpx"
+                prop="productScope"
+                :dict-type="DICT_TYPE.PROMOTION_PRODUCT_SCOPE"
+                placeholder="请选择商品范围"
+              />
+              <wd-form-item v-if="formData.productScope !== PromotionProductScopeEnum.ALL" :title="formData.productScope === PromotionProductScopeEnum.CATEGORY ? '指定分类' : '指定商品'" title-width="200rpx">
                 <ScopePicker v-model="scopeValues" :scope="formData.productScope!" />
               </wd-form-item>
               <wd-form-item title="备注" title-width="200rpx">
@@ -70,8 +65,8 @@
                 <text class="text-26rpx text-[#fa4350]" @click="removeRule(index)">删除</text>
               </view>
               <view class="flex items-center gap-12rpx py-6rpx">
-                <text class="w-180rpx shrink-0 text-26rpx text-[#666]">{{ formData.conditionType === 20 ? '满件数' : '满金额(元)' }}</text>
-                <wd-input-number v-model="rule.limit" :min="0" :step="formData.conditionType === 20 ? 1 : 0.01" />
+                <text class="w-180rpx shrink-0 text-26rpx text-[#666]">{{ formData.conditionType === PromotionConditionTypeEnum.COUNT ? '满件数' : '满金额(元)' }}</text>
+                <wd-input-number v-model="rule.limit" :min="0" :step="formData.conditionType === PromotionConditionTypeEnum.COUNT ? 1 : 0.01" />
               </view>
               <view class="flex items-center gap-12rpx py-6rpx">
                 <text class="w-180rpx shrink-0 text-26rpx text-[#666]">优惠金额(元)</text>
@@ -175,7 +170,7 @@ import { getIntDictOptions } from '@/hooks/useDict'
 import ScopePicker from '@/pages-mall/promotion/components/scope-picker.vue'
 import { fenToYuan, yuanToFen } from '@/utils/format'
 import { delay, navigateBackPlus } from '@/utils'
-import { DICT_TYPE } from '@/utils/constants'
+import { DICT_TYPE, PromotionConditionTypeEnum, PromotionProductScopeEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 
@@ -209,8 +204,8 @@ const formData = ref<PromotionRewardActivity>({
   name: '',
   startTime: undefined,
   endTime: undefined,
-  conditionType: 10,
-  productScope: 1,
+  conditionType: PromotionConditionTypeEnum.PRICE,
+  productScope: PromotionProductScopeEnum.ALL,
   remark: '',
 }) // 表单数据
 const formSchema = createFormSchema({
@@ -295,14 +290,14 @@ async function getDetail() {
   const data = await getPromotionRewardActivity(Number(props.id))
   formData.value = {
     ...data,
-    conditionType: data.conditionType ?? 10,
-    productScope: data.productScope ?? 1,
+    conditionType: data.conditionType ?? PromotionConditionTypeEnum.PRICE,
+    productScope: data.productScope ?? PromotionProductScopeEnum.ALL,
   }
   scopeValues.value = data.productScopeValues || []
   if (data.rules?.length) {
     // 满金额时 limit 为分，需转元；满件数时 limit 为整数。赠券 Map 转为本地数组结构
     rules.value = data.rules.map(rule => ({
-      limit: data.conditionType === 20 ? (rule.limit ?? 0) : fenToYuan(rule.limit),
+      limit: data.conditionType === PromotionConditionTypeEnum.COUNT ? (rule.limit ?? 0) : fenToYuan(rule.limit),
       discountPrice: fenToYuan(rule.discountPrice),
       point: rule.point ?? 0,
       freeDelivery: !!rule.freeDelivery,
@@ -324,7 +319,12 @@ async function handleSubmit() {
     toast.warning('请至少添加一条优惠规则')
     return
   }
-  const isCount = formData.value.conditionType === 20
+  // 非「全部」商品范围时，必须选择至少一个指定商品/分类
+  if (formData.value.productScope !== PromotionProductScopeEnum.ALL && !scopeValues.value.length) {
+    toast.warning(formData.value.productScope === PromotionProductScopeEnum.CATEGORY ? '请选择指定分类' : '请选择指定商品')
+    return
+  }
+  const isCount = formData.value.conditionType === PromotionConditionTypeEnum.COUNT
   const submitRules = rules.value.map((rule) => {
     // 赠券本地数组转回后端 Map<模板编号, 数量>
     const giveCouponTemplateCounts: Record<string, number> = {}
@@ -339,7 +339,7 @@ async function handleSubmit() {
       giveCouponTemplateCounts,
     }
   })
-  const productScopeValues = formData.value.productScope === 1 ? [] : scopeValues.value
+  const productScopeValues = formData.value.productScope === PromotionProductScopeEnum.ALL ? [] : scopeValues.value
   formLoading.value = true
   try {
     const data: PromotionRewardActivity = {

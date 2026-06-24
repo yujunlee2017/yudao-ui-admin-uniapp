@@ -11,15 +11,11 @@
     <view>
       <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
-          <!-- TODO @AI：分类那，封装一个组件，这里直接使用，是不是更好。 -->
-          <wd-form-item
-            title="文章分类"
-            title-width="200rpx"
+          <CategorySelect
+            v-model="formData.categoryId"
+            label="文章分类"
+            label-width="200rpx"
             prop="categoryId"
-            is-link
-            :value="getOptionText(categoryOptions, formData.categoryId)"
-            placeholder="请选择文章分类"
-            @click="categoryPickerVisible = true"
           />
           <wd-form-item title="文章标题" title-width="200rpx" prop="title">
             <wd-input v-model="formData.title" clearable placeholder="请输入文章标题" />
@@ -47,15 +43,12 @@
               </wd-radio>
             </wd-radio-group>
           </wd-form-item>
-          <!-- TODO @AI：能不能找个商品选择器 -->
-          <wd-form-item
-            title="关联商品"
-            title-width="200rpx"
+          <SpuSelect
+            v-model="formData.spuId"
+            label="关联商品"
+            label-width="200rpx"
             prop="spuId"
-            is-link
-            :value="getOptionText(spuOptions, formData.spuId)"
             placeholder="请选择关联商品"
-            @click="spuPickerVisible = true"
           />
           <wd-form-item title="是否热门" title-width="200rpx" prop="recommendHot" center>
             <wd-radio-group v-model="formData.recommendHot" type="button">
@@ -89,22 +82,6 @@
       </wd-form>
     </view>
 
-    <!-- 文章分类选择器 -->
-    <wd-picker
-      v-model:visible="categoryPickerVisible"
-      :model-value="formData.categoryId"
-      :columns="categoryOptions"
-      @confirm="({ value }) => formData.categoryId = Number(value[0])"
-    />
-
-    <!-- 关联商品选择器 -->
-    <wd-picker
-      v-model:visible="spuPickerVisible"
-      :model-value="formData.spuId"
-      :columns="spuOptions"
-      @confirm="({ value }) => formData.spuId = Number(value[0])"
-    />
-
     <!-- 底部保存按钮 -->
     <view class="yd-detail-footer">
       <wd-button
@@ -129,9 +106,9 @@ import {
   getPromotionArticle,
   updatePromotionArticle,
 } from '@/api/mall/promotion/article'
-import { getSimplePromotionArticleCategoryList } from '@/api/mall/promotion/article-category'
-import { getSimpleProductSpuList } from '@/api/mall/product/spu'
 import { getIntDictOptions } from '@/hooks/useDict'
+import CategorySelect from '@/pages-mall/promotion/article/category/components/category-select.vue'
+import SpuSelect from '@/pages-mall/promotion/components/spu-select.vue'
 import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
@@ -150,10 +127,6 @@ definePage({
 const toast = useToast()
 const getTitle = computed(() => props.id ? '编辑文章' : '新增文章')
 const formLoading = ref(false) // 表单提交状态
-const categoryPickerVisible = ref(false) // 文章分类选择器状态
-const spuPickerVisible = ref(false) // 关联商品选择器状态
-const categoryOptions = ref<{ label: string, value: number }[]>([]) // 文章分类选项
-const spuOptions = ref<{ label: string, value: number }[]>([]) // 关联商品选项
 const formData = ref<PromotionArticle>({
   id: undefined,
   categoryId: undefined,
@@ -182,24 +155,6 @@ const formRef = ref<FormInstance>() // 表单组件引用
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mall/promotion/article/index')
-}
-
-/** 获取选项文本 */
-function getOptionText(options: { label: string, value: number }[], value?: number) {
-  if (value == null) {
-    return ''
-  }
-  return options.find(item => Number(item.value) === Number(value))?.label || String(value)
-}
-
-/** 加载关联选项 */
-async function loadOptions() {
-  const [categories, spus] = await Promise.all([
-    getSimplePromotionArticleCategoryList(),
-    getSimpleProductSpuList(),
-  ])
-  categoryOptions.value = categories.map(item => ({ label: item.name || String(item.id), value: Number(item.id) }))
-  spuOptions.value = spus.map(item => ({ label: item.name || String(item.id), value: Number(item.id) }))
 }
 
 /** 加载详情 */
@@ -235,9 +190,8 @@ async function handleSubmit() {
 }
 
 /** 初始化 */
-onMounted(async () => {
-  await loadOptions()
-  await getDetail()
+onMounted(() => {
+  getDetail()
 })
 </script>
 

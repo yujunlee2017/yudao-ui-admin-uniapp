@@ -20,11 +20,10 @@
           <wd-form-item title="备注" title-width="200rpx" prop="remark">
             <wd-textarea v-model="formData.remark" clearable :maxlength="500" placeholder="请输入备注" />
           </wd-form-item>
-          <wd-form-item v-if="isEdit" title="装修属性" title-width="200rpx" prop="propertyText">
+          <wd-form-item v-if="isEdit" title="装修属性" title-width="200rpx" prop="property">
             <wd-textarea
-              v-model="formData.propertyText"
+              v-model="formData.property"
               clearable
-              :maxlength="20000"
               placeholder="请输入装修属性 JSON"
             />
           </wd-form-item>
@@ -70,7 +69,7 @@ interface DiyTemplateFormData {
   name?: string
   remark?: string
   previewPicUrls?: string[]
-  propertyText?: string
+  property?: string // 装修属性 JSON 文本（编辑时维护）
 }
 
 const props = defineProps<{
@@ -93,11 +92,11 @@ const formData = ref<DiyTemplateFormData>({
   name: '',
   remark: '',
   previewPicUrls: [],
-  propertyText: '{}', // TODO @AI：property 是不是就够了，不用这里抽一个IE出来？？？
+  property: '{}',
 }) // 表单数据
 const formSchema = createFormSchema({
   name: [{ required: true, message: '模板名称不能为空' }],
-  propertyText: [{ validator: validateProperty }], // 装修属性仅编辑时显示，需为合法 JSON
+  property: [{ validator: validateProperty }], // 装修属性仅编辑时显示，需为合法 JSON
 })
 const formRef = ref<FormInstance>() // 表单组件引用
 
@@ -131,7 +130,7 @@ async function getDetail() {
     name: detail.name,
     remark: detail.remark,
     previewPicUrls: detail.previewPicUrls || [],
-    propertyText: formatProperty(property.property ?? detail.property),
+    property: formatProperty(property.property ?? detail.property),
   }
 }
 
@@ -170,7 +169,7 @@ async function handleSubmit() {
       // 装修属性走独立接口更新
       await updatePromotionDiyTemplateProperty({
         id: formData.value.id,
-        property: formData.value.propertyText?.trim() || '{}',
+        property: formData.value.property?.trim() || '{}',
       })
       toast.success('修改成功')
     } else {
