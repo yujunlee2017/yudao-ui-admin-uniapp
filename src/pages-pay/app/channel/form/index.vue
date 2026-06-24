@@ -37,8 +37,8 @@
             />
           </wd-form-item>
           <!-- 渠道配置 -->
-          <AlipayConfig v-if="isAlipayChannel" :config="formData.config" />
-          <WeixinConfig v-if="isWeixinChannel" :config="formData.config" />
+          <AlipayConfig v-if="isAlipayChannel" ref="alipayConfigRef" :config="formData.config" />
+          <WeixinConfig v-if="isWeixinChannel" ref="weixinConfigRef" :config="formData.config" />
         </wd-cell-group>
       </wd-form>
     </view>
@@ -87,6 +87,8 @@ definePage({
 
 const toast = useToast()
 const formRef = ref<FormInstance>() // 表单组件引用
+const alipayConfigRef = ref<any>() // 支付宝配置子组件引用
+const weixinConfigRef = ref<any>() // 微信配置子组件引用
 const formLoading = ref(false) // 表单提交状态
 const formData = ref({
   id: undefined as number | undefined,
@@ -125,35 +127,6 @@ function getDefaultConfig(code?: string) {
   if (code === PayChannelEnum.MOCK.code) {
     return { name: 'mock-conf' }
   }
-  if (code?.startsWith('alipay_')) {
-    return {
-      appId: '',
-      serverUrl: 'https://openapi.alipay.com/gateway.do',
-      signType: 'RSA2',
-      mode: 1,
-      privateKey: '',
-      alipayPublicKey: '',
-      appCertContent: '',
-      alipayPublicCertContent: '',
-      rootCertContent: '',
-      encryptType: '',
-      encryptKey: '',
-    }
-  }
-  if (code?.startsWith('wx_')) {
-    return {
-      appId: '',
-      mchId: '',
-      apiVersion: 'v3',
-      mchKey: '',
-      keyContent: '',
-      privateKeyContent: '',
-      certSerialNo: '',
-      apiV3Key: '',
-      publicKeyContent: '',
-      publicKeyId: '',
-    }
-  }
   return {}
 }
 
@@ -172,12 +145,15 @@ function parseConfig(config: any): Record<string, any> {
   return { ...config }
 }
 
-/** 校验渠道配置 */
+/** 校验渠道配置：委托当前渠道子组件的字段校验 */
 function validateConfig() {
-  const code = props.code || ''
-  const config = formData.value.config
-  if (code.startsWith('wx_') && config.apiVersion === 'v3' && !config.publicKeyId) {
-    toast.show('公钥 ID 不能为空')
+  const error = isAlipayChannel.value
+    ? alipayConfigRef.value?.validate?.()
+    : isWeixinChannel.value
+      ? weixinConfigRef.value?.validate?.()
+      : ''
+  if (error) {
+    toast.show(error)
     return false
   }
   return true
@@ -242,6 +218,7 @@ async function handleSubmit() {
       await createPayChannel(data)
       toast.success('新增成功')
     }
+    uni.$emit('pay-channel:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false

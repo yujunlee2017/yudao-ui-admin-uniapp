@@ -63,11 +63,71 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 
 const props = defineProps<{
   config: Record<string, any> // 渠道配置对象
 }>()
 
 const cfg = computed(() => props.config) // 可编辑的配置别名
+const defaultConfig: Record<string, any> = {
+  appId: '',
+  serverUrl: 'https://openapi.alipay.com/gateway.do',
+  signType: 'RSA2',
+  mode: 1,
+  privateKey: '',
+  alipayPublicKey: '',
+  appCertContent: '',
+  alipayPublicCertContent: '',
+  rootCertContent: '',
+  encryptType: '',
+  encryptKey: '',
+} // 渠道默认配置
+
+watch(() => props.config, (config) => {
+  if (!config) {
+    return
+  }
+  Object.entries(defaultConfig).forEach(([key, value]) => {
+    if (config[key] === undefined) {
+      config[key] = value
+    }
+  })
+}, { immediate: true })
+
+/** 校验渠道配置必填项，返回首个错误文案（空串表示通过） */
+function validate(): string {
+  if (!cfg.value.appId) {
+    return '请输入开放平台 AppID'
+  }
+  if (!cfg.value.serverUrl) {
+    return '请选择网关地址'
+  }
+  if (!cfg.value.signType) {
+    return '请选择算法类型'
+  }
+  // 证书模式
+  if (cfg.value.mode === 2) {
+    if (!cfg.value.appCertContent) {
+      return '请粘贴应用公钥证书内容'
+    }
+    if (!cfg.value.alipayPublicCertContent) {
+      return '请粘贴支付宝公钥证书内容'
+    }
+    if (!cfg.value.rootCertContent) {
+      return '请粘贴根证书内容'
+    }
+    return ''
+  }
+  // 公钥模式
+  if (!cfg.value.privateKey) {
+    return '请输入应用私钥'
+  }
+  if (!cfg.value.alipayPublicKey) {
+    return '请输入支付宝公钥'
+  }
+  return ''
+}
+
+defineExpose({ validate })
 </script>

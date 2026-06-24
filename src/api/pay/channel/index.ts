@@ -1,4 +1,3 @@
-import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
 /** 支付渠道 */
@@ -13,9 +12,9 @@ export interface PayChannel {
   createTime?: string
 }
 
-/** 获取支付渠道分页列表 */
-export function getPayChannelPage(params: PageParam) {
-  return http.get<PageResult<PayChannel>>('/pay/channel/page', params)
+/** 获取指定应用的支付渠道列表 */
+export function getPayChannelList(appId: number | string) {
+  return http.get<PayChannel[]>('/pay/channel/list', { appId })
 }
 
 /** 获取支付渠道详情 */

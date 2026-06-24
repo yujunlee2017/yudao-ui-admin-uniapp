@@ -40,13 +40,12 @@
               未配置
             </wd-tag>
           </view>
-          <view class="mb-16rpx flex text-28rpx text-[#666]">
-            <text class="mr-8rpx shrink-0 text-[#999]">渠道费率：</text>
-            <text>{{ getChannel(channel.code)?.feeRate ?? 0 }}%</text>
-          </view>
-          <view class="flex gap-16rpx">
+          <view class="flex items-center justify-between">
+            <view class="flex text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">渠道费率：</text>
+              <text>{{ getChannel(channel.code)?.feeRate ?? 0 }}%</text>
+            </view>
             <wd-button
-              class="flex-1"
               size="small"
               type="primary"
               @click="handleConfig(channel.code)"
@@ -62,8 +61,9 @@
 
 <script lang="ts" setup>
 import type { PayChannel } from '@/api/pay/channel'
+import { onUnload } from '@dcloudio/uni-app'
 import { computed, onMounted, ref } from 'vue'
-import { getPayChannelPage } from '@/api/pay/channel'
+import { getPayChannelList } from '@/api/pay/channel'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE, PayChannelEnum } from '@/utils/constants'
 
@@ -143,20 +143,17 @@ async function loadChannels() {
   if (!props.appId) {
     return
   }
-  try {
-    const data = await getPayChannelPage({
-      pageNo: 1,
-      pageSize: 100,
-      appId: Number(props.appId),
-    })
-    list.value = data.list || []
-  } catch {
-    list.value = []
-  }
+  list.value = await getPayChannelList(Number(props.appId)) || []
 }
 
 /** 初始化 */
 onMounted(() => {
+  uni.$on('pay-channel:reload', loadChannels)
   loadChannels()
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('pay-channel:reload', loadChannels)
 })
 </script>

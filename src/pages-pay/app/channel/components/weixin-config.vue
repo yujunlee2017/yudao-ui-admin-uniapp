@@ -50,11 +50,69 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 
 const props = defineProps<{
   config: Record<string, any> // 渠道配置对象
 }>()
 
 const cfg = computed(() => props.config) // 可编辑的配置别名
+
+const defaultConfig: Record<string, any> = {
+  appId: '',
+  mchId: '',
+  apiVersion: 'v3',
+  mchKey: '',
+  keyContent: '',
+  privateKeyContent: '',
+  certSerialNo: '',
+  apiV3Key: '',
+  publicKeyContent: '',
+  publicKeyId: '',
+} // 渠道默认配置
+
+watch(() => props.config, (config) => {
+  if (!config) {
+    return
+  }
+  Object.entries(defaultConfig).forEach(([key, value]) => {
+    if (config[key] === undefined) {
+      config[key] = value
+    }
+  })
+}, { immediate: true })
+
+/** 校验渠道配置必填项，返回首个错误文案（空串表示通过） */
+function validate(): string {
+  if (!cfg.value.appId) {
+    return '请输入微信 AppID'
+  }
+  if (!cfg.value.mchId) {
+    return '请输入商户号'
+  }
+  if (cfg.value.apiVersion === 'v2') {
+    if (!cfg.value.mchKey) {
+      return '请输入商户密钥'
+    }
+    if (!cfg.value.keyContent) {
+      return '请粘贴 apiclient_cert.p12 证书内容'
+    }
+    return ''
+  }
+  if (!cfg.value.apiV3Key) {
+    return '请输入 API V3 密钥'
+  }
+  if (!cfg.value.privateKeyContent) {
+    return '请粘贴 apiclient_key.pem 证书内容'
+  }
+  if (!cfg.value.certSerialNo) {
+    return '请输入证书序列号'
+  }
+  if (!cfg.value.publicKeyId) {
+    return '请输入公钥 ID'
+  }
+  return ''
+}
+
+defineExpose({ validate })
 </script>
