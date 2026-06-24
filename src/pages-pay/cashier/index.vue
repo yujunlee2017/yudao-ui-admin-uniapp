@@ -121,6 +121,7 @@
   </view>
 </template>
 
+<!--suppress UnreachableCodeJS -->
 <script lang="ts" setup>
 import type { PayOrder } from '@/api/pay/order'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
