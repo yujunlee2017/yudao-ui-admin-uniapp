@@ -17,8 +17,8 @@
         <dict-tag v-if="formData.status != null" :type="DICT_TYPE.PAY_REFUND_STATUS" :value="formData.status" />
         <text v-else>-</text>
       </wd-cell>
-      <wd-cell title="支付金额" :value="formatPayMoney(formData.payPrice ?? formData.payAmount)" />
-      <wd-cell title="退款金额" :value="formatPayMoney(formData.refundPrice ?? formData.refundAmount)" />
+      <wd-cell title="支付金额" :value="formatDisplayMoney(formData.payPrice ?? formData.payAmount)" />
+      <wd-cell title="退款金额" :value="formatDisplayMoney(formData.refundPrice ?? formData.refundAmount)" />
       <wd-cell title="退款渠道">
         <dict-tag v-if="formData.channelCode" :type="DICT_TYPE.PAY_CHANNEL_CODE" :value="formData.channelCode" />
         <text v-else>-</text>
@@ -35,7 +35,7 @@
         <text class="break-all text-right text-[#333]">{{ formData.notifyUrl || '-' }}</text>
       </wd-cell>
       <wd-cell title="回调内容">
-        <text class="break-all text-right text-[#333]">{{ formData.channelExtras || '-' }}</text>
+        <text class="break-all text-right text-[#333]">{{ formData.channelNotifyData || '-' }}</text>
       </wd-cell>
     </wd-cell-group>
   </view>
@@ -49,7 +49,7 @@ import { getPayRefund } from '@/api/pay/refund'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import { formatPayMoney } from '../../utils'
+import { formatDisplayMoney } from '@/utils/format'
 
 const props = defineProps<{ id?: number | any }>()
 

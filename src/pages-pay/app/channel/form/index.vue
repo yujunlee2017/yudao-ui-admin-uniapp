@@ -15,7 +15,8 @@
             <wd-input v-model="formData.code" disabled />
           </wd-form-item>
           <wd-form-item title="渠道费率" title-width="220rpx" prop="feeRate" center>
-            <wd-input-number v-model="formData.feeRate" :min="0" :step="0.01" />
+            <wd-input-number v-model="formData.feeRate" :min="0" :step="0.01" :precision="2" input-width="200rpx" />
+            <!-- TODO @AI：放在尾部，不要折行 -->
             <text class="ml-12rpx text-26rpx text-[#999]">%</text>
           </wd-form-item>
           <wd-form-item title="渠道状态" title-width="220rpx" prop="status" center>
@@ -91,8 +92,6 @@ definePage({
 })
 
 const toast = useToast()
-// TODO @AI：这里的 formData.value.id 报“ESLint: 'formData' was used before it was defined. (ts/no-use-before-define)”错。
-const getTitle = computed(() => formData.value.id ? '编辑支付渠道' : '新增支付渠道')
 const formRef = ref<FormInstance>() // 表单组件引用
 const formLoading = ref(false) // 表单提交状态
 const formData = ref({
@@ -104,6 +103,7 @@ const formData = ref({
   remark: '',
   configText: '',
 }) // 表单数据
+const getTitle = computed(() => formData.value.id ? '编辑支付渠道' : '新增支付渠道')
 const formSchema = createFormSchema({
   feeRate: [{ required: true, message: '渠道费率不能为空' }],
   status: [{ required: true, message: '渠道状态不能为空' }],

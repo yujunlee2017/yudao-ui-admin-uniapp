@@ -41,7 +41,7 @@
           </view>
 
           <view class="mb-16rpx text-36rpx text-[#fa8c16] font-semibold">
-            {{ formatPayAmount(item.price) }}
+            {{ formatDisplayMoney(item.price) }}
           </view>
 
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
@@ -126,7 +126,7 @@
             </wd-radio-group>
           </wd-form-item>
           <wd-form-item title="提现金额" title-width="210rpx" prop="price" center>
-            <wd-input-number v-model="formData.price" :min="0.01" :step="0.01" />
+            <wd-input-number v-model="formData.price" :min="0.01" :step="0.01" :precision="2" input-width="200rpx" />
             <text class="ml-12rpx text-26rpx text-[#999]">元</text>
           </wd-form-item>
           <wd-form-item title="收款账号" title-width="210rpx" prop="userAccount">
@@ -162,7 +162,7 @@ import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
-import { formatPayAmount, yuanToFen } from '../../utils'
+import { formatDisplayMoney, yuanToFen } from '@/utils/format'
 
 definePage({
   style: {

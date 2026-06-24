@@ -1,5 +1,4 @@
 <template>
-  <!-- TODO @AI：不用单独出一个菜单哈；在首页；去掉首页的菜单，就是； -->
   <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
@@ -40,13 +39,13 @@
               </view>
             </view>
             <view class="text-32rpx text-[#fa8c16] font-semibold">
-              {{ formatPayMoney(item.price) }}
+              {{ formatDisplayMoney(item.price) }}
             </view>
           </view>
 
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">钱包余额：</text>
-            <text>{{ formatPayMoney(item.balance) }}</text>
+            <text>{{ formatDisplayMoney(item.balance) }}</text>
           </view>
           <view class="flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">交易时间：</text>
@@ -64,7 +63,7 @@ import { ref } from 'vue'
 import { getPayWalletTransactionPage } from '@/api/pay/wallet/transaction'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
-import { formatPayMoney } from '../../utils'
+import { formatDisplayMoney } from '@/utils/format'
 import SearchForm from './components/search-form.vue'
 
 const props = defineProps<{

@@ -43,16 +43,16 @@
           </view>
 
           <view class="mb-16rpx text-36rpx text-[#fa8c16] font-semibold">
-            {{ formatPayMoney(item.balance) }}
+            {{ formatDisplayMoney(item.balance) }}
           </view>
 
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">累计充值：</text>
-            <text>{{ formatPayMoney(item.totalRecharge) }}</text>
+            <text>{{ formatDisplayMoney(item.totalRecharge) }}</text>
           </view>
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">累计支出：</text>
-            <text>{{ formatPayMoney(item.totalExpense) }}</text>
+            <text>{{ formatDisplayMoney(item.totalExpense) }}</text>
           </view>
           <view class="flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">创建时间：</text>
@@ -71,7 +71,7 @@ import { getPayWalletPage } from '@/api/pay/wallet/balance'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import { formatPayMoney } from '../../utils'
+import { formatDisplayMoney } from '@/utils/format'
 import SearchForm from './components/search-form.vue'
 
 definePage({

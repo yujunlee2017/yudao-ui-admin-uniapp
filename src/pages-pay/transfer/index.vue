@@ -43,7 +43,7 @@
           </view>
 
           <view class="mb-16rpx text-36rpx text-[#fa8c16] font-semibold">
-            {{ formatPayMoney(item.price) }}
+            {{ formatDisplayMoney(item.price) }}
           </view>
 
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
@@ -76,7 +76,7 @@ import { getPayTransferPage } from '@/api/pay/transfer'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import { formatPayMoney } from '../utils'
+import { formatDisplayMoney } from '@/utils/format'
 import SearchForm from './components/search-form.vue'
 
 definePage({

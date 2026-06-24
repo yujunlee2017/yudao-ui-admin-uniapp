@@ -15,10 +15,10 @@
         <dict-tag v-if="formData.userType != null" :type="DICT_TYPE.USER_TYPE" :value="formData.userType" />
         <text v-else>-</text>
       </wd-cell>
-      <wd-cell title="余额" :value="formatPayMoney(formData.balance)" />
-      <wd-cell title="累计充值" :value="formatPayMoney(formData.totalRecharge)" />
-      <wd-cell title="累计支出" :value="formatPayMoney(formData.totalExpense)" />
-      <wd-cell title="冻结金额" :value="formatPayMoney(formData.freezePrice)" />
+      <wd-cell title="余额" :value="formatDisplayMoney(formData.balance)" />
+      <wd-cell title="累计充值" :value="formatDisplayMoney(formData.totalRecharge)" />
+      <wd-cell title="累计支出" :value="formatDisplayMoney(formData.totalExpense)" />
+      <wd-cell title="冻结金额" :value="formatDisplayMoney(formData.freezePrice)" />
       <wd-cell title="创建时间" :value="formatDateTime(formData.createTime) || '-'" />
     </wd-cell-group>
 
@@ -41,7 +41,7 @@ import { getPayWallet } from '@/api/pay/wallet/balance'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import { formatPayMoney } from '../../../utils'
+import { formatDisplayMoney } from '@/utils/format'
 
 const props = defineProps<{
   id?: number | any

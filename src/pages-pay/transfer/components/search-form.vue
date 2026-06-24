@@ -19,65 +19,15 @@
         </view>
         <wd-input v-model="formData.no" placeholder="请输入转账单号" clearable />
       </view>
-      <!-- TODO @AI：select 更好，太长了 -->
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          转账渠道
-        </view>
-        <wd-radio-group v-model="formData.channelCode" type="button">
-          <wd-radio value="">
-            全部
-          </wd-radio>
-          <wd-radio
-            v-for="dict in getStrDictOptions(DICT_TYPE.PAY_CHANNEL_CODE)"
-            :key="dict.value"
-            :value="dict.value"
-          >
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.channelCode" label="转账渠道" :dict-type="DICT_TYPE.PAY_CHANNEL_CODE" dict-kind="str" all-option all-value="" />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           商户单号
         </view>
-        <wd-input v-model="formData.merchantTransferId" placeholder="请输入商户单号" clearable />
+        <wd-input v-model="formData.merchantOrderId" placeholder="请输入商户单号" clearable />
       </view>
-      <!-- TODO @AI：select 更好，太长了 -->
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          转账类型
-        </view>
-        <wd-radio-group v-model="formData.type" type="button">
-          <wd-radio value="">
-            全部
-          </wd-radio>
-          <wd-radio
-            v-for="dict in getStrDictOptions(DICT_TYPE.PAY_TRANSFER_TYPE)"
-            :key="dict.value"
-            :value="dict.value"
-          >
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          转账状态
-        </view>
-        <wd-radio-group v-model="formData.status" type="button">
-          <wd-radio value="">
-            全部
-          </wd-radio>
-          <wd-radio
-            v-for="dict in getStrDictOptions(DICT_TYPE.PAY_TRANSFER_STATUS)"
-            :key="dict.value"
-            :value="dict.value"
-          >
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.type" label="转账类型" :dict-type="DICT_TYPE.PAY_TRANSFER_TYPE" dict-kind="str" all-option all-value="" />
+      <yd-search-picker v-model="formData.status" label="转账状态" :dict-type="DICT_TYPE.PAY_TRANSFER_STATUS" dict-kind="str" all-option all-value="" />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           收款人姓名
@@ -111,7 +61,7 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
-import { getDictLabel, getStrDictOptions } from '@/hooks/useDict'
+import { getDictLabel } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
@@ -125,7 +75,7 @@ const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
   no: undefined as string | undefined,
   channelCode: '',
-  merchantTransferId: undefined as string | undefined,
+  merchantOrderId: undefined as string | undefined,
   type: '',
   status: '',
   userName: undefined as string | undefined,
@@ -143,8 +93,8 @@ const placeholder = computed(() => {
   if (formData.channelCode) {
     conditions.push(`渠道:${getDictLabel(DICT_TYPE.PAY_CHANNEL_CODE, formData.channelCode)}`)
   }
-  if (formData.merchantTransferId) {
-    conditions.push(`商户单号:${formData.merchantTransferId}`)
+  if (formData.merchantOrderId) {
+    conditions.push(`商户单号:${formData.merchantOrderId}`)
   }
   if (formData.type) {
     conditions.push(`类型:${getDictLabel(DICT_TYPE.PAY_TRANSFER_TYPE, formData.type)}`)
@@ -173,7 +123,7 @@ function handleSearch() {
   emit('search', {
     no: formData.no || undefined,
     channelCode: formData.channelCode || undefined,
-    merchantTransferId: formData.merchantTransferId || undefined,
+    merchantOrderId: formData.merchantOrderId || undefined,
     type: formData.type || undefined,
     status: formData.status || undefined,
     userName: formData.userName || undefined,
@@ -187,7 +137,7 @@ function handleSearch() {
 function handleReset() {
   formData.no = undefined
   formData.channelCode = ''
-  formData.merchantTransferId = undefined
+  formData.merchantOrderId = undefined
   formData.type = ''
   formData.status = ''
   formData.userName = undefined

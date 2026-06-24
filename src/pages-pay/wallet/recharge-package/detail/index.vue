@@ -11,8 +11,8 @@
     <wd-cell-group border>
       <wd-cell title="套餐编号" :value="formData.id != null ? String(formData.id) : '-'" />
       <wd-cell title="套餐名" :value="formData.name || '-'" />
-      <wd-cell title="支付金额" :value="formatPayMoney(formData.payPrice)" />
-      <wd-cell title="赠送金额" :value="formatPayMoney(formData.bonusPrice)" />
+      <wd-cell title="支付金额" :value="formatDisplayMoney(formData.payPrice)" />
+      <wd-cell title="赠送金额" :value="formatDisplayMoney(formData.bonusPrice)" />
       <wd-cell title="状态">
         <dict-tag v-if="formData.status != null" :type="DICT_TYPE.COMMON_STATUS" :value="formData.status" />
         <text v-else>-</text>
@@ -45,7 +45,7 @@ import { useAccess } from '@/hooks/useAccess'
 import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import { formatPayMoney } from '../../../utils'
+import { formatDisplayMoney } from '@/utils/format'
 
 const props = defineProps<{ id?: number | any }>()
 

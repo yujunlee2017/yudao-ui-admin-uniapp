@@ -29,7 +29,7 @@ export interface PayRefund {
   channelRefundNo?: string
   channelErrorCode?: string
   channelErrorMsg?: string
-  channelExtras?: string
+  channelNotifyData?: string
   expireTime?: string
   successTime?: string
   notifyTime?: string

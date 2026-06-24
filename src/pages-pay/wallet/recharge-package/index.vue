@@ -38,12 +38,12 @@
           </view>
 
           <view class="mb-16rpx text-36rpx text-[#fa8c16] font-semibold">
-            {{ formatPayMoney(item.payPrice) }}
+            {{ formatDisplayMoney(item.payPrice) }}
           </view>
 
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">赠送金额：</text>
-            <text>{{ formatPayMoney(item.bonusPrice) }}</text>
+            <text>{{ formatDisplayMoney(item.bonusPrice) }}</text>
           </view>
           <view class="flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">创建时间：</text>
@@ -73,7 +73,7 @@ import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import { formatPayMoney } from '../../utils'
+import { formatDisplayMoney } from '@/utils/format'
 import SearchForm from './components/search-form.vue'
 
 definePage({

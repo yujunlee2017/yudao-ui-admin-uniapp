@@ -43,12 +43,12 @@
           </view>
 
           <view class="mb-16rpx text-36rpx text-[#fa8c16] font-semibold">
-            {{ formatPayMoney(item.refundPrice ?? item.refundAmount) }}
+            {{ formatDisplayMoney(item.refundPrice ?? item.refundAmount) }}
           </view>
 
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">支付金额：</text>
-            <text>{{ formatPayMoney(item.payPrice ?? item.payAmount) }}</text>
+            <text>{{ formatDisplayMoney(item.payPrice ?? item.payAmount) }}</text>
           </view>
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">退款渠道：</text>
@@ -76,7 +76,7 @@ import { getPayRefundPage } from '@/api/pay/refund'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import { formatPayMoney } from '../utils'
+import { formatDisplayMoney } from '@/utils/format'
 import SearchForm from './components/search-form.vue'
 
 definePage({

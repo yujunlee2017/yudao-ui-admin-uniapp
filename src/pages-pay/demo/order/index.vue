@@ -1,4 +1,3 @@
-<!-- TODO @AI：类似 /Users/yunai/Java/yudao-ui-admin-uniapp-next-v4/src/pages-pay/demo/withdraw/index.vue 的建议 -->
 <template>
   <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
@@ -36,41 +35,38 @@
                 订单编号：{{ item.id || '-' }}
               </view>
             </view>
-            <!-- TODO @AI：未支付、已支付、已退款？这样更合适？ -->
-            <dict-tag :type="DICT_TYPE.INFRA_BOOLEAN_STRING" :value="item.payStatus" />
+            <view class="shrink-0 rounded-8rpx px-12rpx py-4rpx text-22rpx" :class="payStatusClass(item)">
+              {{ payStatusLabel(item) }}
+            </view>
           </view>
 
           <view class="mb-16rpx text-36rpx text-[#fa8c16] font-semibold">
-            {{ formatPayAmount(item.price) }}
+            {{ formatDisplayMoney(item.price) }}
           </view>
 
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">用户编号：</text>
             <text>{{ item.userId || '-' }}</text>
           </view>
-          <!-- TODO @AI：退款金额存在，才展示 -->
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">创建时间：</text>
             <text>{{ formatDateTime(item.createTime) || '-' }}</text>
           </view>
-          <!-- TODO @AI：支付单号存在，才展示 -->
-          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+          <view v-if="item.payOrderId" class="mb-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">支付单号：</text>
-            <text>{{ item.payOrderId || '-' }}</text>
+            <text>{{ item.payOrderId }}</text>
           </view>
-          <!-- TODO @AI：支付时间存在，才展示 -->
-          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+          <view v-if="item.payTime" class="mb-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">支付时间：</text>
-            <text>{{ formatDateTime(item.payTime) || '-' }}</text>
+            <text>{{ formatDateTime(item.payTime) }}</text>
           </view>
-          <!-- TODO @AI：退款金额存在，才展示 -->
-          <view class="mb-16rpx flex items-center text-28rpx text-[#666]">
+          <view v-if="item.payRefundId || item.refundTime" class="mb-16rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">退款时间：</text>
             <text>{{ getRefundText(item) }}</text>
           </view>
-          <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+          <view v-if="item.refundPrice" class="mb-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">退款金额：</text>
-            <text>{{ formatPayAmount(item.refundPrice) }}</text>
+            <text>{{ formatDisplayMoney(item.refundPrice) }}</text>
           </view>
 
           <view class="flex gap-16rpx">
@@ -83,12 +79,11 @@
             >
               前往支付
             </wd-button>
-            <!-- TODO @AI：发起退款这个 error 貌似不存在，看看换一个； -->
             <wd-button
               v-if="item.payStatus && !item.payRefundId"
               class="flex-1"
               size="small"
-              type="error"
+              type="warning"
               plain
               :loading="refundingId === item.id"
               @click="handleRefund(item)"
@@ -109,7 +104,6 @@
     />
 
     <!-- 发起订单弹窗 -->
-    <!-- TODO @AI：是不是直接弹出商品的 select 然后确认发起更好？ -->
     <wd-popup
       v-model="createVisible"
       position="bottom"
@@ -131,7 +125,7 @@
                 :key="item.id"
                 :value="item.id"
               >
-                {{ item.name }} {{ formatPayAmount(item.price) }}
+                {{ item.name }} {{ formatDisplayMoney(item.price) }}
               </wd-radio>
             </wd-radio-group>
           </wd-form-item>
@@ -159,10 +153,9 @@ import {
   refundPayDemoOrder,
 } from '@/api/pay/demo/order'
 import { navigateBackPlus } from '@/utils'
-import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
-import { formatPayAmount } from '../../utils'
+import { formatDisplayMoney } from '@/utils/format'
 
 definePage({
   style: {
@@ -206,6 +199,22 @@ async function queryList(pageNo: number, pageSize: number) {
   } catch {
     pagingRef.value?.complete(false)
   }
+}
+
+/** 支付状态文案：已退款 / 已支付 / 未支付 */
+function payStatusLabel(item: PayDemoOrder) {
+  if (item.refundPrice || item.payRefundId) {
+    return '已退款'
+  }
+  return item.payStatus ? '已支付' : '未支付'
+}
+
+/** 支付状态标签样式 */
+function payStatusClass(item: PayDemoOrder) {
+  if (item.refundPrice || item.payRefundId) {
+    return 'bg-[#fff1f0] text-[#fa4350]'
+  }
+  return item.payStatus ? 'bg-[#e6f4ff] text-[#1677ff]' : 'bg-[#f5f5f5] text-[#999]'
 }
 
 /** 退款时间展示 */

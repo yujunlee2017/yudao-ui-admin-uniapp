@@ -17,8 +17,8 @@
         <dict-tag v-if="formData.status != null" :type="DICT_TYPE.PAY_ORDER_STATUS" :value="formData.status" />
         <text v-else>-</text>
       </wd-cell>
-      <wd-cell title="支付金额" :value="formatPayMoney(formData.price ?? formData.amount)" />
-      <wd-cell title="手续费" :value="formatPayMoney(formData.channelFeePrice ?? formData.channelFeeAmount)" />
+      <wd-cell title="支付金额" :value="formatDisplayMoney(formData.price ?? formData.amount)" />
+      <wd-cell title="手续费" :value="formatDisplayMoney(formData.channelFeePrice ?? formData.channelFeeAmount)" />
       <wd-cell title="手续费比例" :value="formData.channelFeeRate != null ? `${Number(formData.channelFeeRate).toFixed(2)}%` : '-'" />
       <wd-cell title="商品标题" :value="formData.subject || '-'" />
       <wd-cell title="商品描述" :value="formData.body || '-'" />
@@ -29,7 +29,7 @@
       <wd-cell title="渠道单号" :value="formData.channelOrderNo || '-'" />
       <wd-cell title="渠道用户" :value="formData.channelUserId || '-'" />
       <wd-cell title="支付 IP" :value="formData.userIp || '-'" />
-      <wd-cell title="退款金额" :value="formatPayMoney(formData.refundPrice ?? formData.refundAmount)" />
+      <wd-cell title="退款金额" :value="formatDisplayMoney(formData.refundPrice ?? formData.refundAmount)" />
       <wd-cell title="支付时间" :value="formatDateTime(formData.successTime) || '-'" />
       <wd-cell title="失效时间" :value="formatDateTime(formData.expireTime) || '-'" />
       <wd-cell title="创建时间" :value="formatDateTime(formData.createTime) || '-'" />
@@ -52,7 +52,7 @@ import { getPayOrderDetail } from '@/api/pay/order'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import { formatPayMoney } from '../../utils'
+import { formatDisplayMoney } from '@/utils/format'
 
 const props = defineProps<{ id?: number | any }>()
 

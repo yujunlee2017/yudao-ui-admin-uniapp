@@ -41,8 +41,7 @@
         class="mx-24rpx mb-20rpx rounded-12rpx bg-white p-24rpx shadow-sm"
       >
         <view class="mb-12rpx flex items-center justify-between gap-16rpx">
-          <!-- TODO @AI：{{ log.id ?? '-' }} 不会为空；其他地方也是类似； -->
-          <text class="text-28rpx text-[#333] font-semibold">日志编号：{{ log.id ?? '-' }}</text>
+          <text class="text-28rpx text-[#333] font-semibold">日志编号：{{ log.id }}</text>
           <dict-tag :type="DICT_TYPE.PAY_NOTIFY_STATUS" :value="log.status" />
         </view>
         <view class="mb-12rpx text-28rpx text-[#666]">

@@ -27,7 +27,7 @@
         </view>
         <view class="mb-12rpx flex text-28rpx text-[#666]">
           <text class="mr-8rpx shrink-0 text-[#999]">支付金额：</text>
-          <text class="text-[#fa8c16] font-semibold">{{ formatPayAmount(payOrder.price) }}</text>
+          <text class="text-[#fa8c16] font-semibold">{{ formatDisplayMoney(payOrder.price) }}</text>
         </view>
         <view class="mb-12rpx flex text-28rpx text-[#666]">
           <text class="mr-8rpx shrink-0 text-[#999]">创建时间：</text>
@@ -80,7 +80,7 @@
         <view class="mb-20rpx text-center text-32rpx text-[#333] font-semibold">
           {{ qrCode.title }}
         </view>
-        <view class="mb-24rpx rounded-8rpx bg-[#f7f8fa] p-20rpx text-26rpx text-[#666] break-all">
+        <view class="mb-24rpx break-all rounded-8rpx bg-[#f7f8fa] p-20rpx text-26rpx text-[#666]">
           {{ qrCode.url }}
         </view>
         <wd-button type="primary" block @click="copyText(qrCode.url)">
@@ -121,7 +121,7 @@
   </view>
 </template>
 
-<!--suppress UnreachableCodeJS -->
+<!-- suppress UnreachableCodeJS -->
 <script lang="ts" setup>
 import type { PayOrder } from '@/api/pay/order'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
@@ -130,7 +130,7 @@ import { getPayOrder, submitPayOrder } from '@/api/pay/order'
 import { navigateBackPlus } from '@/utils'
 import { PayChannelEnum, PayDisplayModeEnum, PayOrderStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import { formatPayAmount } from '../utils'
+import { formatDisplayMoney } from '@/utils/format'
 
 const props = defineProps<{
   id?: number | any

@@ -21,6 +21,9 @@ export interface PayTransfer {
   channelTransferNo?: string
   channelErrorCode?: string
   channelErrorMsg?: string
+  notifyUrl?: string
+  userIp?: string
+  channelNotifyData?: string
   createTime?: string
 }
 
@@ -28,7 +31,7 @@ export interface PayTransfer {
 export interface PayTransferPageParam extends PageParam {
   no?: string
   channelCode?: string
-  merchantTransferId?: string
+  merchantOrderId?: string
   type?: number | string
   status?: number | string
   userName?: string

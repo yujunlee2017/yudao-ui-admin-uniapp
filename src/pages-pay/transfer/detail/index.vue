@@ -20,7 +20,7 @@
         <dict-tag v-if="formData.type != null" :type="DICT_TYPE.PAY_TRANSFER_TYPE" :value="formData.type" />
         <text v-else>-</text>
       </wd-cell>
-      <wd-cell title="转账金额" :value="formatPayMoney(formData.price)" />
+      <wd-cell title="转账金额" :value="formatDisplayMoney(formData.price)" />
       <wd-cell title="转账标题" :value="formData.subject || '-'" />
       <wd-cell title="转账渠道">
         <dict-tag v-if="formData.channelCode" :type="DICT_TYPE.PAY_CHANNEL_CODE" :value="formData.channelCode" />
@@ -35,10 +35,13 @@
       <wd-cell title="渠道错误信息" :value="formData.channelErrorMsg || '-'" />
       <wd-cell title="成功时间" :value="formatDateTime(formData.successTime) || '-'" />
       <wd-cell title="创建时间" :value="formatDateTime(formData.createTime) || '-'" />
-      <!-- TODO @AI：转账通知内容，是不是漏了？？？
-       看看其他字段有没漏。
-       这个问题，在支付单、转账单、会不会也有；
-       -->
+      <wd-cell title="转账 IP" :value="formData.userIp || '-'" />
+      <wd-cell title="通知地址">
+        <text class="break-all text-right text-[#333]">{{ formData.notifyUrl || '-' }}</text>
+      </wd-cell>
+      <wd-cell title="回调内容">
+        <text class="break-all text-right text-[#333]">{{ formData.channelNotifyData || '-' }}</text>
+      </wd-cell>
     </wd-cell-group>
   </view>
 </template>
@@ -51,7 +54,7 @@ import { getPayTransfer } from '@/api/pay/transfer'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
-import { formatPayMoney } from '../../utils'
+import { formatDisplayMoney } from '@/utils/format'
 
 const props = defineProps<{ id?: number | any }>()
 

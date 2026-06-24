@@ -19,24 +19,7 @@
         </view>
         <wd-input v-model="formData.appId" type="number" placeholder="请输入应用编号" clearable />
       </view>
-      <!-- TODO @AI：select 更好，太长了 -->
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          支付渠道
-        </view>
-        <wd-radio-group v-model="formData.channelCode" type="button">
-          <wd-radio value="">
-            全部
-          </wd-radio>
-          <wd-radio
-            v-for="dict in getStrDictOptions(DICT_TYPE.PAY_CHANNEL_CODE)"
-            :key="dict.value"
-            :value="dict.value"
-          >
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.channelCode" label="支付渠道" :dict-type="DICT_TYPE.PAY_CHANNEL_CODE" dict-kind="str" all-option all-value="" />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           商户单号
@@ -55,24 +38,7 @@
         </view>
         <wd-input v-model="formData.channelOrderNo" placeholder="请输入渠道单号" clearable />
       </view>
-      <!-- TODO @AI：select 更好，太长了 -->
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          支付状态
-        </view>
-        <wd-radio-group v-model="formData.status" type="button">
-          <wd-radio :value="-1">
-            全部
-          </wd-radio>
-          <wd-radio
-            v-for="dict in getIntDictOptions(DICT_TYPE.PAY_ORDER_STATUS)"
-            :key="dict.value"
-            :value="dict.value"
-          >
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.status" label="支付状态" :dict-type="DICT_TYPE.PAY_ORDER_STATUS" all-option />
       <yd-search-date-range v-model="formData.createTime" label="创建时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -88,7 +54,7 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
-import { getDictLabel, getIntDictOptions, getStrDictOptions } from '@/hooks/useDict'
+import { getDictLabel } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'

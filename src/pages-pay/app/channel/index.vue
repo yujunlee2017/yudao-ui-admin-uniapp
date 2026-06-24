@@ -144,7 +144,6 @@ async function loadChannels() {
     return
   }
   try {
-    // TODO @AI：管理后台没这个接口，是不是需要增加一个获取 list 的？传递 appid 的；
     const data = await getPayChannelPage({
       pageNo: 1,
       pageSize: 100,
