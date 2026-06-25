@@ -153,7 +153,7 @@ import {
 } from '@/api/mall/promotion/kefu/message'
 import { navigateBackPlus } from '@/utils'
 import { KeFuMessageContentTypeEnum, UserTypeEnum } from '@/utils/constants'
-import { formatDate, formatDateTime } from '@/utils/date'
+import { formatDate, formatDateTime, toTimestamp } from '@/utils/date'
 import { uploadFileFromPath } from '@/utils/uploadFile'
 import { KEFU_EMOJIS, parseKefuMessage } from '../composables/message'
 import { connectKefuWebSocket } from '../composables/useKefuWebSocket'
@@ -186,12 +186,9 @@ const sending = ref(false) // 发送状态
 const historyCursor = ref<string>() // 历史游标（已加载最早一条 createTime）
 const emojiVisible = ref(false) // 表情面板是否展开
 
-/** 毫秒时间戳容错：兼容数字、纯数字字符串、日期字符串 */
+/** 毫秒时间戳，解析失败按 0（用于时间间隔比较） */
 function toMs(time?: string | number) {
-  if (time == null || time === '') {
-    return 0
-  }
-  const ms = typeof time === 'number' ? time : (/^\d+$/.test(String(time)) ? Number(time) : Date.parse(String(time)))
+  const ms = toTimestamp(time)
   return Number.isNaN(ms) ? 0 : ms
 }
 

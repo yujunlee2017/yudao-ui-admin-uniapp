@@ -39,10 +39,11 @@ export interface PromotionBargainRecord {
 /** 砍价助力记录 */
 export interface PromotionBargainHelp {
   id?: number
-  record?: number
+  recordId?: number
   userId?: number
+  nickname?: string
+  avatar?: string
   reducePrice?: number
-  endTime?: string
   createTime?: string
 }
 

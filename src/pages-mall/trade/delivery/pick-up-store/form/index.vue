@@ -81,6 +81,7 @@ import { getIntDictOptions } from '@/hooks/useDict'
 import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
+import { isMobile } from '@/utils/validator'
 
 const props = defineProps<{
   id?: number | any
@@ -113,7 +114,10 @@ const formData = ref<DeliveryPickUpStore>({
 }) // 表单数据
 const formSchema = createFormSchema({
   name: [{ required: true, message: '门店名称不能为空' }],
-  phone: [{ required: true, message: '联系电话不能为空' }],
+  phone: [
+    { required: true, message: '联系电话不能为空' },
+    { validator: value => !value || isMobile(String(value)) || '手机号格式不正确' },
+  ],
   areaId: [{ required: true, message: '所在地区不能为空' }],
   detailAddress: [{ required: true, message: '详细地址不能为空' }],
   openingTime: [{ required: true, message: '营业开始时间不能为空' }],

@@ -27,6 +27,12 @@
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
+          商品名称
+        </view>
+        <wd-input v-model="formData.spuName" placeholder="请输入商品名称" clearable />
+      </view>
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
           售后状态
         </view>
         <wd-radio-group v-model="formData.status" type="button">
@@ -105,6 +111,7 @@ const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
   no: undefined as string | undefined,
   orderNo: undefined as string | undefined,
+  spuName: undefined as string | undefined,
   status: -1,
   way: -1,
   type: -1,
@@ -119,6 +126,9 @@ const placeholder = computed(() => {
   }
   if (formData.orderNo) {
     conditions.push(`订单号:${formData.orderNo}`)
+  }
+  if (formData.spuName) {
+    conditions.push(`商品:${formData.spuName}`)
   }
   if (formData.status !== -1) {
     conditions.push(`状态:${getDictLabel(DICT_TYPE.TRADE_AFTER_SALE_STATUS, formData.status)}`)
@@ -141,6 +151,7 @@ function handleSearch() {
   emit('search', {
     no: formData.no || undefined,
     orderNo: formData.orderNo || undefined,
+    spuName: formData.spuName || undefined,
     status: formData.status === -1 ? undefined : formData.status,
     way: formData.way === -1 ? undefined : formData.way,
     type: formData.type === -1 ? undefined : formData.type,
@@ -152,6 +163,7 @@ function handleSearch() {
 function handleReset() {
   formData.no = undefined
   formData.orderNo = undefined
+  formData.spuName = undefined
   formData.status = -1
   formData.way = -1
   formData.type = -1

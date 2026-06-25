@@ -31,8 +31,11 @@
             <text class="text-30rpx text-[#fa8c16] font-semibold">{{ formatDisplayMoney(item.reducePrice) }}</text>
           </view>
           <view class="flex items-center justify-between text-26rpx text-[#666]">
-            <text>砍价记录：{{ item.record ?? '-' }}</text>
-            <text>用户：{{ item.userId ?? '-' }}</text>
+            <text>砍价记录：{{ item.recordId ?? '-' }}</text>
+            <view class="flex items-center gap-8rpx">
+              <wd-img v-if="item.avatar" :src="item.avatar" width="40rpx" height="40rpx" radius="50%" mode="aspectFill" />
+              <text>{{ item.nickname || `用户 #${item.userId}` }}</text>
+            </view>
           </view>
           <view class="mt-8rpx text-24rpx text-[#999]">
             助力时间：{{ formatDateTime(item.createTime) || '-' }}

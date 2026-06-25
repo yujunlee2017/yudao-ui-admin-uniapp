@@ -7,7 +7,7 @@
       @click-left="handleBack"
     />
 
-    <!-- 分组 tab（对齐 PC：基础设置/价格库存/物流设置/商品详情/其它设置） -->
+    <!-- 分组 tab：基础设置/价格库存/物流设置/商品详情/其它设置 -->
     <view class="bg-white">
       <wd-tabs v-model="activeTab" slidable="always">
         <wd-tab v-for="(tab, index) in SPU_DETAIL_TABS" :key="index" :title="tab" />
@@ -114,7 +114,7 @@
               <text v-else>-</text>
             </wd-cell>
             <wd-cell
-              v-if="formData.deliveryTypes?.includes(1)"
+              v-if="formData.deliveryTypes?.includes(DeliveryTypeEnum.EXPRESS)"
               title="运费模板"
               :value="templateName || '-'"
             />
@@ -188,7 +188,7 @@ import { getSimpleDeliveryExpressTemplateList } from '@/api/mall/trade/delivery/
 import { useAccess } from '@/hooks/useAccess'
 import { formatDisplayMoney } from '@/utils/format'
 import { delay, navigateBackPlus } from '@/utils'
-import { DICT_TYPE, ProductSpuStatusEnum } from '@/utils/constants'
+import { DeliveryTypeEnum, DICT_TYPE, ProductSpuStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()

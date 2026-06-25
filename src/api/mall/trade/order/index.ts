@@ -19,8 +19,7 @@ export interface TradeOrderItem {
   skuId?: number
   picUrl?: string
   count?: number
-  originalPrice?: number
-  originalUnitPrice?: number
+  price?: number
   discountPrice?: number
   payPrice?: number
   orderPartPrice?: number

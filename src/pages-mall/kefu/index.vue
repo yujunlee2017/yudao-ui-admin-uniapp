@@ -9,12 +9,14 @@
 
     <!-- 会话列表 -->
     <scroll-view class="min-h-0 flex-1" scroll-y>
-      <view v-if="conversations.length">
+      <view v-if="sortedConversations.length">
         <view
-          v-for="item in conversations"
+          v-for="item in sortedConversations"
           :key="item.id"
-          class="flex items-center gap-20rpx border-b border-[#f5f5f5] bg-white px-24rpx py-24rpx active:bg-[#f7f8fa]"
+          class="flex items-center gap-20rpx border-b border-[#f5f5f5] px-24rpx py-24rpx active:bg-[#f7f8fa]"
+          :class="item.adminPinned ? 'bg-[#f7f8fa]' : 'bg-white'"
           @click="handleOpen(item)"
+          @longpress="handleLongPress(item)"
         >
           <!-- 头像 + 未读角标 -->
           <view class="relative shrink-0">
@@ -36,9 +38,14 @@
           <!-- 昵称 + 最后消息 + 时间 -->
           <view class="min-w-0 flex-1">
             <view class="flex items-center justify-between gap-16rpx">
-              <text class="truncate text-30rpx text-[#333] font-semibold">
-                {{ item.userNickname || `用户 ${item.userId}` }}
-              </text>
+              <view class="min-w-0 flex items-center gap-8rpx">
+                <text v-if="item.adminPinned" class="shrink-0 rounded-4rpx bg-[#fff1f0] px-8rpx text-20rpx text-[#fa4350] leading-32rpx">
+                  置顶
+                </text>
+                <text class="truncate text-30rpx text-[#333] font-semibold">
+                  {{ item.userNickname || `用户 ${item.userId}` }}
+                </text>
+              </view>
               <text class="shrink-0 text-22rpx text-[#999]">
                 {{ formatChatTime(item.lastMessageTime) }}
               </text>
@@ -56,9 +63,14 @@
 
 <script lang="ts" setup>
 import type { PromotionKefuConversation } from '@/api/mall/promotion/kefu/conversation'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onUnload } from '@dcloudio/uni-app'
-import { onMounted, onUnmounted, ref } from 'vue'
-import { getPromotionKefuConversationList } from '@/api/mall/promotion/kefu/conversation'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import {
+  deletePromotionKefuConversation,
+  getPromotionKefuConversationList,
+  updatePromotionKefuConversationPinned,
+} from '@/api/mall/promotion/kefu/conversation'
 import { navigateBackPlus } from '@/utils'
 import { formatChatTime } from '@/utils/date'
 import { connectKefuWebSocket, disconnectKefuWebSocket } from './composables/useKefuWebSocket'
@@ -71,7 +83,14 @@ definePage({
   },
 })
 
+const toast = useToast()
 const conversations = ref<PromotionKefuConversation[]>([]) // 会话列表
+const sortedConversations = computed(() => [...conversations.value].sort((a, b) => {
+  if (!!a.adminPinned !== !!b.adminPinned) {
+    return a.adminPinned ? -1 : 1
+  }
+  return (b.lastMessageTime || '').localeCompare(a.lastMessageTime || '')
+})) // 置顶优先 + 最近消息时间倒序
 
 /** 返回上一页 */
 function handleBack() {
@@ -81,6 +100,43 @@ function handleBack() {
 /** 加载会话列表 */
 async function loadConversations() {
   conversations.value = await getPromotionKefuConversationList()
+}
+
+/** 长按会话：置顶 / 删除 */
+function handleLongPress(item: PromotionKefuConversation) {
+  uni.showActionSheet({
+    itemList: [item.adminPinned ? '取消置顶' : '置顶', '删除会话'],
+    success: ({ tapIndex }) => {
+      if (tapIndex === 0) {
+        togglePin(item)
+      } else if (tapIndex === 1) {
+        confirmDelete(item)
+      }
+    },
+  })
+}
+
+/** 切换会话置顶状态 */
+async function togglePin(item: PromotionKefuConversation) {
+  await updatePromotionKefuConversationPinned({ id: item.id, adminPinned: !item.adminPinned })
+  toast.success(item.adminPinned ? '已取消置顶' : '已置顶')
+  await loadConversations()
+}
+
+/** 删除会话（二次确认） */
+function confirmDelete(item: PromotionKefuConversation) {
+  uni.showModal({
+    title: '提示',
+    content: '确定删除该会话吗？',
+    success: async ({ confirm }) => {
+      if (!confirm) {
+        return
+      }
+      await deletePromotionKefuConversation(item.id!)
+      toast.success('删除成功')
+      await loadConversations()
+    },
+  })
 }
 
 /** 打开会话详情 */

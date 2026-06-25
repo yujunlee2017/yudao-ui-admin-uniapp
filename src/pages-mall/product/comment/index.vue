@@ -41,8 +41,10 @@
           <view class="mb-12rpx text-28rpx text-[#666] leading-relaxed">
             {{ item.content || '-' }}
           </view>
-          <view class="mb-8rpx flex items-center gap-24rpx text-26rpx text-[#999]">
-            <text>评分：{{ item.scores ?? '-' }}</text>
+          <view class="mb-8rpx flex flex-wrap items-center gap-x-24rpx gap-y-4rpx text-26rpx text-[#999]">
+            <text>综合：{{ item.scores ?? '-' }}</text>
+            <text>商品分：{{ item.descriptionScores ?? '-' }}</text>
+            <text>服务分：{{ item.benefitScores ?? '-' }}</text>
             <text>{{ item.replyStatus ? '已回复' : '未回复' }}</text>
           </view>
           <view class="flex items-center text-26rpx text-[#999]">

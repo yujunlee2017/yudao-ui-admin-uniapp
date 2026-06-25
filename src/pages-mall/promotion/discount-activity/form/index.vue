@@ -48,7 +48,7 @@
                   </view>
                   <view class="flex items-center gap-12rpx py-8rpx">
                     <text class="w-160rpx shrink-0 text-26rpx text-[#666]">折扣百分比(%)</text>
-                    <wd-input-number v-model="row.discountPercent" :min="0" :max="100" :step="0.01" :precision="2" />
+                    <wd-input-number v-model="row.discountPercent" :min="0" :max="99.99" :step="0.01" :precision="2" />
                   </view>
                 </template>
               </SpuSkuEditor>
@@ -126,7 +126,7 @@ function mergeConfig(_config: Record<string, any>, product: Record<string, any>)
   return {
     discountType: product.discountType ?? PromotionDiscountTypeEnum.PRICE,
     discountPrice: fenToYuan(product.discountPrice),
-    discountPercent: product.discountPercent ?? 0,
+    discountPercent: fenToYuan(product.discountPercent),
   }
 }
 
@@ -161,9 +161,14 @@ async function handleSubmit() {
     toast.warning('请选择活动商品')
     return
   }
+  // 折扣百分比须 < 100
+  if (products.value.some(row => Number(row.discountPercent) >= 100)) {
+    toast.warning('折扣百分比需小于 100%')
+    return
+  }
   // 根据当前编辑的优惠类型，自动判定每个 SKU 的 discountType；金额元转分
   const submitProducts = products.value.map((row) => {
-    const discountPercent = Number(row.discountPercent) || 0
+    const discountPercent = yuanToFen(Number(row.discountPercent) || 0)
     const discountType = discountPercent > 0 ? PromotionDiscountTypeEnum.PERCENT : PromotionDiscountTypeEnum.PRICE
     return {
       spuId: spuId.value,

@@ -25,6 +25,7 @@
         <dict-tag v-if="formData.status != null" :type="DICT_TYPE.COMMON_STATUS" :value="formData.status" />
         <text v-else>-</text>
       </wd-cell>
+      <wd-cell title="简介" :value="formData.introduction || '-'" />
       <wd-cell title="创建时间" :value="formatDateTime(formData.createTime) || '-'" />
     </wd-cell-group>
 

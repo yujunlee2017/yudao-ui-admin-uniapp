@@ -22,14 +22,6 @@
       </wd-tabs>
     </view>
 
-    <!-- 发送优惠券 -->
-    <!-- pc 没有优惠劵的发送，可以考虑去掉 -->
-    <view v-if="hasAccessByCodes(['promotion:coupon:send'])" class="bg-white px-24rpx py-16rpx">
-      <wd-button size="small" type="primary" @click="sendVisible = true">
-        发送优惠券
-      </wd-button>
-    </view>
-
     <!-- 分页列表 -->
     <z-paging
       ref="pagingRef"
@@ -68,46 +60,15 @@
         </view>
       </view>
     </z-paging>
-
-    <!-- 发送优惠券弹窗 -->
-    <wd-popup
-      v-model="sendVisible"
-      position="bottom"
-      closable
-      custom-style="border-radius: 24rpx 24rpx 0 0;"
-      @close="sendVisible = false"
-    >
-      <view class="p-24rpx">
-        <view class="mb-24rpx text-32rpx text-[#333] font-semibold">
-          发送优惠券
-        </view>
-        <wd-cell-group border>
-          <wd-form-item title="模板编号" title-width="200rpx">
-            <wd-input v-model="sendForm.templateId" type="number" clearable placeholder="请输入优惠券模板编号" />
-          </wd-form-item>
-          <UserPicker v-model="sendUserIds" type="checkbox" label="选择用户" label-width="200rpx" placeholder="请选择用户" />
-        </wd-cell-group>
-        <view class="mt-24rpx flex gap-20rpx">
-          <wd-button class="flex-1" variant="plain" @click="sendVisible = false">
-            取消
-          </wd-button>
-          <wd-button class="flex-1" type="primary" :loading="submitting" @click="handleSend">
-            确定
-          </wd-button>
-        </view>
-      </view>
-    </wd-popup>
   </view>
 </template>
 
 <script lang="ts" setup>
 import type { PromotionCoupon } from '@/api/mall/promotion/coupon/coupon'
 import { onUnload } from '@dcloudio/uni-app'
-import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, reactive, ref } from 'vue'
-import { getPromotionCouponPage, sendPromotionCoupon } from '@/api/mall/promotion/coupon/coupon'
+import { onMounted, ref } from 'vue'
+import { getPromotionCouponPage } from '@/api/mall/promotion/coupon/coupon'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { useAccess } from '@/hooks/useAccess'
 import { formatDisplayMoney } from '@/utils/format'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -120,17 +81,11 @@ definePage({
   },
 })
 
-const { hasAccessByCodes } = useAccess()
-const toast = useToast()
 const list = ref<PromotionCoupon[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({}) // 查询参数（昵称 + 领取时间）
 const statusOptions = getIntDictOptions(DICT_TYPE.PROMOTION_COUPON_STATUS) // 优惠券状态选项
 const statusTabIndex = ref(0) // 状态筛选 tab 下标（0 全部，其余对应 statusOptions）
-const sendVisible = ref(false) // 发送弹窗
-const submitting = ref(false) // 发送提交状态
-const sendForm = reactive({ templateId: '' }) // 发送表单（模板编号）
-const sendUserIds = ref<number[]>([]) // 发送目标用户编号
 
 /** 返回上一页 */
 function handleBack() {
@@ -166,26 +121,6 @@ function handleReset() {
 /** 重新加载 */
 function reload() {
   pagingRef.value?.reload()
-}
-
-/** 发送优惠券 */
-async function handleSend() {
-  const templateId = Number(sendForm.templateId)
-  if (!templateId || !sendUserIds.value.length) {
-    toast.warning('请填写模板编号并选择用户')
-    return
-  }
-  submitting.value = true
-  try {
-    await sendPromotionCoupon({ templateId, userIds: sendUserIds.value })
-    toast.success('发送成功')
-    sendVisible.value = false
-    sendForm.templateId = ''
-    sendUserIds.value = []
-    reload()
-  } finally {
-    submitting.value = false
-  }
 }
 
 /** 查看详情 */

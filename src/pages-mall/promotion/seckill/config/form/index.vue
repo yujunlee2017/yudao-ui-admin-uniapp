@@ -59,6 +59,7 @@ import { getIntDictOptions } from '@/hooks/useDict'
 import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
+import { padTimeSeconds, trimTimeSeconds } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()
 
@@ -101,7 +102,11 @@ async function getDetail() {
     return
   }
   const data = await getPromotionSeckillConfig(Number(props.id))
-  formData.value = data
+  formData.value = {
+    ...data,
+    startTime: trimTimeSeconds(data.startTime),
+    endTime: trimTimeSeconds(data.endTime),
+  }
 }
 
 /** 提交表单 */
@@ -112,7 +117,12 @@ async function handleSubmit() {
   }
   formLoading.value = true
   try {
-    const data: PromotionSeckillConfig = { ...formData.value }
+    // 时段选择器产出 HH:mm
+    const data: PromotionSeckillConfig = {
+      ...formData.value,
+      startTime: padTimeSeconds(formData.value.startTime),
+      endTime: padTimeSeconds(formData.value.endTime),
+    }
     if (props.id) {
       await updatePromotionSeckillConfig(data)
       toast.success('修改成功')

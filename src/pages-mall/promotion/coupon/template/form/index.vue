@@ -65,7 +65,7 @@
           </wd-form-item>
           <template v-else-if="formData.discountType === PromotionDiscountTypeEnum.PERCENT">
             <wd-form-item title="折扣百分比" title-width="200rpx" prop="discountPercent" center>
-              <wd-input-number v-model="formData.discountPercent" :min="0" :max="100" />
+              <wd-input-number v-model="formData.discountPercent" :min="1" :max="99" />
             </wd-form-item>
             <wd-form-item title="最多优惠(元)" title-width="200rpx" prop="discountLimitPrice" center>
               <wd-input-number v-model="formData.discountLimitPrice" :min="0" :step="0.01" :precision="2" />
@@ -219,8 +219,12 @@ async function handleSubmit() {
   }
   formLoading.value = true
   try {
+    const isUserTake = formData.value.takeType === CouponTemplateTakeTypeEnum.USER
     const data: PromotionCouponTemplate = {
       ...formData.value,
+      // 非「直接领取」（指定发放/新人券）发放数量与每人限领锁 -1（不限）
+      totalCount: isUserTake ? formData.value.totalCount : -1,
+      takeLimitCount: isUserTake ? formData.value.takeLimitCount : -1,
       usePrice: yuanToFen(formData.value.usePrice),
       discountPrice: yuanToFen(formData.value.discountPrice),
       discountLimitPrice: yuanToFen(formData.value.discountLimitPrice),

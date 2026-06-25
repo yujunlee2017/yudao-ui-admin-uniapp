@@ -324,6 +324,11 @@ async function handleSubmit() {
     toast.warning(formData.value.productScope === PromotionProductScopeEnum.CATEGORY ? '请选择指定分类' : '请选择指定商品')
     return
   }
+  // 规则门槛与优惠价格必须大于 0
+  if (rules.value.some(rule => !(Number(rule.limit) > 0) || !(Number(rule.discountPrice) > 0))) {
+    toast.warning('优惠门槛与优惠价格需大于 0')
+    return
+  }
   const isCount = formData.value.conditionType === PromotionConditionTypeEnum.COUNT
   const submitRules = rules.value.map((rule) => {
     // 赠券本地数组转回后端 Map<模板编号, 数量>

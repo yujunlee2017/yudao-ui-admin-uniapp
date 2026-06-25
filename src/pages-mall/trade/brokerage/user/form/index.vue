@@ -11,11 +11,11 @@
     <view>
       <wd-form ref="formRef" :model="formData" :schema="formSchema">
         <wd-cell-group border>
-          <wd-form-item title="用户编号" title-width="200rpx" prop="id">
-            <wd-input v-model="formData.id" type="number" clearable placeholder="请输入会员用户编号" />
+          <wd-form-item title="用户编号" title-width="200rpx" prop="userId">
+            <wd-input v-model="formData.userId" type="number" clearable placeholder="请输入会员用户编号" />
           </wd-form-item>
           <wd-form-item title="推广员编号" title-width="200rpx" prop="bindUserId">
-            <wd-input v-model="formData.bindUserId" type="number" clearable placeholder="请输入推广员编号（可选）" />
+            <wd-input v-model="formData.bindUserId" type="number" clearable placeholder="请输入推广员编号" />
           </wd-form-item>
         </wd-cell-group>
       </wd-form>
@@ -47,12 +47,13 @@ definePage({
 
 const toast = useToast()
 const formLoading = ref(false) // 表单提交状态
-const formData = ref<{ id?: number | string, bindUserId?: number | string }>({
-  id: undefined,
+const formData = ref<{ userId?: number | string, bindUserId?: number | string }>({
+  userId: undefined,
   bindUserId: undefined,
 }) // 表单数据
 const formSchema = createFormSchema({
-  id: [{ required: true, message: '用户编号不能为空' }],
+  userId: [{ required: true, message: '用户编号不能为空' }],
+  bindUserId: [{ required: true, message: '推广员编号不能为空' }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用
 
@@ -70,8 +71,8 @@ async function handleSubmit() {
   formLoading.value = true
   try {
     await createTradeBrokerageUser({
-      id: Number(formData.value.id),
-      bindUserId: formData.value.bindUserId ? Number(formData.value.bindUserId) : undefined,
+      userId: Number(formData.value.userId),
+      bindUserId: Number(formData.value.bindUserId),
     })
     toast.success('新增成功')
     uni.$emit('mall:brokerage-user:reload')

@@ -27,6 +27,12 @@
             <view><text class="text-[#999]">来源：</text>{{ getDictLabel(DICT_TYPE.TERMINAL, formData.terminal) || '-' }}</view>
             <view><text class="text-[#999]">类型：</text>{{ getDictLabel(DICT_TYPE.TRADE_ORDER_TYPE, formData.type) || '-' }}</view>
             <view><text class="text-[#999]">支付：</text>{{ formData.payStatus ? '已支付' : '未支付' }}</view>
+            <view v-if="formData.brokerageUser">
+              <text class="text-[#999]">推广用户：</text>{{ formData.brokerageUser.nickname || '-' }}
+            </view>
+            <view v-if="formData.payOrderId">
+              <text class="text-[#999]">支付单号：</text>{{ formData.payOrderId }}
+            </view>
           </view>
         </view>
 
@@ -54,6 +60,12 @@
           </view>
           <view class="text-26rpx text-[#333] space-y-10rpx">
             <view><text class="text-[#999]">配送方式：</text>{{ getDictLabel(DICT_TYPE.TRADE_DELIVERY_TYPE, formData.deliveryType) || '-' }}</view>
+            <view v-if="formData.deliveryType === DeliveryTypeEnum.PICK_UP">
+              <text class="text-[#999]">自提门店：</text>{{ pickUpStoreName || '-' }}
+            </view>
+            <view v-if="formData.deliveryTime">
+              <text class="text-[#999]">发货时间：</text>{{ formatDateTime(formData.deliveryTime) }}
+            </view>
             <view><text class="text-[#999]">收件人：</text>{{ formData.receiverName || '-' }}</view>
             <view><text class="text-[#999]">联系电话：</text>{{ formData.receiverMobile || '-' }}</view>
             <view><text class="text-[#999]">收货地址：</text>{{ formData.receiverAreaName || '' }} {{ formData.receiverDetailAddress || '' }}</view>
@@ -278,6 +290,7 @@ import {
   updateTradeOrderRemark,
 } from '@/api/mall/trade/order'
 import { getSimpleDeliveryExpressList } from '@/api/mall/trade/delivery/express'
+import { getSimpleDeliveryPickUpStoreList } from '@/api/mall/trade/delivery/pick-up-store'
 import { getAreaTree } from '@/api/system/area'
 import { getDictLabel } from '@/hooks/useDict'
 import { useAccess } from '@/hooks/useAccess'
@@ -315,6 +328,8 @@ const addressForm = reactive<Record<string, any>>({ receiverName: '', receiverMo
 const expressPickerVisible = ref(false) // 快递公司选择器
 const expressList = ref<DeliveryExpress[]>([]) // 快递公司列表
 const expressName = computed(() => expressList.value.find(item => item.id === deliveryForm.logisticsId)?.name || '') // 当前选中快递公司名
+const pickUpStoreList = ref<Record<string, any>[]>([]) // 自提门店列表（解析门店名）
+const pickUpStoreName = computed(() => pickUpStoreList.value.find(item => item.id === formData.value?.pickUpStoreId)?.name || '') // 自提门店名
 
 // 各动作可见性：按权限 + 订单状态 + 配送方式判断
 const canRemark = computed(() => !!formData.value && hasAccessByCodes(['trade:order:update'])) // 备注任意状态可改
@@ -461,6 +476,9 @@ onMounted(async () => {
     }),
     getSimpleDeliveryExpressList().then((list) => {
       expressList.value = list
+    }),
+    getSimpleDeliveryPickUpStoreList().then((list) => {
+      pickUpStoreList.value = list
     }),
   ])
 })

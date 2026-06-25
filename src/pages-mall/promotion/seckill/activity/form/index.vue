@@ -32,6 +32,9 @@
               <wd-form-item title="排序" title-width="200rpx" prop="sort" center>
                 <wd-input-number v-model="formData.sort" :min="0" />
               </wd-form-item>
+              <wd-form-item title="备注" title-width="200rpx">
+                <wd-textarea v-model="formData.remark" clearable :maxlength="500" placeholder="请输入备注" />
+              </wd-form-item>
             </wd-cell-group>
           </view>
 
@@ -134,6 +137,7 @@ const formData = ref<PromotionSeckillActivity>({
   totalLimitCount: 0,
   singleLimitCount: 0,
   sort: 0,
+  remark: '',
 }) // 表单数据
 const formSchema = createFormSchema({
   name: [{ required: true, message: '活动名称不能为空' }],

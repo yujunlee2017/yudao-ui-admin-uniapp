@@ -7,7 +7,7 @@
       @click-left="handleBack"
     />
 
-    <!-- 分组 tab（对齐 PC：基础设置/价格库存/物流设置/商品详情/其它设置） -->
+    <!-- 分组 tab：基础设置/价格库存/物流设置/商品详情/其它设置 -->
     <view class="bg-white">
       <wd-tabs v-model="activeTab" slidable="always">
         <wd-tab v-for="(tab, index) in SPU_FORM_TABS" :key="index" :title="tab" />
@@ -122,17 +122,6 @@
               <wd-form-item title="虚拟销量" title-width="200rpx">
                 <wd-input-number v-model="formData.virtualSalesCount" :min="0" />
               </wd-form-item>
-              <wd-form-item title="商品状态" title-width="200rpx" prop="status" center>
-                <wd-radio-group v-model="formData.status" type="button">
-                  <wd-radio
-                    v-for="item in statusOptions"
-                    :key="item.value"
-                    :value="item.value"
-                  >
-                    {{ item.label }}
-                  </wd-radio>
-                </wd-radio-group>
-              </wd-form-item>
             </wd-cell-group>
           </view>
         </view>
@@ -179,7 +168,6 @@ const formLoading = ref(false) // 表单提交状态
 const formId = computed(() => props.id != null && props.id !== '' ? Number(props.id) : undefined) // 商品编号（路由透传）
 const activeTab = ref(0) // 当前分组 tab 下标
 const SPU_FORM_TABS = ['基础设置', '价格库存', '物流设置', '商品详情', '其它设置'] // 分组 tab
-const statusOptions = getIntDictOptions(DICT_TYPE.PRODUCT_SPU_STATUS)
 const getTitle = computed(() => `${formId.value ? '编辑' : '新增'}商品`)
 const formData = ref<ProductSpu>({
   name: '',
@@ -197,7 +185,6 @@ const formData = ref<ProductSpu>({
   sort: 0,
   giveIntegral: 0,
   virtualSalesCount: 0,
-  status: 0,
 })
 const skus = ref<ProductSku[]>([]) // SKU 列表（金额单位元）
 const formSchema = createFormSchema({
@@ -214,7 +201,6 @@ const formSchema = createFormSchema({
   subCommissionType: [{ required: true, message: '单独分佣不能为空' }],
   description: [{ required: true, message: '商品详情不能为空' }],
   sort: [{ required: true, message: '排序不能为空' }],
-  status: [{ required: true, message: '商品状态不能为空' }],
 })
 const PROP_TAB: Record<string, number> = {
   name: 0,
@@ -230,7 +216,6 @@ const PROP_TAB: Record<string, number> = {
   deliveryTemplateId: 2,
   description: 3,
   sort: 4,
-  status: 4,
 } // 字段 → 所属 tab 下标，校验失败时自动切到对应 tab
 
 /** 返回上一页 */
@@ -311,6 +296,12 @@ async function handleSubmit() {
   if (!data.skus?.length) {
     activeTab.value = 1 // 价格库存
     toast.warning(formData.value.specType ? '请添加规格并生成 SKU' : '请完善 SKU 价格库存')
+    return
+  }
+  // 逐 SKU 校验销售价/市场价大于 0，避免 0 价商品
+  if (skus.value.some(sku => !(Number(sku.price) >= 0.01) || !(Number(sku.marketPrice) >= 0.01))) {
+    activeTab.value = 1 // 价格库存
+    toast.warning('请完善 SKU 的销售价与市场价（需大于 0）')
     return
   }
   formLoading.value = true

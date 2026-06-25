@@ -95,7 +95,7 @@ const toast = useToast()
 const formData = ref<PromotionDiyTemplate>({} as PromotionDiyTemplate) // 详情数据
 const deleting = ref(false) // 删除状态
 const using = ref(false) // 使用模板状态
-const canUse = computed(() => !formData.value.used && hasAccessByCodes(['promotion:diy-template:update']))
+const canUse = computed(() => !formData.value.used && hasAccessByCodes(['promotion:diy-template:use']))
 
 /** 格式化装修属性 */
 function formatProperty(value: any) {

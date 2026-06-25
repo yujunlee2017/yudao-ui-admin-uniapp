@@ -30,8 +30,8 @@ export function getTradeBrokerageUser(id: number) {
 }
 
 /** 创建分销用户 */
-export function createTradeBrokerageUser(data: TradeBrokerageUser) {
-  return http.post<number>('/trade/brokerage-user/create', data as Record<string, any>)
+export function createTradeBrokerageUser(data: { userId: number, bindUserId: number }) {
+  return http.post<number>('/trade/brokerage-user/create', data)
 }
 
 /** 修改推广员 */

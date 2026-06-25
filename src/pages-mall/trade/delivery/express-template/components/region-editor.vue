@@ -27,7 +27,7 @@
       <template v-if="mode === 'charge'">
         <view class="flex items-center gap-12rpx py-6rpx">
           <text class="w-180rpx shrink-0 text-26rpx text-[#666]">首{{ unitLabel }}</text>
-          <wd-input-number v-model="rule.startCount" :min="0" @change="emitChange" />
+          <wd-input-number v-model="rule.startCount" :min="0" :step="countStep" :precision="countPrecision" @change="emitChange" />
         </view>
         <view class="flex items-center gap-12rpx py-6rpx">
           <text class="w-180rpx shrink-0 text-26rpx text-[#666]">运费(元)</text>
@@ -35,7 +35,7 @@
         </view>
         <view class="flex items-center gap-12rpx py-6rpx">
           <text class="w-180rpx shrink-0 text-26rpx text-[#666]">续{{ unitLabel }}</text>
-          <wd-input-number v-model="rule.extraCount" :min="0" @change="emitChange" />
+          <wd-input-number v-model="rule.extraCount" :min="0" :step="countStep" :precision="countPrecision" @change="emitChange" />
         </view>
         <view class="flex items-center gap-12rpx py-6rpx">
           <text class="w-180rpx shrink-0 text-26rpx text-[#666]">续费(元)</text>
@@ -47,7 +47,7 @@
       <template v-else>
         <view class="flex items-center gap-12rpx py-6rpx">
           <text class="w-180rpx shrink-0 text-26rpx text-[#666]">包邮{{ unitLabel }}</text>
-          <wd-input-number v-model="rule.freeCount" :min="0" @change="emitChange" />
+          <wd-input-number v-model="rule.freeCount" :min="0" :step="countStep" :precision="countPrecision" @change="emitChange" />
         </view>
         <view class="flex items-center gap-12rpx py-6rpx">
           <text class="w-180rpx shrink-0 text-26rpx text-[#666]">包邮金额(元)</text>
@@ -79,7 +79,10 @@ const emit = defineEmits<{
 }>()
 
 const rules = computed(() => props.modelValue || []) // 区域规则（直接编辑元素）
-const unitLabel = computed(() => ({ [DeliveryExpressChargeModeEnum.COUNT]: '件', [DeliveryExpressChargeModeEnum.WEIGHT]: '重量', [DeliveryExpressChargeModeEnum.VOLUME]: '体积' } as Record<number, string>)[props.chargeMode ?? DeliveryExpressChargeModeEnum.COUNT] || '件') // 计量单位文案
+const unitLabel = computed(() => ({ [DeliveryExpressChargeModeEnum.COUNT]: '件', [DeliveryExpressChargeModeEnum.WEIGHT]: '重量(kg)', [DeliveryExpressChargeModeEnum.VOLUME]: '体积(m³)' } as Record<number, string>)[props.chargeMode ?? DeliveryExpressChargeModeEnum.COUNT] || '件') // 计量单位文案
+const isCountMode = computed(() => (props.chargeMode ?? DeliveryExpressChargeModeEnum.COUNT) === DeliveryExpressChargeModeEnum.COUNT) // 是否按件数计费
+const countPrecision = computed(() => isCountMode.value ? 0 : 2) // 件数整数，重量/体积保留 2 位小数
+const countStep = computed(() => isCountMode.value ? 1 : 0.01) // 计量步长
 
 /** 通知父级变化 */
 function emitChange() {

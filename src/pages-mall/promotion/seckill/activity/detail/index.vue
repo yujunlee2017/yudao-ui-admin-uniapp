@@ -18,6 +18,7 @@
             <wd-cell title="总限购" :value="formData.totalLimitCount != null ? String(formData.totalLimitCount) : '-'" />
             <wd-cell title="单次限购" :value="formData.singleLimitCount != null ? String(formData.singleLimitCount) : '-'" />
             <wd-cell title="排序" :value="formData.sort != null ? String(formData.sort) : '-'" />
+            <wd-cell title="备注" :value="formData.remark || '-'" />
             <wd-cell title="创建时间" :value="formatDateTime(formData.createTime) || '-'" />
           </wd-cell-group>
         </view>

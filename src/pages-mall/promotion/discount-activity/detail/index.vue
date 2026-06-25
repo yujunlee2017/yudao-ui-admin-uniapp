@@ -92,7 +92,7 @@ const closing = ref(false) // 关闭状态
 const productFields: SpuSkuViewField[] = [
   { label: '优惠类型', formatter: product => getDictLabel(DICT_TYPE.PROMOTION_DISCOUNT_TYPE, product.discountType) || '-' },
   { label: '优惠金额', prop: 'discountPrice', type: 'money', show: product => product.discountType === PromotionDiscountTypeEnum.PRICE },
-  { label: '折扣', prop: 'discountPercent', type: 'percent', show: product => product.discountType === PromotionDiscountTypeEnum.PERCENT },
+  { label: '折扣', prop: 'discountPercent', type: 'percentScaled', show: product => product.discountType === PromotionDiscountTypeEnum.PERCENT },
 ] // 优惠商品每个 SKU 展示的活动字段
 
 /** 返回上一页 */

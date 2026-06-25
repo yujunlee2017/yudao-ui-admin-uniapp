@@ -73,7 +73,7 @@ import { formatDisplayMoney } from '@/utils/format'
 export interface SpuSkuViewField {
   label: string
   prop?: string // 取值字段名（product[prop]）
-  type?: 'money' | 'percent' // money：分转元并加￥；percent：值加 %
+  type?: 'money' | 'percent' | 'percentScaled' // money：分转元加￥；percent：值直接加 %；percentScaled：后端按 ×100 存储的百分比，÷100 后加 %
   formatter?: (product: Record<string, any>) => string // 完全自定义取值（如字典）
   show?: (product: Record<string, any>) => boolean // 条件展示（如折扣金额/百分比二选一）
 }
@@ -148,6 +148,9 @@ function formatField(field: SpuSkuViewField, product: Record<string, any>) {
   }
   if (field.type === 'percent') {
     return value != null ? `${value}%` : '-'
+  }
+  if (field.type === 'percentScaled') {
+    return value != null ? `${value / 100}%` : '-'
   }
   return value != null && value !== '' ? String(value) : '-'
 }
