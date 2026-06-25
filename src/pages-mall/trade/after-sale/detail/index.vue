@@ -55,6 +55,22 @@
           </view>
         </view>
 
+        <!-- 订单信息 -->
+        <view v-if="formData.order" class="mb-24rpx rounded-12rpx bg-white p-24rpx shadow-sm">
+          <view class="mb-16rpx text-30rpx text-[#333] font-semibold">
+            订单信息
+          </view>
+          <view class="text-26rpx space-y-10rpx">
+            <view class="flex items-center">
+              <text class="text-[#999]">配送方式：</text>
+              <dict-tag :type="DICT_TYPE.TRADE_DELIVERY_TYPE" :value="formData.order.deliveryType" />
+            </view>
+            <view><text class="text-[#999]">收货人：</text>{{ formData.order.receiverName || '-' }}</view>
+            <view><text class="text-[#999]">手机号：</text>{{ formData.order.receiverMobile || '-' }}</view>
+            <view><text class="text-[#999]">买家留言：</text>{{ formData.order.userRemark || '-' }}</view>
+          </view>
+        </view>
+
         <view class="mb-24rpx rounded-12rpx bg-white p-24rpx shadow-sm">
           <view class="mb-16rpx text-30rpx text-[#333] font-semibold">
             申请信息

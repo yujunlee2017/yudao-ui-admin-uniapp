@@ -1,3 +1,4 @@
+import type { TradeOrder } from '@/api/mall/trade/order'
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
@@ -31,6 +32,7 @@ export interface TradeAfterSale {
   applyPicUrls?: string[]
   orderId?: number
   orderNo?: string
+  order?: TradeOrder // 关联订单
   orderItemId?: number
   spuId?: number
   spuName?: string

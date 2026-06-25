@@ -7,6 +7,7 @@ export interface KefuParsedMessage {
   conversationId?: number
   createTime?: string | number
   fromAdmin: boolean // 是否客服（管理员）发送，决定气泡左右
+  senderAvatar?: string // 发送者头像
   kind: 'system' | 'image' | 'text' | 'product' | 'order'
   text: string
   picUrl?: string
@@ -43,6 +44,7 @@ export function parseKefuMessage(item: Record<string, any>): KefuParsedMessage {
     conversationId: item.conversationId,
     createTime: item.createTime,
     fromAdmin: item.senderType === UserTypeEnum.ADMIN,
+    senderAvatar: item.senderAvatar,
     text: '',
     picUrl: payload.picUrl,
   }

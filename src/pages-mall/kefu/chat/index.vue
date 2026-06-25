@@ -42,7 +42,11 @@
           </view>
 
           <!-- 用户 / 客服消息：客服(管理员)靠右，用户靠左 -->
-          <view v-else class="flex" :class="item.fromAdmin ? 'justify-end' : 'justify-start'">
+          <view v-else class="flex items-start gap-12rpx" :class="item.fromAdmin ? 'flex-row-reverse' : ''">
+            <!-- 发送者头像 -->
+            <view v-if="item.senderAvatar" class="shrink-0">
+              <wd-img :src="item.senderAvatar" width="64rpx" height="64rpx" radius="50%" mode="aspectFill" />
+            </view>
             <!-- 图片消息（custom-image 覆盖 wd-img 内部 height:100% 让 widthFix 撑开高度） -->
             <wd-img
               v-if="item.kind === 'image'"
@@ -152,7 +156,7 @@ import {
   updatePromotionKefuMessageReadStatus,
 } from '@/api/mall/promotion/kefu/message'
 import { navigateBackPlus } from '@/utils'
-import { KeFuMessageContentTypeEnum, UserTypeEnum } from '@/utils/constants'
+import { KeFuMessageContentTypeEnum } from '@/utils/constants'
 import { formatDate, formatDateTime, toTimestamp } from '@/utils/date'
 import { uploadFileFromPath } from '@/utils/uploadFile'
 import { KEFU_EMOJIS, parseKefuMessage } from '../composables/message'
@@ -265,8 +269,6 @@ async function handleSend() {
   try {
     await sendPromotionKefuMessage({
       conversationId: conversationId.value,
-      receiverId: receiverId.value,
-      receiverType: UserTypeEnum.MEMBER,
       contentType: KeFuMessageContentTypeEnum.TEXT,
       content: JSON.stringify({ text: messageContent.value.trim() }),
     })
@@ -295,8 +297,6 @@ function handleSendImage() {
         const picUrl = await uploadFileFromPath(path, 'mall/kefu')
         await sendPromotionKefuMessage({
           conversationId: conversationId.value,
-          receiverId: receiverId.value,
-          receiverType: UserTypeEnum.MEMBER,
           contentType: KeFuMessageContentTypeEnum.IMAGE,
           content: JSON.stringify({ picUrl }),
         })
