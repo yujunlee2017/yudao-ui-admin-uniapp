@@ -16,10 +16,8 @@ export interface PayOrder {
   notifyUrl?: string
   notifyStatus?: number
   price?: number
-  amount?: number
   channelFeeRate?: number
   channelFeePrice?: number
-  channelFeeAmount?: number
   status?: number
   userIp?: string
   expireTime?: string
@@ -27,7 +25,6 @@ export interface PayOrder {
   notifyTime?: string
   refundStatus?: number
   refundPrice?: number
-  refundAmount?: number
   refundTimes?: number
   channelUserId?: string
   channelOrderNo?: string

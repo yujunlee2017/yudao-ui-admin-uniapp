@@ -17,7 +17,12 @@
         <text v-else>-</text>
       </wd-cell>
       <wd-cell title="商户名称" :value="formData.merchantName || '-'" />
-      <wd-cell title="支付渠道" :value="formData.channelCodes?.length ? formData.channelCodes.join('、') : '-'" />
+      <wd-cell title="支付渠道">
+        <view class="flex justify-end">
+          <dict-tag v-if="formData.channelCodes?.length" :type="DICT_TYPE.PAY_CHANNEL_CODE" :value="formData.channelCodes" />
+          <text v-else>-</text>
+        </view>
+      </wd-cell>
       <wd-cell title="支付回调">
         <text class="break-all text-right text-[#333]">{{ formData.orderNotifyUrl || formData.payNotifyUrl || '-' }}</text>
       </wd-cell>
@@ -37,6 +42,9 @@
         <wd-button v-if="canConfigChannel" class="flex-1" type="primary" @click="handleChannelConfig">
           渠道配置
         </wd-button>
+        <wd-button v-if="hasAccessByCodes(['pay:app:update']) && formData.status != null" class="flex-1" :type="formData.status === CommonStatusEnum.ENABLE ? 'info' : 'success'" :loading="statusChanging" @click="handleToggleStatus">
+          {{ formData.status === CommonStatusEnum.ENABLE ? '停用' : '启用' }}
+        </wd-button>
         <wd-button v-if="hasAccessByCodes(['pay:app:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
@@ -54,10 +62,10 @@ import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { deletePayApp, getPayApp } from '@/api/pay/app'
+import { deletePayApp, getPayApp, updatePayAppStatus } from '@/api/pay/app'
 import { useAccess } from '@/hooks/useAccess'
 import { delay, navigateBackPlus } from '@/utils'
-import { DICT_TYPE } from '@/utils/constants'
+import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()
@@ -74,11 +82,31 @@ const dialog = useDialog()
 const toast = useToast()
 const formData = ref<PayApp>({}) // 详情数据
 const deleting = ref(false) // 删除状态
+const statusChanging = ref(false) // 状态切换中
 const canConfigChannel = computed(() => !!props.id)
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-pay/app/index')
+}
+
+/** 切换启用/停用状态 */
+async function handleToggleStatus() {
+  const next = formData.value.status === CommonStatusEnum.ENABLE ? CommonStatusEnum.DISABLE : CommonStatusEnum.ENABLE
+  try {
+    await dialog.confirm({ title: '提示', msg: `确定要${next === CommonStatusEnum.ENABLE ? '启用' : '停用'}该支付应用吗？` })
+  } catch {
+    return
+  }
+  statusChanging.value = true
+  try {
+    await updatePayAppStatus({ id: Number(props.id), status: next })
+    toast.success('操作成功')
+    uni.$emit('pay:app:reload')
+    await getDetail()
+  } finally {
+    statusChanging.value = false
+  }
 }
 
 /** 加载详情 */

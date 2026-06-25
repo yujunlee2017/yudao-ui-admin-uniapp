@@ -10,14 +10,12 @@ export interface PayTransfer {
   channelId?: number
   channelCode?: string
   merchantTransferId?: string
-  type?: number | string
-  status?: number | string
+  status?: number
   successTime?: string
   price?: number
   subject?: string
   userName?: string
   userAccount?: string
-  accountNo?: string
   channelTransferNo?: string
   channelErrorCode?: string
   channelErrorMsg?: string
@@ -32,11 +30,9 @@ export interface PayTransferPageParam extends PageParam {
   no?: string
   channelCode?: string
   merchantOrderId?: string
-  type?: number | string
   status?: number | string
   userName?: string
   userAccount?: string
-  accountNo?: string
   channelTransferNo?: string
   createTime?: string[]
 }

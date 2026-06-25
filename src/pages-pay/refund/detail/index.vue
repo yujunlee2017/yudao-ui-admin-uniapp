@@ -10,15 +10,15 @@
     <!-- 详情内容 -->
     <wd-cell-group border>
       <wd-cell title="退款单号" :value="formData.no || '-'" />
-      <wd-cell title="商户退款单号" :value="formData.merchantRefundId || formData.merchantRefundNo || '-'" />
+      <wd-cell title="商户退款单号" :value="formData.merchantRefundId || '-'" />
       <wd-cell title="商户支付单号" :value="formData.merchantOrderId || '-'" />
       <wd-cell title="支付应用" :value="formData.appName || '-'" />
       <wd-cell title="退款状态">
         <dict-tag v-if="formData.status != null" :type="DICT_TYPE.PAY_REFUND_STATUS" :value="formData.status" />
         <text v-else>-</text>
       </wd-cell>
-      <wd-cell title="支付金额" :value="formatDisplayMoney(formData.payPrice ?? formData.payAmount)" />
-      <wd-cell title="退款金额" :value="formatDisplayMoney(formData.refundPrice ?? formData.refundAmount)" />
+      <wd-cell title="支付金额" :value="formatDisplayMoney(formData.payPrice)" />
+      <wd-cell title="退款金额" :value="formatDisplayMoney(formData.refundPrice)" />
       <wd-cell title="退款渠道">
         <dict-tag v-if="formData.channelCode" :type="DICT_TYPE.PAY_CHANNEL_CODE" :value="formData.channelCode" />
         <text v-else>-</text>

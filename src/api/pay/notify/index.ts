@@ -17,6 +17,7 @@ export interface PayNotifyTask {
   lastExecuteTime?: string
   nextNotifyTime?: string
   createTime?: string
+  updateTime?: string
   logs?: PayNotifyLog[]
 }
 

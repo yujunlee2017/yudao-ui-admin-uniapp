@@ -48,7 +48,10 @@
           </view>
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">支付渠道：</text>
-            <text class="min-w-0 flex-1 truncate">{{ item.channelCodes?.length ? item.channelCodes.join('、') : '-' }}</text>
+            <view class="min-w-0 flex-1">
+              <dict-tag v-if="item.channelCodes?.length" :type="DICT_TYPE.PAY_CHANNEL_CODE" :value="item.channelCodes" />
+              <text v-else>-</text>
+            </view>
           </view>
           <view class="flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">创建时间：</text>

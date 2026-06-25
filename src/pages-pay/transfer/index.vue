@@ -57,7 +57,7 @@
           </view>
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">收款账号：</text>
-            <text class="min-w-0 flex-1 truncate">{{ item.userAccount || item.accountNo || '-' }}</text>
+            <text class="min-w-0 flex-1 truncate">{{ item.userAccount || '-' }}</text>
           </view>
           <view class="flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">成功时间：</text>

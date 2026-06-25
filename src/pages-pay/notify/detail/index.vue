@@ -28,6 +28,7 @@
       <wd-cell title="最后通知时间" :value="formatDateTime(formData.lastExecuteTime) || '-'" />
       <wd-cell title="下次通知时间" :value="formatDateTime(formData.nextNotifyTime) || '-'" />
       <wd-cell title="创建时间" :value="formatDateTime(formData.createTime) || '-'" />
+      <wd-cell title="更新时间" :value="formatDateTime(formData.updateTime) || '-'" />
     </wd-cell-group>
 
     <!-- 回调日志 -->

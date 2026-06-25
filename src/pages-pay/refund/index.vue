@@ -33,7 +33,7 @@
           <view class="mb-16rpx flex items-start justify-between gap-16rpx">
             <view class="min-w-0 flex-1">
               <view class="truncate text-32rpx text-[#333] font-semibold">
-                {{ item.merchantRefundId || item.merchantRefundNo || item.no || `退款 #${item.id}` }}
+                {{ item.merchantRefundId || item.no || `退款 #${item.id}` }}
               </view>
               <view v-if="item.merchantOrderId" class="mt-6rpx truncate text-24rpx text-[#999]">
                 商户支付单号：{{ item.merchantOrderId }}
@@ -43,12 +43,12 @@
           </view>
 
           <view class="mb-16rpx text-36rpx text-[#fa8c16] font-semibold">
-            {{ formatDisplayMoney(item.refundPrice ?? item.refundAmount) }}
+            {{ formatDisplayMoney(item.refundPrice) }}
           </view>
 
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">支付金额：</text>
-            <text>{{ formatDisplayMoney(item.payPrice ?? item.payAmount) }}</text>
+            <text>{{ formatDisplayMoney(item.payPrice) }}</text>
           </view>
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
             <text class="mr-8rpx shrink-0 text-[#999]">退款渠道：</text>

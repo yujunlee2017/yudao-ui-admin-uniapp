@@ -14,15 +14,12 @@ export interface PayRefund {
   tradeNo?: string
   merchantOrderId?: string
   merchantRefundId?: string
-  merchantRefundNo?: string
   notifyUrl?: string
   notifyStatus?: number
   status?: number
   type?: number
   payPrice?: number
-  payAmount?: number
   refundPrice?: number
-  refundAmount?: number
   reason?: string
   userIp?: string
   channelOrderNo?: string

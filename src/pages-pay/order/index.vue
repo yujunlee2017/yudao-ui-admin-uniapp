@@ -43,7 +43,7 @@
           </view>
 
           <view class="mb-16rpx text-36rpx text-[#fa8c16] font-semibold">
-            {{ formatDisplayMoney(item.price ?? item.amount) }}
+            {{ formatDisplayMoney(item.price) }}
           </view>
 
           <view class="mb-12rpx flex items-center text-28rpx text-[#666]">

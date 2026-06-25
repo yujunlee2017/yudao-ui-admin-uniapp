@@ -14,7 +14,6 @@ export interface PayWalletTransaction {
 /** 钱包流水分页参数 */
 export interface PayWalletTransactionPageParam extends PageParam {
   walletId?: number
-  createTime?: string[]
 }
 
 /** 获取钱包流水分页列表 */

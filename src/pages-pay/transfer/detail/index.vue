@@ -16,10 +16,6 @@
         <dict-tag v-if="formData.status != null" :type="DICT_TYPE.PAY_TRANSFER_STATUS" :value="formData.status" />
         <text v-else>-</text>
       </wd-cell>
-      <wd-cell title="转账类型">
-        <dict-tag v-if="formData.type != null" :type="DICT_TYPE.PAY_TRANSFER_TYPE" :value="formData.type" />
-        <text v-else>-</text>
-      </wd-cell>
       <wd-cell title="转账金额" :value="formatDisplayMoney(formData.price)" />
       <wd-cell title="转账标题" :value="formData.subject || '-'" />
       <wd-cell title="转账渠道">
@@ -28,7 +24,7 @@
       </wd-cell>
       <wd-cell title="收款人姓名" :value="formData.userName || '-'" />
       <wd-cell title="收款人账号">
-        <text class="break-all text-right text-[#333]">{{ formData.userAccount || formData.accountNo || '-' }}</text>
+        <text class="break-all text-right text-[#333]">{{ formData.userAccount || '-' }}</text>
       </wd-cell>
       <wd-cell title="渠道单号" :value="formData.channelTransferNo || '-'" />
       <wd-cell title="渠道错误码" :value="formData.channelErrorCode || '-'" />

@@ -26,7 +26,6 @@
         </view>
         <wd-input v-model="formData.merchantOrderId" placeholder="请输入商户单号" clearable />
       </view>
-      <yd-search-picker v-model="formData.type" label="转账类型" :dict-type="DICT_TYPE.PAY_TRANSFER_TYPE" dict-kind="str" all-option all-value="" />
       <yd-search-picker v-model="formData.status" label="转账状态" :dict-type="DICT_TYPE.PAY_TRANSFER_STATUS" dict-kind="str" all-option all-value="" />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
@@ -76,7 +75,6 @@ const formData = reactive({
   no: undefined as string | undefined,
   channelCode: '',
   merchantOrderId: undefined as string | undefined,
-  type: '',
   status: '',
   userName: undefined as string | undefined,
   userAccount: undefined as string | undefined,
@@ -95,9 +93,6 @@ const placeholder = computed(() => {
   }
   if (formData.merchantOrderId) {
     conditions.push(`商户单号:${formData.merchantOrderId}`)
-  }
-  if (formData.type) {
-    conditions.push(`类型:${getDictLabel(DICT_TYPE.PAY_TRANSFER_TYPE, formData.type)}`)
   }
   if (formData.status) {
     conditions.push(`状态:${getDictLabel(DICT_TYPE.PAY_TRANSFER_STATUS, formData.status)}`)
@@ -124,7 +119,6 @@ function handleSearch() {
     no: formData.no || undefined,
     channelCode: formData.channelCode || undefined,
     merchantOrderId: formData.merchantOrderId || undefined,
-    type: formData.type || undefined,
     status: formData.status || undefined,
     userName: formData.userName || undefined,
     userAccount: formData.userAccount || undefined,
@@ -138,7 +132,6 @@ function handleReset() {
   formData.no = undefined
   formData.channelCode = ''
   formData.merchantOrderId = undefined
-  formData.type = ''
   formData.status = ''
   formData.userName = undefined
   formData.userAccount = undefined

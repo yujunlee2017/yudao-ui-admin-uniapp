@@ -13,12 +13,7 @@
     @close="visible = false"
   >
     <view class="yd-search-form-container">
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          应用编号
-        </view>
-        <wd-input v-model="formData.appId" type="number" placeholder="请输入应用编号" clearable />
-      </view>
+      <AppPicker v-model="formData.appId" @change="name => formData.appName = name" />
       <yd-search-picker v-model="formData.channelCode" label="支付渠道" :dict-type="DICT_TYPE.PAY_CHANNEL_CODE" dict-kind="str" all-option all-value="" />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
@@ -58,6 +53,7 @@ import { getDictLabel } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
+import AppPicker from '@/pages-pay/app/components/app-picker.vue'
 
 const emit = defineEmits<{
   search: [data: Record<string, any>]
@@ -66,7 +62,8 @@ const emit = defineEmits<{
 
 const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
-  appId: undefined as string | undefined,
+  appId: 0,
+  appName: '',
   channelCode: '',
   merchantOrderId: undefined as string | undefined,
   no: undefined as string | undefined,
@@ -79,7 +76,7 @@ const formData = reactive({
 const placeholder = computed(() => {
   const conditions: string[] = []
   if (formData.appId) {
-    conditions.push(`应用:${formData.appId}`)
+    conditions.push(`应用:${formData.appName}`)
   }
   if (formData.channelCode) {
     conditions.push(`渠道:${getDictLabel(DICT_TYPE.PAY_CHANNEL_CODE, formData.channelCode)}`)
@@ -118,7 +115,8 @@ function handleSearch() {
 
 /** 重置按钮操作 */
 function handleReset() {
-  formData.appId = undefined
+  formData.appId = 0
+  formData.appName = ''
   formData.channelCode = ''
   formData.merchantOrderId = undefined
   formData.no = undefined
