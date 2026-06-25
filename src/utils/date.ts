@@ -36,6 +36,31 @@ export function formatDateTime(time?: FormatDate) {
   return formatDate(time, 'YYYY-MM-DD HH:mm:ss')
 }
 
+/** HH:mm 补秒为 HH:mm:ss（对齐后端 LocalTime；time 选择器只产出 HH:mm） */
+export function padTimeSeconds(time?: string) {
+  return time && time.length === 5 ? `${time}:00` : time
+}
+
+/** HH:mm:ss 去秒为 HH:mm（padTimeSeconds 的逆；回显给只接受 HH:mm 的 time 选择器） */
+export function trimTimeSeconds(time?: string) {
+  return (time || '').slice(0, 5)
+}
+
+/**
+ * 转毫秒时间戳：数字 / 纯数字串原样取值；日期串把 `-` 换 `/` 再解析，
+ * 兼容 iOS/JSCore（`new Date('YYYY-MM-DD HH:mm:ss')` 在其上返回 NaN）。无法解析返回 NaN。
+ */
+export function toTimestamp(time?: FormatDate): number {
+  if (typeof time === 'number') {
+    return time
+  }
+  if (dayjs.isDayjs(time) || time instanceof Date) {
+    return dayjs(time).valueOf()
+  }
+  const str = String(time ?? '')
+  return /^\d+$/.test(str) ? Number(str) : Date.parse(str.replace(/-/g, '/'))
+}
+
 /** 计算开始结束时间 */
 export function formatDateRange(dateRange?: [any, any]) {
   if (!dateRange || !dateRange[0] || !dateRange[1]) {
