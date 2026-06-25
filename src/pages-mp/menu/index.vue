@@ -116,7 +116,7 @@
           <wd-form :model="activeMenu">
             <wd-cell-group border>
               <wd-form-item title="菜单名称" title-width="220rpx">
-                <wd-input v-model="activeMenu.name" clearable placeholder="请输入菜单名称" />
+                <wd-input v-model="activeMenu.name" clearable :maxlength="activePosition.childIndex === -1 ? 4 : 7" placeholder="请输入菜单名称" />
               </wd-form-item>
               <template v-if="isLeafMenu">
                 <wd-form-item title="菜单标识" title-width="220rpx">
@@ -501,7 +501,7 @@ function handleAddParent() {
 /** 新增子菜单 */
 function handleAddChild(parent: MpMenu, parentIndex: number) {
   parent.children = parent.children || []
-  // 不预设 type，由用户主动选择菜单内容，避免空内容直接 400（对齐 PC）
+  // 不预设 type，由用户主动选择菜单内容，避免空内容直接 400
   const menu: MpMenu = {
     name: '子菜单名称',
     reply: {
@@ -576,7 +576,7 @@ function handleReplyTypeConfirm({ value }: { value: string[] }) {
   if (current.type === nextType) {
     return
   }
-  // 缓存当前类型已填内容，切回时恢复，避免跨类型来回切丢失数据（对齐 PC tabCache）
+  // 缓存当前类型已填内容，切回时恢复，避免跨类型来回切丢失数据
   if (current.type) {
     replyCache[current.type] = current
   }

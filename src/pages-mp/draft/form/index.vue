@@ -13,7 +13,7 @@
         <view class="text-28rpx text-[#333] font-semibold">
           图文列表
         </view>
-        <wd-button v-if="articles.length < 8" size="small" type="primary" @click="handleAddArticle">
+        <wd-button v-if="isCreating && articles.length < 8" size="small" type="primary" @click="handleAddArticle">
           新增图文
         </wd-button>
       </view>
@@ -37,7 +37,7 @@
         <wd-button class="flex-1" size="small" variant="plain" :disabled="activeIndex === articles.length - 1" @click="handleMoveArticle(1)">
           下移
         </wd-button>
-        <wd-button class="flex-1" size="small" type="danger" :disabled="articles.length <= 1" @click="handleRemoveArticle">
+        <wd-button class="flex-1" size="small" type="danger" :disabled="!isCreating || articles.length <= 1" @click="handleRemoveArticle">
           删除
         </wd-button>
       </view>
@@ -119,6 +119,7 @@ const toast = useToast()
 const accountId = computed(() => getMpRouteNumber(routeParams.accountId))
 const mediaId = computed(() => getMpRouteString(routeParams.mediaId))
 const getTitle = computed(() => mediaId.value ? '编辑公众号草稿' : '新增公众号草稿')
+const isCreating = computed(() => !mediaId.value) // 仅新建态可增删图文（编辑走 updateDraft 按 index 改写，增删会保存失败/微信端残留）
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<NewsItem>(createEmptyNewsItem()) // 表单数据
 const articles = ref<NewsItem[]>([formData.value]) // 图文列表

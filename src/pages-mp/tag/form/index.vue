@@ -58,7 +58,7 @@ const getTitle = computed(() => id.value ? '编辑公众号标签' : '新增公�
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<Tag>({
   id: undefined,
-  accountId: accountId.value || 0,
+  accountId: accountId.value,
   name: '',
 }) // 表单数据
 const formSchema = createFormSchema({
@@ -93,10 +93,10 @@ async function handleSubmit() {
   formLoading.value = true
   try {
     if (id.value) {
-      await updateTag({ ...formData.value, id: id.value, accountId: formData.value.accountId || accountId.value || 0 })
+      await updateTag({ ...formData.value, id: id.value, accountId: accountId.value })
       toast.success('修改成功')
     } else {
-      await createTag({ ...formData.value, accountId: accountId.value || formData.value.accountId || 0 })
+      await createTag({ ...formData.value, accountId: accountId.value })
       toast.success('新增成功')
     }
     uni.$emit('mp:tag:reload')
@@ -110,7 +110,7 @@ async function handleSubmit() {
 onLoad((query) => {
   syncRouteParams(query)
   if (!id.value) {
-    formData.value.accountId = accountId.value || 0
+    formData.value.accountId = accountId.value
   }
   getDetail()
 })

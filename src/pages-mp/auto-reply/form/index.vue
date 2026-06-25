@@ -118,7 +118,7 @@
             <wd-form-item title="描述" title-width="220rpx" prop="responseDescription">
               <wd-textarea v-model="formData.responseDescription" clearable placeholder="请输入描述" />
             </wd-form-item>
-            <wd-form-item v-if="formData.responseMessageType === 'news'" title="图文 JSON" title-width="220rpx" prop="responseArticlesText">
+            <wd-form-item v-if="formData.responseMessageType === 'news'" title="图文 JSON" title-width="220rpx">
               <wd-textarea v-model="responseArticlesText" clearable placeholder="请输入图文数组 JSON" />
             </wd-form-item>
             <view v-if="formData.responseMessageType === 'news' && formData.responseArticles?.length" class="px-24rpx pb-16rpx">
