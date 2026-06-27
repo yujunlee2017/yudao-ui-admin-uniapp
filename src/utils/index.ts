@@ -256,3 +256,13 @@ export function getTopPopupModalStyle() {
 export function trimArray(list: string[]): string[] {
   return list.map(item => item.trim()).filter(Boolean)
 }
+
+/** 换行文本转字符串数组（逐项去空白、过滤空项），用于多值表单字段 */
+export function linesToArray(text: string): string[] {
+  return trimArray(text.split('\n'))
+}
+
+/** 字符串数组转换行文本，用于多值表单字段 */
+export function arrayToLines(list?: string[]): string {
+  return (list || []).join('\n')
+}

@@ -59,6 +59,7 @@
 import type { NotifyTemplate } from '@/api/system/notify/template'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { deleteNotifyTemplate, getNotifyTemplate } from '@/api/system/notify/template'
 import { useAccess } from '@/hooks/useAccess'
@@ -84,8 +85,7 @@ const dialog = useDialog()
 const formData = ref<NotifyTemplate>() // 详情数据
 const deleting = ref(false) // 删除状态
 
-// 发送测试站内信相关
-const sendVisible = ref(false)
+const sendVisible = ref(false) // 发送测试站内信弹窗
 
 /** 返回上一页 */
 function handleBack() {
@@ -130,6 +130,7 @@ async function handleDelete() {
   try {
     await deleteNotifyTemplate(props.id)
     toast.success('删除成功')
+    uni.$emit('system:notify-template:reload')
     delay(handleBack)
   } finally {
     deleting.value = false
@@ -144,5 +145,11 @@ function handleSendTest() {
 /** 初始化 */
 onMounted(() => {
   getDetail()
+  uni.$on('system:notify-template:reload', getDetail)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('system:notify-template:reload', getDetail)
 })
 </script>

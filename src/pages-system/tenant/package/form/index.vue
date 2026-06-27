@@ -154,6 +154,7 @@ async function handleSubmit() {
       await createTenantPackage(data)
       toast.success('新增成功')
     }
+    uni.$emit('system:tenant-package:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false

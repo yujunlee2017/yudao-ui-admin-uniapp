@@ -35,6 +35,10 @@
               <text class="min-w-0 flex-1 truncate">{{ item.clientId }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">授权类型：</text>
+              <dict-tag :type="DICT_TYPE.SYSTEM_OAUTH2_GRANT_TYPE" :value="item.authorizedGrantTypes" />
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx text-[#999]">访问令牌有效期：</text>
               <text>{{ item.accessTokenValiditySeconds }} 秒</text>
             </view>
@@ -64,7 +68,7 @@
 
 <script lang="ts" setup>
 import type { OAuth2Client } from '@/api/system/oauth2/client'
-import { ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { getOAuth2ClientPage } from '@/api/system/oauth2/client'
 import { useAccess } from '@/hooks/useAccess'
 import { DICT_TYPE } from '@/utils/constants'
@@ -121,4 +125,13 @@ function handleDetail(item: OAuth2Client) {
   })
 }
 
+/** 初始化 */
+onMounted(() => {
+  uni.$on('system:oauth2-client:reload', reload)
+})
+
+/** 卸载 */
+onUnmounted(() => {
+  uni.$off('system:oauth2-client:reload', reload)
+})
 </script>

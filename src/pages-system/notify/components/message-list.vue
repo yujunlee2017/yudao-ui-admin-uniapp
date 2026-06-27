@@ -51,6 +51,14 @@
               <text class="min-w-0 flex-1 truncate">{{ item.templateContent }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">模版参数：</text>
+              <text class="min-w-0 flex-1 truncate">{{ formatTemplateParams(item.templateParams) }}</text>
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx text-[#999]">阅读时间：</text>
+              <text>{{ formatDateTime(item.readTime) }}</text>
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx text-[#999]">创建时间：</text>
               <text>{{ formatDateTime(item.createTime) }}</text>
             </view>
@@ -104,11 +112,22 @@ function reload() {
   pagingRef.value?.reload()
 }
 
+/** 格式化模版参数 */
+function formatTemplateParams(params: any) {
+  if (!params) {
+    return '-'
+  }
+  try {
+    return typeof params === 'string' ? params : JSON.stringify(params)
+  } catch {
+    return '-'
+  }
+}
+
 /** 查看详情 */
 function handleDetail(item: NotifyMessage) {
   uni.navigateTo({
     url: `/pages-system/notify/message/detail/index?id=${item.id}`,
   })
 }
-
 </script>

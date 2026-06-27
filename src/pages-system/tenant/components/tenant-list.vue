@@ -73,7 +73,7 @@
 <script lang="ts" setup>
 import type { Tenant } from '@/api/system/tenant'
 import type { TenantPackage } from '@/api/system/tenant/package'
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { getTenantPage } from '@/api/system/tenant'
 import { getTenantPackageList } from '@/api/system/tenant/package'
 import { useAccess } from '@/hooks/useAccess'
@@ -149,5 +149,11 @@ function handleDetail(item: Tenant) {
 /** 初始化 */
 onMounted(async () => {
   await loadPackageList()
+  uni.$on('system:tenant:reload', reload)
+})
+
+/** 卸载 */
+onUnmounted(() => {
+  uni.$off('system:tenant:reload', reload)
 })
 </script>

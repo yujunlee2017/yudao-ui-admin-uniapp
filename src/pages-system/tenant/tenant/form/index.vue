@@ -65,12 +65,11 @@
               placeholder="请输入用户密码"
             />
           </wd-form-item>
-          <wd-form-item title="账号额度" title-width="200rpx" prop="accountCount">
-            <wd-input
+          <wd-form-item title="账号额度" title-width="200rpx" prop="accountCount" center>
+            <wd-input-number
               v-model="formData.accountCount"
-              type="number"
-              clearable
-              placeholder="请输入账号额度"
+              :min="0"
+              allow-null
             />
           </wd-form-item>
           <wd-form-item
@@ -88,6 +87,14 @@
             title="请选择过期时间"
             type="date"
           />
+          <wd-form-item title="绑定域名" title-width="200rpx" prop="websites">
+            <wd-textarea
+              v-model="websitesText"
+              clearable
+              placeholder="请输入绑定域名，多个换行分隔"
+              :rows="2"
+            />
+          </wd-form-item>
           <wd-form-item title="租户状态" title-width="200rpx" prop="status" center>
             <wd-radio-group v-model="formData.status" type="button">
               <wd-radio
@@ -126,7 +133,7 @@ import { computed, onMounted, ref } from 'vue'
 import { createTenant, getTenant, updateTenant } from '@/api/system/tenant'
 import { getTenantPackageList } from '@/api/system/tenant/package'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { delay, navigateBackPlus } from '@/utils'
+import { arrayToLines, delay, linesToArray, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
@@ -145,14 +152,14 @@ definePage({
 const toast = useToast()
 const getTitle = computed(() => props.id ? '编辑租户' : '新增租户')
 const formLoading = ref(false) // 表单提交状态
-const formData = ref<Tenant & { username?: string, password?: string }>({
+const formData = ref<Tenant>({
   id: undefined,
   name: '',
   packageId: undefined,
   contactName: '',
   contactMobile: '',
   accountCount: undefined,
-  expireTime: new Date(),
+  expireTime: undefined,
   websites: [],
   status: CommonStatusEnum.ENABLE,
   username: '',
@@ -170,6 +177,7 @@ const formSchema = createFormSchema({
 const formRef = ref<FormInstance>() // 表单组件引用
 const pickerVisible = ref<Record<string, boolean>>({})
 const packageOptions = ref<TenantPackage[]>([])
+const websitesText = ref('') // 绑定域名文本（换行分隔）
 
 /** 返回上一页 */
 function handleBack() {
@@ -187,10 +195,12 @@ async function getDetail() {
     return
   }
   formData.value = await getTenant(props.id)
+  websitesText.value = arrayToLines(formData.value.websites)
 }
 
 /** 提交表单 */
 async function handleSubmit() {
+  formData.value.websites = linesToArray(websitesText.value)
   const { valid } = await formRef.value.validate()
   if (!valid) {
     return
@@ -205,6 +215,7 @@ async function handleSubmit() {
       await createTenant(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('system:tenant:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false

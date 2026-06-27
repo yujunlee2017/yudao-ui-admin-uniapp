@@ -114,21 +114,20 @@ function reload() {
   pagingRef.value?.reload()
 }
 
-/** 删除令牌 */
+/** 强制退出用户 */
 async function handleDelete(item: OAuth2Token) {
   try {
     await dialog.confirm({
       title: '提示',
-      msg: '确定要删除该令牌吗？',
+      msg: '是否要强制退出用户？',
     })
   } catch {
     return
   }
-  // 执行删除
+  // 执行强退
   await deleteOAuth2Token(item.accessToken)
-  toast.success('删除成功')
+  toast.success('强退成功')
   // 刷新列表
   handleQuery()
 }
-
 </script>

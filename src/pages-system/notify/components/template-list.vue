@@ -68,7 +68,7 @@
 
 <script lang="ts" setup>
 import type { NotifyTemplate } from '@/api/system/notify/template'
-import { ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { getNotifyTemplatePage } from '@/api/system/notify/template'
 import { useAccess } from '@/hooks/useAccess'
 import { DICT_TYPE } from '@/utils/constants'
@@ -125,4 +125,13 @@ function handleDetail(item: NotifyTemplate) {
   })
 }
 
+/** 初始化 */
+onMounted(() => {
+  uni.$on('system:notify-template:reload', reload)
+})
+
+/** 卸载 */
+onUnmounted(() => {
+  uni.$off('system:notify-template:reload', reload)
+})
 </script>

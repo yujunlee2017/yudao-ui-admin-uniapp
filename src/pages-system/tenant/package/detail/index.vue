@@ -44,6 +44,7 @@
 import type { TenantPackage } from '@/api/system/tenant/package'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { deleteTenantPackage, getTenantPackage } from '@/api/system/tenant/package'
 import { useAccess } from '@/hooks/useAccess'
@@ -111,6 +112,7 @@ async function handleDelete() {
   try {
     await deleteTenantPackage(props.id)
     toast.success('删除成功')
+    uni.$emit('system:tenant-package:reload')
     delay(handleBack)
   } finally {
     deleting.value = false
@@ -120,5 +122,11 @@ async function handleDelete() {
 /** 初始化 */
 onMounted(() => {
   getDetail()
+  uni.$on('system:tenant-package:reload', getDetail)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('system:tenant-package:reload', getDetail)
 })
 </script>

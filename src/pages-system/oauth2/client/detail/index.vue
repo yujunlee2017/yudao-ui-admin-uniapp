@@ -26,6 +26,10 @@
         <wd-cell title="授权类型" :value="formData?.authorizedGrantTypes?.join(', ') || '-'" />
         <wd-cell title="授权范围" :value="formData?.scopes?.join(', ') || '-'" />
         <wd-cell title="可重定向 URI" :value="formData?.redirectUris?.join(', ') || '-'" />
+        <wd-cell title="自动授权范围" :value="formData?.autoApproveScopes?.join(', ') || '-'" />
+        <wd-cell title="权限" :value="formData?.authorities?.join(', ') || '-'" />
+        <wd-cell title="资源" :value="formData?.resourceIds?.join(', ') || '-'" />
+        <wd-cell title="附加信息" :value="formData?.additionalInformation || '-'" />
         <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime)" />
       </wd-cell-group>
     </view>
@@ -54,6 +58,7 @@
 import type { OAuth2Client } from '@/api/system/oauth2/client'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { deleteOAuth2Client, getOAuth2Client } from '@/api/system/oauth2/client'
 import { useAccess } from '@/hooks/useAccess'
@@ -121,6 +126,7 @@ async function handleDelete() {
   try {
     await deleteOAuth2Client(props.id)
     toast.success('删除成功')
+    uni.$emit('system:oauth2-client:reload')
     delay(handleBack)
   } finally {
     deleting.value = false
@@ -130,5 +136,11 @@ async function handleDelete() {
 /** 初始化 */
 onMounted(() => {
   getDetail()
+  uni.$on('system:oauth2-client:reload', getDetail)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('system:oauth2-client:reload', getDetail)
 })
 </script>

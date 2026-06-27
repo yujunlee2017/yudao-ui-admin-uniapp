@@ -174,6 +174,7 @@ async function handleSubmit() {
       await createNotifyTemplate(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('system:notify-template:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false

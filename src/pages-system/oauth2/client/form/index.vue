@@ -53,20 +53,75 @@
               </wd-radio>
             </wd-radio-group>
           </wd-form-item>
-          <wd-form-item title="访问令牌有效期" title-width="220rpx" prop="accessTokenValiditySeconds">
-            <wd-input
+          <wd-form-item title="访问令牌有效期" title-width="220rpx" prop="accessTokenValiditySeconds" center>
+            <wd-input-number
               v-model="formData.accessTokenValiditySeconds"
-              type="number"
-              clearable
-              placeholder="请输入访问令牌有效期（秒）"
+              :min="0"
             />
           </wd-form-item>
-          <wd-form-item title="刷新令牌有效期" title-width="220rpx" prop="refreshTokenValiditySeconds">
-            <wd-input
+          <wd-form-item title="刷新令牌有效期" title-width="220rpx" prop="refreshTokenValiditySeconds" center>
+            <wd-input-number
               v-model="formData.refreshTokenValiditySeconds"
-              type="number"
+              :min="0"
+            />
+          </wd-form-item>
+          <wd-form-item title="授权类型" title-width="220rpx" prop="authorizedGrantTypes">
+            <wd-checkbox-group v-model="formData.authorizedGrantTypes" type="button">
+              <wd-checkbox
+                v-for="dict in getStrDictOptions(DICT_TYPE.SYSTEM_OAUTH2_GRANT_TYPE)"
+                :key="dict.value"
+                :name="dict.value"
+              >
+                {{ dict.label }}
+              </wd-checkbox>
+            </wd-checkbox-group>
+          </wd-form-item>
+          <wd-form-item title="重定向地址" title-width="220rpx" prop="redirectUris">
+            <wd-textarea
+              v-model="arrayText.redirectUris"
               clearable
-              placeholder="请输入刷新令牌有效期（秒）"
+              placeholder="请输入重定向地址，多个换行分隔"
+              :rows="2"
+            />
+          </wd-form-item>
+          <wd-form-item title="授权范围" title-width="220rpx" prop="scopes">
+            <wd-textarea
+              v-model="arrayText.scopes"
+              clearable
+              placeholder="请输入授权范围，多个换行分隔"
+              :rows="2"
+            />
+          </wd-form-item>
+          <wd-form-item title="自动授权范围" title-width="220rpx" prop="autoApproveScopes">
+            <wd-textarea
+              v-model="arrayText.autoApproveScopes"
+              clearable
+              placeholder="请输入自动授权范围，多个换行分隔"
+              :rows="2"
+            />
+          </wd-form-item>
+          <wd-form-item title="权限" title-width="220rpx" prop="authorities">
+            <wd-textarea
+              v-model="arrayText.authorities"
+              clearable
+              placeholder="请输入权限，多个换行分隔"
+              :rows="2"
+            />
+          </wd-form-item>
+          <wd-form-item title="资源" title-width="220rpx" prop="resourceIds">
+            <wd-textarea
+              v-model="arrayText.resourceIds"
+              clearable
+              placeholder="请输入资源，多个换行分隔"
+              :rows="2"
+            />
+          </wd-form-item>
+          <wd-form-item title="附加信息" title-width="220rpx" prop="additionalInformation">
+            <wd-textarea
+              v-model="formData.additionalInformation"
+              clearable
+              placeholder="请输入附加信息（JSON 格式）"
+              :rows="2"
             />
           </wd-form-item>
         </wd-cell-group>
@@ -93,8 +148,8 @@ import type { OAuth2Client } from '@/api/system/oauth2/client'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createOAuth2Client, getOAuth2Client, updateOAuth2Client } from '@/api/system/oauth2/client'
-import { getIntDictOptions } from '@/hooks/useDict'
-import { delay, navigateBackPlus } from '@/utils'
+import { getIntDictOptions, getStrDictOptions } from '@/hooks/useDict'
+import { arrayToLines, delay, linesToArray, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -123,9 +178,9 @@ const formData = ref<OAuth2Client>({
   accessTokenValiditySeconds: 1800,
   refreshTokenValiditySeconds: 43200,
   redirectUris: [],
-  autoApprove: false,
   authorizedGrantTypes: [],
   scopes: [],
+  autoApproveScopes: [],
   authorities: [],
   resourceIds: [],
   additionalInformation: '',
@@ -137,8 +192,27 @@ const formSchema = createFormSchema({
   logo: [{ required: true, message: '应用图标不能为空' }],
   accessTokenValiditySeconds: [{ required: true, message: '访问令牌有效期不能为空' }],
   refreshTokenValiditySeconds: [{ required: true, message: '刷新令牌有效期不能为空' }],
+  authorizedGrantTypes: [{ required: true, message: '授权类型不能为空' }],
+  redirectUris: [{ required: true, message: '重定向地址不能为空' }],
+  additionalInformation: [{
+    validator: (value) => {
+      if (!value) {
+        return true
+      }
+      try {
+        JSON.parse(String(value))
+        return true
+      } catch {
+        return '附加信息必须是合法的 JSON'
+      }
+    },
+  }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用
+const ARRAY_FIELDS = ['redirectUris', 'scopes', 'autoApproveScopes', 'authorities', 'resourceIds'] as const
+const arrayText = ref( // 多值字段文本（换行分隔），键派生自 ARRAY_FIELDS
+  Object.fromEntries(ARRAY_FIELDS.map(key => [key, ''])) as Record<typeof ARRAY_FIELDS[number], string>,
+)
 
 /** 返回上一页 */
 function handleBack() {
@@ -151,10 +225,17 @@ async function getDetail() {
     return
   }
   formData.value = await getOAuth2Client(props.id)
+  ARRAY_FIELDS.forEach((key) => {
+    arrayText.value[key] = arrayToLines(formData.value[key])
+  })
 }
 
 /** 提交表单 */
 async function handleSubmit() {
+  // 多值字段：换行文本转数组（先于校验，确保必填能读到）
+  ARRAY_FIELDS.forEach((key) => {
+    formData.value[key] = linesToArray(arrayText.value[key])
+  })
   const { valid } = await formRef.value.validate()
   if (!valid) {
     return
@@ -169,6 +250,7 @@ async function handleSubmit() {
       await createOAuth2Client(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('system:oauth2-client:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false

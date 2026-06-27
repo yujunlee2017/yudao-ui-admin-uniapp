@@ -12,6 +12,8 @@ export interface Tenant {
   expireTime: Date | any
   websites: string[]
   status: number
+  username?: string
+  password?: string
   createTime?: Date
 }
 
