@@ -35,8 +35,8 @@
           </wd-form-item>
         </wd-cell-group>
 
-        <!-- DB / Local / FTP / SFTP 配置 -->
-        <wd-cell-group v-if="formData.storage && formData.storage >= 10 && formData.storage <= 12" border title="存储配置">
+        <!-- Local / FTP / SFTP 配置 -->
+        <wd-cell-group v-if="isLocalLike" border title="存储配置">
           <wd-form-item title="基础路径" title-width="200rpx" prop="config.basePath">
             <wd-input
               v-model="formData.config!.basePath"
@@ -45,7 +45,7 @@
             />
           </wd-form-item>
           <!-- FTP / SFTP 配置 -->
-          <template v-if="formData.storage >= 11 && formData.storage <= 12">
+          <template v-if="isFtpLike">
             <wd-form-item title="主机地址" title-width="200rpx" prop="config.host">
               <wd-input
                 v-model="formData.config!.host"
@@ -77,7 +77,7 @@
             </wd-form-item>
           </template>
           <!-- FTP 连接模式 -->
-          <wd-form-item v-if="formData.storage === 11" title="连接模式" title-width="200rpx" prop="config.mode" center>
+          <wd-form-item v-if="isFtp" title="连接模式" title-width="200rpx" prop="config.mode" center>
             <wd-radio-group v-model="formData.config!.mode" type="button">
               <wd-radio value="Active">
                 主动模式
@@ -90,7 +90,7 @@
         </wd-cell-group>
 
         <!-- S3 配置 -->
-        <wd-cell-group v-if="formData.storage === 20" border title="S3 配置">
+        <wd-cell-group v-if="isS3" border title="S3 配置">
           <wd-form-item title="节点地址" title-width="200rpx" prop="config.endpoint">
             <wd-input
               v-model="formData.config!.endpoint"
@@ -182,7 +182,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createFileConfig, getFileConfig, updateFileConfig } from '@/api/infra/file/config'
 import { delay, navigateBackPlus } from '@/utils'
-import { DICT_TYPE } from '@/utils/constants'
+import { DICT_TYPE, InfraFileStorageEnum } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
@@ -204,28 +204,33 @@ const formData = ref<FileConfig>({
   name: '',
   storage: undefined,
   remark: '',
-  config: {
-    basePath: '',
-    host: '',
-    port: undefined,
-    username: '',
-    password: '',
-    mode: 'Passive',
-    endpoint: '',
-    bucket: '',
-    accessKey: '',
-    accessSecret: '',
-    enablePathStyleAccess: false,
-    enablePublicAccess: false,
-    region: '',
-    domain: '',
-  },
+  config: {}, // 配置随 storage 按需填充
 }) // 表单数据
 const formSchema = createFormSchema({
-  name: [{ required: true, message: '配置名不能为空' }],
-  storage: [{ required: true, message: '存储器不能为空' }],
+  'name': [{ required: true, message: '配置名不能为空' }],
+  'storage': [{ required: true, message: '存储器不能为空' }],
+  // 存储配置按 storage 动态必填（嵌套 prop 由 createFormSchema 的 getValueByPath 解析）
+  'config.basePath': [{ required: m => [InfraFileStorageEnum.LOCAL, InfraFileStorageEnum.FTP, InfraFileStorageEnum.SFTP].includes(m?.storage), message: '基础路径不能为空' }],
+  'config.host': [{ required: m => [InfraFileStorageEnum.FTP, InfraFileStorageEnum.SFTP].includes(m?.storage), message: '主机地址不能为空' }],
+  'config.port': [{ required: m => [InfraFileStorageEnum.FTP, InfraFileStorageEnum.SFTP].includes(m?.storage), message: '主机端口不能为空' }],
+  'config.username': [{ required: m => [InfraFileStorageEnum.FTP, InfraFileStorageEnum.SFTP].includes(m?.storage), message: '用户名不能为空' }],
+  'config.password': [{ required: m => [InfraFileStorageEnum.FTP, InfraFileStorageEnum.SFTP].includes(m?.storage), message: '密码不能为空' }],
+  'config.mode': [{ required: m => m?.storage === InfraFileStorageEnum.FTP, message: '连接模式不能为空' }],
+  'config.endpoint': [{ required: m => m?.storage === InfraFileStorageEnum.S3, message: '节点地址不能为空' }],
+  'config.bucket': [{ required: m => m?.storage === InfraFileStorageEnum.S3, message: 'bucket 不能为空' }],
+  'config.accessKey': [{ required: m => m?.storage === InfraFileStorageEnum.S3, message: 'accessKey 不能为空' }],
+  'config.accessSecret': [{ required: m => m?.storage === InfraFileStorageEnum.S3, message: 'accessSecret 不能为空' }],
+  // Path Style / 公开访问后端 @NotNull（false 非空、可通过；undefined 拦截）
+  'config.enablePathStyleAccess': [{ required: m => m?.storage === InfraFileStorageEnum.S3, message: '请选择是否 Path Style' }],
+  'config.enablePublicAccess': [{ required: m => m?.storage === InfraFileStorageEnum.S3, message: '请选择是否公开访问' }],
+  // 自定义域名：非 S3 必填；S3 仅七牛（endpoint 含 qiniucs.com）必填
+  'config.domain': [{ required: m => m?.storage != null && (m.storage !== InfraFileStorageEnum.S3 || !!m.config?.endpoint?.includes('qiniucs.com')), message: '自定义域名不能为空' }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用
+const isLocalLike = computed(() => [InfraFileStorageEnum.LOCAL, InfraFileStorageEnum.FTP, InfraFileStorageEnum.SFTP].includes(formData.value.storage as number)) // 本地/FTP/SFTP：有基础路径
+const isFtpLike = computed(() => [InfraFileStorageEnum.FTP, InfraFileStorageEnum.SFTP].includes(formData.value.storage as number)) // FTP/SFTP：有主机/凭证
+const isFtp = computed(() => formData.value.storage === InfraFileStorageEnum.FTP) // FTP：有连接模式
+const isS3 = computed(() => formData.value.storage === InfraFileStorageEnum.S3) // S3：对象存储
 
 /** 返回上一页 */
 function handleBack() {
@@ -240,22 +245,7 @@ async function getDetail() {
   const data = await getFileConfig(props.id)
   formData.value = {
     ...data,
-    config: data.config || {
-      basePath: '',
-      host: '',
-      port: undefined,
-      username: '',
-      password: '',
-      mode: 'Passive',
-      endpoint: '',
-      bucket: '',
-      accessKey: '',
-      accessSecret: '',
-      enablePathStyleAccess: false,
-      enablePublicAccess: false,
-      region: '',
-      domain: '',
-    },
+    config: data.config || {},
   }
 }
 
@@ -275,6 +265,7 @@ async function handleSubmit() {
       await createFileConfig(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('infra:file-config:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false

@@ -6,7 +6,7 @@ export interface DataSourceConfig {
   name: string
   url: string
   username: string
-  password: string
+  password?: string
   createTime?: Date
 }
 

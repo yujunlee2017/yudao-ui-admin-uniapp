@@ -15,8 +15,8 @@
       </wd-tabs>
     </view>
     <!-- 列表内容 -->
-    <FileList v-show="tabType === 'file'" class="min-h-0 flex-1" />
-    <ConfigList v-show="tabType === 'config'" class="min-h-0 flex-1" />
+    <FileList v-if="tabType === 'file'" class="min-h-0 flex-1" />
+    <ConfigList v-if="tabType === 'config'" class="min-h-0 flex-1" />
   </view>
 </template>
 

@@ -63,7 +63,7 @@
 <script lang="ts" setup>
 import type { DataSourceConfig } from '@/api/infra/data-source-config'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { getDataSourceConfigList } from '@/api/infra/data-source-config'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
@@ -115,6 +115,12 @@ function handleDetail(item: DataSourceConfig) {
 /** 初始化 */
 onMounted(() => {
   getList()
+  uni.$on('infra:data-source-config:reload', getList)
+})
+
+/** 卸载 */
+onUnmounted(() => {
+  uni.$off('infra:data-source-config:reload', getList)
 })
 </script>
 

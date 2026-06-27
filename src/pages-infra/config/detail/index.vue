@@ -117,6 +117,7 @@ async function handleDelete() {
   try {
     await deleteConfig(props.id)
     toast.success('删除成功')
+    uni.$emit('infra:config:reload')
     delay(handleBack)
   } finally {
     deleting.value = false

@@ -1,3 +1,4 @@
+import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 import { useTokenStore } from '@/store/token'
 import { useUserStore } from '@/store/user'
@@ -41,6 +42,11 @@ export function getFilePresignedUrl(name: string, directory?: string) {
 /** 创建文件记录 */
 export function createFile(data: FileCreateReqVO) {
   return http.post<string>('/infra/file/create', data)
+}
+
+/** 获取文件分页列表 */
+export function getFilePage(params: PageParam) {
+  return http.get<PageResult<FileVO>>('/infra/file/page', params)
 }
 
 /** 获取文件详情 */

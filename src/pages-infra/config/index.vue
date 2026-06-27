@@ -75,7 +75,7 @@
 
 <script lang="ts" setup>
 import type { Config } from '@/api/infra/config'
-import { ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { getConfigPage } from '@/api/infra/config'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
@@ -145,6 +145,15 @@ function handleDetail(item: Config) {
   })
 }
 
+/** 初始化 */
+onMounted(() => {
+  uni.$on('infra:config:reload', reload)
+})
+
+/** 卸载 */
+onUnmounted(() => {
+  uni.$off('infra:config:reload', reload)
+})
 </script>
 
 <style lang="scss" scoped>

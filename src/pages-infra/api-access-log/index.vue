@@ -46,15 +46,15 @@
             </view>
             <view class="mb-12rpx flex items-center text-26rpx text-[#666]">
               <text class="mr-8rpx text-[#999]">应用名：</text>
-              <text>{{ item.applicationName }}</text>
+              <text>{{ item.applicationName || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-26rpx text-[#666]">
               <text class="mr-8rpx text-[#999]">用户编号：</text>
-              <text>{{ item.userId }}</text>
+              <text>{{ item.userId ?? '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-26rpx text-[#666]">
               <text class="mr-8rpx text-[#999]">执行时长：</text>
-              <text>{{ item.duration }} ms</text>
+              <text>{{ item.duration != null ? `${item.duration} ms` : '-' }}</text>
             </view>
             <view v-if="item.operateName" class="mb-12rpx flex items-center text-26rpx text-[#666]">
               <text class="mr-8rpx text-[#999]">操作名：</text>
@@ -131,7 +131,6 @@ function handleDetail(item: ApiAccessLog) {
     url: `/pages-infra/api-access-log/detail/index?id=${item.id}`,
   })
 }
-
 </script>
 
 <style lang="scss" scoped>

@@ -21,7 +21,7 @@
         </wd-cell>
         <wd-cell title="开始时间" :value="formatDateTime(formData?.beginTime)" />
         <wd-cell title="结束时间" :value="formatDateTime(formData?.endTime)" />
-        <wd-cell title="执行时长" :value="formData?.duration ? `${formData.duration} ms` : '-'" />
+        <wd-cell title="执行时长" :value="formData?.duration != null ? `${formData.duration} ms` : '-'" />
         <wd-cell title="执行结果" :value="formData?.result" />
         <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime)" />
       </wd-cell-group>

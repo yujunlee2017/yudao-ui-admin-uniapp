@@ -43,7 +43,12 @@ export function deleteJob(id: number) {
 
 /** 更新定时任务状态 */
 export function updateJobStatus(id: number, status: number) {
-  return http.put<boolean>('/infra/job/update-status', { id, status })
+  return http.put<boolean>('/infra/job/update-status', undefined, { id, status })
+}
+
+/** 同步定时任务 */
+export function syncJob() {
+  return http.post<boolean>('/infra/job/sync')
 }
 
 /** 立即执行一次定时任务 */

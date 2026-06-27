@@ -33,6 +33,44 @@
           clearable
         />
       </view>
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
+          请求地址
+        </view>
+        <wd-input
+          v-model="formData.requestUrl"
+          placeholder="请输入请求地址"
+          clearable
+        />
+      </view>
+      <yd-search-picker
+        v-model="formData.userType"
+        label="用户类型"
+        :dict-type="DICT_TYPE.USER_TYPE"
+        all-option
+      />
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
+          执行时长
+        </view>
+        <wd-input
+          v-model.number="formData.duration"
+          type="number"
+          placeholder="请输入执行时长（毫秒）"
+          clearable
+        />
+      </view>
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
+          结果码
+        </view>
+        <wd-input
+          v-model.number="formData.resultCode"
+          type="number"
+          placeholder="请输入结果码"
+          clearable
+        />
+      </view>
       <yd-search-date-range v-model="formData.createTime" label="访问时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -48,7 +86,9 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
+import { getDictLabel } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
 
 const emit = defineEmits<{
@@ -60,6 +100,10 @@ const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
   userId: undefined as number | undefined,
   applicationName: undefined as string | undefined,
+  requestUrl: undefined as string | undefined,
+  userType: -1, // -1 表示全部
+  duration: undefined as number | undefined,
+  resultCode: undefined as number | undefined,
   createTime: [undefined, undefined] as [number | undefined, number | undefined],
 }) // 搜索表单数据
 
@@ -72,6 +116,18 @@ const placeholder = computed(() => {
   if (formData.applicationName) {
     conditions.push(`应用名:${formData.applicationName}`)
   }
+  if (formData.requestUrl) {
+    conditions.push(`地址:${formData.requestUrl}`)
+  }
+  if (formData.userType !== -1) {
+    conditions.push(`类型:${getDictLabel(DICT_TYPE.USER_TYPE, formData.userType)}`)
+  }
+  if (formData.duration != null) {
+    conditions.push(`时长:${formData.duration}ms`)
+  }
+  if (formData.resultCode != null) {
+    conditions.push(`结果码:${formData.resultCode}`)
+  }
   if (formData.createTime?.[0] && formData.createTime?.[1]) {
     conditions.push(`时间:${formatDate(formData.createTime[0])}~${formatDate(formData.createTime[1])}`)
   }
@@ -81,12 +137,14 @@ const placeholder = computed(() => {
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  const dateRange = formatDateRange(formData.createTime)
   emit('search', {
     userId: formData.userId,
     applicationName: formData.applicationName,
-    beginTime: dateRange?.[0],
-    endTime: dateRange?.[1],
+    requestUrl: formData.requestUrl,
+    userType: formData.userType === -1 ? undefined : formData.userType,
+    duration: formData.duration,
+    resultCode: formData.resultCode,
+    beginTime: formatDateRange(formData.createTime),
   })
 }
 
@@ -94,6 +152,10 @@ function handleSearch() {
 function handleReset() {
   formData.userId = undefined
   formData.applicationName = undefined
+  formData.requestUrl = undefined
+  formData.userType = -1
+  formData.duration = undefined
+  formData.resultCode = undefined
   formData.createTime = [undefined, undefined]
   visible.value = false
   emit('reset')

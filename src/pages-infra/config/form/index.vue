@@ -41,11 +41,12 @@
           </wd-form-item>
           <wd-form-item title="是否可见" title-width="200rpx" prop="visible" center>
             <wd-radio-group v-model="formData.visible" type="button">
-              <wd-radio :value="true">
-                是
-              </wd-radio>
-              <wd-radio :value="false">
-                否
+              <wd-radio
+                v-for="dict in getBoolDictOptions(DICT_TYPE.INFRA_BOOLEAN_STRING)"
+                :key="`${dict.value}`"
+                :value="dict.value"
+              >
+                {{ dict.label }}
               </wd-radio>
             </wd-radio-group>
           </wd-form-item>
@@ -80,7 +81,9 @@ import type { Config } from '@/api/infra/config'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
 import { createConfig, getConfig, updateConfig } from '@/api/infra/config'
+import { getBoolDictOptions } from '@/hooks/useDict'
 import { delay, navigateBackPlus } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
@@ -145,6 +148,7 @@ async function handleSubmit() {
       await createConfig(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('infra:config:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false

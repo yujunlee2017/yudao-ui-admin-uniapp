@@ -10,13 +10,15 @@
     <!-- 详情内容 -->
     <view>
       <wd-cell-group border>
-        <wd-cell title="日志编号" :value="formData?.id" />
+        <wd-cell title="日志编号" :value="formData?.id || '-'" />
         <wd-cell title="链路追踪" :value="formData?.traceId || '-'" />
-        <wd-cell title="应用名" :value="formData?.applicationName" />
+        <wd-cell title="应用名" :value="formData?.applicationName || '-'" />
         <wd-cell title="用户编号" :value="formData?.userId ?? '-'" />
-        <wd-cell title="用户类型" :value="getDictLabel(DICT_TYPE.USER_TYPE, formData?.userType) || '-'" />
-        <wd-cell title="用户 IP" :value="formData?.userIp" />
-        <wd-cell title="用户 UA" :value="formData?.userAgent" />
+        <wd-cell title="用户类型">
+          <dict-tag :type="DICT_TYPE.USER_TYPE" :value="formData?.userType" />
+        </wd-cell>
+        <wd-cell title="用户 IP" :value="formData?.userIp || '-'" />
+        <wd-cell title="用户 UA" :value="formData?.userAgent || '-'" />
         <wd-cell title="请求信息" :value="getRequestInfo()" />
         <wd-cell title="请求参数" is-link @click="handleCopyText(formData?.requestParams, '请求参数')">
           <view class="max-w-400rpx truncate text-right">
@@ -45,7 +47,9 @@
         </wd-cell>
         <wd-cell title="操作模块" :value="formData?.operateModule || '-'" />
         <wd-cell title="操作名" :value="formData?.operateName || '-'" />
-        <wd-cell title="操作类型" :value="getDictLabel(DICT_TYPE.INFRA_OPERATE_TYPE, formData?.operateType) || '-'" />
+        <wd-cell title="操作类型">
+          <dict-tag :type="DICT_TYPE.INFRA_OPERATE_TYPE" :value="formData?.operateType" />
+        </wd-cell>
       </wd-cell-group>
     </view>
   </view>
@@ -56,7 +60,6 @@ import type { ApiAccessLog } from '@/api/infra/api-access-log'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
 import { getApiAccessLog } from '@/api/infra/api-access-log'
-import { getDictLabel } from '@/hooks/useDict'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'

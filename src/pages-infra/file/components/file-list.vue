@@ -83,32 +83,20 @@
 </template>
 
 <script lang="ts" setup>
+import type { FileVO } from '@/api/infra/file'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { ref } from 'vue'
-import { uploadFile } from '@/api/infra/file'
+import { onMounted, onUnmounted, ref } from 'vue'
+import { deleteFile, getFilePage, uploadFile } from '@/api/infra/file'
 import { useAccess } from '@/hooks/useAccess'
-import { http } from '@/http/http'
 import { formatDateTime } from '@/utils/date'
 import { formatFileSize } from '@/utils/download'
 import FileSearchForm from './file-search-form.vue'
 
-/** 文件信息 */
-interface FileInfo {
-  id?: number
-  configId?: number
-  path: string
-  name?: string
-  url?: string
-  size?: number
-  type?: string
-  createTime?: Date
-}
-
 const { hasAccessByCodes } = useAccess()
 const toast = useToast()
 const dialog = useDialog()
-const list = ref<FileInfo[]>([]) // 列表数据
+const list = ref<FileVO[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({}) // 查询参数
 
@@ -120,7 +108,7 @@ async function queryList(pageNo: number, pageSize: number) {
       pageNo,
       pageSize,
     }
-    const data = await http.get<{ list: FileInfo[], total: number }>('/infra/file/page', params)
+    const data = await getFilePage(params)
     pagingRef.value?.completeByTotal(data.list, data.total)
   } catch {
     pagingRef.value?.complete(false)
@@ -154,7 +142,7 @@ function handleUpload() {
         await uploadFile(filePath)
         toast.success('上传成功')
         // 刷新列表
-        handleQuery()
+        reload()
       } catch {
         toast.show('上传失败')
       }
@@ -163,7 +151,7 @@ function handleUpload() {
 }
 
 /** 复制链接 */
-function handleCopyUrl(item: FileInfo) {
+function handleCopyUrl(item: FileVO) {
   if (!item.url) {
     toast.show('文件 URL 为空')
     return
@@ -177,14 +165,14 @@ function handleCopyUrl(item: FileInfo) {
 }
 
 /** 查看详情 */
-function handleDetail(item: FileInfo) {
+function handleDetail(item: FileVO) {
   uni.navigateTo({
     url: `/pages-infra/file/detail/index?id=${item.id}`,
   })
 }
 
 /** 删除文件 */
-async function handleDelete(item: FileInfo) {
+async function handleDelete(item: FileVO) {
   try {
     await dialog.confirm({
       title: '提示',
@@ -196,13 +184,22 @@ async function handleDelete(item: FileInfo) {
   // 执行删除
   try {
     toast.loading('删除中...')
-    await http.delete(`/infra/file/delete?id=${item.id}`)
+    await deleteFile(item.id!)
     toast.success('删除成功')
     // 刷新列表
-    handleQuery()
+    reload()
   } catch {
     toast.show('删除失败')
   }
 }
 
+/** 初始化 */
+onMounted(() => {
+  uni.$on('infra:file:reload', reload)
+})
+
+/** 卸载 */
+onUnmounted(() => {
+  uni.$off('infra:file:reload', reload)
+})
 </script>

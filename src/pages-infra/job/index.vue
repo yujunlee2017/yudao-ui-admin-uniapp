@@ -15,8 +15,8 @@
       </wd-tabs>
     </view>
     <!-- 列表内容 -->
-    <JobList v-show="tabType === 'job'" @view-log="handleViewLog" class="min-h-0 flex-1" />
-    <LogList v-show="tabType === 'log'" :job-id="selectedJobId" class="min-h-0 flex-1" />
+    <JobList v-if="tabType === 'job'" class="min-h-0 flex-1" @view-log="handleViewLog" />
+    <LogList v-if="tabType === 'log'" :job-id="selectedJobId" class="min-h-0 flex-1" />
   </view>
 </template>
 

@@ -34,20 +34,34 @@
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
+          请求地址
+        </view>
+        <wd-input
+          v-model="formData.requestUrl"
+          placeholder="请输入请求地址"
+          clearable
+        />
+      </view>
+      <yd-search-picker
+        v-model="formData.userType"
+        label="用户类型"
+        :dict-type="DICT_TYPE.USER_TYPE"
+        all-option
+      />
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
           处理状态
         </view>
         <wd-radio-group v-model="formData.processStatus" type="button">
           <wd-radio :value="-1">
             全部
           </wd-radio>
-          <wd-radio :value="0">
-            未处理
-          </wd-radio>
-          <wd-radio :value="1">
-            已处理
-          </wd-radio>
-          <wd-radio :value="2">
-            已忽略
+          <wd-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.INFRA_API_ERROR_LOG_PROCESS_STATUS)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
           </wd-radio>
         </wd-radio-group>
       </view>
@@ -66,7 +80,9 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
+import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
 
 const emit = defineEmits<{
@@ -78,6 +94,8 @@ const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
   userId: undefined as number | undefined,
   applicationName: undefined as string | undefined,
+  requestUrl: undefined as string | undefined,
+  userType: -1, // -1 表示全部
   processStatus: -1, // -1 表示全部
   exceptionTime: [undefined, undefined] as [number | undefined, number | undefined],
 }) // 搜索表单数据
@@ -91,9 +109,14 @@ const placeholder = computed(() => {
   if (formData.applicationName) {
     conditions.push(`应用名:${formData.applicationName}`)
   }
+  if (formData.requestUrl) {
+    conditions.push(`地址:${formData.requestUrl}`)
+  }
+  if (formData.userType !== -1) {
+    conditions.push(`类型:${getDictLabel(DICT_TYPE.USER_TYPE, formData.userType)}`)
+  }
   if (formData.processStatus !== -1) {
-    const statusMap: Record<number, string> = { 0: '未处理', 1: '已处理', 2: '已忽略' }
-    conditions.push(`状态:${statusMap[formData.processStatus]}`)
+    conditions.push(`状态:${getDictLabel(DICT_TYPE.INFRA_API_ERROR_LOG_PROCESS_STATUS, formData.processStatus)}`)
   }
   if (formData.exceptionTime?.[0] && formData.exceptionTime?.[1]) {
     conditions.push(`时间:${formatDate(formData.exceptionTime[0])}~${formatDate(formData.exceptionTime[1])}`)
@@ -106,6 +129,7 @@ function handleSearch() {
   visible.value = false
   emit('search', {
     ...formData,
+    userType: formData.userType === -1 ? undefined : formData.userType,
     processStatus: formData.processStatus === -1 ? undefined : formData.processStatus,
     exceptionTime: formatDateRange(formData.exceptionTime),
   })
@@ -115,6 +139,8 @@ function handleSearch() {
 function handleReset() {
   formData.userId = undefined
   formData.applicationName = undefined
+  formData.requestUrl = undefined
+  formData.userType = -1
   formData.processStatus = -1
   formData.exceptionTime = [undefined, undefined]
   visible.value = false

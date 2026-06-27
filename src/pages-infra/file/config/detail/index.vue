@@ -24,19 +24,19 @@
 
       <!-- 存储配置详情 -->
       <wd-cell-group v-if="formData?.config" border title="存储配置">
-        <!-- DB / Local / FTP / SFTP 配置 -->
-        <template v-if="formData.storage && formData.storage >= 10 && formData.storage <= 12">
+        <!-- Local / FTP / SFTP 配置 -->
+        <template v-if="isLocalLike">
           <wd-cell title="基础路径" :value="formData.config.basePath ?? '-'" />
-          <template v-if="formData.storage >= 11 && formData.storage <= 12">
+          <template v-if="isFtpLike">
             <wd-cell title="主机地址" :value="formData.config.host ?? '-'" />
             <wd-cell title="主机端口" :value="formData.config.port ?? '-'" />
             <wd-cell title="用户名" :value="formData.config.username ?? '-'" />
             <wd-cell title="密码" :value="formData.config.password ?? '-'" />
           </template>
-          <wd-cell v-if="formData.storage === 11" title="连接模式" :value="formData.config.mode === 'Active' ? '主动模式' : '被动模式'" />
+          <wd-cell v-if="isFtp" title="连接模式" :value="formData.config.mode === 'Active' ? '主动模式' : '被动模式'" />
         </template>
         <!-- S3 配置 -->
-        <template v-if="formData.storage === 20">
+        <template v-if="isS3">
           <wd-cell title="节点地址" :value="formData.config.endpoint" />
           <wd-cell title="存储 bucket" :value="formData.config.bucket" />
           <wd-cell title="accessKey" :value="formData.config.accessKey" />
@@ -74,11 +74,11 @@
 import type { FileConfig } from '@/api/infra/file/config'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { deleteFileConfig, getFileConfig } from '@/api/infra/file/config'
 import { useAccess } from '@/hooks/useAccess'
 import { delay, navigateBackPlus } from '@/utils'
-import { DICT_TYPE } from '@/utils/constants'
+import { DICT_TYPE, InfraFileStorageEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{
@@ -97,6 +97,10 @@ const toast = useToast()
 const dialog = useDialog()
 const formData = ref<FileConfig>() // 详情数据
 const deleting = ref(false) // 删除状态
+const isLocalLike = computed(() => [InfraFileStorageEnum.LOCAL, InfraFileStorageEnum.FTP, InfraFileStorageEnum.SFTP].includes(formData.value?.storage as number)) // 本地/FTP/SFTP
+const isFtpLike = computed(() => [InfraFileStorageEnum.FTP, InfraFileStorageEnum.SFTP].includes(formData.value?.storage as number)) // FTP/SFTP
+const isFtp = computed(() => formData.value?.storage === InfraFileStorageEnum.FTP) // FTP
+const isS3 = computed(() => formData.value?.storage === InfraFileStorageEnum.S3) // S3
 
 /** 返回上一页 */
 function handleBack() {
@@ -141,6 +145,7 @@ async function handleDelete() {
   try {
     await deleteFileConfig(props.id)
     toast.success('删除成功')
+    uni.$emit('infra:file-config:reload')
     delay(handleBack)
   } finally {
     deleting.value = false

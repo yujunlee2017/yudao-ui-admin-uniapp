@@ -21,6 +21,7 @@
           <wd-form-item title="处理器名称" title-width="200rpx" prop="handlerName">
             <wd-input
               v-model="formData.handlerName"
+              :readonly="!!formData.id"
               clearable
               placeholder="请输入处理器名称"
             />
@@ -154,6 +155,7 @@ async function handleSubmit() {
       await createJob(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('infra:job:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false

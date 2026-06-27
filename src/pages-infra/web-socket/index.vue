@@ -161,7 +161,7 @@
     </view>
 
     <!-- 底部安全区域 -->
-    <view class="h-env(safe-area-inset-bottom)" />
+    <view class="h-[env(safe-area-inset-bottom)]" />
   </view>
 </template>
 
@@ -170,6 +170,7 @@ import type { User } from '@/api/system/user'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { getSimpleUserList } from '@/api/system/user'
+import { isDoubleTokenRes } from '@/api/types/login'
 import { useTokenStore } from '@/store/token'
 import { getEnvBaseUrlRoot, navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
@@ -189,13 +190,20 @@ const toast = useToast()
 const socketTask = ref<UniApp.SocketTask | null>(null)
 const isConnected = ref(false)
 const statusText = computed(() => (isConnected.value ? '已连接' : '未连接'))
+const manualClose = ref(false) // 是否主动关闭（主动关闭不重连）
+
+// 自动重连状态
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+let reconnectAttempts = 0
+const MAX_RECONNECT_ATTEMPTS = 5
 
 // 服务地址
 const serverUrl = computed(() => {
   const baseUrl = getEnvBaseUrlRoot()
   const wsUrl = baseUrl.replace('http', 'ws')
-  const tokenInfo = tokenStore.tokenInfo as any
-  const token = tokenInfo?.refreshToken || tokenStore.updateNowTime().validToken
+  const tokenInfo = tokenStore.tokenInfo
+  // 双 token 用 refreshToken，单 token 回退 validToken（读 getter，不在 computed 里写副作用）
+  const token = isDoubleTokenRes(tokenInfo) ? tokenInfo.refreshToken : tokenStore.validToken
   return `${wsUrl}/infra/ws?token=${token}`
 })
 
@@ -239,22 +247,19 @@ function connect() {
   if (socketTask.value) {
     return
   }
+  manualClose.value = false
 
   // 1.1 发起连接请求
   socketTask.value = uni.connectSocket({
     url: serverUrl.value,
-    success: () => {
-      console.log('WebSocket 连接请求已发送')
-    },
-    fail: (err) => {
-      console.error('WebSocket 连接失败:', err)
+    fail: () => {
       toast.error('连接失败')
     },
   })
   // 1.2 监听连接打开
   socketTask.value.onOpen(() => {
-    console.log('WebSocket 连接已打开')
     isConnected.value = true
+    reconnectAttempts = 0
     toast.success('连接成功')
     // 开始心跳
     startHeartbeat()
@@ -267,29 +272,31 @@ function connect() {
 
   // 3.1 监听连接关闭
   socketTask.value.onClose(() => {
-    console.log('WebSocket 连接已关闭')
     isConnected.value = false
     socketTask.value = null
     stopHeartbeat()
+    // 非主动关闭时退避重连
+    scheduleReconnect()
   })
   // 3.2 监听错误
-  socketTask.value.onError((err) => {
-    console.error('WebSocket 错误:', err)
+  socketTask.value.onError(() => {
     isConnected.value = false
     socketTask.value = null
     stopHeartbeat()
-    toast.error('连接异常')
+    // 异常断开时退避重连
+    scheduleReconnect()
   })
 }
 
 /** 关闭 WebSocket 连接 */
 function disconnect() {
+  manualClose.value = true
+  stopReconnect()
   if (!socketTask.value) {
     return
   }
   socketTask.value.close({
     success: () => {
-      console.log('WebSocket 连接已主动关闭')
       toast.success('已断开')
     },
   })
@@ -316,12 +323,7 @@ function startHeartbeat() {
   // 30 秒发送一次心跳
   heartbeatTimer = setInterval(() => {
     if (socketTask.value && isConnected.value) {
-      socketTask.value.send({
-        data: 'ping',
-        fail: (err) => {
-          console.error('心跳发送失败:', err)
-        },
-      })
+      socketTask.value.send({ data: 'ping' })
     }
   }, 30000)
 }
@@ -332,6 +334,34 @@ function stopHeartbeat() {
     clearInterval(heartbeatTimer)
     heartbeatTimer = null
   }
+}
+
+// ======================= 自动重连 =======================
+
+/** 退避重连：非主动关闭时按指数退避尝试重连 */
+function scheduleReconnect() {
+  // 已排重连 / 主动关闭 / 超次数则跳过（onClose 与 onError 可能都触发，避免重复排 timer）
+  if (manualClose.value || reconnectTimer || reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+    return
+  }
+  reconnectAttempts++
+  // 退避间隔：2s、4s、8s……最多 30s
+  const delayMs = Math.min(2000 * 2 ** (reconnectAttempts - 1), 30000)
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null
+    if (!manualClose.value && !socketTask.value) {
+      connect()
+    }
+  }, delayMs)
+}
+
+/** 停止重连 */
+function stopReconnect() {
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer)
+    reconnectTimer = null
+  }
+  reconnectAttempts = 0
 }
 
 // ======================= 消息处理 =======================
@@ -353,7 +383,6 @@ function handleMessage(data: string) {
     const type = jsonMessage.type
     const content = JSON.parse(jsonMessage.content)
     if (!type) {
-      console.warn('未知的消息类型:', data)
       return
     }
 
@@ -378,10 +407,8 @@ function handleMessage(data: string) {
       })
       return
     }
-
-    console.warn('未处理的消息类型:', type, data)
-  } catch (error) {
-    console.error('消息解析失败:', error, data)
+  } catch {
+    toast.error('消息解析失败')
   }
 }
 
@@ -399,7 +426,7 @@ function handleSend() {
   // 1.1 构建消息内容
   const messageContent = JSON.stringify({
     text: sendText.value,
-    toUserId: sendUserId.value === 'all' ? undefined : sendUserId.value,
+    toUserId: sendUserId.value === 'all' ? undefined : Number(sendUserId.value),
   })
   // 1.2 构建完整消息
   const jsonMessage = JSON.stringify({
@@ -414,8 +441,7 @@ function handleSend() {
       toast.success('发送成功')
       sendText.value = ''
     },
-    fail: (err) => {
-      console.error('消息发送失败:', err)
+    fail: () => {
       toast.error('发送失败')
     },
   })
@@ -468,8 +494,8 @@ onMounted(async () => {
   // 获取用户列表
   try {
     userList.value = await getSimpleUserList()
-  } catch (error) {
-    console.error('获取用户列表失败:', error)
+  } catch {
+    toast.error('获取用户列表失败')
   }
 })
 

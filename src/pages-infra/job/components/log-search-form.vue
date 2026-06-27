@@ -108,11 +108,13 @@ const placeholder = computed(() => {
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
+  const range = formatDateRange(formData.beginTime)
   emit('search', {
     jobId: formData.jobId || undefined,
     handlerName: formData.handlerName || undefined,
     status: formData.status === -1 ? undefined : formData.status,
-    beginTime: formatDateRange(formData.beginTime),
+    beginTime: range?.[0],
+    endTime: range?.[1],
   })
 }
 

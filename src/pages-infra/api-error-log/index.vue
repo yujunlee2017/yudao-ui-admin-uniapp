@@ -33,9 +33,8 @@
           <view class="p-24rpx">
             <view class="mb-16rpx flex items-center justify-between">
               <view class="line-clamp-1 mr-16rpx flex-1 text-28rpx text-[#333] font-semibold">
-                {{ item.exceptionName }}
+                {{ item.exceptionName || '-' }}
               </view>
-              <!-- DONE @芽艺：字典 -->
               <dict-tag :type="DICT_TYPE.INFRA_API_ERROR_LOG_PROCESS_STATUS" :value="item.processStatus" />
             </view>
             <view class="mb-12rpx flex text-26rpx text-[#666]">
@@ -44,11 +43,11 @@
             </view>
             <view class="mb-12rpx flex items-center text-26rpx text-[#666]">
               <text class="mr-8rpx text-[#999]">应用名：</text>
-              <text>{{ item.applicationName }}</text>
+              <text>{{ item.applicationName || '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-26rpx text-[#666]">
               <text class="mr-8rpx text-[#999]">用户编号：</text>
-              <text>{{ item.userId }}</text>
+              <text>{{ item.userId ?? '-' }}</text>
             </view>
             <view class="flex items-center text-24rpx text-[#999]">
               <text>{{ formatDateTime(item.exceptionTime) }}</text>
@@ -62,7 +61,7 @@
 
 <script lang="ts" setup>
 import type { ApiErrorLog } from '@/api/infra/api-error-log'
-import { ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { getApiErrorLogPage } from '@/api/infra/api-error-log'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -123,6 +122,15 @@ function handleDetail(item: ApiErrorLog) {
   })
 }
 
+/** 初始化 */
+onMounted(() => {
+  uni.$on('infra:api-error-log:reload', reload)
+})
+
+/** 卸载 */
+onUnmounted(() => {
+  uni.$off('infra:api-error-log:reload', reload)
+})
 </script>
 
 <style lang="scss" scoped>

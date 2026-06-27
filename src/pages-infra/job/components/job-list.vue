@@ -3,6 +3,13 @@
     <!-- 搜索组件 -->
     <JobSearchForm @search="handleQuery" @reset="handleReset" />
 
+    <!-- 同步任务 -->
+    <view v-if="hasAccessByCodes(['infra:job:create'])" class="flex justify-end bg-white px-24rpx py-16rpx">
+      <wd-button type="success" size="small" :loading="syncing" @click="handleSync">
+        同步任务
+      </wd-button>
+    </view>
+
     <!-- 任务列表 -->
     <z-paging
       ref="pagingRef"
@@ -70,8 +77,9 @@
 
 <script lang="ts" setup>
 import type { Job } from '@/api/infra/job'
-import { ref } from 'vue'
-import { getJobPage } from '@/api/infra/job'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { onMounted, onUnmounted, ref } from 'vue'
+import { getJobPage, syncJob } from '@/api/infra/job'
 import { useAccess } from '@/hooks/useAccess'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
@@ -82,9 +90,11 @@ const emit = defineEmits<{
 }>()
 
 const { hasAccessByCodes } = useAccess()
+const toast = useToast()
 const list = ref<Job[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({}) // 查询参数
+const syncing = ref(false) // 同步任务状态
 
 /** 查询列表 */
 async function queryList(pageNo: number, pageSize: number) {
@@ -136,4 +146,25 @@ function handleViewLog(item: Job) {
   emit('viewLog', item.id)
 }
 
+/** 同步任务 */
+async function handleSync() {
+  syncing.value = true
+  try {
+    await syncJob()
+    toast.success('同步成功')
+    reload()
+  } finally {
+    syncing.value = false
+  }
+}
+
+/** 初始化：监听增删改后刷新 */
+onMounted(() => {
+  uni.$on('infra:job:reload', reload)
+})
+
+/** 卸载 */
+onUnmounted(() => {
+  uni.$off('infra:job:reload', reload)
+})
 </script>

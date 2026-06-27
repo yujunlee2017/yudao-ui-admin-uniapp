@@ -10,12 +10,12 @@
     <!-- 详情内容 -->
     <view>
       <wd-cell-group border>
-        <wd-cell title="文件编号" :value="formData?.id" />
-        <wd-cell title="文件名" :value="formData?.name" />
-        <wd-cell title="文件路径" :value="formData?.path" />
-        <wd-cell title="文件 URL" :value="formData?.url" />
+        <wd-cell title="文件编号" :value="formData?.id || '-'" />
+        <wd-cell title="文件名" :value="formData?.name || '-'" />
+        <wd-cell title="文件路径" :value="formData?.path || '-'" />
+        <wd-cell title="文件 URL" :value="formData?.url || '-'" />
         <wd-cell title="文件大小" :value="formatFileSize(formData?.size)" />
-        <wd-cell title="文件类型" :value="formData?.type" />
+        <wd-cell title="文件类型" :value="formData?.type || '-'" />
         <wd-cell title="上传时间" :value="formatDateTime(formData?.createTime)" />
       </wd-cell-group>
       <!-- 文件预览 -->
@@ -129,6 +129,7 @@ async function handleDelete() {
   try {
     await deleteFile(props.id)
     toast.success('删除成功')
+    uni.$emit('infra:file:reload')
     delay(handleBack)
   } finally {
     deleting.value = false

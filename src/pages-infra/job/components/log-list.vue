@@ -40,7 +40,7 @@
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">执行时长：</text>
-              <text>{{ item.duration ? `${item.duration} ms` : '-' }}</text>
+              <text>{{ item.duration != null ? `${item.duration} ms` : '-' }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx text-[#999]">开始时间：</text>
@@ -108,11 +108,11 @@ function handleDetail(item: JobLog) {
   })
 }
 
-
-/** 监听 jobId 变化，重新查询 */
+/** 监听外部 jobId 变化，同步到搜索态并重新查询 */
 watch(
   () => props.jobId,
   () => {
+    queryParams.value.jobId = props.jobId
     if (props.jobId) {
       reload()
     }

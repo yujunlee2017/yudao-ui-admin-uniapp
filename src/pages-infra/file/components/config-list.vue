@@ -56,7 +56,7 @@
                 设为主配置
               </wd-button>
               <wd-button
-                v-if="hasAccessByCodes(['infra:file-config:update'])"
+                v-if="hasAccessByCodes(['infra:file-config:query'])"
                 size="small" type="info" @click.stop="handleTest(item)"
               >
                 测试
@@ -82,7 +82,7 @@
 import type { FileConfig } from '@/api/infra/file/config'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { getFileConfigPage, testFileConfig, updateFileConfigMaster } from '@/api/infra/file/config'
 import { useAccess } from '@/hooks/useAccess'
 import { DICT_TYPE } from '@/utils/constants'
@@ -143,9 +143,13 @@ function handleDetail(item: FileConfig) {
 
 /** 测试文件配置 */
 async function handleTest(item: FileConfig) {
-  toast.loading('测试上传中...')
-  const url = await testFileConfig(item.id!)
-  toast.close()
+  let url: string
+  try {
+    toast.loading('测试上传中...')
+    url = await testFileConfig(item.id!)
+  } finally {
+    toast.close()
+  }
   if (!url) {
     return
   }
@@ -185,10 +189,19 @@ async function handleMaster(item: FileConfig) {
     await updateFileConfigMaster(item.id!)
     toast.success('设置成功')
     // 刷新列表
-    handleQuery()
+    reload()
   } catch {
     toast.close()
   }
 }
 
+/** 初始化 */
+onMounted(() => {
+  uni.$on('infra:file-config:reload', reload)
+})
+
+/** 卸载 */
+onUnmounted(() => {
+  uni.$off('infra:file-config:reload', reload)
+})
 </script>

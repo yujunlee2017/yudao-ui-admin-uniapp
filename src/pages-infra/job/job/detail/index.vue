@@ -19,9 +19,14 @@
         <wd-cell title="处理器参数" :value="formData?.handlerParam ?? '-'" />
         <wd-cell title="CRON 表达式" :value="formData?.cronExpression" />
         <wd-cell title="重试次数" :value="formData?.retryCount" />
-        <wd-cell title="重试间隔" :value="formData?.retryInterval ? `${formData.retryInterval} ms` : '-'" />
-        <wd-cell title="监控超时" :value="formData?.monitorTimeout ? `${formData.monitorTimeout} ms` : '-'" />
+        <wd-cell title="重试间隔" :value="formData?.retryInterval != null ? `${formData.retryInterval} ms` : '-'" />
+        <wd-cell title="监控超时" :value="formData?.monitorTimeout != null ? `${formData.monitorTimeout} ms` : '-'" />
         <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime) || '-'" />
+      </wd-cell-group>
+
+      <!-- 后续执行时间 -->
+      <wd-cell-group v-if="nextTimes.length > 0" border title="后续执行时间" custom-class="mt-24rpx">
+        <wd-cell v-for="(time, index) in nextTimes" :key="index" :title="`第 ${index + 1} 次`" :value="formatDateTime(time) || '-'" />
       </wd-cell-group>
     </view>
 
@@ -59,7 +64,7 @@ import type { Job } from '@/api/infra/job'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { deleteJob, getJob, runJob, updateJobStatus } from '@/api/infra/job'
+import { deleteJob, getJob, getJobNextTimes, runJob, updateJobStatus } from '@/api/infra/job'
 import { useAccess } from '@/hooks/useAccess'
 import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, InfraJobStatusEnum } from '@/utils/constants'
@@ -80,6 +85,7 @@ const { hasAccessByCodes } = useAccess()
 const toast = useToast()
 const dialog = useDialog()
 const formData = ref<Job>() // 详情数据
+const nextTimes = ref<Date[]>([]) // 后续执行时间
 const deleting = ref(false) // 删除状态
 
 const moreActionVisible = ref(false) // 更多操作菜单
@@ -115,6 +121,7 @@ async function getDetail() {
   try {
     toast.loading('加载中...')
     formData.value = await getJob(props.id)
+    nextTimes.value = await getJobNextTimes(props.id)
   } finally {
     toast.close()
   }
@@ -136,8 +143,9 @@ async function handleRun() {
   try {
     toast.loading('执行中...')
     await runJob(props.id)
+    toast.close()
     toast.success('执行成功')
-  } finally {
+  } catch {
     toast.close()
   }
 }
@@ -167,6 +175,7 @@ async function handleDelete() {
   try {
     await deleteJob(props.id)
     toast.success('删除成功')
+    uni.$emit('infra:job:reload')
     delay(handleBack)
   } finally {
     deleting.value = false
@@ -204,9 +213,12 @@ async function handleUpdateStatus() {
     toast.loading(`正在${statusText}中...`)
     const newStatus = isRunning ? InfraJobStatusEnum.STOP : InfraJobStatusEnum.NORMAL
     await updateJobStatus(props.id, newStatus)
+    // 静默刷新详情，避免 success 被 loading 覆盖
+    formData.value = await getJob(props.id)
+    toast.close()
     toast.success(`${statusText}成功`)
-    await getDetail()
-  } finally {
+    uni.$emit('infra:job:reload')
+  } catch {
     toast.close()
   }
 }

@@ -10,13 +10,15 @@
     <!-- 详情内容 -->
     <view>
       <wd-cell-group border>
-        <wd-cell title="日志编号" :value="formData?.id" />
+        <wd-cell title="日志编号" :value="formData?.id || '-'" />
         <wd-cell title="链路追踪" :value="formData?.traceId || '-'" />
-        <wd-cell title="应用名" :value="formData?.applicationName" />
+        <wd-cell title="应用名" :value="formData?.applicationName || '-'" />
         <wd-cell title="用户编号" :value="formData?.userId ?? '-'" />
-        <wd-cell title="用户类型" :value="getDictLabel(DICT_TYPE.USER_TYPE, formData?.userType) || '-'" />
-        <wd-cell title="用户 IP" :value="formData?.userIp" />
-        <wd-cell title="用户 UA" :value="formData?.userAgent" />
+        <wd-cell title="用户类型">
+          <dict-tag :type="DICT_TYPE.USER_TYPE" :value="formData?.userType" />
+        </wd-cell>
+        <wd-cell title="用户 IP" :value="formData?.userIp || '-'" />
+        <wd-cell title="用户 UA" :value="formData?.userAgent || '-'" />
         <wd-cell title="请求信息" :value="getRequestInfo()" />
         <wd-cell title="请求参数" is-link @click="handleCopyText(formData?.requestParams, '请求参数')">
           <view class="max-w-400rpx truncate text-right">
@@ -25,6 +27,16 @@
         </wd-cell>
         <wd-cell title="异常时间" :value="formatDateTime(formData?.exceptionTime) || '-'" />
         <wd-cell title="异常名" :value="formData?.exceptionName || '-'" />
+        <wd-cell title="异常消息" is-link @click="handleCopyText(getExceptionMessage(), '异常消息')">
+          <view class="max-w-400rpx truncate text-right">
+            {{ getExceptionMessage() }}
+          </view>
+        </wd-cell>
+        <wd-cell title="异常位置" is-link @click="handleCopyText(getExceptionLocation(), '异常位置')">
+          <view class="max-w-400rpx truncate text-right">
+            {{ getExceptionLocation() }}
+          </view>
+        </wd-cell>
         <wd-cell title="处理状态">
           <dict-tag :type="DICT_TYPE.INFRA_API_ERROR_LOG_PROCESS_STATUS" :value="formData?.processStatus" />
         </wd-cell>
@@ -46,7 +58,10 @@
     </view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="formData?.processStatus === InfraApiErrorLogProcessStatusEnum.INIT" class="yd-detail-footer">
+    <view
+      v-if="formData?.processStatus === InfraApiErrorLogProcessStatusEnum.INIT && hasAccessByCodes(['infra:api-error-log:update-status'])"
+      class="yd-detail-footer"
+    >
       <view class="yd-detail-footer-actions">
         <wd-button class="flex-1" type="success" :loading="processing" @click="handleProcess(InfraApiErrorLogProcessStatusEnum.DONE)">
           已处理
@@ -65,7 +80,7 @@ import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
 import { getApiErrorLog, updateApiErrorLogStatus } from '@/api/infra/api-error-log'
-import { getDictLabel } from '@/hooks/useDict'
+import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE, InfraApiErrorLogProcessStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
@@ -81,6 +96,7 @@ definePage({
   },
 })
 
+const { hasAccessByCodes } = useAccess()
 const toast = useToast()
 const dialog = useDialog()
 const formData = ref<ApiErrorLog>() // 详情数据
@@ -126,6 +142,20 @@ function getRequestInfo() {
   return '-'
 }
 
+/** 获取异常消息（优先根因消息） */
+function getExceptionMessage() {
+  return formData.value?.exceptionRootCauseMessage || formData.value?.exceptionMessage || '-'
+}
+
+/** 获取异常位置（类名:文件名:行号 方法名） */
+function getExceptionLocation() {
+  const data = formData.value
+  if (!data?.exceptionClassName) {
+    return '-'
+  }
+  return `${data.exceptionClassName}:${data.exceptionFileName}:${data.exceptionLineNumber}(${data.exceptionMethodName})`
+}
+
 /** 处理日志 */
 async function handleProcess(processStatus: number) {
   if (!props.id) {
@@ -144,9 +174,9 @@ async function handleProcess(processStatus: number) {
   processing.value = true
   try {
     await updateApiErrorLogStatus(props.id, processStatus)
+    formData.value = await getApiErrorLog(props.id)
     toast.success('操作成功')
-    // 刷新详情
-    await getDetail()
+    uni.$emit('infra:api-error-log:reload')
   } finally {
     processing.value = false
   }

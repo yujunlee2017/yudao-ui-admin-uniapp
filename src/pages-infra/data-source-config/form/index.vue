@@ -37,7 +37,7 @@
               v-model="formData.password"
               show-password
               clearable
-              placeholder="请输入密码"
+              :placeholder="props.id ? '编辑需重新输入密码' : '请输入密码'"
             />
           </wd-form-item>
         </wd-cell-group>
@@ -106,7 +106,12 @@ async function getDetail() {
   if (!props.id) {
     return
   }
-  formData.value = await getDataSourceConfig(props.id)
+  try {
+    toast.loading('加载中')
+    formData.value = await getDataSourceConfig(props.id)
+  } finally {
+    toast.close()
+  }
 }
 
 /** 提交表单 */
@@ -125,6 +130,7 @@ async function handleSubmit() {
       await createDataSourceConfig(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('infra:data-source-config:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false
