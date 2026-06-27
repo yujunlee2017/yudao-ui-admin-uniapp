@@ -28,6 +28,7 @@ import * as echarts from 'echarts/core'
 import {
   BarChart,
   FunnelChart,
+  GaugeChart,
   LineChart,
   PieChart,
 } from 'echarts/charts'
@@ -65,6 +66,7 @@ const emit = defineEmits<{
 echarts.use([
   BarChart,
   FunnelChart,
+  GaugeChart,
   LineChart,
   PieChart,
   CanvasRenderer,
@@ -108,6 +110,8 @@ async function initChart() {
     emit('ready', chartInstance)
   }
   chartInstance?.setOption?.(props.option, props.notMerge)
+  // 容器可能在隐藏（loading / tab 切换）时完成初始化导致画布 0×0，渲染后再量一次尺寸兜底
+  chartRef.value?.resize?.()
 }
 
 /** 延迟渲染图表，等待容器尺寸稳定 */

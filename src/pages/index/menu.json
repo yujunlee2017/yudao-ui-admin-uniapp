@@ -243,7 +243,8 @@
               "name": "代码生成",
               "icon": "code",
               "iconColor": "#52c41a",
-              "onlyPc": true
+              "url": "/pages-infra/codegen/index",
+              "permission": "infra:codegen:query"
             },
             {
               "key": "build",
@@ -258,13 +259,87 @@
               "icon": "link",
               "iconColor": "#95de64",
               "onlyPc": true
+            }
+          ]
+        },
+        {
+          "key": "monitor",
+          "name": "监控中心",
+          "menus": [
+            {
+              "key": "mysql",
+              "name": "MySQL 监控",
+              "icon": "desktop",
+              "iconColor": "#1890ff",
+              "onlyPc": true
             },
             {
-              "key": "druid",
-              "name": "监控中心",
-              "icon": "dashboard",
-              "iconColor": "#389e0d",
+              "key": "redis",
+              "name": "Redis 监控",
+              "icon": "folder",
+              "iconColor": "#cf1322",
+              "url": "/pages-statistics/infra/redis/index",
+              "permission": "infra:redis:get-monitor-info"
+            },
+            {
+              "key": "java",
+              "name": "Java 监控",
+              "icon": "settings",
+              "iconColor": "#52c41a",
               "onlyPc": true
+            },
+            {
+              "key": "skywalking",
+              "name": "链路追踪",
+              "icon": "apps",
+              "iconColor": "#722ed1",
+              "onlyPc": true
+            }
+          ]
+        },
+        {
+          "key": "demo",
+          "name": "代码生成案例",
+          "menus": [
+            {
+              "key": "demo01",
+              "name": "单表",
+              "icon": "list",
+              "iconColor": "#1890ff",
+              "url": "/pages-infra/demo/demo01/index",
+              "permission": "infra:demo01-contact:query"
+            },
+            {
+              "key": "demo02",
+              "name": "树表",
+              "icon": "folder",
+              "iconColor": "#13c2c2",
+              "url": "/pages-infra/demo/demo02/index",
+              "permission": "infra:demo02-category:query"
+            },
+            {
+              "key": "demo03-normal",
+              "name": "主子表（标准）",
+              "icon": "apps",
+              "iconColor": "#52c41a",
+              "url": "/pages-infra/demo/demo03-normal/index",
+              "permission": "infra:demo03-student:query"
+            },
+            {
+              "key": "demo03-erp",
+              "name": "主子表（ERP）",
+              "icon": "desktop",
+              "iconColor": "#722ed1",
+              "url": "/pages-infra/demo/demo03-erp/index",
+              "permission": "infra:demo03-student:query"
+            },
+            {
+              "key": "demo03-inner",
+              "name": "主子表（内嵌）",
+              "icon": "menu-fold",
+              "iconColor": "#fa8c16",
+              "url": "/pages-infra/demo/demo03-inner/index",
+              "permission": "infra:demo03-student:query"
             }
           ]
         }
