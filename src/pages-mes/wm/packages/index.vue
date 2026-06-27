@@ -263,6 +263,3 @@ onUnload(() => {
   uni.$off('mes:wm:packages:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

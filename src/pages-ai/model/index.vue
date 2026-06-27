@@ -61,6 +61,3 @@ function handleNavigate(url: string) {
   uni.navigateTo({ url })
 }
 </script>
-
-<style lang="scss" scoped>
-</style>

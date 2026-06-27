@@ -86,6 +86,3 @@ onMounted(() => {
   getList()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

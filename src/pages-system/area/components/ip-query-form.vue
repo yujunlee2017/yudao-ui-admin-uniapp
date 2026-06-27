@@ -72,6 +72,3 @@ async function handleQueryIp() {
   toast.success('查询成功')
 }
 </script>
-
-<style lang="scss" scoped>
-</style>

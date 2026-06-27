@@ -171,8 +171,4 @@ async function handleReadAll() {
   // 刷新列表
   reload()
 }
-
 </script>
-
-<style lang="scss" scoped>
-</style>

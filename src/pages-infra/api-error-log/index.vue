@@ -132,6 +132,3 @@ onUnmounted(() => {
   uni.$off('infra:api-error-log:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

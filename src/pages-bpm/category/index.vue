@@ -140,8 +140,4 @@ function handleDetail(item: Category) {
     url: `/pages-bpm/category/detail/index?id=${item.id}`,
   })
 }
-
 </script>
-
-<style lang="scss" scoped>
-</style>

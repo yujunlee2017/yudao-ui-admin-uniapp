@@ -240,6 +240,3 @@ onUnload(() => {
   uni.$off('mes:wm:barcode:config:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

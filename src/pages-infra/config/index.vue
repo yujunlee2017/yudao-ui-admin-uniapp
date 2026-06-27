@@ -155,6 +155,3 @@ onUnmounted(() => {
   uni.$off('infra:config:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

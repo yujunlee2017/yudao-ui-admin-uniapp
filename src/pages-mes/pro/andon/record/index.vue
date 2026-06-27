@@ -187,6 +187,3 @@ onUnload(() => {
   uni.$off('mes:pro:andon:record:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

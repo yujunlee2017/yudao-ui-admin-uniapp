@@ -242,6 +242,3 @@ watch(currentId, () => {
   loadPageData()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

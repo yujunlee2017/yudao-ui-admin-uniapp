@@ -200,6 +200,3 @@ onUnload(() => {
   uni.$off('mes:dv:checkrecord:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

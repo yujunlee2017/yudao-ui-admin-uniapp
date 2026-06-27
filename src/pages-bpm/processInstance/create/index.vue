@@ -291,6 +291,3 @@ async function restartProcessInstance(processInstanceId: string) {
   handleSelect(processDefinition, processInstanceId)
 }
 </script>
-
-<style lang="scss" scoped>
-</style>

@@ -450,6 +450,3 @@ onLoad(async (query) => {
   await getList(true)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

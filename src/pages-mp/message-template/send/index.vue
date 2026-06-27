@@ -215,6 +215,3 @@ onLoad((query) => {
   loadUserList()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

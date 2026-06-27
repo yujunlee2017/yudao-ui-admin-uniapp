@@ -156,7 +156,7 @@
           <view class="line-clamp-2 text-28rpx text-[#333]">
             {{ item.prompt || '-' }}
           </view>
-          <view class="mt-12rpx line-clamp-3 text-26rpx text-[#666]">
+          <view class="line-clamp-3 mt-12rpx text-26rpx text-[#666]">
             {{ item.generatedContent || item.errorMessage || '-' }}
           </view>
           <view class="mt-16rpx flex justify-end">
@@ -318,6 +318,3 @@ onUnmounted(() => {
   stopStream()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

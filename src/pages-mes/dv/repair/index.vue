@@ -243,6 +243,3 @@ onUnload(() => {
   uni.$off('mes:dv:repair:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

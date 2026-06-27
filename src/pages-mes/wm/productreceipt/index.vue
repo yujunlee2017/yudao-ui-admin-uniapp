@@ -270,6 +270,3 @@ onUnload(() => {
   uni.$off('mes:wm:productreceipt:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

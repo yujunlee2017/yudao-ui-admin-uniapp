@@ -355,6 +355,3 @@ function getTagsText(tags?: string | string[]) {
   return tags || '-'
 }
 </script>
-
-<style lang="scss" scoped>
-</style>

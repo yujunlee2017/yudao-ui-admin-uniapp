@@ -245,6 +245,3 @@ onUnload(() => {
   uni.$off('mes:dv:checkplan:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

@@ -563,6 +563,3 @@ watch([routeId, routeNoticeId, routeMode], () => {
   initPage()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

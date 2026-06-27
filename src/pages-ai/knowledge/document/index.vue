@@ -216,6 +216,3 @@ onUnload(() => {
   uni.$off('ai:knowledge-document:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

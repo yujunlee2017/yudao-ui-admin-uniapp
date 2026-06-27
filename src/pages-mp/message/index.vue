@@ -164,6 +164,3 @@ function handleOpenChat(item: MpMessage) {
   uni.navigateTo({ url: `/pages-mp/message/chat/index?${params}` })
 }
 </script>
-
-<style lang="scss" scoped>
-</style>

@@ -168,6 +168,3 @@ onMounted(() => {
   loadUserList()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

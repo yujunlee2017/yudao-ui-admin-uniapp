@@ -126,8 +126,4 @@ function handleDetail(item: OperateLog) {
     url: `/pages-system/operate-log/detail/index?id=${item.id}`,
   })
 }
-
 </script>
-
-<style lang="scss" scoped>
-</style>

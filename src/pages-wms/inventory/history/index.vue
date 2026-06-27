@@ -119,6 +119,3 @@ function getQuantityClass(quantity?: number) {
   return quantity > 0 ? 'text-green-600' : 'text-red-500'
 }
 </script>
-
-<style lang="scss" scoped>
-</style>

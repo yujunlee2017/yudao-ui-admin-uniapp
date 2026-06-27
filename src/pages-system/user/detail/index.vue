@@ -211,6 +211,3 @@ onUnload(() => {
   uni.$off('system:user:reload', getDetail)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

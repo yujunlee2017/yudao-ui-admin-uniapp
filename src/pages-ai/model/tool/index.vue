@@ -161,6 +161,3 @@ onUnload(() => {
   uni.$off('ai:tool:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

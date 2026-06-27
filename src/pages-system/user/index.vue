@@ -160,6 +160,3 @@ onUnload(() => {
   uni.$off('system:user:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

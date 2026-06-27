@@ -152,6 +152,3 @@ onUnload(() => {
   uni.$off('wms:movement-order:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

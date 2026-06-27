@@ -134,8 +134,4 @@ function handleDetail(item: ProcessExpression) {
     url: `/pages-bpm/process-expression/detail/index?id=${item.id}`,
   })
 }
-
 </script>
-
-<style lang="scss" scoped>
-</style>

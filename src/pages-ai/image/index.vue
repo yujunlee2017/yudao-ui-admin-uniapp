@@ -435,7 +435,7 @@ const isMidjourneyMode = computed(() => formData.platformMode === 'midjourney')
 const commonModelOptions = computed(() => {
   const commonPlatforms = OtherPlatformList.map(platform => platform.key)
   const options = models.value.filter(item => ![AiPlatformEnum.OPENAI, AiPlatformEnum.MIDJOURNEY, AiPlatformEnum.STABLE_DIFFUSION].includes(item.platform as any)
-    || commonPlatforms.includes(item.platform || '')
+    || commonPlatforms.includes(item.platform || ''),
   )
   return options.length > 0 ? options : models.value
 })
@@ -688,6 +688,3 @@ onMounted(async () => {
 /** 监听平台变化 */
 watch(() => formData.platformMode, handlePlatformChange)
 </script>
-
-<style lang="scss" scoped>
-</style>

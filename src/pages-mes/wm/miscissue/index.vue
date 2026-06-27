@@ -270,6 +270,3 @@ onUnload(() => {
   uni.$off('mes:wm:miscissue:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

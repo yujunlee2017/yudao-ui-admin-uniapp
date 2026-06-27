@@ -141,6 +141,3 @@ onUnload(() => {
   uni.$off('wms:warehouse:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

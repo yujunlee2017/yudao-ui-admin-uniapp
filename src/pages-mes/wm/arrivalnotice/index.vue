@@ -236,6 +236,3 @@ onUnload(() => {
   uni.$off('mes:wm:arrivalnotice:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

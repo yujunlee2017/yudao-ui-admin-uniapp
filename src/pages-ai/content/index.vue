@@ -94,7 +94,7 @@
               <view class="line-clamp-2">
                 {{ item.prompt || '-' }}
               </view>
-              <view class="mt-12rpx line-clamp-4 text-24rpx text-[#999]">
+              <view class="line-clamp-4 mt-12rpx text-24rpx text-[#999]">
                 {{ item.generatedContent || item.errorMessage || '-' }}
               </view>
             </view>
@@ -103,7 +103,7 @@
                 <view class="line-clamp-2">
                   {{ item.prompt || '-' }}
                 </view>
-                <view class="mt-12rpx line-clamp-4 text-24rpx text-[#999]">
+                <view class="line-clamp-4 mt-12rpx text-24rpx text-[#999]">
                   {{ item.generatedContent || item.errorMessage || '-' }}
                 </view>
               </template>
@@ -406,6 +406,3 @@ function getItemTitle(item: Record<string, any>) {
   return item.prompt || `#${item.id}`
 }
 </script>
-
-<style lang="scss" scoped>
-</style>

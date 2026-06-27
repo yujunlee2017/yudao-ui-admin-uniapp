@@ -266,6 +266,3 @@ watch(currentId, () => {
   initPage()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

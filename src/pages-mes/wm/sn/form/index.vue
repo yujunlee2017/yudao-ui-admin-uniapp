@@ -149,6 +149,3 @@ async function handleSubmit() {
   }
 }
 </script>
-
-<style lang="scss" scoped>
-</style>

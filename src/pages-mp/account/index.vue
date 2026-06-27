@@ -142,6 +142,3 @@ onUnload(() => {
   uni.$off('mp:account:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

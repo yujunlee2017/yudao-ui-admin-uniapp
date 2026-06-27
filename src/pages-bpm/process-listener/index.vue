@@ -141,8 +141,4 @@ function handleDetail(item: ProcessListener) {
     url: `/pages-bpm/process-listener/detail/index?id=${item.id}`,
   })
 }
-
 </script>
-
-<style lang="scss" scoped>
-</style>

@@ -295,6 +295,3 @@ onUnload(() => {
   uni.$off('mes:qc:pendinginspect:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

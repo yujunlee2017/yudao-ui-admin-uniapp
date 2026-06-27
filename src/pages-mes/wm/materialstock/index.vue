@@ -196,6 +196,3 @@ onUnload(() => {
   uni.$off('mes:wm:materialstock:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

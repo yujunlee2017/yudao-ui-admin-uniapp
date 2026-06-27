@@ -659,6 +659,3 @@ async function handleDeleteActive() {
   editorVisible.value = false
 }
 </script>
-
-<style lang="scss" scoped>
-</style>

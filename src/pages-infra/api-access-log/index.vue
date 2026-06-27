@@ -132,6 +132,3 @@ function handleDetail(item: ApiAccessLog) {
   })
 }
 </script>
-
-<style lang="scss" scoped>
-</style>

@@ -214,6 +214,3 @@ onUnload(() => {
   uni.$off('mp:auto-reply:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

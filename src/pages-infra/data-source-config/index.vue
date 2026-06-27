@@ -123,6 +123,3 @@ onUnmounted(() => {
   uni.$off('infra:data-source-config:reload', getList)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

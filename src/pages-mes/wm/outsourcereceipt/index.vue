@@ -284,6 +284,3 @@ onUnload(() => {
   uni.$off('mes:wm:outsourcereceipt:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

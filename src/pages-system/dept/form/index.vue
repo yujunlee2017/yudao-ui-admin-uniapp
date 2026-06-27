@@ -161,6 +161,3 @@ onMounted(async () => {
   await getDetail()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

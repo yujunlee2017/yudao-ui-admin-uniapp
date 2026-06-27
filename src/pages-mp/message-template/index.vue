@@ -169,6 +169,3 @@ async function handleDelete(item: MsgTemplate) {
   getList()
 }
 </script>
-
-<style lang="scss" scoped>
-</style>

@@ -106,6 +106,3 @@ function handleReset() {
   handleQuery({ type: 'warehouse' })
 }
 </script>
-
-<style lang="scss" scoped>
-</style>

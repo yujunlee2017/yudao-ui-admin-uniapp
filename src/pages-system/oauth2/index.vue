@@ -48,6 +48,3 @@ function handleBack() {
   navigateBackPlus()
 }
 </script>
-
-<style lang="scss" scoped>
-</style>

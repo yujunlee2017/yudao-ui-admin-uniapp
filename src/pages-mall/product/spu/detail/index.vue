@@ -305,6 +305,3 @@ onUnload(() => {
   uni.$off('mall:product-spu:reload', getDetail)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

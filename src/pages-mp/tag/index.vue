@@ -200,6 +200,3 @@ onUnload(() => {
   uni.$off('mp:tag:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

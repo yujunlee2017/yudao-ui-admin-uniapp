@@ -403,6 +403,3 @@ async function handleDelete(item: Material) {
   reload()
 }
 </script>
-
-<style lang="scss" scoped>
-</style>

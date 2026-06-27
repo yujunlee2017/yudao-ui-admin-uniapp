@@ -208,6 +208,3 @@ async function getSummary() {
   }
 }
 </script>
-
-<style lang="scss" scoped>
-</style>

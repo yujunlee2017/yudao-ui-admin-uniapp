@@ -173,6 +173,3 @@ onUnload(() => {
   uni.$off('ai:model:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

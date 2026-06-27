@@ -138,6 +138,3 @@ onUnload(() => {
   uni.$off('mes:pro:workrecord:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

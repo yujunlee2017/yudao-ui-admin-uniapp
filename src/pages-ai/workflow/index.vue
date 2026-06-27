@@ -372,6 +372,3 @@ function createDefaultForm(): WorkflowVO {
   }
 }
 </script>
-
-<style lang="scss" scoped>
-</style>

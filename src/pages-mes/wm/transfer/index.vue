@@ -316,6 +316,3 @@ onUnload(() => {
   uni.$off('mes:wm:transfer:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

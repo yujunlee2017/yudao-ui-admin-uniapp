@@ -136,8 +136,4 @@ function handleDetail(item: Notice) {
     url: `/pages-system/notice/detail/index?id=${item.id}`,
   })
 }
-
 </script>
-
-<style lang="scss" scoped>
-</style>

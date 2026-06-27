@@ -134,8 +134,4 @@ function handleDetail(item: Post) {
     url: `/pages-system/post/detail/index?id=${item.id}`,
   })
 }
-
 </script>
-
-<style lang="scss" scoped>
-</style>

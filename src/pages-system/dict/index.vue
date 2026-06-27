@@ -15,7 +15,7 @@
       </wd-tabs>
     </view>
     <!-- 列表内容 -->
-    <TypeList v-show="tabType === 'type'" @select="handleTypeSelect" class="min-h-0 flex-1" />
+    <TypeList v-show="tabType === 'type'" class="min-h-0 flex-1" @select="handleTypeSelect" />
     <DataList v-show="tabType === 'data'" :dict-type="selectedDictType" class="min-h-0 flex-1" />
   </view>
 </template>
@@ -54,6 +54,3 @@ function handleBack() {
   navigateBackPlus()
 }
 </script>
-
-<style lang="scss" scoped>
-</style>

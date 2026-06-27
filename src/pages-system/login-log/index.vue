@@ -119,8 +119,4 @@ function handleDetail(item: LoginLog) {
     url: `/pages-system/login-log/detail/index?id=${item.id}`,
   })
 }
-
 </script>
-
-<style lang="scss" scoped>
-</style>

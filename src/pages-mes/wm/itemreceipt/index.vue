@@ -262,6 +262,3 @@ onUnload(() => {
   uni.$off('mes:wm:itemreceipt:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

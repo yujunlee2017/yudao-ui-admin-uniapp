@@ -437,6 +437,3 @@ watch([currentId, routeMode], () => {
   getDetail()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

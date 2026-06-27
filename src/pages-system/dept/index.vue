@@ -169,6 +169,3 @@ onMounted(async () => {
   await getList()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

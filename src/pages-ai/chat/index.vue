@@ -652,6 +652,3 @@ onUnmounted(() => {
   stopStream()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

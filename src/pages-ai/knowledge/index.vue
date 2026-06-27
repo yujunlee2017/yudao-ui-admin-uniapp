@@ -41,7 +41,7 @@
             <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="item.status" />
           </view>
           <view class="text-26rpx text-[#666]">
-            <view class="mb-8rpx line-clamp-2">
+            <view class="line-clamp-2 mb-8rpx">
               {{ item.description || '-' }}
             </view>
             <view class="text-24rpx text-[#999]">
@@ -189,6 +189,3 @@ onUnload(() => {
   uni.$off('ai:knowledge:reload', reload)
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

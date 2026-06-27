@@ -124,12 +124,12 @@ async function getDetail() {
     return
   }
   const detailData = await getPackage(packageId.value)
-    if (!detailData) {
-      uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
-      setTimeout(() => handleBack(), 300)
-      return
-    }
-    formData.value = detailData
+  if (!detailData) {
+    uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+    setTimeout(() => handleBack(), 300)
+    return
+  }
+  formData.value = detailData
 }
 
 /** 初始化页面数据 */
@@ -212,6 +212,3 @@ watch(packageId, () => {
   initPage()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

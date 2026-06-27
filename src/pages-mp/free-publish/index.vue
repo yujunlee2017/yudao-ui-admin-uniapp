@@ -136,6 +136,3 @@ async function handleDelete(item: FreePublish) {
   reload()
 }
 </script>
-
-<style lang="scss" scoped>
-</style>

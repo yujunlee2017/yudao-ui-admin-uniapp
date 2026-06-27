@@ -202,8 +202,4 @@ function handleCancel(item: ProcessInstance) {
     },
   })
 }
-
 </script>
-
-<style lang="scss" scoped>
-</style>

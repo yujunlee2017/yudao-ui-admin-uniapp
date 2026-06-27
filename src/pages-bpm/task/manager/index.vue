@@ -139,8 +139,4 @@ function handleDetail(item: Task) {
     uni.navigateTo({ url: `/pages-bpm/processInstance/detail/index?id=${item.processInstance.id}` })
   }
 }
-
 </script>
-
-<style lang="scss" scoped>
-</style>
