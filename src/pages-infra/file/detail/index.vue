@@ -36,6 +36,9 @@
     <!-- 底部操作按钮 -->
     <view class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
+        <wd-button class="flex-1" type="primary" plain @click="openFile(formData?.url)">
+          打开
+        </wd-button>
         <wd-button class="flex-1" type="info" @click="handleCopyUrl">
           复制链接
         </wd-button>
@@ -59,7 +62,7 @@ import { deleteFile, getFile } from '@/api/infra/file'
 import { useAccess } from '@/hooks/useAccess'
 import { delay, navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
-import { formatFileSize } from '@/utils/download'
+import { formatFileSize, openFile } from '@/utils/download'
 
 const props = defineProps<{
   id?: number | any
@@ -141,6 +144,3 @@ onMounted(() => {
   getDetail()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

@@ -57,6 +57,9 @@
             </view>
             <!-- 操作按钮 -->
             <view class="mt-16rpx flex justify-end gap-16rpx">
+              <wd-button size="small" type="primary" plain @click.stop="openFile(item.url)">
+                打开
+              </wd-button>
               <wd-button size="small" type="info" @click.stop="handleCopyUrl(item)">
                 复制链接
               </wd-button>
@@ -90,7 +93,7 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import { deleteFile, getFilePage, uploadFile } from '@/api/infra/file'
 import { useAccess } from '@/hooks/useAccess'
 import { formatDateTime } from '@/utils/date'
-import { formatFileSize } from '@/utils/download'
+import { formatFileSize, openFile } from '@/utils/download'
 import FileSearchForm from './file-search-form.vue'
 
 const { hasAccessByCodes } = useAccess()

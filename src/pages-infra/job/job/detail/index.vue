@@ -63,7 +63,8 @@
 import type { Job } from '@/api/infra/job'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { computed, ref } from 'vue'
 import { deleteJob, getJob, getJobNextTimes, runJob, updateJobStatus } from '@/api/infra/job'
 import { useAccess } from '@/hooks/useAccess'
 import { delay, navigateBackPlus } from '@/utils'
@@ -231,10 +232,7 @@ function handleViewLog() {
 }
 
 /** 初始化 */
-onMounted(() => {
+onShow(() => {
   getDetail()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

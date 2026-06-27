@@ -229,3 +229,29 @@ export function staticUrl(path: string): string {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
   return `${baseUrl}${normalizedPath}`
 }
+
+/**
+ * 打开文件：H5 浏览器新窗口打开/下载；其他端下载后用系统能力打开
+ * @param url 文件地址
+ */
+export function openFile(url?: string) {
+  if (!url) {
+    uni.showToast({ title: '文件地址为空', icon: 'none' })
+    return
+  }
+  // #ifdef H5
+  window.open(url)
+  // #endif
+  // #ifndef H5
+  uni.showLoading({ title: '打开中...' })
+  uni.downloadFile({
+    url,
+    success: (res) => {
+      if (res.statusCode === 200) {
+        uni.openDocument({ filePath: res.tempFilePath, showMenu: true })
+      }
+    },
+    complete: () => uni.hideLoading(),
+  })
+  // #endif
+}
