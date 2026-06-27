@@ -49,6 +49,7 @@
 import type { MailAccount } from '@/api/system/mail/account'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { deleteMailAccount, getMailAccount } from '@/api/system/mail/account'
 import { useAccess } from '@/hooks/useAccess'
@@ -116,6 +117,7 @@ async function handleDelete() {
   try {
     await deleteMailAccount(props.id)
     toast.success('删除成功')
+    uni.$emit('system:mail-account:reload')
     delay(handleBack)
   } finally {
     deleting.value = false
@@ -125,5 +127,11 @@ async function handleDelete() {
 /** 初始化 */
 onMounted(() => {
   getDetail()
+  uni.$on('system:mail-account:reload', getDetail)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('system:mail-account:reload', getDetail)
 })
 </script>

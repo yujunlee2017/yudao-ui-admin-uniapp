@@ -155,6 +155,7 @@ async function handleSubmit() {
       await createSmsChannel(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('system:sms-channel:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false

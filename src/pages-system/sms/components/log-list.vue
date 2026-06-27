@@ -43,8 +43,16 @@
               <text class="min-w-0 flex-1 truncate">{{ item.templateContent }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">接收状态：</text>
+              <dict-tag :type="DICT_TYPE.SYSTEM_SMS_RECEIVE_STATUS" :value="item.receiveStatus" />
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx text-[#999]">发送时间：</text>
               <text>{{ formatDateTime(item.sendTime) || '-' }}</text>
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx text-[#999]">接收时间：</text>
+              <text>{{ formatDateTime(item.receiveTime) || '-' }}</text>
             </view>
           </view>
         </view>
@@ -106,5 +114,4 @@ function handleDetail(item: SmsLog) {
     url: `/pages-system/sms/log/detail/index?id=${item.id}`,
   })
 }
-
 </script>

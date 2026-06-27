@@ -19,7 +19,9 @@
         <wd-cell title="开启状态">
           <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="formData?.status" />
         </wd-cell>
-        <wd-cell title="模板内容" :value="formData?.content" />
+        <wd-cell title="模板内容">
+          <rich-text :nodes="formData?.content || '-'" />
+        </wd-cell>
         <wd-cell title="备注" :value="formData?.remark ?? '-'" />
         <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime)" />
       </wd-cell-group>
@@ -59,6 +61,7 @@ import type { MailAccount } from '@/api/system/mail/account'
 import type { MailTemplate } from '@/api/system/mail/template'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { getSimpleMailAccountList } from '@/api/system/mail/account'
 import { deleteMailTemplate, getMailTemplate } from '@/api/system/mail/template'
@@ -148,6 +151,7 @@ async function handleDelete() {
   try {
     await deleteMailTemplate(props.id)
     toast.success('删除成功')
+    uni.$emit('system:mail-template:reload')
     delay(handleBack)
   } finally {
     deleting.value = false
@@ -163,5 +167,11 @@ function handleSendTest() {
 onMounted(async () => {
   await loadAccountList()
   await getDetail()
+  uni.$on('system:mail-template:reload', getDetail)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('system:mail-template:reload', getDetail)
 })
 </script>

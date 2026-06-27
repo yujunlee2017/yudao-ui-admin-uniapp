@@ -57,7 +57,7 @@
           </wd-radio>
         </wd-radio-group>
       </view>
-      <yd-search-picker v-model="formData.accountId" label="邮箱账号" :columns="accountOptions" placeholder="请选择邮箱账号" />
+      <yd-search-picker v-model="formData.accountId" label="邮箱账号" :columns="accountList" label-key="mail" value-key="id" placeholder="请选择邮箱账号" />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           模板编号
@@ -65,6 +65,16 @@
         <wd-input
           v-model="formData.templateId"
           placeholder="请输入模板编号"
+          clearable
+        />
+      </view>
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
+          接收邮箱
+        </view>
+        <wd-input
+          v-model="formData.toMail"
+          placeholder="请输入接收邮箱"
           clearable
         />
       </view>
@@ -101,19 +111,12 @@ const formData = reactive({
   sendStatus: -1,
   accountId: undefined as number | undefined,
   templateId: undefined as number | undefined,
+  toMail: undefined as string | undefined,
 }) // 搜索表单数据
 const visible = ref(false) // 搜索弹窗显示状态
 
 /** 邮箱账号列表 */
 const accountList = ref<{ id?: number, mail: string }[]>([])
-
-/** 邮箱账号选项 */
-const accountOptions = computed(() => {
-  return accountList.value.map(item => ({
-    value: item.id,
-    label: item.mail,
-  }))
-})
 
 /** 获取邮箱账号名称 */
 function getAccountMail(accountId?: number) {
@@ -141,21 +144,23 @@ const placeholder = computed(() => {
   if (formData.templateId) {
     conditions.push(`模板:${formData.templateId}`)
   }
+  if (formData.toMail) {
+    conditions.push(`接收:${formData.toMail}`)
+  }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索邮件日志'
 })
 
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  const dateRange = formatDateRange(formData.sendTime)
   emit('search', {
-    beginTime: dateRange?.[0],
-    endTime: dateRange?.[1],
+    sendTime: formatDateRange(formData.sendTime),
     userId: formData.userId,
     userType: formData.userType === -1 ? undefined : formData.userType,
     sendStatus: formData.sendStatus === -1 ? undefined : formData.sendStatus,
     accountId: formData.accountId || undefined,
     templateId: formData.templateId || undefined,
+    toMail: formData.toMail || undefined,
   })
 }
 
@@ -167,6 +172,7 @@ function handleReset() {
   formData.sendStatus = -1
   formData.accountId = undefined
   formData.templateId = undefined
+  formData.toMail = undefined
   visible.value = false
   emit('reset')
 }

@@ -25,23 +25,7 @@
               placeholder="请输入模板编码"
             />
           </wd-form-item>
-          <wd-form-item
-            title="邮箱账号"
-            title-width="200rpx"
-            prop="accountId"
-            is-link
-            :value="getWotPickerFormValue(accountList, formData.accountId, { valueKey: 'id', labelKey: 'mail' })"
-            placeholder="请选择邮箱账号"
-            @click="pickerVisible.accountId = true"
-          />
-          <wd-picker
-            v-model:visible="pickerVisible.accountId"
-            :model-value="formData.accountId"
-            :columns="accountList"
-            label-key="mail"
-            value-key="id"
-            @confirm="({ value }) => formData.accountId = value[0]"
-          />
+          <AccountPicker v-model="formData.accountId" label="邮箱账号" prop="accountId" />
           <wd-form-item title="发送人名称" title-width="200rpx">
             <wd-input
               v-model="formData.nickname"
@@ -102,16 +86,15 @@
 
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
-import type { MailAccount } from '@/api/system/mail/account'
 import type { MailTemplate } from '@/api/system/mail/template'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { getSimpleMailAccountList } from '@/api/system/mail/account'
 import { createMailTemplate, getMailTemplate, updateMailTemplate } from '@/api/system/mail/template'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
-import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
+import { createFormSchema } from '@/utils/wot'
+import AccountPicker from '../../components/account-picker.vue'
 
 const props = defineProps<{
   id?: number | any
@@ -147,19 +130,10 @@ const formSchema = createFormSchema({
   status: [{ required: true, message: '开启状态不能为空' }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用
-const pickerVisible = ref<Record<string, boolean>>({})
-
-/** 邮箱账号列表 */
-const accountList = ref<MailAccount[]>([])
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-system/mail/index')
-}
-
-/** 加载邮箱账号列表 */
-async function loadAccountList() {
-  accountList.value = await getSimpleMailAccountList()
 }
 
 /** 加载详情 */
@@ -186,6 +160,7 @@ async function handleSubmit() {
       await createMailTemplate(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('system:mail-template:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false
@@ -193,8 +168,7 @@ async function handleSubmit() {
 }
 
 /** 初始化 */
-onMounted(async () => {
-  await loadAccountList()
-  await getDetail()
+onMounted(() => {
+  getDetail()
 })
 </script>

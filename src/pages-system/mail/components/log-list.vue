@@ -106,5 +106,4 @@ function handleDetail(item: MailLog) {
     url: `/pages-system/mail/log/detail/index?id=${item.id}`,
   })
 }
-
 </script>

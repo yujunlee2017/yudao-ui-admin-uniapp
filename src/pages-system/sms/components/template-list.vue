@@ -43,6 +43,10 @@
               <text class="min-w-0 flex-1 truncate">{{ item.content }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">API 模板编号：</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.apiTemplateId || '-' }}</text>
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx text-[#999]">创建时间：</text>
               <text>{{ formatDateTime(item.createTime) }}</text>
             </view>
@@ -64,7 +68,7 @@
 
 <script lang="ts" setup>
 import type { SmsTemplate } from '@/api/system/sms/template'
-import { ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { getSmsTemplatePage } from '@/api/system/sms/template'
 import { useAccess } from '@/hooks/useAccess'
 import { DICT_TYPE } from '@/utils/constants'
@@ -121,4 +125,13 @@ function handleDetail(item: SmsTemplate) {
   })
 }
 
+/** 初始化 */
+onMounted(() => {
+  uni.$on('system:sms-template:reload', reload)
+})
+
+/** 卸载 */
+onUnmounted(() => {
+  uni.$off('system:sms-template:reload', reload)
+})
 </script>

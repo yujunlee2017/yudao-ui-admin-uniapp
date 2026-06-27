@@ -60,7 +60,7 @@
 
 <script lang="ts" setup>
 import type { SmsChannel } from '@/api/system/sms/channel'
-import { ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { getSmsChannelPage } from '@/api/system/sms/channel'
 import { useAccess } from '@/hooks/useAccess'
 import { DICT_TYPE } from '@/utils/constants'
@@ -117,4 +117,13 @@ function handleDetail(item: SmsChannel) {
   })
 }
 
+/** 初始化 */
+onMounted(() => {
+  uni.$on('system:sms-channel:reload', reload)
+})
+
+/** 卸载 */
+onUnmounted(() => {
+  uni.$off('system:sms-channel:reload', reload)
+})
 </script>

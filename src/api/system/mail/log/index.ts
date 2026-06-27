@@ -8,6 +8,7 @@ export interface MailLog {
   userType?: number
   templateId?: number
   templateCode?: string
+  templateNickname?: string
   templateTitle?: string
   templateContent?: string
   templateParams?: Record<string, any>

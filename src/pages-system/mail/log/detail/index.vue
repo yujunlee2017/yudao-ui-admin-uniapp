@@ -15,8 +15,12 @@
         <wd-cell title="接收信息" :value="formatReceiveInfo(formData)" />
         <wd-cell title="模板编号" :value="formData?.templateId" />
         <wd-cell title="模板编码" :value="formData?.templateCode" />
+        <wd-cell title="模版发送人名称" :value="formData?.templateNickname ?? '-'" />
         <wd-cell title="邮件标题" :value="formData?.templateTitle" />
-        <wd-cell title="邮件内容" :value="formData?.templateContent" />
+        <wd-cell title="邮件内容">
+          <rich-text :nodes="formData?.templateContent || '-'" />
+        </wd-cell>
+        <wd-cell title="邮件参数" :value="formatTemplateParams(formData?.templateParams)" />
         <wd-cell title="发送状态">
           <dict-tag :type="DICT_TYPE.SYSTEM_MAIL_SEND_STATUS" :value="formData?.sendStatus" />
         </wd-cell>
@@ -73,6 +77,18 @@ function formatReceiveInfo(data?: MailLog) {
     lines.push(`密送：${data.bccMails.join('、')}`)
   }
   return lines.length > 0 ? lines.join('；') : '-'
+}
+
+/** 格式化邮件参数 */
+function formatTemplateParams(params: any) {
+  if (!params) {
+    return '-'
+  }
+  try {
+    return typeof params === 'string' ? params : JSON.stringify(params)
+  } catch {
+    return '-'
+  }
 }
 
 /** 加载详情 */

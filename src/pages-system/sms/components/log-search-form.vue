@@ -57,7 +57,16 @@
           </wd-radio>
         </wd-radio-group>
       </view>
+      <yd-search-picker
+        v-model="formData.channelId"
+        label="短信渠道"
+        :columns="channelList"
+        label-key="signature"
+        value-key="id"
+        placeholder="请选择短信渠道"
+      />
       <yd-search-date-range v-model="formData.sendTime" label="发送时间" />
+      <yd-search-date-range v-model="formData.receiveTime" label="接收时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -71,7 +80,9 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue'
+import type { SmsChannel } from '@/api/system/sms/channel'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { getSimpleSmsChannelList } from '@/api/system/sms/channel'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -83,11 +94,14 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
+const channelList = ref<SmsChannel[]>([]) // 短信渠道列表
 const formData = reactive({
   mobile: undefined as string | undefined,
+  channelId: undefined as number | undefined,
   sendStatus: -1,
   receiveStatus: -1,
   sendTime: [undefined, undefined] as [number | undefined, number | undefined],
+  receiveTime: [undefined, undefined] as [number | undefined, number | undefined],
 }) // 搜索表单数据
 
 /** 搜索条件 placeholder 拼接 */
@@ -96,6 +110,9 @@ const placeholder = computed(() => {
   if (formData.mobile) {
     conditions.push(`手机号:${formData.mobile}`)
   }
+  if (formData.channelId) {
+    conditions.push(`渠道:${channelList.value.find(item => item.id === formData.channelId)?.signature}`)
+  }
   if (formData.sendStatus !== -1) {
     conditions.push(`发送:${getDictLabel(DICT_TYPE.SYSTEM_SMS_SEND_STATUS, formData.sendStatus)}`)
   }
@@ -103,29 +120,46 @@ const placeholder = computed(() => {
     conditions.push(`接收:${getDictLabel(DICT_TYPE.SYSTEM_SMS_RECEIVE_STATUS, formData.receiveStatus)}`)
   }
   if (formData.sendTime?.[0] && formData.sendTime?.[1]) {
-    conditions.push(`时间:${formatDate(formData.sendTime[0])}~${formatDate(formData.sendTime[1])}`)
+    conditions.push(`发送时间:${formatDate(formData.sendTime[0])}~${formatDate(formData.sendTime[1])}`)
+  }
+  if (formData.receiveTime?.[0] && formData.receiveTime?.[1]) {
+    conditions.push(`接收时间:${formatDate(formData.receiveTime[0])}~${formatDate(formData.receiveTime[1])}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索短信日志'
 })
+
+/** 加载短信渠道列表 */
+async function loadChannelList() {
+  channelList.value = await getSimpleSmsChannelList()
+}
 
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
   emit('search', {
     mobile: formData.mobile || undefined,
+    channelId: formData.channelId,
     sendStatus: formData.sendStatus === -1 ? undefined : formData.sendStatus,
     receiveStatus: formData.receiveStatus === -1 ? undefined : formData.receiveStatus,
     sendTime: formatDateRange(formData.sendTime),
+    receiveTime: formatDateRange(formData.receiveTime),
   })
 }
 
 /** 重置按钮操作 */
 function handleReset() {
   formData.mobile = undefined
+  formData.channelId = undefined
   formData.sendStatus = -1
   formData.receiveStatus = -1
   formData.sendTime = [undefined, undefined]
+  formData.receiveTime = [undefined, undefined]
   visible.value = false
   emit('reset')
 }
+
+/** 初始化 */
+onMounted(() => {
+  loadChannelList()
+})
 </script>

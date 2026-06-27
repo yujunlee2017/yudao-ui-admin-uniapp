@@ -15,16 +15,6 @@
     <view class="yd-search-form-container">
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
-          模板名称
-        </view>
-        <wd-input
-          v-model="formData.name"
-          placeholder="请输入模板名称"
-          clearable
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
           模板编码
         </view>
         <wd-input
@@ -67,6 +57,24 @@
           </wd-radio>
         </wd-radio-group>
       </view>
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
+          API 模板编号
+        </view>
+        <wd-input
+          v-model="formData.apiTemplateId"
+          placeholder="请输入 API 模板编号"
+          clearable
+        />
+      </view>
+      <yd-search-picker
+        v-model="formData.channelId"
+        label="短信渠道"
+        :columns="channelList"
+        label-key="signature"
+        value-key="id"
+        placeholder="请选择短信渠道"
+      />
       <yd-search-date-range v-model="formData.createTime" label="创建时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -81,7 +89,9 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue'
+import type { SmsChannel } from '@/api/system/sms/channel'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { getSimpleSmsChannelList } from '@/api/system/sms/channel'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
@@ -93,20 +103,19 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
+const channelList = ref<SmsChannel[]>([]) // 短信渠道列表
 const formData = reactive({
-  name: undefined as string | undefined,
   code: undefined as string | undefined,
   type: -1,
   status: -1,
+  apiTemplateId: undefined as string | undefined,
+  channelId: undefined as number | undefined,
   createTime: [undefined, undefined] as [number | undefined, number | undefined],
 }) // 搜索表单数据
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
   const conditions: string[] = []
-  if (formData.name) {
-    conditions.push(`名称:${formData.name}`)
-  }
   if (formData.code) {
     conditions.push(`编码:${formData.code}`)
   }
@@ -116,32 +125,50 @@ const placeholder = computed(() => {
   if (formData.status !== -1) {
     conditions.push(`状态:${getDictLabel(DICT_TYPE.COMMON_STATUS, formData.status)}`)
   }
+  if (formData.apiTemplateId) {
+    conditions.push(`API:${formData.apiTemplateId}`)
+  }
+  if (formData.channelId) {
+    conditions.push(`渠道:${channelList.value.find(item => item.id === formData.channelId)?.signature}`)
+  }
   if (formData.createTime?.[0] && formData.createTime?.[1]) {
     conditions.push(`时间:${formatDate(formData.createTime[0])}~${formatDate(formData.createTime[1])}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索短信模板'
 })
 
+/** 加载短信渠道列表 */
+async function loadChannelList() {
+  channelList.value = await getSimpleSmsChannelList()
+}
+
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
   emit('search', {
-    name: formData.name || undefined,
     code: formData.code || undefined,
     type: formData.type === -1 ? undefined : formData.type,
     status: formData.status === -1 ? undefined : formData.status,
+    apiTemplateId: formData.apiTemplateId || undefined,
+    channelId: formData.channelId,
     createTime: formatDateRange(formData.createTime),
   })
 }
 
 /** 重置按钮操作 */
 function handleReset() {
-  formData.name = undefined
   formData.code = undefined
   formData.type = -1
   formData.status = -1
+  formData.apiTemplateId = undefined
+  formData.channelId = undefined
   formData.createTime = [undefined, undefined]
   visible.value = false
   emit('reset')
 }
+
+/** 初始化 */
+onMounted(() => {
+  loadChannelList()
+})
 </script>

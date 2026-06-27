@@ -33,6 +33,7 @@
           clearable
         />
       </view>
+      <yd-search-date-range v-model="formData.createTime" label="创建时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -48,6 +49,7 @@
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import { formatDate, formatDateRange } from '@/utils/date'
 
 const emit = defineEmits<{
   search: [data: Record<string, any>]
@@ -58,6 +60,7 @@ const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
   mail: undefined as string | undefined,
   username: undefined as string | undefined,
+  createTime: [undefined, undefined] as [number | undefined, number | undefined],
 }) // 搜索表单数据
 
 /** 搜索条件 placeholder 拼接 */
@@ -69,6 +72,9 @@ const placeholder = computed(() => {
   if (formData.username) {
     conditions.push(`用户名:${formData.username}`)
   }
+  if (formData.createTime?.[0] && formData.createTime?.[1]) {
+    conditions.push(`时间:${formatDate(formData.createTime[0])}~${formatDate(formData.createTime[1])}`)
+  }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索邮箱账号'
 })
 
@@ -78,6 +84,7 @@ function handleSearch() {
   emit('search', {
     mail: formData.mail || undefined,
     username: formData.username || undefined,
+    createTime: formatDateRange(formData.createTime),
   })
 }
 
@@ -85,6 +92,7 @@ function handleSearch() {
 function handleReset() {
   formData.mail = undefined
   formData.username = undefined
+  formData.createTime = [undefined, undefined]
   visible.value = false
   emit('reset')
 }

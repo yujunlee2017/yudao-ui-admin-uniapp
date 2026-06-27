@@ -50,7 +50,7 @@
           </wd-radio>
         </wd-radio-group>
       </view>
-      <yd-search-picker v-model="formData.accountId" label="邮箱账号" :columns="accountOptions" placeholder="请选择邮箱账号" />
+      <yd-search-picker v-model="formData.accountId" label="邮箱账号" :columns="accountList" label-key="mail" value-key="id" placeholder="请选择邮箱账号" />
       <yd-search-date-range v-model="formData.createTime" label="创建时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -86,18 +86,8 @@ const formData = reactive({
 }) // 搜索表单数据
 const visible = ref(false) // 搜索弹窗显示状态
 
-/** 邮箱账号列表 */
-const accountList = ref<{ id?: number, mail: string }[]>([])
-
-/** 邮箱账号选项 */
-const accountOptions = computed(() => {
-  return accountList.value.map(item => ({
-    value: item.id,
-    label: item.mail,
-  }))
-})
-
 /** 获取邮箱账号名称 */
+const accountList = ref<{ id?: number, mail: string }[]>([]) // 邮箱账号列表
 function getAccountMail(accountId?: number) {
   return accountList.value.find(item => item.id === accountId)?.mail
 }
@@ -126,14 +116,12 @@ const placeholder = computed(() => {
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
-  const dateRange = formatDateRange(formData.createTime)
   emit('search', {
     status: formData.status === -1 ? undefined : formData.status,
     code: formData.code || undefined,
     name: formData.name || undefined,
     accountId: formData.accountId || undefined,
-    beginTime: dateRange?.[0],
-    endTime: dateRange?.[1],
+    createTime: formatDateRange(formData.createTime),
   })
 }
 

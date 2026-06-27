@@ -62,6 +62,7 @@
 import type { SmsTemplate } from '@/api/system/sms/template'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { deleteSmsTemplate, getSmsTemplate } from '@/api/system/sms/template'
 import { useAccess } from '@/hooks/useAccess'
@@ -133,6 +134,7 @@ async function handleDelete() {
   try {
     await deleteSmsTemplate(props.id)
     toast.success('删除成功')
+    uni.$emit('system:sms-template:reload')
     delay(handleBack)
   } finally {
     deleting.value = false
@@ -147,5 +149,11 @@ function handleSendTest() {
 /** 初始化 */
 onMounted(() => {
   getDetail()
+  uni.$on('system:sms-template:reload', getDetail)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('system:sms-template:reload', getDetail)
 })
 </script>

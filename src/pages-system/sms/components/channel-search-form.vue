@@ -25,23 +25,6 @@
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
-          渠道编码
-        </view>
-        <wd-radio-group v-model="formData.code" type="button">
-          <wd-radio value="">
-            全部
-          </wd-radio>
-          <wd-radio
-            v-for="dict in getStrDictOptions(DICT_TYPE.SYSTEM_SMS_CHANNEL_CODE)"
-            :key="dict.value"
-            :value="dict.value"
-          >
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
           状态
         </view>
         <wd-radio-group v-model="formData.status" type="button">
@@ -72,7 +55,7 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
-import { getDictLabel, getIntDictOptions, getStrDictOptions } from '@/hooks/useDict'
+import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
@@ -85,7 +68,6 @@ const emit = defineEmits<{
 const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
   signature: undefined as string | undefined,
-  code: '',
   status: -1,
   createTime: [undefined, undefined] as [number | undefined, number | undefined],
 }) // 搜索表单数据
@@ -95,9 +77,6 @@ const placeholder = computed(() => {
   const conditions: string[] = []
   if (formData.signature) {
     conditions.push(`签名:${formData.signature}`)
-  }
-  if (formData.code) {
-    conditions.push(`渠道:${getDictLabel(DICT_TYPE.SYSTEM_SMS_CHANNEL_CODE, formData.code)}`)
   }
   if (formData.status !== -1) {
     conditions.push(`状态:${getDictLabel(DICT_TYPE.COMMON_STATUS, formData.status)}`)
@@ -113,7 +92,6 @@ function handleSearch() {
   visible.value = false
   emit('search', {
     signature: formData.signature || undefined,
-    code: formData.code || undefined,
     status: formData.status === -1 ? undefined : formData.status,
     createTime: formatDateRange(formData.createTime),
   })
@@ -122,7 +100,6 @@ function handleSearch() {
 /** 重置按钮操作 */
 function handleReset() {
   formData.signature = undefined
-  formData.code = ''
   formData.status = -1
   formData.createTime = [undefined, undefined]
   visible.value = false

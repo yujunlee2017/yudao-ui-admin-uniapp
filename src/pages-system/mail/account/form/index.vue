@@ -41,7 +41,7 @@
             />
           </wd-form-item>
           <wd-form-item title="SMTP 服务器端口" title-width="220rpx" prop="port" center>
-            <wd-input-number v-model="formData.port" :min="0" :max="65535" />
+            <wd-input-number v-model="formData.port" :min="1" :max="65535" />
           </wd-form-item>
           <wd-form-item title="是否开启 SSL" title-width="220rpx" prop="sslEnable" center>
             <wd-radio-group v-model="formData.sslEnable" type="button">
@@ -114,12 +114,12 @@ const formData = ref<MailAccount>({
   username: '',
   password: '',
   host: '',
-  port: 25,
+  port: 465,
   sslEnable: true,
   starttlsEnable: false,
 }) // 表单数据
 const formSchema = createFormSchema({
-  mail: [{ required: true, message: '邮箱不能为空' }],
+  mail: [{ required: true, message: '邮箱不能为空' }, { type: 'email', message: '请输入正确的邮箱地址' }],
   username: [{ required: true, message: '用户名不能为空' }],
   password: [{ required: true, message: '密码不能为空' }],
   host: [{ required: true, message: 'SMTP 服务器域名不能为空' }],
@@ -158,6 +158,7 @@ async function handleSubmit() {
       await createMailAccount(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('system:mail-account:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false

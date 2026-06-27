@@ -35,6 +35,10 @@
               <text class="min-w-0 flex-1 truncate">{{ item.code }}</text>
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">发送人名称：</text>
+              <text class="min-w-0 flex-1 truncate">{{ item.nickname }}</text>
+            </view>
+            <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx shrink-0 text-[#999]">标题：</text>
               <text class="min-w-0 flex-1 truncate">{{ item.title }}</text>
             </view>
@@ -60,7 +64,7 @@
 
 <script lang="ts" setup>
 import type { MailTemplate } from '@/api/system/mail/template'
-import { ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { getMailTemplatePage } from '@/api/system/mail/template'
 import { useAccess } from '@/hooks/useAccess'
 import { DICT_TYPE } from '@/utils/constants'
@@ -117,4 +121,13 @@ function handleDetail(item: MailTemplate) {
   })
 }
 
+/** 初始化 */
+onMounted(() => {
+  uni.$on('system:mail-template:reload', reload)
+})
+
+/** 卸载 */
+onUnmounted(() => {
+  uni.$off('system:mail-template:reload', reload)
+})
 </script>

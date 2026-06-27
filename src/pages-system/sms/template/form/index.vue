@@ -40,21 +40,7 @@
               placeholder="请输入模板编码"
             />
           </wd-form-item>
-          <wd-form-item
-            title="短信渠道"
-            title-width="200rpx"
-            prop="channelId"
-            is-link
-            :value="getWotPickerFormValue(channelOptions, formData.channelId)"
-            placeholder="请选择短信渠道"
-            @click="pickerVisible.channelId = true"
-          />
-          <wd-picker
-            v-model:visible="pickerVisible.channelId"
-            :model-value="formData.channelId"
-            :columns="channelOptions"
-            @confirm="({ value }) => formData.channelId = value[0]"
-          />
+          <ChannelPicker v-model="formData.channelId" label="短信渠道" prop="channelId" />
           <wd-form-item title="开启状态" title-width="200rpx" prop="status" center>
             <wd-radio-group v-model="formData.status" type="button">
               <wd-radio
@@ -108,16 +94,15 @@
 
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
-import type { SmsChannel } from '@/api/system/sms/channel'
 import type { SmsTemplate } from '@/api/system/sms/template'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { getSimpleSmsChannelList } from '@/api/system/sms/channel'
 import { createSmsTemplate, getSmsTemplate, updateSmsTemplate } from '@/api/system/sms/template'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
+import ChannelPicker from '../../components/channel-picker.vue'
 
 const props = defineProps<{
   id?: number | any
@@ -156,9 +141,6 @@ const formSchema = createFormSchema({
 const formRef = ref<FormInstance>() // 表单组件引用
 const pickerVisible = ref<Record<string, boolean>>({})
 
-/** 短信渠道列表 */
-const channelList = ref<SmsChannel[]>([])
-
 /** 短信类型选项 */
 const templateTypeOptions = computed(() => {
   return getIntDictOptions(DICT_TYPE.SYSTEM_SMS_TEMPLATE_TYPE).map(item => ({
@@ -167,22 +149,9 @@ const templateTypeOptions = computed(() => {
   }))
 })
 
-/** 短信渠道选项 */
-const channelOptions = computed(() => {
-  return channelList.value.map(item => ({
-    value: item.id,
-    label: item.signature,
-  }))
-})
-
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-system/sms/index')
-}
-
-/** 加载短信渠道列表 */
-async function loadChannelList() {
-  channelList.value = await getSimpleSmsChannelList()
 }
 
 /** 加载详情 */
@@ -209,6 +178,7 @@ async function handleSubmit() {
       await createSmsTemplate(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('system:sms-template:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false
@@ -216,8 +186,7 @@ async function handleSubmit() {
 }
 
 /** 初始化 */
-onMounted(async () => {
-  await loadChannelList()
-  await getDetail()
+onMounted(() => {
+  getDetail()
 })
 </script>

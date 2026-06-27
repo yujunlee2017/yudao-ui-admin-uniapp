@@ -50,6 +50,7 @@
 import type { SmsChannel } from '@/api/system/sms/channel'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { deleteSmsChannel, getSmsChannel } from '@/api/system/sms/channel'
 import { useAccess } from '@/hooks/useAccess'
@@ -117,6 +118,7 @@ async function handleDelete() {
   try {
     await deleteSmsChannel(props.id)
     toast.success('删除成功')
+    uni.$emit('system:sms-channel:reload')
     delay(handleBack)
   } finally {
     deleting.value = false
@@ -126,5 +128,11 @@ async function handleDelete() {
 /** 初始化 */
 onMounted(() => {
   getDetail()
+  uni.$on('system:sms-channel:reload', getDetail)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('system:sms-channel:reload', getDetail)
 })
 </script>

@@ -16,6 +16,7 @@
           <dict-tag :type="DICT_TYPE.SYSTEM_SMS_CHANNEL_CODE" :value="formData?.channelCode" />
         </wd-cell>
         <wd-cell title="模板编号" :value="formData?.templateId" />
+        <wd-cell title="模板编码" :value="formData?.templateCode" />
         <wd-cell title="模板类型">
           <dict-tag :type="DICT_TYPE.SYSTEM_SMS_TEMPLATE_TYPE" :value="formData?.templateType" />
         </wd-cell>

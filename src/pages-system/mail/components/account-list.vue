@@ -55,7 +55,7 @@
 
 <script lang="ts" setup>
 import type { MailAccount } from '@/api/system/mail/account'
-import { ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { getMailAccountPage } from '@/api/system/mail/account'
 import { useAccess } from '@/hooks/useAccess'
 import { formatDateTime } from '@/utils/date'
@@ -111,4 +111,13 @@ function handleDetail(item: MailAccount) {
   })
 }
 
+/** 初始化 */
+onMounted(() => {
+  uni.$on('system:mail-account:reload', reload)
+})
+
+/** 卸载 */
+onUnmounted(() => {
+  uni.$off('system:mail-account:reload', reload)
+})
 </script>
