@@ -38,7 +38,7 @@
               :inactive-value="CommonStatusEnum.DISABLE"
             />
           </wd-form-item>
-          <wd-form-item title="备注" title-width="180rpx">
+          <wd-form-item title="备注" title-width="180rpx" prop="remark">
             <wd-textarea
               v-model="formData.remark"
               placeholder="请输入备注"
@@ -102,6 +102,7 @@ const formSchema = createFormSchema({
   code: [{ required: true, message: '岗位编码不能为空' }],
   sort: [{ required: true, message: '显示顺序不能为空' }],
   status: [{ required: true, message: '状态不能为空' }],
+  remark: [{ max: 200, message: '备注长度不能超过 200 个字符' }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用
 
@@ -134,6 +135,7 @@ async function handleSubmit() {
       await createPost(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('system:post:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false

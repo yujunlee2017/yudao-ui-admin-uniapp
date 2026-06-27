@@ -63,7 +63,8 @@
 
 <script lang="ts" setup>
 import type { Post } from '@/api/system/post'
-import { ref } from 'vue'
+import { onUnload } from '@dcloudio/uni-app'
+import { onMounted, ref } from 'vue'
 import { getPostPage } from '@/api/system/post'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
@@ -134,4 +135,14 @@ function handleDetail(item: Post) {
     url: `/pages-system/post/detail/index?id=${item.id}`,
   })
 }
+
+/** 初始化 */
+onMounted(() => {
+  uni.$on('system:post:reload', reload)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('system:post:reload', reload)
+})
 </script>

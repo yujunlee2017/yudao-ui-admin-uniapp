@@ -67,7 +67,8 @@
 
 <script lang="ts" setup>
 import type { Notice } from '@/api/system/notice'
-import { ref } from 'vue'
+import { onUnload } from '@dcloudio/uni-app'
+import { onMounted, ref } from 'vue'
 import { getNoticePage } from '@/api/system/notice'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
@@ -136,4 +137,14 @@ function handleDetail(item: Notice) {
     url: `/pages-system/notice/detail/index?id=${item.id}`,
   })
 }
+
+/** 初始化 */
+onMounted(() => {
+  uni.$on('system:notice:reload', reload)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('system:notice:reload', reload)
+})
 </script>

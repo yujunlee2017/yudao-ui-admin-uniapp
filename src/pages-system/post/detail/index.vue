@@ -45,6 +45,7 @@
 import type { Post } from '@/api/system/post'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { deletePost, getPost } from '@/api/system/post'
 import { useAccess } from '@/hooks/useAccess'
@@ -112,6 +113,7 @@ async function handleDelete() {
   try {
     await deletePost(props.id)
     toast.success('删除成功')
+    uni.$emit('system:post:reload')
     delay(handleBack)
   } finally {
     deleting.value = false
@@ -121,5 +123,11 @@ async function handleDelete() {
 /** 初始化 */
 onMounted(() => {
   getDetail()
+  uni.$on('system:post:reload', getDetail)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('system:post:reload', getDetail)
 })
 </script>

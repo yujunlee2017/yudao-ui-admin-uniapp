@@ -19,9 +19,10 @@
             />
           </wd-form-item>
           <wd-form-item title="公告内容" title-width="180rpx" prop="content">
-            <wd-input
+            <wd-textarea
               v-model="formData.content"
               clearable
+              :rows="4"
               placeholder="请输入公告内容"
             />
           </wd-form-item>
@@ -46,6 +47,15 @@
                 {{ dict.label }}
               </wd-radio>
             </wd-radio-group>
+          </wd-form-item>
+          <wd-form-item title="备注" title-width="180rpx" prop="remark">
+            <wd-textarea
+              v-model="formData.remark"
+              placeholder="请输入备注"
+              :maxlength="200"
+              show-word-limit
+              clearable
+            />
           </wd-form-item>
         </wd-cell-group>
       </wd-form>
@@ -96,12 +106,14 @@ const formData = ref<Notice>({
   content: '',
   type: undefined,
   status: CommonStatusEnum.ENABLE,
+  remark: '',
 }) // 表单数据
 const formSchema = createFormSchema({
   title: [{ required: true, message: '公告标题不能为空' }],
   content: [{ required: true, message: '公告内容不能为空' }],
   type: [{ required: true, message: '公告类型不能为空' }],
   status: [{ required: true, message: '公告状态不能为空' }],
+  remark: [{ max: 200, message: '备注长度不能超过 200 个字符' }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用
 
@@ -134,6 +146,7 @@ async function handleSubmit() {
       await createNotice(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('system:notice:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false

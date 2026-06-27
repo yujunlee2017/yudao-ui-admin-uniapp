@@ -10,6 +10,7 @@ export interface Notice {
   content: string
   type: number
   status: number
+  remark?: string
   createTime?: Date
 }
 

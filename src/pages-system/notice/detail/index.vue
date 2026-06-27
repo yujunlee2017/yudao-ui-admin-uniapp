@@ -12,13 +12,18 @@
       <wd-cell-group border>
         <wd-cell title="公告编号" :value="formData?.id" />
         <wd-cell title="公告标题" :value="formData?.title" />
-        <wd-cell title="公告内容" :value="formData?.content" />
+        <wd-cell title="公告内容">
+          <template #value>
+            <rich-text :nodes="formData?.content || '-'" />
+          </template>
+        </wd-cell>
         <wd-cell title="公告类型">
           <dict-tag :type="DICT_TYPE.SYSTEM_NOTICE_TYPE" :value="formData?.type" />
         </wd-cell>
         <wd-cell title="公告状态">
           <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="formData?.status" />
         </wd-cell>
+        <wd-cell title="备注" :value="formData?.remark || '-'" />
         <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime)" />
       </wd-cell-group>
     </view>
@@ -47,6 +52,7 @@
 import type { Notice } from '@/api/system/notice'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { deleteNotice, getNotice } from '@/api/system/notice'
 import { useAccess } from '@/hooks/useAccess'
@@ -114,6 +120,7 @@ async function handleDelete() {
   try {
     await deleteNotice(props.id)
     toast.success('删除成功')
+    uni.$emit('system:notice:reload')
     delay(handleBack)
   } finally {
     deleting.value = false
@@ -123,5 +130,11 @@ async function handleDelete() {
 /** 初始化 */
 onMounted(() => {
   getDetail()
+  uni.$on('system:notice:reload', getDetail)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('system:notice:reload', getDetail)
 })
 </script>
