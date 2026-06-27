@@ -1,5 +1,5 @@
 <template>
-  <view v-if="breadcrumbList.length > 0" class="bg-white px-24rpx py-16rpx">
+  <view class="bg-white px-24rpx py-16rpx">
     <scroll-view scroll-x class="whitespace-nowrap">
       <view class="inline-flex items-center">
         <view
