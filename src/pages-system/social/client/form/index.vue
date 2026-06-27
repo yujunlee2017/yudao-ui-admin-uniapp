@@ -50,17 +50,15 @@
               placeholder="请输入应用密钥，对应各平台的 appSecret"
             />
           </wd-form-item>
-          <wd-form-item title="agentId" title-width="200rpx" prop="agentId">
+          <wd-form-item v-if="formData.socialType === 30" title="agentId" title-width="200rpx" prop="agentId">
             <wd-input
-              v-show="formData.socialType === 30"
               v-model="formData.agentId"
               clearable
               placeholder="授权方的网页应用 ID，有则填"
             />
           </wd-form-item>
-          <wd-form-item title="publicKey" title-width="200rpx" prop="publicKey">
+          <wd-form-item v-if="formData.socialType === 40" title="publicKey" title-width="200rpx" prop="publicKey">
             <wd-input
-              v-show="formData.socialType === 40"
               v-model="formData.publicKey"
               clearable
               placeholder="请输入 publicKey 公钥"
@@ -124,7 +122,7 @@ const formData = ref<SocialClient>({
   id: undefined,
   name: '',
   socialType: undefined,
-  userType: 1,
+  userType: undefined,
   clientId: '',
   clientSecret: '',
   agentId: '',
@@ -169,6 +167,7 @@ async function handleSubmit() {
       await createSocialClient(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('system:social-client:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false

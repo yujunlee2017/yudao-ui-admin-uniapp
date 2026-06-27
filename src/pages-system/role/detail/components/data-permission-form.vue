@@ -37,14 +37,20 @@
 
       <!-- 部门范围 -->
       <view v-if="formData.dataScope === SystemDataScopeEnum.DEPT_CUSTOM" class="mt-24rpx">
+        <wd-cell-group border>
+          <wd-cell title="父子联动" center>
+            <wd-switch v-model="treeLinkage" />
+          </wd-cell>
+        </wd-cell-group>
         <yd-tree-select
           ref="deptTreeRef"
           v-model="formData.dataScopeDeptIds"
+          class="mt-24rpx"
           title="部门范围"
           placeholder="请选择部门范围"
           :data="deptOptions"
           :props="treeProps"
-          :check-strictly="false"
+          :check-strictly="!treeLinkage"
           multiple
           filterable
           show-toolbar
@@ -95,10 +101,11 @@ const deptTreeRef = ref<any>() // 部门树组件引用
 const pickerVisible = ref({
   dataScope: false,
 }) // 选择器显示状态
-const formData = ref({
-  dataScope: SystemDataScopeEnum.ALL,
-  dataScopeDeptIds: [] as number[],
+const formData = ref<{ dataScope?: number, dataScopeDeptIds: number[] }>({
+  dataScope: undefined,
+  dataScopeDeptIds: [],
 }) // 表单数据
+const treeLinkage = ref(true) // 部门树父子联动（关闭则父子独立勾选）
 const treeProps = {
   children: 'children',
   label: 'name',
@@ -132,8 +139,9 @@ async function loadData() {
   loading.value = true
   dataLoaded.value = false
   deptLoaded.value = false
+  treeLinkage.value = true
   formData.value = {
-    dataScope: props.role.dataScope ?? SystemDataScopeEnum.ALL,
+    dataScope: props.role.dataScope,
     dataScopeDeptIds: props.role.dataScopeDeptIds || [],
   }
   dataLoaded.value = true

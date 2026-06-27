@@ -15,7 +15,7 @@
         </wd-cell>
         <wd-cell title="用户昵称" :value="formData?.nickname ?? '-'" />
         <wd-cell v-if="formData?.avatar" title="用户头像">
-          <wd-img :src="formData.avatar" width="120rpx" height="120rpx" />
+          <wd-img :src="formData.avatar" width="120rpx" height="120rpx" mode="aspectFill" round enable-preview />
         </wd-cell>
         <wd-cell title="社交 openid" is-link @click="handleCopyText(formData?.openid, '社交 openid')">
           <view class="max-w-400rpx truncate text-right">

@@ -40,12 +40,10 @@
               placeholder="请输入数据键值"
             />
           </wd-form-item>
-          <wd-form-item title="显示排序" title-width="200rpx" prop="sort">
-            <wd-input
-              v-model.number="formData.sort"
-              type="number"
-              clearable
-              placeholder="请输入显示排序"
+          <wd-form-item title="显示排序" title-width="200rpx" prop="sort" center>
+            <wd-input-number
+              v-model="formData.sort"
+              :min="0"
             />
           </wd-form-item>
           <wd-form-item title="状态" title-width="200rpx" prop="status" center>
@@ -188,6 +186,7 @@ async function handleSubmit() {
       await createDictData(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('system:dict-data:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false

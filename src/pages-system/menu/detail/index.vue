@@ -46,10 +46,16 @@
     <!-- 底部操作按钮 -->
     <view class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button class="flex-1" type="warning" @click="handleEdit">
+        <wd-button
+          v-if="hasAccessByCodes(['system:menu:update'])"
+          class="flex-1" type="warning" @click="handleEdit"
+        >
           编辑
         </wd-button>
-        <wd-button class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button
+          v-if="hasAccessByCodes(['system:menu:delete'])"
+          class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
+        >
           删除
         </wd-button>
       </view>
@@ -61,8 +67,10 @@
 import type { Menu } from '@/api/system/menu'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { deleteMenu, getMenu, getSimpleMenuList } from '@/api/system/menu'
+import { useAccess } from '@/hooks/useAccess'
 import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, SystemMenuTypeEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
@@ -80,6 +88,7 @@ definePage({
 
 const toast = useToast()
 const dialog = useDialog()
+const { hasAccessByCodes } = useAccess()
 const formData = ref<Menu>() // 详情数据
 const deleting = ref(false) // 删除状态
 const parentMenuName = ref('-') // 上级菜单名称链
@@ -161,6 +170,7 @@ async function handleDelete() {
   try {
     await deleteMenu(props.id)
     toast.success('删除成功')
+    uni.$emit('system:menu:reload')
     delay(handleBack)
   } finally {
     deleting.value = false
@@ -170,5 +180,11 @@ async function handleDelete() {
 /** 初始化 */
 onMounted(() => {
   getDetail()
+  uni.$on('system:menu:reload', getDetail)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('system:menu:reload', getDetail)
 })
 </script>

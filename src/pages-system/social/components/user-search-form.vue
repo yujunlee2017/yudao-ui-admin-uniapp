@@ -50,6 +50,7 @@
           clearable
         />
       </view>
+      <yd-search-date-range v-model="formData.createTime" label="创建时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -67,6 +68,7 @@ import { computed, reactive, ref } from 'vue'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
+import { formatDate, formatDateRange } from '@/utils/date'
 
 const emit = defineEmits<{
   search: [data: Record<string, any>]
@@ -78,6 +80,7 @@ const formData = reactive({
   type: -1,
   nickname: undefined as string | undefined,
   openid: undefined as string | undefined,
+  createTime: [undefined, undefined] as [number | undefined, number | undefined],
 }) // 搜索表单数据
 
 /** 搜索条件 placeholder 拼接 */
@@ -92,6 +95,9 @@ const placeholder = computed(() => {
   if (formData.openid) {
     conditions.push(`openid:${formData.openid}`)
   }
+  if (formData.createTime?.[0] && formData.createTime?.[1]) {
+    conditions.push(`时间:${formatDate(formData.createTime[0])}~${formatDate(formData.createTime[1])}`)
+  }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索三方用户'
 })
 
@@ -102,6 +108,7 @@ function handleSearch() {
     type: formData.type === -1 ? undefined : formData.type,
     nickname: formData.nickname || undefined,
     openid: formData.openid || undefined,
+    createTime: formatDateRange(formData.createTime),
   })
 }
 
@@ -110,6 +117,7 @@ function handleReset() {
   formData.type = -1
   formData.nickname = undefined
   formData.openid = undefined
+  formData.createTime = [undefined, undefined]
   visible.value = false
   emit('reset')
 }

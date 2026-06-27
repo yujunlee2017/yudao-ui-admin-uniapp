@@ -159,6 +159,7 @@ const formData = ref<Menu>({
 const formSchema = createFormSchema({
   name: [{ required: true, message: '菜单名称不能为空' }],
   type: [{ required: true, message: '菜单类型不能为空' }],
+  path: [{ required: m => m?.type !== SystemMenuTypeEnum.BUTTON, message: '路由地址不能为空' }],
   sort: [{ required: true, message: '显示排序不能为空' }],
   status: [{ required: true, message: '状态不能为空' }],
 })
@@ -226,6 +227,7 @@ async function handleSubmit() {
       await createMenu(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('system:menu:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false

@@ -26,10 +26,16 @@
     <!-- 底部操作按钮 -->
     <view class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
-        <wd-button class="flex-1" type="warning" @click="handleEdit">
+        <wd-button
+          v-if="hasAccessByCodes(['system:dept:update'])"
+          class="flex-1" type="warning" @click="handleEdit"
+        >
           编辑
         </wd-button>
-        <wd-button class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+        <wd-button
+          v-if="hasAccessByCodes(['system:dept:delete'])"
+          class="flex-1" type="danger" :loading="deleting" @click="handleDelete"
+        >
           删除
         </wd-button>
       </view>
@@ -42,9 +48,11 @@ import type { Dept } from '@/api/system/dept'
 import type { User } from '@/api/system/user'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { deleteDept, getDept, getSimpleDeptList } from '@/api/system/dept'
 import { getSimpleUserList } from '@/api/system/user'
+import { useAccess } from '@/hooks/useAccess'
 import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
@@ -62,6 +70,7 @@ definePage({
 
 const dialog = useDialog()
 const toast = useToast()
+const { hasAccessByCodes } = useAccess()
 const formData = ref<Dept>() // 详情数据
 const deleting = ref(false) // 删除状态
 const deptList = ref<Dept[]>([])
@@ -128,6 +137,7 @@ async function handleDelete() {
   try {
     await deleteDept(props.id)
     toast.success('删除成功')
+    uni.$emit('system:dept:reload')
     delay(handleBack)
   } finally {
     deleting.value = false
@@ -142,5 +152,11 @@ onMounted(async () => {
   userList.value = await getSimpleUserList()
   // 获取详情
   await getDetail()
+  uni.$on('system:dept:reload', getDetail)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('system:dept:reload', getDetail)
 })
 </script>

@@ -130,6 +130,7 @@ async function handleSubmit() {
       await createDictType(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('system:dict-type:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false

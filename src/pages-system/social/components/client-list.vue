@@ -64,7 +64,7 @@
 
 <script lang="ts" setup>
 import type { SocialClient } from '@/api/system/social/client'
-import { ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { getSocialClientPage } from '@/api/system/social/client'
 import { useAccess } from '@/hooks/useAccess'
 import { DICT_TYPE } from '@/utils/constants'
@@ -121,4 +121,13 @@ function handleDetail(item: SocialClient) {
   })
 }
 
+/** 初始化 */
+onMounted(() => {
+  uni.$on('system:social-client:reload', reload)
+})
+
+/** 卸载 */
+onUnmounted(() => {
+  uni.$off('system:social-client:reload', reload)
+})
 </script>

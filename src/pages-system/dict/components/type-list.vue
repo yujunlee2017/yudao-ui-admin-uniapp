@@ -66,7 +66,7 @@
 
 <script lang="ts" setup>
 import type { DictType } from '@/api/system/dict/type'
-import { ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { getDictTypePage } from '@/api/system/dict/type'
 import { useAccess } from '@/hooks/useAccess'
 import { DICT_TYPE } from '@/utils/constants'
@@ -132,4 +132,13 @@ function handleSelectType(item: DictType) {
   emit('select', item.type)
 }
 
+/** 初始化 */
+onMounted(() => {
+  uni.$on('system:dict-type:reload', reload)
+})
+
+/** 卸载 */
+onUnmounted(() => {
+  uni.$off('system:dict-type:reload', reload)
+})
 </script>

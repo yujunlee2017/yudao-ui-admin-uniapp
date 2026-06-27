@@ -117,6 +117,8 @@ const formSchema = createFormSchema({
   name: [{ required: true, message: '部门名称不能为空' }],
   sort: [{ required: true, message: '显示顺序不能为空' }],
   status: [{ required: true, message: '状态不能为空' }],
+  phone: [{ type: 'mobile', message: '请输入正确的手机号码' }],
+  email: [{ type: 'email', message: '请输入正确的邮箱地址' }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用
 
@@ -149,6 +151,7 @@ async function handleSubmit() {
       await createDept(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('system:dept:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false

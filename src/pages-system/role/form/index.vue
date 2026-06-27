@@ -38,7 +38,7 @@
               :inactive-value="CommonStatusEnum.DISABLE"
             />
           </wd-form-item>
-          <wd-form-item title="备注" title-width="180rpx">
+          <wd-form-item title="备注" title-width="180rpx" prop="remark">
             <wd-textarea
               v-model="formData.remark"
               placeholder="请输入备注"

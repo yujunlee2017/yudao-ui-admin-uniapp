@@ -75,7 +75,7 @@
 <script lang="ts" setup>
 import type { TagType } from '@wot-ui/ui/components/wd-tag/types'
 import type { DictData } from '@/api/system/dict/data'
-import { ref, watch } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { getDictDataPage } from '@/api/system/dict/data'
 import { useAccess } from '@/hooks/useAccess'
 import { DICT_TYPE } from '@/utils/constants'
@@ -162,4 +162,13 @@ watch(
   },
 )
 
+/** 初始化 */
+onMounted(() => {
+  uni.$on('system:dict-data:reload', reload)
+})
+
+/** 卸载 */
+onUnmounted(() => {
+  uni.$off('system:dict-data:reload', reload)
+})
 </script>

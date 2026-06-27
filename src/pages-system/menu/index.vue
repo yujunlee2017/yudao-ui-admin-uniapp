@@ -59,6 +59,7 @@
 
     <!-- 新增按钮 -->
     <wd-fab
+      v-if="hasAccessByCodes(['system:menu:create'])"
       position="right-bottom"
       type="primary"
       :expandable="false"
@@ -69,8 +70,10 @@
 
 <script lang="ts" setup>
 import type { Menu } from '@/api/system/menu'
+import { onUnload } from '@dcloudio/uni-app'
 import { computed, onMounted, ref } from 'vue'
 import { getMenuList } from '@/api/system/menu'
+import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE, SystemMenuTypeEnum } from '@/utils/constants'
 import { findChildren, handleTree } from '@/utils/tree'
@@ -84,6 +87,7 @@ definePage({
   },
 })
 
+const { hasAccessByCodes } = useAccess()
 const loading = ref(false) // 列表加载状态
 const list = ref<Menu[]>([]) // 完整菜单列表（树形结构）
 
@@ -194,5 +198,11 @@ function handleDetail(item: Menu) {
 /** 初始化 */
 onMounted(() => {
   getList()
+  uni.$on('system:menu:reload', getList)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('system:menu:reload', getList)
 })
 </script>

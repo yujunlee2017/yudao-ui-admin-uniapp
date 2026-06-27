@@ -36,7 +36,7 @@
             </view>
             <view v-if="item.avatar" class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx text-[#999]">头像：</text>
-              <wd-img :src="item.avatar" width="60rpx" height="60rpx" />
+              <wd-img :src="item.avatar" width="60rpx" height="60rpx" mode="aspectFill" round enable-preview />
             </view>
             <view class="mb-12rpx flex items-center text-28rpx text-[#666]">
               <text class="mr-8rpx text-[#999]">创建时间：</text>
@@ -98,5 +98,4 @@ function handleDetail(item: SocialUser) {
     url: `/pages-system/social/user/detail/index?id=${item.id}`,
   })
 }
-
 </script>

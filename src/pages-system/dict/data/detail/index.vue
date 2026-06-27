@@ -58,6 +58,7 @@
 <script lang="ts" setup>
 import type { TagType } from '@wot-ui/ui/components/wd-tag/types'
 import type { DictData } from '@/api/system/dict/data'
+import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
@@ -92,8 +93,6 @@ const COLOR_TYPE_MAP: Record<string, TagType> = {
   info: 'default',
   warning: 'warning',
   danger: 'danger',
-  error: 'danger',
-  processing: 'primary',
 }
 
 /** 获取标签类型 */
@@ -144,6 +143,7 @@ async function handleDelete() {
   try {
     await deleteDictData(props.id)
     toast.success('删除成功')
+    uni.$emit('system:dict-data:reload')
     delay(handleBack)
   } finally {
     deleting.value = false
@@ -152,6 +152,12 @@ async function handleDelete() {
 
 /** 初始化 */
 onMounted(() => {
+  uni.$on('system:dict-data:reload', getDetail)
   getDetail()
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('system:dict-data:reload', getDetail)
 })
 </script>

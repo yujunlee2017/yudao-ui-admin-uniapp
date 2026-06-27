@@ -51,6 +51,7 @@
 
 <script lang="ts" setup>
 import type { SocialClient } from '@/api/system/social/client'
+import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref } from 'vue'
@@ -120,6 +121,7 @@ async function handleDelete() {
   try {
     await deleteSocialClient(props.id)
     toast.success('删除成功')
+    uni.$emit('system:social-client:reload')
     delay(handleBack)
   } finally {
     deleting.value = false
@@ -128,6 +130,12 @@ async function handleDelete() {
 
 /** 初始化 */
 onMounted(() => {
+  uni.$on('system:social-client:reload', getDetail)
   getDetail()
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('system:social-client:reload', getDetail)
 })
 </script>

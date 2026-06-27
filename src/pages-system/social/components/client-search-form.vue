@@ -25,6 +25,16 @@
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
+          应用编号
+        </view>
+        <wd-input
+          v-model="formData.clientId"
+          placeholder="请输入应用编号"
+          clearable
+        />
+      </view>
+      <view class="yd-search-form-item">
+        <view class="yd-search-form-label">
           三方平台
         </view>
         <wd-radio-group v-model="formData.socialType" type="button">
@@ -100,6 +110,7 @@ const emit = defineEmits<{
 const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
   name: undefined as string | undefined,
+  clientId: undefined as string | undefined,
   socialType: -1,
   userType: -1,
   status: -1,
@@ -110,6 +121,9 @@ const placeholder = computed(() => {
   const conditions: string[] = []
   if (formData.name) {
     conditions.push(`应用名:${formData.name}`)
+  }
+  if (formData.clientId) {
+    conditions.push(`应用编号:${formData.clientId}`)
   }
   if (formData.socialType !== -1) {
     conditions.push(`平台:${getDictLabel(DICT_TYPE.SYSTEM_SOCIAL_TYPE, formData.socialType)}`)
@@ -128,6 +142,7 @@ function handleSearch() {
   visible.value = false
   emit('search', {
     name: formData.name || undefined,
+    clientId: formData.clientId || undefined,
     socialType: formData.socialType === -1 ? undefined : formData.socialType,
     userType: formData.userType === -1 ? undefined : formData.userType,
     status: formData.status === -1 ? undefined : formData.status,
@@ -137,6 +152,7 @@ function handleSearch() {
 /** 重置按钮操作 */
 function handleReset() {
   formData.name = undefined
+  formData.clientId = undefined
   formData.socialType = -1
   formData.userType = -1
   formData.status = -1
