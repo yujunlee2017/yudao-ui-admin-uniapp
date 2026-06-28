@@ -36,7 +36,7 @@
         <view
           v-for="course in courses"
           :key="course.id"
-          class="mb-16rpx flex items-center rounded-12rpx bg-white p-24rpx shadow-sm"
+          class="mb-16rpx flex items-center gap-16rpx rounded-12rpx bg-white p-24rpx shadow-sm"
         >
           <view class="min-w-0 flex-1">
             <text class="text-30rpx text-[#333]">{{ course.name }}</text>
@@ -45,7 +45,7 @@
           <wd-button size="small" plain @click="openCourse(course)">
             编辑
           </wd-button>
-          <wd-button class="ml-12rpx" size="small" type="danger" plain @click="removeCourse(course)">
+          <wd-button size="small" type="danger" plain @click="removeCourse(course)">
             删除
           </wd-button>
         </view>
@@ -68,7 +68,7 @@
         <view
           v-for="item in grades"
           :key="item.id"
-          class="mb-16rpx flex items-center rounded-12rpx bg-white p-24rpx shadow-sm"
+          class="mb-16rpx flex items-center gap-16rpx rounded-12rpx bg-white p-24rpx shadow-sm"
         >
           <view class="min-w-0 flex-1">
             <text class="text-30rpx text-[#333]">{{ item.name }}</text>
@@ -77,7 +77,7 @@
           <wd-button size="small" plain @click="openGrade(item)">
             编辑
           </wd-button>
-          <wd-button class="ml-12rpx" size="small" type="danger" plain @click="removeGrade(item)">
+          <wd-button size="small" type="danger" plain @click="removeGrade(item)">
             删除
           </wd-button>
         </view>
