@@ -106,14 +106,18 @@ import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref, watch } from 'vue'
 import { getProcessDefinition } from '@/api/bpm/definition'
-import { createLeave } from '@/api/bpm/oa/leave'
+import { createLeave, getLeave } from '@/api/bpm/oa/leave'
 import { getApprovalDetail } from '@/api/bpm/processInstance'
 import { getIntDictOptions } from '@/hooks/useDict'
 import ProcessInstanceTimeline from '@/pages-bpm/processInstance/detail/components/time-line.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { BpmCandidateStrategyEnum, BpmNodeIdEnum, DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
+
+const props = defineProps<{
+  id?: number | string
+}>()
 
 definePage({
   style: {
@@ -134,6 +138,7 @@ const activityNodes = ref<ApprovalNodeInfo[]>([]) // 审批节点信息
 const startUserSelectTasks = ref<any[]>([]) // 发起人需要选择审批人的用户任务列表
 const startUserSelectAssignees = ref<any>({}) // 发起人选择审批人的数据
 const tempStartUserSelectAssignees = ref<any>({}) // 临时保存的审批人数据
+let previewPromise: Promise<void> | undefined // 进行中的流程预览重算
 
 const formData = ref<Partial<Leave>>({
   type: undefined,
@@ -157,7 +162,7 @@ const leaveDays = computed(() => {
   }
   const start = new Date(formData.value.startTime)
   const end = new Date(formData.value.endTime)
-  return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+  return Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
 })
 
 /** 返回上一页 */
@@ -213,8 +218,6 @@ async function getProcessApprovalDetail() {
             : []
       }
     }
-  } catch (error) {
-    console.error('获取流程审批详情失败:', error)
   } finally {
     processTimeLineLoading.value = false
   }
@@ -225,6 +228,28 @@ function selectUserConfirm(id: string, userList: any[]) {
   startUserSelectAssignees.value[id] = userList?.map((item: any) => item.id) || []
 }
 
+/** 刷新流程预览 */
+function refreshPreview() {
+  tempStartUserSelectAssignees.value = { ...startUserSelectAssignees.value }
+  startUserSelectAssignees.value = {}
+  previewPromise = getProcessApprovalDetail()
+  return previewPromise
+}
+
+/** 提交前等待流程预览，失败返回 false */
+async function flushPreview(): Promise<boolean> {
+  if (!previewPromise) {
+    refreshPreview()
+  }
+  try {
+    await previewPromise
+    return true
+  } catch {
+    previewPromise = undefined
+    return false
+  }
+}
+
 /** 提交表单 */
 async function handleSubmit() {
   const { valid } = await formRef.value!.validate()
@@ -233,6 +258,13 @@ async function handleSubmit() {
   }
   if (formData.value.startTime! >= formData.value.endTime!) {
     toast.show('结束时间必须大于开始时间')
+    return
+  }
+
+  // 提交前等待流程预览
+  const previewOk = await flushPreview()
+  if (!previewOk) {
+    toast.show('流程预览加载失败，请重试')
     return
   }
 
@@ -259,9 +291,9 @@ async function handleSubmit() {
 
     await createLeave(submitData)
     toast.success('提交成功')
-    setTimeout(() => {
-      navigateBackPlus('/pages-bpm/oa/leave/index')
-    }, 1500)
+    uni.$emit('bpm:oa-leave:reload')
+    uni.$emit('bpm:task:reload')
+    delay(() => navigateBackPlus('/pages-bpm/oa/leave/index'))
   } finally {
     formLoading.value = false
   }
@@ -275,32 +307,39 @@ watch(
       return
     }
     if (newValue && newValue.some(v => v !== undefined)) {
-      // 记录之前的节点审批人
-      tempStartUserSelectAssignees.value = { ...startUserSelectAssignees.value }
-      startUserSelectAssignees.value = {}
-      // 加载最新的审批详情，主要用于节点预测
-      getProcessApprovalDetail()
+      refreshPreview()
     }
   },
   { deep: true },
 )
 
+/** 重新发起时回填请假信息 */
+async function getDetail() {
+  if (!props.id) {
+    return
+  }
+  const data = await getLeave(Number(props.id))
+  formData.value.type = data.type
+  formData.value.reason = data.reason
+  formData.value.startTime = data.startTime
+  formData.value.endTime = data.endTime
+}
+
 // 组件初始化
 onMounted(async () => {
-  try {
-    // 获取流程定义详情
-    const processDefinitionDetail = await getProcessDefinition(undefined, processDefineKey)
-    if (!processDefinitionDetail) {
-      toast.show('OA 请假的流程模型未配置，请检查！')
-      return
-    }
-    processDefinitionId.value = processDefinitionDetail.id
+  // 重新发起时回填请假信息
+  await getDetail()
 
-    // 获取流程审批详情
-    await getProcessApprovalDetail()
-  } catch (error) {
-    console.error('初始化流程失败:', error)
-    toast.show('初始化流程失败，请稍后重试')
+  // 获取流程定义详情
+  const processDefinitionDetail = await getProcessDefinition(undefined, processDefineKey)
+  if (!processDefinitionDetail) {
+    toast.show('OA 请假的流程模型未配置，请检查！')
+    return
   }
+  processDefinitionId.value = processDefinitionDetail.id
+
+  // 获取流程审批详情
+  previewPromise = getProcessApprovalDetail()
+  await previewPromise
 })
 </script>

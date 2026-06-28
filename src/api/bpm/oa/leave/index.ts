@@ -8,10 +8,10 @@ export interface Leave {
   type: number
   reason: string
   processInstanceId: string
-  startTime: Date | any
-  endTime: Date | any
+  startTime: number
+  endTime: number
   createTime: Date
-  startUserSelectAssignees?: Record<string, string[]>
+  startUserSelectAssignees?: Record<string, number[]>
 }
 
 /** 创建请假申请 */

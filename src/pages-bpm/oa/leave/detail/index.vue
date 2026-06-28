@@ -11,6 +11,7 @@
     <!-- 详情内容 -->
     <view>
       <wd-cell-group :border="!embedded">
+        <wd-cell title="申请编号" :value="formData.id ? String(formData.id) : '-'" />
         <wd-cell title="请假类型">
           <dict-tag :type="DICT_TYPE.BPM_OA_LEAVE_TYPE" :value="formData.type" />
         </wd-cell>

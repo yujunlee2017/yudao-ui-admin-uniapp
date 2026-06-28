@@ -39,6 +39,10 @@
             </view>
             <view class="bpm-summary">
               <view class="bpm-summary-item">
+                <text class="text-[#999]">申请编号：</text>
+                <text>{{ item.id }}</text>
+              </view>
+              <view class="bpm-summary-item">
                 <text class="text-[#999]">开始时间：</text>
                 <text>{{ formatDateTime(item.startTime) }}</text>
               </view>
@@ -78,27 +82,38 @@
               <wd-icon name="close" size="32rpx" color="#ff4d4f" />
               <text class="ml-8rpx">取消</text>
             </view>
+            <view
+              v-else
+              class="bpm-action-btn"
+              @click.stop="handleReCreate(item)"
+            >
+              <wd-icon name="refresh" size="32rpx" />
+              <text class="ml-8rpx">重新发起</text>
+            </view>
           </view>
         </view>
-
-        <!-- 新增按钮 -->
-        <wd-fab
-          position="right-bottom"
-          type="primary"
-          :expandable="false"
-          @click="handleCreate"
-        />
       </view>
     </z-paging>
+
+    <!-- 新增按钮 -->
+    <wd-fab
+      v-if="hasAccessByCodes(['bpm:oa-leave:create'])"
+      position="right-bottom"
+      type="primary"
+      :expandable="false"
+      @click="handleCreate"
+    />
   </view>
 </template>
 
 <script lang="ts" setup>
 import type { Leave } from '@/api/bpm/oa/leave'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, ref } from 'vue'
+import { onUnload } from '@dcloudio/uni-app'
+import { computed, onMounted, ref } from 'vue'
 import { getLeavePage } from '@/api/bpm/oa/leave'
 import { cancelProcessInstanceByStartUser } from '@/api/bpm/processInstance'
+import { useAccess } from '@/hooks/useAccess'
 import { useUserStore } from '@/store'
 import { navigateBackPlus } from '@/utils'
 import { BpmProcessInstanceStatus, DICT_TYPE } from '@/utils/constants'
@@ -113,6 +128,7 @@ definePage({
   },
 })
 
+const { hasAccessByCodes } = useAccess()
 const userStore = useUserStore()
 const toast = useToast()
 const userNickname = computed(() => userStore.userInfo?.nickname || '')
@@ -183,10 +199,8 @@ function handleCancel(item: Leave) {
         return
       }
       await cancelProcessInstanceByStartUser(String(item.processInstanceId), reason)
-      // 更新状态
       toast.success('取消成功')
-      item.status = BpmProcessInstanceStatus.CANCEL
-      item.endTime = new Date()
+      reload()
     },
   })
 }
@@ -196,4 +210,18 @@ function handleCreate() {
   uni.navigateTo({ url: '/pages-bpm/oa/leave/create/index' })
 }
 
+/** 重新发起请假 */
+function handleReCreate(item: Leave) {
+  uni.navigateTo({ url: `/pages-bpm/oa/leave/create/index?id=${item.id}` })
+}
+
+/** 初始化 */
+onMounted(() => {
+  uni.$on('bpm:oa-leave:reload', reload)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('bpm:oa-leave:reload', reload)
+})
 </script>
