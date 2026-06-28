@@ -62,6 +62,7 @@
 </template>
 
 <script lang="ts" setup>
+// TODO @YunaiV：搜索风格对齐 system/infra——① wd-calendar 日期范围改全局 yd-search-date-range（createTime）；② 物料选择器 MesSearchSelectorField+ItemSelector 后续评估收敛为 yd-search-picker
 import type { MdItemVO } from '@/api/mes/md/item'
 import type { WmSnQueryParams } from '@/api/mes/wm/sn'
 import { computed, reactive, ref } from 'vue'

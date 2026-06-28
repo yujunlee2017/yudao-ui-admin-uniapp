@@ -1,3 +1,4 @@
+<!-- TODO @AI：可能可以去掉，或者封装到 src/pages-statistics/components 看看怎么搞成一个通用组件 -->
 <template>
   <view class="overflow-hidden rounded-12rpx bg-white shadow-sm">
     <!-- 标题 -->

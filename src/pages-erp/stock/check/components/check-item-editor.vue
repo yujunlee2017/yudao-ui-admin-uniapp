@@ -1,3 +1,4 @@
+<!-- TODO @Yunai：组件命名是否改成 check-item-form，和表单明细编辑职责对齐。 -->
 <template>
   <view class="w-full">
     <view v-for="(item, index) in items" :key="index" class="mb-24rpx rounded-12rpx bg-[#f8f8f8] p-20rpx">
@@ -128,6 +129,9 @@ async function handleWarehouseConfirm(index: number, warehouseId?: number | stri
   }
   item.warehouseId = warehouseId
   await setItemStockCount(item)
+  // TODO @Yunai：业务退化——vue3+ep 盘点选仓库/产品后默认「实际库存=账面库存」(row.actualCount = row.stockCount)，
+  // 用户只调整有差异的项。当前 actualCount 保持 undefined，每行都得手填、易漏填。
+  // 需补：if (item.stockCount != null) item.actualCount = item.stockCount（handleProductConfirm 同款）。
 }
 
 /** 选择产品 */
@@ -145,9 +149,8 @@ async function handleProductConfirm(index: number, productId?: number | string) 
     item.productPrice = product.minPrice
   }
   await setItemStockCount(item)
+  // TODO @Yunai：同 handleWarehouseConfirm，补 item.actualCount = item.stockCount。
 }
-
-/** 刷新明细金额 */
 function refreshItemAmount(item: Record<string, any>) {
   if (hasValue(item.stockCount) && hasValue(item.actualCount)) {
     item.count = roundCount(toNumber(item.actualCount) - toNumber(item.stockCount))

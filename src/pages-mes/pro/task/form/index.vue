@@ -110,6 +110,7 @@ const formLoading = ref(false) // 表单提交状态
 const taskDetail = ref<ProTaskVO>() // 编辑详情
 const selectedWorkstation = ref<MdWorkstationVO>() // 当前工作站
 const { getRouteQueryNumber, getRouteQueryValue } = useRouteQuery(props, '/pages-mes/pro/task/form/index')
+// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
 const currentId = computed(() => getRouteQueryNumber('id')) // 当前任务编号
 const readonly = computed(() => getRouteQueryValue('readonly') === true || getRouteQueryValue('readonly') === 'true')
 const currentColorCode = computed(() => String(getRouteQueryValue('colorCode') || '#00AEF3')) // 当前甘特颜色
@@ -273,6 +274,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:pro:task:reload')
+    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 1 处 setTimeout(() => handleBack())）
     setTimeout(() => handleBack(), 500)
   } finally {
     formLoading.value = false

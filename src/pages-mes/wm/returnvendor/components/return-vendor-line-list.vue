@@ -97,6 +97,7 @@
   </MesLineListShell>
 
   <!-- 退货行表单弹窗 -->
+  <!-- TODO @YunaiV：本 wd-popup 去掉 transition="fade" :duration="0"，对齐 system/infra（基线不带这俩属性） -->
   <wd-popup
     v-model="formVisible"
     position="top"
@@ -155,6 +156,7 @@
   <ItemSelector ref="itemSelectorRef" :multiple="false" @confirm="handleItemConfirm" />
 
   <!-- 拣货明细表单弹窗 -->
+  <!-- TODO @YunaiV：本 wd-popup 去掉 transition="fade" :duration="0"，对齐 system/infra（基线不带这俩属性） -->
   <wd-popup
     v-model="detailFormVisible"
     position="top"

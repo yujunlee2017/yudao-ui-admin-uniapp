@@ -169,7 +169,7 @@
 
             <!-- 审批意见 -->
             <view
-              v-if="shouldShowReasonAndAttachment(task, activity.nodeType)"
+              v-if="shouldShowReasonAndAttachment(task, activity.nodeType, index)"
               class="mt-8rpx rounded-8rpx bg-[#f5f5f5] p-16rpx"
             >
               <view v-if="task.reason">
@@ -416,12 +416,15 @@ function shouldShowCustomUserSelect(activity: ApprovalNodeInfo) {
 }
 
 /** 判断是否需要显示审批意见和附件 */
-function shouldShowReasonAndAttachment(task: ApprovalTaskInfo, nodeType: number) {
+function shouldShowReasonAndAttachment(task: ApprovalTaskInfo, nodeType: number, nodeIndex: number) {
+  // 第一个发起人节点是系统自动通过的，不展示审批意见
+  if (nodeType === BpmNodeTypeEnum.START_USER_NODE && nodeIndex === 0) {
+    return false
+  }
   return (
     Boolean(task.reason || task.attachments?.length)
     && [
       BpmNodeTypeEnum.START_USER_NODE,
-      BpmNodeTypeEnum.END_EVENT_NODE,
       BpmNodeTypeEnum.USER_TASK_NODE,
     ].includes(nodeType)
   )

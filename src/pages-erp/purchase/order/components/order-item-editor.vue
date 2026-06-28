@@ -1,3 +1,4 @@
+<!-- TODO @Yunai：组件命名是否改成 order-item-form，和表单明细编辑职责对齐。 -->
 <template>
   <view class="w-full">
     <view v-for="(item, index) in items" :key="index" class="mb-24rpx rounded-12rpx bg-[#f8f8f8] p-20rpx">
@@ -66,6 +67,11 @@ const emit = defineEmits<{
 const toast = useToast()
 const items = ref<Record<string, any>[]>([])
 
+// TODO @Yunai：风格对齐——以下函数缺 /** */ JSDoc（system/mall 标准每个函数/生命周期都补）：
+//   createDefaultItem / handleRemove / handleProductConfirm / refreshItemAmount / validate / watch / onMounted。
+//   13 个单据 item-editor（purchase/{order,in,return}、sale/{order,out,return}、stock/{in,out,move,check}、finance/{payment,receipt}）
+//   及 4 个 selector（purchase-order-in/return-selector、sale-order-out/return-selector、payment/receipt-source-selector）
+//   均为同款问题，建议统一补全。
 function createDefaultItem() {
   return {
     id: undefined,

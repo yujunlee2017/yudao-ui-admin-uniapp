@@ -76,6 +76,7 @@ import { formatMoney, roundPrice, toNumber } from '@/pages-erp/utils'
 
 const props = defineProps<{ id?: number | any }>()
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/purchase/order/form/index')
+// TODO @Yunai：对齐 system 表单页，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
 const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
@@ -87,6 +88,7 @@ definePage({
 
 const toast = useToast()
 const getTitle = computed(() => currentId.value ? '编辑采购订单' : '新增采购订单')
+// TODO @Yunai：状态变量缺尾注释，按 AGENTS.md 补 // 表单提交状态、// 表单数据。
 const formLoading = ref(false)
 const formData = ref<PurchaseOrder>({
   id: undefined,
@@ -129,6 +131,7 @@ function refreshOrderAmount() {
   formData.value.totalPrice = roundPrice(totalPrice - discountPrice)
 }
 
+// TODO @Yunai：考虑在 src/pages-erp/finance/account 封装账户 picker/默认账户加载组件，避免采购/销售/财务重复。
 async function loadOptions() {
   const [accounts, products] = await Promise.all([
     getAccountSimpleList(),
@@ -143,6 +146,7 @@ async function loadOptions() {
 }
 
 /** 加载详情 */
+// TODO @Yunai：加载详情对齐 system/tenant，补 toast.loading/finally close，并直接 getPurchaseOrder(props.id)，不要 getPurchaseOrder(Number(currentId.value))。
 async function getDetail() {
   if (!currentId.value) {
     return

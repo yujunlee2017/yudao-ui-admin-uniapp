@@ -29,6 +29,7 @@
         <view class="yd-search-form-label">
           账户状态
         </view>
+        <!-- TODO @Yunai：字典/状态筛选对齐 yd-search-picker（dict-type + all-option），不要手写 wd-radio-group + -1「全部」。 -->
         <wd-radio-group v-model="formData.status" type="button">
           <wd-radio :value="-1">
             全部

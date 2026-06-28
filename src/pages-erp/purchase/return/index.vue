@@ -71,6 +71,16 @@
       </view>
     </z-paging>
 
+    <!-- TODO @Yunai：补底部批量操作栏（长按选择模式无退出/删除入口）。参考 purchase/order/index.vue 或 product/unit/index.vue:57-67。
+    <view v-if="selecting" class="yd-detail-footer">
+      <view class="flex items-center justify-between px-24rpx">
+        <wd-button variant="plain" size="small" @click="exitSelectMode">取消</wd-button>
+        <text class="text-28rpx text-[#666]">已选 {{ selectedIds.size }} 项</text>
+        <wd-button type="danger" size="small" :loading="batchDeleting" :disabled="selectedIds.size === 0" @click="handleBatchDelete">删除</wd-button>
+      </view>
+    </view>
+    -->
+
     <!-- 新增按钮 -->
     <wd-fab
       v-if="hasAccessByCodes(['erp:purchase-return:create'])"
@@ -104,6 +114,7 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
+// TODO @Yunai：状态变量缺尾注释，按 AGENTS.md 对齐为 // 列表数据、// 分页组件引用、// 查询参数。
 const list = ref<PurchaseReturn[]>([])
 const pagingRef = ref<any>()
 const queryParams = ref<Record<string, any>>({})

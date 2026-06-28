@@ -18,6 +18,7 @@
         <wd-input v-model="formData.no" placeholder="请输入付款单号" clearable />
       </view>
       <yd-search-date-range v-model="formData.paymentTime" label="付款时间" />
+      <!-- TODO @Yunai：搜索业务下拉对齐 yd-search-picker，删除 ErpPicker + selectedNames 的重复样板。 -->
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           供应商
@@ -70,6 +71,7 @@
         <view class="yd-search-form-label">
           状态
         </view>
+        <!-- TODO @Yunai：字典/状态筛选对齐 yd-search-picker（dict-type + all-option），不要手写 wd-radio-group + -1「全部」。 -->
         <wd-radio-group v-model="formData.status" type="button">
           <wd-radio :value="-1">
             全部

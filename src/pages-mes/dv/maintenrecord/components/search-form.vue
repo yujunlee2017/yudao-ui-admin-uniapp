@@ -5,6 +5,7 @@
   </view>
 
   <!-- 搜索弹窗 -->
+  <!-- TODO @YunaiV：本 wd-popup 去掉 transition="fade" :duration="0"，对齐 system/infra（基线不带这俩属性） -->
   <wd-popup
     v-model="visible"
     position="top"
@@ -90,6 +91,7 @@
 </template>
 
 <script lang="ts" setup>
+// TODO @YunaiV：搜索风格对齐 system/infra——wd-calendar 日期范围改全局 yd-search-date-range；业务选择器（Selector/MesSearchSelectorField）后续评估收敛为 yd-search-picker
 import type { User } from '@/api/system/user'
 import type { DvCheckPlanVO } from '@/api/mes/dv/checkplan'
 import type { DvMachineryVO } from '@/api/mes/dv/machinery'

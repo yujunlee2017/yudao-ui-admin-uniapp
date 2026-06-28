@@ -1,6 +1,7 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
+// TODO @Yunai：按后端 VO 收窄类型，补 FinanceReceiptItem 明细类型；导出接口改 downloadApiFile 或删除未用方法。
 /** ERP 收款单 */
 export interface FinanceReceipt {
   id?: number // 收款单编号

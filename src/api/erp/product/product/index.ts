@@ -1,6 +1,7 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
+// TODO @Yunai：按后端 VO 收窄类型，去掉 items?: any[] / [key: string]: any；导出接口改 downloadApiFile 或删除未用方法。
 /** ERP 产品 */
 export interface Product {
   id?: number // 产品编号

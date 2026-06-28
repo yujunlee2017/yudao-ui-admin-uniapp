@@ -1,4 +1,12 @@
 <!-- ERP 单据详情明细卡片：展示 ERP 单据 items 数组中的产品/仓库/金额等明细字段 -->
+<!-- TODO @AI：每个模块自己写，不做这种统一的； -->
+<!-- TODO @Yunai：本组件用「itemFields 配置 + v-for + 按 type 分支 formatFieldValue」生成明细每行字段，
+     属 AGENTS.md 明确禁止的「字段配置数组 + v-for + 类型分支」迷你 descriptions 引擎。
+     规范要求明细行内每个字段逐个显式写（对标 el-descriptions-item / wd-cell）。
+     建议改为：保留外层 v-for(item) 渲染明细行，但行内字段在每个 detail 页逐个 <wd-cell> 显式声明，
+     删除本组件与各页的 itemFields 配置。涉及 13 个 detail 页：
+     purchase/{order,in,return}、sale/{order,out,return}、stock/{in,out,move,check}、finance/{payment,receipt}。
+     若权衡后保留（13 页明细字段高度重复），需在迁移文档登记此例外。 -->
 <template>
   <view v-if="items.length > 0" class="mt-24rpx">
     <view class="px-24rpx py-16rpx text-28rpx text-[#666]">

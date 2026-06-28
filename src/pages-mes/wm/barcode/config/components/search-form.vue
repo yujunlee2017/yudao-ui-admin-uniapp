@@ -46,6 +46,7 @@
 </template>
 
 <script lang="ts" setup>
+// TODO @YunaiV：搜索风格对齐 system/infra——wd-radio-group 条码格式/业务类型筛选改 yd-search-picker（format/bizType，配 dict-kind + all-option）
 import type { WmBarcodeConfigQueryParams } from '@/api/mes/wm/barcode/config'
 import { computed, reactive, ref } from 'vue'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'

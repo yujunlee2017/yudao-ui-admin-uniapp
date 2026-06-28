@@ -1,3 +1,4 @@
+<!-- TODO @Yunai：组件命名是否改成 in-item-form，和表单明细编辑职责对齐。 -->
 <template>
   <view class="w-full">
     <view v-for="(item, index) in items" :key="index" class="mb-24rpx rounded-12rpx bg-[#f8f8f8] p-20rpx">

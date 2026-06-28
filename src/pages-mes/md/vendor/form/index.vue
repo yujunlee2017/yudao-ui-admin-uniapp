@@ -111,6 +111,7 @@ const props = defineProps<{ id?: number | string }>()
 definePage({ style: { navigationBarTitleText: '', navigationStyle: 'custom' } })
 const toast = useToast()
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/md/vendor/form/index')
+// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
 const currentId = computed(() => getRouteQueryNumber('id'))
 const getTitle = computed(() => currentId.value ? '编辑供应商' : '新增供应商')
 const formLoading = ref(false)

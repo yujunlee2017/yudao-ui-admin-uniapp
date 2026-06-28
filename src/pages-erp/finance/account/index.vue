@@ -110,7 +110,14 @@ const {
   handleBatchDelete,
 } = useBatchSelect({
   permission: 'erp:account:delete',
-  deleteApi: (ids: number[]) => deleteAccount(ids[0]),
+  // TODO @Yunai：批量删除 bug 修复——原 deleteAccount(ids[0]) 只删第一条（后端接口只接单 id）。
+  // 已改为 for 循环逐条删，对齐 product/category/index.vue:148 的正确写法。
+  // 待统一修复的同类：product/product、product/unit、purchase/supplier、sale/customer、stock/warehouse（仍为 ids[0]）。
+  deleteApi: async (ids: number[]) => {
+    for (const id of ids) {
+      await deleteAccount(id)
+    }
+  },
   reloadEvent: 'erp:account:reload',
 })
 

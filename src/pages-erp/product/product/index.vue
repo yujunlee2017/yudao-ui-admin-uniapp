@@ -151,7 +151,7 @@ const {
   handleBatchDelete,
 } = useBatchSelect({
   permission: 'erp:product:delete',
-  deleteApi: (ids: number[]) => deleteProduct(ids[0]),
+  deleteApi: (ids: number[]) => deleteProduct(ids[0]), // TODO @Yunai：BUG！ids[0] 只删第一条（后端删除接口只接单 id）。改为 for 循环逐条删，参考 finance/account/index.vue 或 product/category/index.vue:148。
   reloadEvent: 'erp:product:reload',
 })
 

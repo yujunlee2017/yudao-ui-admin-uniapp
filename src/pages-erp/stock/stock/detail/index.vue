@@ -40,6 +40,7 @@ import { navigateBackPlus } from '@/utils'
 
 const props = defineProps<{ id?: number | any }>()
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/stock/stock/detail/index')
+// TODO @Yunai：对齐 system 页面，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
 const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
@@ -74,6 +75,8 @@ async function getDetail() {
 onMounted(() => {
   getDetail()
 })
+
+// TODO @Yunai：watch currentId 对齐其它 detail，补 /** */ 注释并统一初始化/路由变化刷新写法。
 watch(currentId, () => {
   formData.value = undefined
   void getDetail()

@@ -83,6 +83,7 @@
 </template>
 
 <script lang="ts" setup>
+// TODO @YunaiV：搜索风格对齐 system/infra——① wd-picker（仓库/库位）改 yd-search-picker（:columns + all-option）；② wd-calendar 日期范围改全局 yd-search-date-range；③ 供应商选择器后续评估收敛为 yd-search-picker
 import type { MdVendorVO } from '@/api/mes/md/vendor'
 import type { WmOutsourceReceiptQueryParams } from '@/api/mes/wm/outsourcereceipt'
 import { computed, reactive, ref } from 'vue'

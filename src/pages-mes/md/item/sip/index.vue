@@ -22,6 +22,7 @@
           <view v-for="sip in list" :key="sip.id" class="mb-20rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
             <!-- 图片 -->
             <view class="h-320rpx cursor-pointer bg-[#f5f7fa]" @click="handlePreview(sip.url)">
+              <!-- TODO @YunaiV：图片展示改用 wd-img（width/height/mode="aspectFill"/enable-preview，去掉手写占位），对齐 AGENTS.md -->
               <image v-if="sip.url" :src="sip.url" mode="aspectFill" class="h-full w-full" />
               <view v-else class="h-full flex items-center justify-center">
                 <wd-icon name="picture" size="64rpx" color="#c0c4cc" />
@@ -317,6 +318,7 @@ async function handleDelete(sip: MdProductSipVO) {
 onMounted(async () => {
   if (!props.itemId) {
     uni.showToast({ icon: 'none', title: '缺少物料编号' })
+    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 1 处 setTimeout(() => handleBack())）
     setTimeout(() => handleBack(), 1000)
     return
   }

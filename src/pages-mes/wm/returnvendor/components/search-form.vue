@@ -72,6 +72,7 @@
 </template>
 
 <script lang="ts" setup>
+// TODO @YunaiV：搜索风格对齐 system/infra——① 供应商选择器 MesSearchSelectorField+VendorSelector 后续评估收敛为 yd-search-picker；② wd-popup 去掉 transition="fade" :duration="0"
 import type { MdVendorVO } from '@/api/mes/md/vendor'
 import type { WmReturnVendorQueryParams } from '@/api/mes/wm/returnvendor'
 import { computed, reactive, ref } from 'vue'

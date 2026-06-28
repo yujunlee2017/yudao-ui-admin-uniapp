@@ -101,6 +101,7 @@ import { formatMoney, roundPrice, toNumber } from '@/pages-erp/utils'
 
 const props = defineProps<{ id?: number | any }>()
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/sale/order/form/index')
+// TODO @Yunai：对齐 system 表单页，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
 const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
@@ -157,6 +158,7 @@ function refreshOrderAmount() {
 }
 
 /** 加载基础选项 */
+// TODO @Yunai：考虑在 src/pages-erp/finance/account 封装账户 picker/默认账户加载组件，避免采购/销售/财务重复。
 async function loadOptions() {
   const [accounts, products] = await Promise.all([
     getAccountSimpleList(),
@@ -171,6 +173,7 @@ async function loadOptions() {
 }
 
 /** 加载销售订单详情 */
+// TODO @Yunai：加载详情对齐 system/tenant，补 toast.loading/finally close，并直接 getSaleOrder(props.id)，不要 getSaleOrder(Number(currentId.value))。
 async function getDetail() {
   if (!currentId.value) {
     return

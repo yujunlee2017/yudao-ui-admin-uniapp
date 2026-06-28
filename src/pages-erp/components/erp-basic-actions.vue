@@ -1,3 +1,4 @@
+<!-- TODO @AI：每个模块自己写，不做这种统一的； -->
 <template>
   <view v-if="hasActions" class="yd-detail-footer">
     <view class="yd-detail-footer-actions">

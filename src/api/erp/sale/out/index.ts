@@ -1,6 +1,7 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
+// TODO @Yunai：按后端 VO 收窄类型，补 SaleOutItem 明细类型；导出接口改 downloadApiFile 或删除未用方法。
 /** ERP 销售出库 */
 export interface SaleOut {
   id?: number // 销售出库编号

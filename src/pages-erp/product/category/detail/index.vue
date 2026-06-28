@@ -25,6 +25,7 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
+    <!-- TODO @Yunai：不做 ErpBasicActions 统一封装，参考其它模块把底部操作写回各自详情页。 -->
     <ErpBasicActions
       :can-update="canUpdate"
       :can-delete="canDelete"
@@ -51,6 +52,7 @@ import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/product/category/detail/index')
+// TODO @Yunai：对齐 system 页面，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
 const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
@@ -121,6 +123,7 @@ onMounted(() => {
   uni.$on('erp:product-category:reload', getDetail)
 })
 
+// TODO @Yunai：watch currentId 对齐其它 detail，补 /** */ 注释并统一初始化/路由变化刷新写法。
 watch(currentId, () => {
   formData.value = undefined
   void getDetail()

@@ -245,6 +245,7 @@ async function loadAll() {
     item.value = itemData
     if (!itemData.batchFlag) {
       uni.showToast({ icon: 'none', title: '该物料未启用批次管理' })
+      // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 2 处 setTimeout(() => handleBack())）
       setTimeout(() => handleBack(), 1500)
       return
     }

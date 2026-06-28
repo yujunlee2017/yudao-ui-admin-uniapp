@@ -21,6 +21,7 @@
         <view class="yd-search-form-label">
           产品
         </view>
+        <!-- TODO @Yunai：搜索业务下拉对齐 yd-search-picker，删除 ErpPicker + selectedNames 的重复样板。 -->
         <ErpPicker
           v-model="formData.productId"
           source="product"
@@ -58,6 +59,7 @@
         <view class="yd-search-form-label">
           状态
         </view>
+        <!-- TODO @Yunai：字典/状态筛选对齐 yd-search-picker（columns/dict-type + all-option），不要手写 wd-radio-group + -1「全部」。 -->
         <wd-radio-group v-model="formData.status" type="button">
           <wd-radio :value="-1">
             全部

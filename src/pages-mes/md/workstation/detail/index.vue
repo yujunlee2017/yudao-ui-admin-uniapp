@@ -60,6 +60,7 @@ const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/md/workstation/detail/index')
+// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
 const currentId = computed(() => getRouteQueryNumber('id'))
 interface MdWorkstationDetail extends MdWorkstationVO {
   warehouseName?: string
@@ -70,6 +71,7 @@ const formData = ref<MdWorkstationDetail>()
 const deleting = ref(false)
 const canUpdate = computed(() => hasAccessByCodes(['mes:md-workstation:update']))
 const canDelete = computed(() => hasAccessByCodes(['mes:md-workstation:delete']))
+// TODO @YunaiV：纯权限的 canUpdate/canDelete/hasFooter 尽量内联到模板，避免额外 computed；只有状态条件组合才保留具名 computed。
 const hasFooter = computed(() => canUpdate.value || canDelete.value)
 
 function handleBack() {
@@ -137,6 +139,7 @@ async function handleDelete() {
     toast.close()
     toast.success('删除成功')
     uni.$emit('mes:md:workstation:reload')
+    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 1 处 setTimeout(() => handleBack())）
     setTimeout(() => handleBack(), 500)
   } catch {
     toast.close()

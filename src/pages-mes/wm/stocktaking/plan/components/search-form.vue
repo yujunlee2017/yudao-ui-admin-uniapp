@@ -64,6 +64,7 @@
 </template>
 
 <script lang="ts" setup>
+// TODO @YunaiV：搜索风格对齐 system/infra——wd-radio-group 类型/状态筛选改 yd-search-picker（type/status，配 dict-kind + all-option）
 import type { StockTakingPlanQueryParams } from '@/api/mes/wm/stocktaking/plan'
 import { computed, reactive, ref } from 'vue'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'

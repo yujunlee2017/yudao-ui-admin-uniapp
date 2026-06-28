@@ -70,6 +70,7 @@
 </template>
 
 <script lang="ts" setup>
+// TODO @YunaiV：搜索风格对齐 system/infra——客户选择器 MesSearchSelectorField+ClientSelector 后续评估收敛为 yd-search-picker
 import type { MdClientVO } from '@/api/mes/md/client'
 import type { WmSalesNoticeQueryParams } from '@/api/mes/wm/salesnotice'
 import { computed, reactive, ref } from 'vue'

@@ -8,6 +8,16 @@ import { staticUrl } from '@/utils/download'
 import { createFormSchema } from '@/utils/wot'
 import { getStockByProductAndWarehouse, getStockCount } from '@/api/erp/stock/stock'
 
+// TODO @Yunai：看看怎么尽量去掉这个工具类；如果有必要保留的；新建一个 pages-erp/utils/erp.ts；
+
+// TODO @Yunai：本文件存在大量「字段配置引擎」死代码，全局 grep 零引用，建议整块删除：
+//   createErpFormData / createErpFormSchema / formatErpValue / getPickerText / getListFields / getFormFields /
+//   getSearchFields / getFieldDictType / getTitleField / isDateField / isMoneyField / getOptionName /
+//   refreshErpItemsAmount / getCurrentRouteQuery / getFileName（getFileName 仅被 formatErpValue 调用）。
+// 保留的有用函数：roundPrice / roundCount / toNumber / formatMoney / formatCount / formatNumber / formatPercent /
+//   openErpFile / resolveErpFileUrl / refreshSingleItemAmount / normalizeOptions。
+// 删除后，本文件对 config.ts 的 ErpField/ErpModule/erpOptionLoaders/getErpModule 依赖也可一并清理。
+
 export type ErpOptionsMap = Partial<Record<ErpOptionKey, Array<Record<string, any>>>>
 
 /** 获取当前路由参数 */
@@ -46,6 +56,7 @@ export function resolveErpFileUrl(url?: string) {
   return staticUrl(url)
 }
 
+// TODO @Yunai：全局方法替代下；
 /** 打开附件（图片预览 / 文档下载） */
 export function openErpFile(url?: string) {
   const fullUrl = resolveErpFileUrl(url)
@@ -295,6 +306,7 @@ export function formatCount(value?: any) {
   return Number.isNaN(count) ? String(value) : String(Number(count.toFixed(3)))
 }
 
+// TODO @Yunai：这种抽到全局
 /** 格式化数字（原样转字符串，空值返回 -） */
 export function formatNumber(value?: any) {
   if (value === undefined || value === null || value === '') {
@@ -303,6 +315,7 @@ export function formatNumber(value?: any) {
   return String(value)
 }
 
+// TODO @Yunai：这种抽到全局
 /** 格式化百分比（保留两位小数） */
 export function formatPercent(value?: any) {
   if (value === undefined || value === null || value === '') {
@@ -312,6 +325,7 @@ export function formatPercent(value?: any) {
   return Number.isNaN(percent) ? String(value) : percent.toFixed(2)
 }
 
+// TODO @Yunai：这种抽到全局
 /** 计算单据明细金额 */
 export function refreshErpItemsAmount(data: Record<string, any>, module?: ErpModule) {
   if (!Array.isArray(data.items)) {
@@ -381,6 +395,7 @@ export async function setItemStockCount(item: Record<string, any>, warehouseFiel
   item.stockCount = await getStockCount(Number(item.productId))
 }
 
+// TODO @Yunai：看看是不是抽到全局做计算？？？或者每个逻辑自己写号了；
 /**
  * 刷新单条明细金额（count × price → totalPrice）
  * 不处理税额，税额逻辑见 refreshErpItemsAmount

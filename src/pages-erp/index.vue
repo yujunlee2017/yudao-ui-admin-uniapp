@@ -1,3 +1,4 @@
+<!-- TODO @Yunai：挪到 src/pages-statistics/erp/home 目录下：增加报表，对齐 vue3 + ep、crm、mall 报表风格；去掉菜单入口。 -->
 <template>
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
@@ -169,6 +170,7 @@ const { hasAccessByCodes } = useAccess()
 const loading = ref(false) // 统计加载状态
 const loaded = ref(false) // 是否已完成首次加载
 const loadError = ref(false) // 是否存在统计加载失败
+// TODO @Yunai：统计状态直接使用 ErpSaleSummaryResp / ErpPurchaseSummaryResp / TimeSummaryResp，不要用 Record<string, any> 和手写数组类型兜底。
 const saleSummary = ref<Record<string, any>>({}) // 销售概况统计
 const purchaseSummary = ref<Record<string, any>>({}) // 采购概况统计
 const saleTimeSummaryList = ref<Array<{ time: string, price: number }>>([]) // 销售时段统计

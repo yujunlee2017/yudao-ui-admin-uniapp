@@ -11,6 +11,7 @@
         <wd-cell title="账户状态">
           <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="formData?.status" />
         </wd-cell>
+        <!-- TODO @Yunai：是否默认对齐 boolean dict-tag，不要手写「是/否」文本。 -->
         <wd-cell title="是否默认" :value="formData?.defaultStatus ? '是' : '否'" />
         <wd-cell title="排序" :value="formData?.sort ?? '-'" />
         <wd-cell title="备注" :value="formData?.remark || '-'" />
@@ -53,6 +54,7 @@ import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/finance/account/detail/index')
+// TODO @Yunai：对齐 system 页面，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
 const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
@@ -68,6 +70,7 @@ const toast = useToast()
 const formData = ref<Account>() // 详情数据
 const deleting = ref(false) // 删除状态
 const defaultLoading = ref(false) // 默认状态修改状态
+// TODO @Yunai：简单页脚判断对齐 system 风格，看看 canSetDefault、hasFooter 能不能直接写到模板里。
 const canSetDefault = computed(() => hasAccessByCodes(['erp:account:update']) && !formData.value?.defaultStatus)
 const hasFooter = computed(() => hasAccessByCodes(['erp:account:update']) || hasAccessByCodes(['erp:account:delete']) || canSetDefault.value)
 

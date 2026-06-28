@@ -215,6 +215,7 @@ const userStore = useUserStore()
 const formLoading = ref(false) // 表单提交状态
 const formRef = ref<FormInstance>() // 表单组件引用
 const { getRouteQueryNumber, getRouteQueryValue } = useRouteQuery(props, '/pages-mes/pro/feedback/form/index')
+// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
 const currentId = computed(() => getRouteQueryNumber('id'))
 const routeMode = computed(() => (getRouteQueryValue('mode') as FormMode) || 'create')
 const formMode = ref<FormMode>(routeMode.value)
@@ -576,6 +577,7 @@ async function handleSubmitFeedback() {
     }
     toast.success('报工单已提交')
     uni.$emit('mes:pro:feedback:reload')
+    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 3 处 setTimeout(() => handleBack())）
     setTimeout(() => handleBack(), 500)
   } finally {
     formLoading.value = false

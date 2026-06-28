@@ -71,6 +71,18 @@
       </view>
     </z-paging>
 
+    <!-- TODO @Yunai：本列表已接入 useBatchSelect（长按进入选择模式），但缺少底部批量操作栏，
+         导致用户进入选择模式后无「取消/删除」可用、无法退出。需补下方批量栏（参考 product/unit/index.vue:57-67）。
+         同样缺失的还有 purchase/in、purchase/return、finance/payment、finance/receipt 共 5 个列表。
+    <view v-if="selecting" class="yd-detail-footer">
+      <view class="flex items-center justify-between px-24rpx">
+        <wd-button variant="plain" size="small" @click="exitSelectMode">取消</wd-button>
+        <text class="text-28rpx text-[#666]">已选 {{ selectedIds.size }} 项</text>
+        <wd-button type="danger" size="small" :loading="batchDeleting" :disabled="selectedIds.size === 0" @click="handleBatchDelete">删除</wd-button>
+      </view>
+    </view>
+    -->
+
     <!-- 新增按钮 -->
     <wd-fab
       v-if="hasAccessByCodes(['erp:purchase-order:create'])"
@@ -104,6 +116,7 @@ definePage({
 })
 
 const { hasAccessByCodes } = useAccess()
+// TODO @Yunai：状态变量缺尾注释，按 AGENTS.md 对齐为 // 列表数据、// 分页组件引用、// 查询参数。
 const list = ref<PurchaseOrder[]>([])
 const pagingRef = ref<any>()
 const queryParams = ref<Record<string, any>>({})

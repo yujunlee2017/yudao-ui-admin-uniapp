@@ -123,6 +123,7 @@
   </MesLineListShell>
 
   <!-- 调拨物料表单弹窗 -->
+  <!-- TODO @YunaiV：本 wd-popup 去掉 transition="fade" :duration="0"，对齐 system/infra（基线不带这俩属性） -->
   <wd-popup
     v-model="lineFormVisible"
     position="top"
@@ -259,6 +260,7 @@
   </wd-popup>
 
   <!-- 上架明细表单弹窗 -->
+  <!-- TODO @YunaiV：本 wd-popup 去掉 transition="fade" :duration="0"，对齐 system/infra（基线不带这俩属性） -->
   <wd-popup
     v-model="detailFormVisible"
     position="top"

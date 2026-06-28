@@ -113,6 +113,7 @@ definePage({
 
 const toast = useToast()
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/dv/subject/form/index')
+// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
 const currentId = computed(() => getRouteQueryNumber('id')) // 当前编辑编号
 const getTitle = computed(() => currentId.value ? '编辑点检项目' : '新增点检项目')
 const formLoading = ref(false) // 表单提交状态
@@ -217,6 +218,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:dv:subject:reload')
+    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 1 处 setTimeout(() => handleBack())）
     setTimeout(() => {
       handleBack()
     }, 500)

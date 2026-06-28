@@ -33,6 +33,7 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
+    <!-- TODO @Yunai：不做 ErpAuditActions 统一封装，参考其它模块把底部操作写回各自详情页。 -->
     <ErpAuditActions
       :can-update="canUpdate"
       :can-update-status="canUpdateStatus"
@@ -66,6 +67,7 @@ import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/purchase/in/detail/index')
+// TODO @Yunai：对齐 system 页面，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
 const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
@@ -78,10 +80,12 @@ definePage({
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
+// TODO @Yunai：状态变量缺尾注释，按 AGENTS.md 补 // 详情数据、// 删除状态、// 审批提交状态。
 const formData = ref<PurchaseIn>()
 const deleting = ref(false)
 const statusLoading = ref(false)
 const items = computed(() => Array.isArray(formData.value?.items) ? formData.value.items : [])
+// TODO @Yunai：明细字段按 AGENTS 改成逐字段模板，不再通过 itemFields 配置生成。
 const itemFields: ErpDetailItemField[] = [
   { prop: 'warehouseName', label: '仓库' },
   { prop: 'productName', label: '产品' },
@@ -98,6 +102,7 @@ const itemFields: ErpDetailItemField[] = [
   { prop: 'remark', label: '备注', hiddenWhenEmpty: true },
 ] // 入库明细字段
 const unpaidPrice = computed(() => Number(formData.value?.totalPrice || 0) - Number(formData.value?.paymentPrice || 0))
+// TODO @Yunai：审批状态魔法数字 10/20 改 ErpAuditStatusEnum（同 purchase/order/detail，4 处）
 const canUpdate = computed(() => formData.value?.status !== 20 && hasAccessByCodes(['erp:purchase-in:update']))
 const canDelete = computed(() => hasAccessByCodes(['erp:purchase-in:delete']))
 const canUpdateStatus = computed(() => hasAccessByCodes(['erp:purchase-in:update-status']) && (formData.value?.status === 10 || formData.value?.status === 20))
@@ -126,6 +131,7 @@ function handleEdit() {
   uni.navigateTo({ url: `/pages-erp/purchase/in/form/index?id=${currentId.value}` })
 }
 
+// TODO @Yunai：补 /** 打开附件 */ JSDoc。
 function handleOpenFile() {
   if (formData.value?.fileUrl) {
     openErpFile(formData.value.fileUrl)
@@ -158,6 +164,7 @@ async function handleUpdateStatus(status: number) {
   if (!currentId.value) {
     return
   }
+  // TODO @Yunai：审批状态 20 改用 ErpAuditStatusEnum.AUDITED。
   const actionName = status === 20 ? '审批' : '反审批'
   try {
     await dialog.confirm({ title: '提示', msg: `确定要${actionName}该采购入库吗？` })
@@ -183,6 +190,8 @@ onMounted(() => {
 onUnload(() => {
   uni.$off('erp:purchase-in:reload', getDetail)
 })
+
+// TODO @Yunai：watch currentId 对齐其它 detail，补 /** */ 注释并统一初始化/路由变化刷新写法。
 watch(currentId, () => {
   formData.value = undefined
   void getDetail()

@@ -1,6 +1,7 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
+// TODO @Yunai：按后端 VO 收窄类型，补 PurchaseOrderItem 明细类型；导出接口改 downloadApiFile 或删除未用方法。
 /** ERP 采购订单 */
 export interface PurchaseOrder {
   id?: number // 订单工单编号

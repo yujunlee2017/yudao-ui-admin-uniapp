@@ -20,6 +20,7 @@
           </wd-form-item>
         </wd-cell-group>
 
+        <!-- TODO @AI：这里的交互，要不要对齐？pages-infra/demo/demo03-normal/form/index -->
         <view class="px-24rpx py-16rpx text-28rpx text-[#666]">
           采购入库、退货单
         </view>
@@ -72,6 +73,7 @@ import { formatMoney, roundPrice, toNumber } from '@/pages-erp/utils'
 
 const props = defineProps<{ id?: number | any }>()
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/finance/payment/form/index')
+// TODO @Yunai：对齐 system 表单页，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
 const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
@@ -83,6 +85,7 @@ definePage({
 
 const toast = useToast()
 const getTitle = computed(() => currentId.value ? '编辑付款单' : '新增付款单')
+// TODO @Yunai：状态变量缺尾注释，按 AGENTS.md 补 // 表单提交状态、// 表单数据。
 const formLoading = ref(false)
 const formData = ref<FinancePayment>({
   id: undefined,
@@ -114,6 +117,7 @@ function handleBack() {
   navigateBackPlus('/pages-erp/finance/payment/index')
 }
 
+// TODO @AI：写下注释；
 function refreshAmount() {
   const items = Array.isArray(formData.value.items) ? formData.value.items : []
   const totalPrice = items.reduce((sum, item) => sum + toNumber(item.paymentPrice), 0)
@@ -121,6 +125,7 @@ function refreshAmount() {
   formData.value.paymentPrice = roundPrice(totalPrice - toNumber(formData.value.discountPrice))
 }
 
+// TODO @AI：在 src/pages-erp/finance/account 封装一个 picker 组件？
 async function loadOptions() {
   const accounts = await getAccountSimpleList()
   accountOptions.value = accounts || []
@@ -131,6 +136,7 @@ async function loadOptions() {
 }
 
 /** 加载详情 */
+// TODO @Yunai：加载详情对齐 system/tenant，补 toast.loading/finally close，并直接 getFinancePayment(props.id)，不要 getFinancePayment(Number(currentId.value))。
 async function getDetail() {
   if (!currentId.value) {
     return

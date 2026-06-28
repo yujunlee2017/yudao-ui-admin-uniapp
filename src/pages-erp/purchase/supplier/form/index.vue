@@ -86,6 +86,7 @@ import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{ id?: number | any }>()
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/purchase/supplier/form/index')
+// TODO @Yunai：对齐 system 表单页，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
 const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
@@ -130,6 +131,7 @@ function handleBack() {
 }
 
 /** 加载供应商详情 */
+// TODO @Yunai：加载详情对齐 system/tenant，补 toast.loading/finally close，并直接 getSupplier(props.id)，不要 getSupplier(Number(currentId.value))。
 async function getDetail() {
   if (!currentId.value) {
     return

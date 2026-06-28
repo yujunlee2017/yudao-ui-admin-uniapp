@@ -279,6 +279,7 @@ async function handleDelete(bom: MdProductBomVO) {
 onMounted(() => {
   if (!itemId.value) {
     uni.showToast({ icon: 'none', title: '缺少物料编号' })
+    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 1 处 setTimeout(() => handleBack())）
     setTimeout(() => handleBack(), 1000)
     return
   }

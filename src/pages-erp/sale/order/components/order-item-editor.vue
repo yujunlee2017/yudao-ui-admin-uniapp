@@ -1,3 +1,4 @@
+<!-- TODO @Yunai：组件命名是否改成 order-item-form，和表单明细编辑职责对齐。 -->
 <template>
   <view class="w-full">
     <view

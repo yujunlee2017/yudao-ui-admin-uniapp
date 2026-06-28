@@ -1,3 +1,4 @@
+<!-- TODO @Yunai：对齐 vue3 + ep 的位置和拆分方式，命名可按现有风格用 picker 或 select。 -->
 <template>
   <wd-popup
     v-model="visible"
@@ -22,6 +23,9 @@
         <wd-input v-model="queryParams.no" placeholder="请输入订单单号" clearable />
         <ErpPicker v-model="queryParams.productId" class="mt-12rpx" source="product" form-item placeholder="请选择产品" />
         <view class="mt-12rpx flex gap-12rpx">
+          <!-- TODO @Yunai：时间范围手写 dateVisible + 两个 wd-datetime-picker，应改用全局 yd-search-date-range
+               （AGENTS.md：日期范围用全局 yd-search-date-range，已统一抽离，勿再手写）。
+               同款问题：purchase-order-return-selector、sale-order-out/return-selector、payment/receipt-source-selector。 -->
           <view class="flex-1" @click="dateVisible.start = true">
             <view class="yd-search-form-date-range-picker">
               {{ formatDate(queryParams.orderTime[0]) || '开始日期' }}

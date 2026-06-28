@@ -82,6 +82,7 @@
 </template>
 
 <script lang="ts" setup>
+// TODO @YunaiV：搜索风格对齐 system/infra——① wd-calendar 日期范围改全局 yd-search-date-range（arrivalDate）；② wd-popup 去掉 transition="fade" :duration="0"（基线 search-form 无此属性）；③ 供应商选择器 MesSearchSelectorField+VendorSelector 为 mes 自封装展示行，功能弱于基线 yd-search-picker，后续评估统一收敛
 import type { MdVendorVO } from '@/api/mes/md/vendor'
 import type { WmArrivalNoticeQueryParams } from '@/api/mes/wm/arrivalnotice'
 import { computed, reactive, ref } from 'vue'

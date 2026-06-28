@@ -66,6 +66,7 @@ import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{ id?: number | string, parentId?: number | string }>()
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/product/category/form/index')
+// TODO @Yunai：对齐 system 表单页，直接用 props.id / props.parentId 接参，删除 useRouteQuery/currentId 包装。
 const currentId = computed(() => getRouteQueryNumber('id'))
 const currentParentId = computed(() => getRouteQueryNumber('parentId'))
 
@@ -133,6 +134,7 @@ function applyQueryDefaults() {
 }
 
 /** 加载产品分类详情 */
+// TODO @Yunai：加载详情对齐 system/tenant，补 toast.loading/finally close，并直接 getProductCategory(props.id)，不要 getProductCategory(Number(currentId.value))。
 async function getDetail() {
   if (!currentId.value) {
     return

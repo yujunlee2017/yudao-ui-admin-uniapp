@@ -117,6 +117,7 @@
 </template>
 
 <script lang="ts" setup>
+// TODO @YunaiV：搜索风格对齐 system/infra——① wd-radio-group 质量状态筛选改 yd-search-picker（qualityStatus，配 dict-kind + all-option）；② 物料/供应商/客户选择器 MesSearchSelectorField+XxxSelector 后续评估收敛为 yd-search-picker
 import type { MdClientVO } from '@/api/mes/md/client'
 import type { MdItemVO } from '@/api/mes/md/item'
 import type { MdVendorVO } from '@/api/mes/md/vendor'

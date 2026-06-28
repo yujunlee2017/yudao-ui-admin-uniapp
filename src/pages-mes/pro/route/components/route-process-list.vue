@@ -256,6 +256,7 @@ function openForm(type: 'create' | 'update', row?: ProRouteProcessVO) {
     ? { ...row, keyFlag: normalizeBoolean(row.keyFlag) === 'true', checkFlag: normalizeBoolean(row.checkFlag) === 'true' }
     : createDefaultFormData(props.routeId, maxSort + 1)
   formVisible.value = true
+  // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 1 处 setTimeout(() => handleBack())）
   setTimeout(() => formRef.value?.reset(), 0)
 }
 

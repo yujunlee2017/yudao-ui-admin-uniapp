@@ -1,3 +1,4 @@
+<!-- TODO @AI：对齐 vue3 + ep 的位置和拆分方式？（名字可以用 picker 或者 select 啥，和现有项目风格一致） -->
 <template>
   <wd-popup
     v-model="visible"
@@ -20,8 +21,10 @@
 
       <view class="bg-white px-24rpx pb-20rpx">
         <wd-input v-model="queryParams.no" :placeholder="`请输入${sourceLabel}单号`" clearable />
+        <!-- TODO @Yunai：产品选择对齐 yd-form-picker/ErpPicker，不要在弹窗里直接散落 wd-picker。 -->
         <wd-form-item class="mt-12rpx" :value="productDisplayValue" placeholder="请选择产品" is-link @click="productPickerVisible = true" />
         <wd-picker v-model:visible="productPickerVisible" :model-value="queryParams.productId" :columns="productOptions" label-key="name" value-key="id" @confirm="({ value }) => queryParams.productId = value[0]" />
+        <!-- TODO @Yunai：时间范围对齐 yd-search-date-range 或抽公共组件，避免手写双 datetime-picker。 -->
         <view class="mt-12rpx flex gap-12rpx">
           <view class="flex-1" @click="dateVisible.start = true">
             <view class="yd-search-form-date-range-picker">

@@ -44,6 +44,7 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
+    <!-- TODO @Yunai：不做 ErpAuditActions 统一封装，参考其它模块把底部操作写回各自详情页。 -->
     <ErpAuditActions
       :can-update="canUpdate"
       :can-update-status="canUpdateStatus"
@@ -77,6 +78,7 @@ import { enrichErpDocumentDetail, formatCount, formatMoney, formatPercent, openE
 
 const props = defineProps<{ id?: number | any }>()
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/sale/order/detail/index')
+// TODO @Yunai：对齐 system 页面，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
 const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
@@ -93,6 +95,7 @@ const formData = ref<SaleOrder>() // 详情数据
 const deleting = ref(false) // 删除状态
 const statusLoading = ref(false) // 审批状态
 const items = computed(() => Array.isArray(formData.value?.items) ? formData.value.items : [])
+// TODO @Yunai：明细字段按 AGENTS 改成逐字段模板，不再通过 itemFields 配置生成。
 const itemFields: ErpDetailItemField[] = [
   { prop: 'productName', label: '产品' },
   { prop: 'productBarCode', label: '条码' },
@@ -105,6 +108,7 @@ const itemFields: ErpDetailItemField[] = [
   { prop: 'totalPrice', label: '含税金额', type: 'money' },
   { prop: 'remark', label: '备注', hiddenWhenEmpty: true },
 ] // 产品明细字段
+// TODO @Yunai：审批状态魔法数字 10/20 改 ErpAuditStatusEnum（同 purchase/order/detail，4 处）
 const canUpdate = computed(() => formData.value?.status !== 20 && hasAccessByCodes(['erp:sale-order:update']))
 const canDelete = computed(() => hasAccessByCodes(['erp:sale-order:delete']))
 const canUpdateStatus = computed(() => hasAccessByCodes(['erp:sale-order:update-status']) && (formData.value?.status === 10 || formData.value?.status === 20))
@@ -169,6 +173,7 @@ async function handleUpdateStatus(status: number) {
   if (!currentId.value) {
     return
   }
+  // TODO @Yunai：审批状态 20 改用 ErpAuditStatusEnum.AUDITED。
   const actionName = status === 20 ? '审批' : '反审批'
   try {
     await dialog.confirm({
@@ -195,6 +200,7 @@ onMounted(() => {
   uni.$on('erp:sale-order:reload', getDetail)
 })
 
+// TODO @Yunai：watch currentId 对齐其它 detail，补 /** */ 注释并统一初始化/路由变化刷新写法。
 watch(currentId, () => {
   formData.value = undefined
   void getDetail()

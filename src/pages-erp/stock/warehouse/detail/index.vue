@@ -11,6 +11,7 @@
         <wd-cell title="仓库状态">
           <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="formData?.status" />
         </wd-cell>
+        <!-- TODO @Yunai：是否默认对齐 boolean dict-tag，不要手写「是/否」文本。 -->
         <wd-cell title="是否默认" :value="formData?.defaultStatus ? '是' : '否'" />
         <wd-cell title="仓储费" :value="formatMoney(formData?.warehousePrice)" />
         <wd-cell title="搬运费" :value="formatMoney(formData?.truckagePrice)" />
@@ -55,6 +56,7 @@ import { formatMoney } from '@/pages-erp/utils'
 
 const props = defineProps<{ id?: number | any }>()
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/stock/warehouse/detail/index')
+// TODO @Yunai：对齐 system 页面，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
 const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
@@ -70,6 +72,7 @@ const toast = useToast()
 const formData = ref<Warehouse>() // 详情数据
 const deleting = ref(false) // 删除状态
 const defaultLoading = ref(false) // 默认状态修改状态
+// TODO @Yunai：简单页脚判断对齐 system 风格，看看 canSetDefault、hasFooter 能不能直接写到模板里。
 const canSetDefault = computed(() => hasAccessByCodes(['erp:warehouse:update']) && !formData.value?.defaultStatus)
 const hasFooter = computed(() => hasAccessByCodes(['erp:warehouse:update']) || hasAccessByCodes(['erp:warehouse:delete']) || canSetDefault.value)
 
@@ -144,6 +147,7 @@ onMounted(() => {
   uni.$on('erp:warehouse:reload', getDetail)
 })
 
+// TODO @Yunai：watch currentId 对齐其它 detail，补 /** */ 注释并统一初始化/路由变化刷新写法。
 watch(currentId, () => {
   formData.value = undefined
   void getDetail()

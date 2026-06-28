@@ -27,6 +27,7 @@
         <view class="yd-search-form-label">
           状态
         </view>
+        <!-- TODO @Yunai：字典/状态筛选对齐 yd-search-picker（dict-type + all-option），不要手写 wd-radio-group + -1「全部」。 -->
         <wd-radio-group v-model="formData.status" type="button">
           <wd-radio :value="-1">
             全部
@@ -84,6 +85,9 @@ const placeholder = computed(() => {
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
+  // TODO @Yunai：BUG！status=-1「全部」未转 undefined，会直接发给后端导致过滤异常。
+  // 应改为 emit('search', { name: formData.name || undefined, status: formData.status === -1 ? undefined : formData.status })
+  // 对齐 mall coupon/template/search-form.vue:112-113 的标准写法。product/unit/search-form.vue 同款问题。
   emit('search', { ...formData })
 }
 

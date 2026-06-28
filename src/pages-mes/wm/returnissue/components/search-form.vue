@@ -75,6 +75,7 @@
 </template>
 
 <script lang="ts" setup>
+// TODO @YunaiV：搜索风格对齐 system/infra——① wd-picker（物料/工作站）改 yd-search-picker（:columns + all-option）；② 工单选择器后续评估收敛为 yd-search-picker；③ wd-popup 去掉 transition="fade" :duration="0"
 import type { ProWorkOrderVO } from '@/api/mes/pro/workorder'
 import type { WmReturnIssueQueryParams } from '@/api/mes/wm/returnissue'
 import { computed, reactive, ref } from 'vue'

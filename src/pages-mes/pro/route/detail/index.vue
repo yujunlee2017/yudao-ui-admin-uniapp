@@ -94,6 +94,7 @@ const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/pro/route/detai
 const routeId = computed(() => getRouteQueryNumber('id'))
 const canUpdate = computed(() => hasAccessByCodes(['mes:pro-route:update']))
 const canDelete = computed(() => hasAccessByCodes(['mes:pro-route:delete']))
+// TODO @YunaiV：纯权限的 canUpdate/canDelete/hasFooter 尽量内联到模板，避免额外 computed；只有状态条件组合才保留具名 computed。
 const hasFooter = computed(() => canUpdate.value || canDelete.value)
 const isDisabled = computed(() => formData.value?.status === CommonStatusEnum.DISABLE)
 
@@ -112,6 +113,7 @@ async function getDetail() {
     const detailData = await getRoute(routeId.value)
     if (!detailData) {
       uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+      // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 2 处 setTimeout(() => handleBack())）
       setTimeout(() => handleBack(), 300)
       return
     }

@@ -26,7 +26,7 @@
               </wd-button>
             </view>
           </wd-form-item>
-          <wd-picker v-model:visible="userPickerVisible" :model-value="userPickerValue" :columns="userOptions" label-key="nickname" value-key="id" @confirm="handleUserConfirm" />
+          <wd-picker v-model:visible="userPickerVisible" :model-value="userPickerValue" :columns="userOptions" label-key="nickname" value-key="id" @confirm="handleUserConfirm" /> <!-- TODO @YunaiV：仓库负责人选择改用 system-select/user-picker.vue（wm 内 packages/stocktaking-task 已用，对齐基线） -->
           <wd-form-item title="仓库地址" title-width="220rpx" prop="address">
             <wd-textarea v-model="formData.address" placeholder="请输入仓库地址" :maxlength="200" show-word-limit clearable />
           </wd-form-item>
@@ -78,6 +78,7 @@ definePage({
 
 const toast = useToast()
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/wm/warehouse/form/index')
+// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
 const currentId = computed(() => getRouteQueryNumber('id'))
 const getTitle = computed(() => currentId.value ? '编辑仓库' : '新增仓库')
 const formLoading = ref(false)
@@ -175,6 +176,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:wm:warehouse:reload')
+    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 1 处 setTimeout(() => handleBack())）
     setTimeout(() => handleBack(), 500)
   } finally {
     formLoading.value = false

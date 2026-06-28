@@ -198,6 +198,7 @@ const formLoading = ref(false) // 表单提交状态
 const formRef = ref<FormInstance>() // 表单组件引用
 const detailData = ref<ProAndonRecordVO>() // 原始详情
 const { getRouteQueryNumber, getRouteQueryValue } = useRouteQuery(props, '/pages-mes/pro/andon/record/form/index')
+// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
 const currentId = computed(() => getRouteQueryNumber('id'))
 const routeMode = computed(() => (getRouteQueryValue('mode') as FormMode) || 'create')
 const formData = ref<AndonRecordFormData>(getDefaultFormData()) // 表单数据

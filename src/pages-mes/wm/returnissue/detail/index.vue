@@ -114,6 +114,7 @@ const dialog = useDialog()
 const toast = useToast()
 const formData = ref<WmReturnIssueVO>() // 详情数据
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/wm/returnissue/detail/index')
+// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
 const currentId = computed(() => getRouteQueryNumber('id')) // 当前详情编号
 const deleting = ref(false) // 删除状态
 const submitting = ref(false) // 提交状态
@@ -174,6 +175,7 @@ async function getDetail() {
     const detailData = await getReturnIssue(currentId.value)
     if (!detailData) {
       uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+      // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 2 处 setTimeout(() => handleBack())）
       setTimeout(() => handleBack(), 300)
       return
     }

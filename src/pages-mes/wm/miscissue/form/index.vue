@@ -344,6 +344,7 @@ async function handleSubmitIssue() {
     await submitMiscIssue(currentId.value)
     toast.success('提交成功')
     uni.$emit('mes:wm:miscissue:reload')
+    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 2 处 setTimeout(() => handleBack())）
     setTimeout(() => {
       handleBack()
     }, 500)

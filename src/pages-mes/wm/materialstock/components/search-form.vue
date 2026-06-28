@@ -120,6 +120,7 @@
 </template>
 
 <script lang="ts" setup>
+// TODO @YunaiV：搜索风格对齐 system/infra——① wd-picker（仓库/库区）改 yd-search-picker（:columns + all-option）；② wd-radio-group 冻结状态改 yd-search-picker（frozen，:columns + all-option）；③ 物料选择器后续评估收敛为 yd-search-picker
 import type { MdItemVO } from '@/api/mes/md/item'
 import type { WmMaterialStockQueryParams } from '@/api/mes/wm/materialstock'
 import type { WmWarehouseVO } from '@/api/mes/wm/warehouse'

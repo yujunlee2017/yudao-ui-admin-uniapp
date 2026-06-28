@@ -142,6 +142,7 @@ definePage({
 const dialog = useDialog()
 const toast = useToast()
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/dv/checkrecord/form/index')
+// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
 const currentId = computed(() => getRouteQueryNumber('id')) // 当前编辑编号
 const getTitle = computed(() => currentId.value ? '编辑点检记录' : '新增点检记录')
 const formLoading = ref(false) // 表单提交状态

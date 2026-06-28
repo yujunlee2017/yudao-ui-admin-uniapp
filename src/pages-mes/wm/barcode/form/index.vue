@@ -253,6 +253,7 @@ interface BarcodeFormData {
 
 const toast = useToast()
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/wm/barcode/form/index')
+// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
 const currentId = computed(() => getRouteQueryNumber('id')) // 当前条码编号
 const formLoading = ref(false) // 表单提交状态
 const loadingDetail = ref(false) // 详情加载状态

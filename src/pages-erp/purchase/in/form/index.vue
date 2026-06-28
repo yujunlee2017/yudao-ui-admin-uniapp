@@ -86,6 +86,7 @@ import { formatMoney, roundPrice, toNumber } from '@/pages-erp/utils'
 
 const props = defineProps<{ id?: number | any }>()
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/purchase/in/form/index')
+// TODO @Yunai：对齐 system 表单页，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
 const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
@@ -97,6 +98,7 @@ definePage({
 
 const toast = useToast()
 const getTitle = computed(() => currentId.value ? '编辑采购入库' : '新增采购入库')
+// TODO @Yunai：状态变量缺尾注释，按 AGENTS.md 补 // 表单提交状态、// 表单数据。
 const formLoading = ref(false)
 const formData = ref<PurchaseIn>({
   id: undefined,
@@ -134,6 +136,7 @@ function handleBack() {
   navigateBackPlus('/pages-erp/purchase/in/index')
 }
 
+// TODO @Yunai：补 /** 刷新入库金额 */ JSDoc。
 function refreshAmount() {
   const items = Array.isArray(formData.value.items) ? formData.value.items : []
   const totalCount = items.reduce((sum, item) => sum + toNumber(item.count), 0)
@@ -144,6 +147,7 @@ function refreshAmount() {
   formData.value.totalPrice = roundPrice(totalPrice - discountPrice + toNumber(formData.value.otherPrice))
 }
 
+// TODO @Yunai：考虑在 src/pages-erp/finance/account 封装账户 picker/默认账户加载组件，避免采购/销售/财务重复。
 async function loadOptions() {
   const [accounts, suppliers, warehouses] = await Promise.all([
     getAccountSimpleList(),
@@ -160,6 +164,7 @@ async function loadOptions() {
 }
 
 /** 加载详情 */
+// TODO @Yunai：加载详情对齐 system/tenant，补 toast.loading/finally close，并直接 getPurchaseIn(props.id)，不要 getPurchaseIn(Number(currentId.value))。
 async function getDetail() {
   if (!currentId.value) {
     return

@@ -17,6 +17,7 @@
         <view class="yd-search-form-label">
           产品
         </view>
+        <!-- TODO @Yunai：搜索业务下拉对齐 yd-search-picker，删除 ErpPicker + selectedNames 的重复样板。 -->
         <ErpPicker
           v-model="formData.productId"
           source="product"

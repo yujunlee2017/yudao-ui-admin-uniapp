@@ -1,3 +1,4 @@
+<!-- TODO @Yunai：组件命名是否改成 receipt-item-form，和表单明细编辑职责对齐。 -->
 <template>
   <view class="w-full">
     <view v-for="(item, index) in items" :key="index" class="mb-24rpx rounded-12rpx bg-[#f8f8f8] p-20rpx">
@@ -53,7 +54,7 @@ const toast = useToast()
 const items = ref<Record<string, any>[]>([])
 const saleOutSelectorRef = ref<InstanceType<typeof ReceiptSourceSelector>>()
 const saleReturnSelectorRef = ref<InstanceType<typeof ReceiptSourceSelector>>()
-const ERP_BIZ_TYPE = {
+const ERP_BIZ_TYPE = { // TODO @Yunai：删除局部定义，统一用 utils/constants/biz-erp-enum.ts 的 ErpBizType。与 receipt/detail、payment 两处共 4 处重复。
   SALE_OUT: 21,
   SALE_RETURN: 22,
 } as const

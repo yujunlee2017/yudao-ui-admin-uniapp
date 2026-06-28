@@ -1,3 +1,4 @@
+<!-- TODO @Yunai：对齐 vue3 + ep 的位置和拆分方式，命名可按现有风格用 picker 或 select。 -->
 <template>
   <wd-popup v-model="visible" position="bottom" safe-area-inset-bottom custom-style="height: 86vh; border-radius: 24rpx 24rpx 0 0;">
     <view class="h-full flex flex-col bg-[#f5f5f5]">
@@ -18,6 +19,7 @@
       <view class="bg-white px-24rpx pb-20rpx">
         <wd-input v-model="queryParams.no" placeholder="请输入订单单号" clearable />
         <ErpPicker v-model="queryParams.productId" class="mt-12rpx" source="product" form-item placeholder="请选择产品" />
+        <!-- TODO @Yunai：时间范围对齐 yd-search-date-range 或抽公共组件，避免手写双 datetime-picker。 -->
         <view class="mt-12rpx flex gap-12rpx">
           <view class="flex-1" @click="dateVisible.start = true">
             <view class="yd-search-form-date-range-picker">

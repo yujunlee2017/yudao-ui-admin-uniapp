@@ -1,3 +1,4 @@
+<!-- TODO @AI：手机端，暂时不做导出 -->
 <template>
   <view v-if="canExport" class="bg-white px-24rpx py-16rpx">
     <view
@@ -12,6 +13,11 @@
 </template>
 
 <script lang="ts" setup>
+// TODO @Yunai：本组件实现正确（用 downloadApiFile），但全局零引用——19 个 erp 列表页均未挂载导出入口，
+// vue3+ep 每个列表都有导出按钮。需在各列表 search-form 下方挂载本组件并传入 queryParams。
+// TODO @Yunai：风格对齐——cleanParams / handleExport 补 /** */ JSDoc；
+//   二次确认改用项目惯用的 useDialog().confirm() + try/catch cancel（参考 mall coupon/template/detail），
+//   而非 await uni.showModal() 解构 { confirm }。
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, ref } from 'vue'
 import { useAccess } from '@/hooks/useAccess'

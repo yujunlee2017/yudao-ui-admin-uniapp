@@ -180,6 +180,7 @@ definePage({
 
 const toast = useToast()
 const { getRouteQueryNumber, getRouteQueryValue } = useRouteQuery(props, '/pages-mes/qc/iqc/form/index')
+// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
 const currentId = computed(() => getRouteQueryNumber('id'))
 const getTitle = computed(() => currentId.value ? '编辑来料检验单（IQC）' : '新增来料检验单（IQC）')
 const formLoading = ref(false) // 表单提交状态
@@ -448,6 +449,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:qc:iqc:reload')
+    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 1 处 setTimeout(() => handleBack())）
     setTimeout(() => handleBack(), 500)
   } finally {
     formLoading.value = false

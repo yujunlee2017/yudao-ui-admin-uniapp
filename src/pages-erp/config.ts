@@ -23,6 +23,17 @@ import * as WarehouseApi from '@/api/erp/stock/warehouse'
 import * as PurchaseStatisticsApi from '@/api/erp/statistics/purchase'
 import * as SaleStatisticsApi from '@/api/erp/statistics/sale'
 
+// TODO @Yunai：不做这种全局的封装，参考别的模块，更加 html 点；
+
+// TODO @Yunai：本文件含大量「字段配置」死代码，CRUD 页面均未用其驱动 UI，建议清理：
+//   1) ErpFieldType / ErpField 接口、ErpModule.fields / ErpModule.itemFields 字段属性；
+//   2) orderBaseFields / orderItemFields / contactFields / stockItemFields / stockMoveItemFields /
+//      stockCheckItemFields / warehouseOrderItemFields 等 builder（约 200 行）；
+//   3) getErpItemFields() 全局零调用。
+//   保留工作台实际使用的：erpGroups / erpOptionLoaders / erpStatistics / erpModules（仅 key/group/title/icon/
+//   permission/route/exportConfig 等元数据） / getErpModule / getErpGroupModules。
+//   清理后 ErpModule 接口可精简为仅含工作台所需字段。
+
 export type ErpFieldType = 'audit-status' | 'boolean' | 'date' | 'dict' | 'file' | 'items' | 'money' | 'number' | 'picker' | 'status' | 'textarea' | 'text'
 export type ErpOptionKey = 'account' | 'category' | 'customer' | 'product' | 'supplier' | 'unit' | 'user' | 'warehouse'
 
