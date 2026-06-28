@@ -12,7 +12,7 @@ export interface ProcessListener {
   event: string // 监听事件
   valueType: string // 监听器值类型
   value: string // 监听器值
-  createTime?: Date
+  createTime?: Date // 创建时间
 }
 
 /** 获取流程监听器分页列表 */

@@ -11,7 +11,7 @@ export interface UserGroup {
   userIds: number[] // 成员用户编号数组
   status: number // 状态
   remark: string // 备注
-  createTime?: Date
+  createTime?: Date // 创建时间
 }
 
 /** 获取用户组分页列表 */

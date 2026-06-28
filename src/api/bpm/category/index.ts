@@ -11,7 +11,7 @@ export interface Category {
   status: number // 分类状态
   description?: string // 分类描述
   sort: number // 分类排序
-  createTime?: Date
+  createTime?: Date // 创建时间
 }
 
 /** 获取流程分类分页列表 */

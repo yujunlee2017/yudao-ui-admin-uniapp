@@ -91,7 +91,7 @@ async function getDetail() {
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getProcessListener(props.id)
+    formData.value = await getProcessListener(Number(props.id))
   } finally {
     toast.close()
   }
@@ -120,8 +120,9 @@ async function handleDelete() {
   // 执行删除
   deleting.value = true
   try {
-    await deleteProcessListener(props.id)
+    await deleteProcessListener(Number(props.id))
     toast.success('删除成功')
+    uni.$emit('bpm:process-listener:reload')
     delay(handleBack)
   } finally {
     deleting.value = false

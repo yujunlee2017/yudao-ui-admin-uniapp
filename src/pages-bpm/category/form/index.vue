@@ -106,6 +106,7 @@ const formSchema = createFormSchema({
   name: [{ required: true, message: '分类名不能为空' }],
   code: [{ required: true, message: '分类标志不能为空' }],
   status: [{ required: true, message: '分类状态不能为空' }],
+  sort: [{ required: true, message: '分类排序不能为空' }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用
 
@@ -119,7 +120,7 @@ async function getDetail() {
   if (!props.id) {
     return
   }
-  formData.value = await getCategory(props.id)
+  formData.value = await getCategory(Number(props.id))
 }
 
 /** 提交表单 */
@@ -138,6 +139,7 @@ async function handleSubmit() {
       await createCategory(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('bpm:category:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false

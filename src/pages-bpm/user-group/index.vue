@@ -80,6 +80,7 @@
 <script lang="ts" setup>
 import type { UserGroup } from '@/api/bpm/user-group'
 import type { User } from '@/api/system/user'
+import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { getUserGroupPage } from '@/api/bpm/user-group'
 import { getSimpleUserList } from '@/api/system/user'
@@ -166,5 +167,11 @@ function handleDetail(item: UserGroup) {
 /** 初始化 */
 onMounted(() => {
   loadUserList()
+  uni.$on('bpm:user-group:reload', reload)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('bpm:user-group:reload', reload)
 })
 </script>

@@ -82,7 +82,7 @@ async function getDetail() {
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getCategory(props.id)
+    formData.value = await getCategory(Number(props.id))
   } finally {
     toast.close()
   }
@@ -111,8 +111,9 @@ async function handleDelete() {
   // 执行删除
   deleting.value = true
   try {
-    await deleteCategory(props.id)
+    await deleteCategory(Number(props.id))
     toast.success('删除成功')
+    uni.$emit('bpm:category:reload')
     delay(handleBack)
   } finally {
     deleting.value = false

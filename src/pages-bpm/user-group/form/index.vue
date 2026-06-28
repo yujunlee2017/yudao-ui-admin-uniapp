@@ -26,7 +26,6 @@
             />
           </wd-form-item>
           <UserPicker
-            ref="userPickerRef"
             v-model="formData.userIds"
             label="成员"
             prop="userIds"
@@ -102,7 +101,6 @@ const formSchema = createFormSchema({
   status: [{ required: true, message: '状态不能为空' }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用
-const userPickerRef = ref()
 
 /** 返回上一页 */
 function handleBack() {
@@ -114,7 +112,7 @@ async function getDetail() {
   if (!props.id) {
     return
   }
-  formData.value = await getUserGroup(props.id)
+  formData.value = await getUserGroup(Number(props.id))
 }
 
 /** 提交表单 */
@@ -133,6 +131,7 @@ async function handleSubmit() {
       await createUserGroup(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('bpm:user-group:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false

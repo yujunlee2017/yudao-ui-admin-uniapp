@@ -182,7 +182,7 @@ async function getDetail() {
   if (!props.id) {
     return
   }
-  formData.value = await getProcessListener(props.id)
+  formData.value = await getProcessListener(Number(props.id))
 }
 
 /** 提交表单 */
@@ -201,6 +201,7 @@ async function handleSubmit() {
       await createProcessListener(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('bpm:process-listener:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false

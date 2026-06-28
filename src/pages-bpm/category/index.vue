@@ -71,7 +71,8 @@
 
 <script lang="ts" setup>
 import type { Category } from '@/api/bpm/category'
-import { ref } from 'vue'
+import { onUnload } from '@dcloudio/uni-app'
+import { onMounted, ref } from 'vue'
 import { getCategoryPage } from '@/api/bpm/category'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
@@ -140,4 +141,14 @@ function handleDetail(item: Category) {
     url: `/pages-bpm/category/detail/index?id=${item.id}`,
   })
 }
+
+/** 初始化 */
+onMounted(() => {
+  uni.$on('bpm:category:reload', reload)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('bpm:category:reload', reload)
+})
 </script>

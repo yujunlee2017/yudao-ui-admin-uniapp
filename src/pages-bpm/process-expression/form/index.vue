@@ -102,7 +102,7 @@ async function getDetail() {
   if (!props.id) {
     return
   }
-  formData.value = await getProcessExpression(props.id)
+  formData.value = await getProcessExpression(Number(props.id))
 }
 
 /** 提交表单 */
@@ -121,6 +121,7 @@ async function handleSubmit() {
       await createProcessExpression(formData.value)
       toast.success('新增成功')
     }
+    uni.$emit('bpm:process-expression:reload')
     delay(handleBack)
   } finally {
     formLoading.value = false

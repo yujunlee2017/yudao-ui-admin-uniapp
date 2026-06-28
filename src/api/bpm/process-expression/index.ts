@@ -9,7 +9,7 @@ export interface ProcessExpression {
   name: string // 表达式名字
   status: number // 表达式状态
   expression: string // 表达式
-  createTime?: Date
+  createTime?: Date // 创建时间
 }
 
 /** 获取流程表达式分页列表 */

@@ -65,7 +65,8 @@
 
 <script lang="ts" setup>
 import type { ProcessExpression } from '@/api/bpm/process-expression'
-import { ref } from 'vue'
+import { onUnload } from '@dcloudio/uni-app'
+import { onMounted, ref } from 'vue'
 import { getProcessExpressionPage } from '@/api/bpm/process-expression'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
@@ -134,4 +135,14 @@ function handleDetail(item: ProcessExpression) {
     url: `/pages-bpm/process-expression/detail/index?id=${item.id}`,
   })
 }
+
+/** 初始化 */
+onMounted(() => {
+  uni.$on('bpm:process-expression:reload', reload)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('bpm:process-expression:reload', reload)
+})
 </script>
