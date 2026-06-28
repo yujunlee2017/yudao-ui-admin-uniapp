@@ -46,12 +46,14 @@
               <wd-button type="primary" size="small" @click="openSignatureModal">
                 {{ formData.signPicUrl ? '重新签名' : '点击签名' }}
               </wd-button>
-              <image
+              <wd-img
                 v-if="formData.signPicUrl"
                 :src="formData.signPicUrl"
-                class="h-80rpx w-192rpx"
+                width="192rpx"
+                height="80rpx"
                 mode="aspectFit"
-                @click="previewSignature"
+                radius="8rpx"
+                enable-preview
               />
             </view>
           </view>
@@ -130,7 +132,7 @@ import { uploadFile as uploadFileToServer } from '@/api/infra/file'
 import FormCreate from '@/pages-bpm/components/form-create/packages/wot-ui/src/index.vue'
 import ProcessInstanceTimeline from '@/pages-bpm/processInstance/detail/components/time-line.vue'
 import { setConfAndFields2 } from '@/pages-bpm/utils'
-import { getEnvBaseUrl, navigateBackPlus } from '@/utils'
+import { delay, getEnvBaseUrl, navigateBackPlus } from '@/utils'
 import { BpmCandidateStrategyEnum } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import { isEmptyValue } from '@/utils/is'
@@ -192,6 +194,7 @@ const approveForm = ref<FormCreatePreview>({
   value: {},
 }) // 节点表单配置和数据
 let nextAssigneeTimer: ReturnType<typeof setTimeout> | undefined // 下一节点审批人刷新防抖定时器
+let nextAssigneePromise: Promise<void> | undefined // 进行中的下一节点审批人重算
 
 const showSignatureModal = ref(false) // 签名相关
 
@@ -252,11 +255,16 @@ async function loadNextApproveNodes() {
   approveUserSelectAssignees.value = {}
   if (data && data.length > 0) {
     nextAssigneesActivityNode.value = data
-    // 获取审批人自选的任务（已返回 candidateUsers，则无需自选）
+    // 获取需要自选审批人的节点（已返回 candidateUsers，则无需自选）
     approveUserSelectTasks.value = data.filter(
       (node: ApprovalNodeInfo) =>
-        BpmCandidateStrategyEnum.APPROVE_USER_SELECT === node.candidateStrategy
-        && isEmptyValue(node.candidateUsers),
+        // 审批人自选
+        (BpmCandidateStrategyEnum.APPROVE_USER_SELECT === node.candidateStrategy
+          && isEmptyValue(node.candidateUsers))
+        // 发起人自选（仅当节点尚无任务时才要求选人）
+        || (BpmCandidateStrategyEnum.START_USER_SELECT === node.candidateStrategy
+          && isEmptyValue(node.tasks)
+          && isEmptyValue(node.candidateUsers)),
     ) || []
   }
 }
@@ -299,6 +307,23 @@ function clearNextAssigneeTimer() {
   if (nextAssigneeTimer) {
     clearTimeout(nextAssigneeTimer)
     nextAssigneeTimer = undefined
+  }
+}
+
+/** 提交前等待下一节点审批人，失败返回 false */
+async function flushNextApproveNodes(): Promise<boolean> {
+  if (nextAssigneeTimer) {
+    clearNextAssigneeTimer()
+    nextAssigneePromise = loadNextApproveNodes()
+  } else if (!nextAssigneePromise) {
+    nextAssigneePromise = loadNextApproveNodes()
+  }
+  try {
+    await nextAssigneePromise
+    return true
+  } catch {
+    nextAssigneePromise = undefined
+    return false
   }
 }
 
@@ -351,16 +376,6 @@ function uploadSignatureFile(tempFilePath: string): Promise<string> {
 /** 签名清除 */
 function handleSignatureClear() {
   formData.signPicUrl = ''
-}
-
-/** 预览签名 */
-function previewSignature() {
-  if (formData.signPicUrl) {
-    uni.previewImage({
-      urls: [formData.signPicUrl],
-      current: formData.signPicUrl,
-    })
-  }
 }
 
 /** 附件上传 */
@@ -472,6 +487,15 @@ async function handleSubmit() {
     }
   }
 
+  // 提交前等待下一节点审批人，失败则阻断
+  if (isApprove.value) {
+    const nodesOk = await flushNextApproveNodes()
+    if (!nodesOk) {
+      toast.show('下一节点审批人加载失败，请重试')
+      return
+    }
+  }
+
   // 验证审批人选择
   if (isApprove.value && approveUserSelectTasks.value.length > 0) {
     for (const task of approveUserSelectTasks.value) {
@@ -496,7 +520,7 @@ async function handleSubmit() {
         reason: formData.reason,
         attachments,
         signPicUrl: formData.signPicUrl || undefined,
-        variables: Object.keys(variables).length > 0 ? variables : undefined,
+        variables,
         nextAssignees: Object.keys(approveUserSelectAssignees.value).length > 0
           ? approveUserSelectAssignees.value
           : undefined,
@@ -511,11 +535,9 @@ async function handleSubmit() {
     }
     clearCachedNormalFormVariables()
     toast.success('审批成功')
-    setTimeout(() => {
-      uni.redirectTo({
-        url: `/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`,
-      })
-    }, 1000)
+    uni.$emit('bpm:processInstance:reload')
+    uni.$emit('bpm:task:reload')
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }
@@ -531,7 +553,7 @@ watch(
     clearNextAssigneeTimer()
     nextAssigneeTimer = setTimeout(() => {
       nextAssigneeTimer = undefined
-      loadNextApproveNodes()
+      nextAssigneePromise = loadNextApproveNodes()
     }, 300)
   },
   { deep: true },
@@ -553,7 +575,8 @@ onMounted(async () => {
     toast.loading('加载中...')
     // 加载任务信息和下一个节点审批人
     await loadTaskInfo()
-    await loadNextApproveNodes()
+    nextAssigneePromise = loadNextApproveNodes()
+    await nextAssigneePromise
   } finally {
     toast.close()
   }

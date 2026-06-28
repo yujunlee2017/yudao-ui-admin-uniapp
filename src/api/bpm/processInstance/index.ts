@@ -22,13 +22,14 @@ export interface ProcessInstance {
   status: number
   category?: string
   categoryName?: string
-  createTime?: number
-  startTime?: number
-  endTime?: number
+  createTime?: Date
+  startTime?: Date
+  endTime?: Date
   startUser?: User
   businessKey?: string
   formVariables?: Record<string, any>
   processDefinition?: ProcessDefinition
+  tasks?: { id: string, name: string }[]
   summary?: {
     key: string
     value: string
@@ -40,7 +41,7 @@ export interface ApprovalDetail {
   processInstance: ProcessInstance
   processDefinition: ProcessDefinition
   activityNodes: ApprovalNodeInfo[]
-  todoTask: Task
+  todoTask?: Task
   formFieldsPermission?: Record<string, string>
   status?: number
 }
@@ -76,7 +77,7 @@ export interface ProcessInstanceCopy {
   processInstanceId: string
   processInstanceName: string
   startUser: User
-  createTime: number
+  createTime: Date
   summary?: {
     key: string
     value: string

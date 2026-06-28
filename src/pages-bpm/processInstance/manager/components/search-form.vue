@@ -35,10 +35,10 @@
       </view>
       <yd-search-picker
         v-if="processDefinitionList.length > 0"
-        v-model="formData.processDefinitionId"
+        v-model="formData.processDefinitionKey"
         label="所属流程"
         :columns="processDefinitionList"
-        value-key="id"
+        value-key="key"
         label-key="name"
       />
       <!-- 流程分类 -->
@@ -96,7 +96,7 @@ const emit = defineEmits<{
 const formData = reactive({
   startUserId: undefined as number | undefined, // 发起人
   name: undefined as string | undefined, // 流程名称
-  processDefinitionId: undefined as string | undefined, // 所属流程
+  processDefinitionKey: undefined as string | undefined, // 所属流程
   category: undefined as string | undefined, // 流程分类
   status: -1, // -1 表示全部
   createTime: [undefined, undefined] as [number | undefined, number | undefined], // 发起时间
@@ -123,20 +123,12 @@ const processDefinitionList = ref<ProcessDefinition[]>([]) // 流程定义选项
 
 /** 获取流程分类列表 */
 async function getCategoryList() {
-  try {
-    categoryList.value = await getCategorySimpleList()
-  } catch (error) {
-    console.error('获取流程分类失败:', error)
-  }
+  categoryList.value = await getCategorySimpleList()
 }
 
 /** 获取流程定义列表 */
 async function getProcessDefinitions() {
-  try {
-    processDefinitionList.value = await getProcessDefinitionList({ suspensionState: 1 })
-  } catch (error) {
-    console.error('获取流程定义失败:', error)
-  }
+  processDefinitionList.value = await getProcessDefinitionList({ suspensionState: 1 })
 }
 
 /** 搜索按钮操作 */
@@ -153,7 +145,7 @@ function handleSearch() {
 function handleReset() {
   formData.startUserId = undefined
   formData.name = undefined
-  formData.processDefinitionId = undefined
+  formData.processDefinitionKey = undefined
   formData.category = undefined
   formData.status = -1
   formData.createTime = [undefined, undefined]

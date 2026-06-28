@@ -10,11 +10,13 @@
     <!-- 区域：流程信息（基本信息） -->
     <view class="relative mx-24rpx mt-24rpx overflow-hidden rounded-16rpx bg-white">
       <!-- 审批状态图标（盖章效果） -->
-      <image
+      <wd-img
         v-if="processInstance?.status !== undefined"
         :src="getStatusIcon(processInstance?.status)"
-        class="absolute right-20rpx top-20rpx z-10 h-144rpx w-144rpx"
+        width="144rpx"
+        height="144rpx"
         mode="aspectFit"
+        class="absolute right-20rpx top-20rpx z-10"
       />
       <view class="p-24rpx">
         <!-- 标题 -->
@@ -95,11 +97,10 @@
 
 <script lang="ts" setup>
 import type { ApprovalNodeInfo, ProcessDefinition, ProcessInstance } from '@/api/bpm/processInstance'
-import type { Task } from '@/api/bpm/task'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { onUnload } from '@dcloudio/uni-app'
 import { onMounted, ref } from 'vue'
 import { getApprovalDetail } from '@/api/bpm/processInstance'
-import { getTaskListByProcessInstanceId } from '@/api/bpm/task'
 import { navigateBackPlus } from '@/utils'
 import { BpmProcessInstanceStatus } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
@@ -110,6 +111,7 @@ import ProcessInstanceTimeline from './components/time-line.vue'
 const props = defineProps<{
   id: string // 流程实例的编号
   taskId?: string // 任务编号
+  activityId?: string // 活动编号（抄送查看场景定位）
 }>()
 
 definePage({
@@ -123,7 +125,6 @@ const toast = useToast()
 const processInstance = ref<ProcessInstance>()
 const processDefinition = ref<ProcessDefinition>()
 const formFieldsPermission = ref<Record<string, string>>({})
-const tasks = ref<Task[]>([])
 
 const activityNodes = ref<ApprovalNodeInfo[]>([]) // 审批节点信息
 
@@ -157,6 +158,7 @@ function handlePrintTip() {
 async function loadProcessInstance() {
   const data = await getApprovalDetail({
     processInstanceId: props.id,
+    activityId: props.activityId,
     taskId: props.taskId,
   })
   if (!data || !data.processInstance) {
@@ -183,17 +185,18 @@ function getNormalFormVariables() {
   return formDetailRef.value?.getWritableVariables() || {}
 }
 
-/** 加载任务列表 */
-async function loadTasks() {
-  tasks.value = await getTaskListByProcessInstanceId(props.id)
-}
-
 /** 初始化 */
-onMounted(async () => {
+onMounted(() => {
   if (!props.id) {
     toast.show('参数错误')
     return
   }
-  await Promise.all([loadProcessInstance(), loadTasks()])
+  uni.$on('bpm:processInstance:reload', loadProcessInstance)
+  loadProcessInstance()
+})
+
+/** 页面卸载时注销刷新监听 */
+onUnload(() => {
+  uni.$off('bpm:processInstance:reload', loadProcessInstance)
 })
 </script>

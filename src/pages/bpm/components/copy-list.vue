@@ -56,7 +56,7 @@
 
 <script lang="ts" setup>
 import type { ProcessInstanceCopy } from '@/api/bpm/processInstance'
-import { ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { getProcessInstanceCopyPage } from '@/api/bpm/processInstance'
 import { formatDateTime } from '@/utils/date'
 import CopySearchForm from './copy-search-form.vue'
@@ -102,4 +102,13 @@ function handleDetail(item: ProcessInstanceCopy) {
   uni.navigateTo({ url: `/pages-bpm/processInstance/detail/index?id=${item.processInstanceId}` })
 }
 
+/** 初始化 */
+onMounted(() => {
+  uni.$on('bpm:task:reload', reload)
+})
+
+/** 卸载 */
+onUnmounted(() => {
+  uni.$off('bpm:task:reload', reload)
+})
 </script>

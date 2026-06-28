@@ -24,7 +24,7 @@
       sticky
       @click="handleTabClick"
     >
-      <wd-tab v-for="item in categoryList" :key="item.code" :title="item.name" :name="item.code" />
+      <wd-tab v-for="item in availableCategories" :key="item.code" :title="item.name" :name="item.code" />
     </wd-tabs>
 
     <!-- 流程定义列表 -->
@@ -36,7 +36,7 @@
       @scroll="handleScroll"
     >
       <view
-        v-for="item in categoryList"
+        v-for="item in availableCategories"
         :id="`category-${item.code}`"
         :key="item.code"
         class="category-section mx-24rpx mt-24rpx"
@@ -47,7 +47,7 @@
           <text class="text-28rpx text-[#333] font-bold">{{ item.name }}</text>
         </view>
         <!-- 流程列表 -->
-        <view v-if="groupedDefinitions[item.code]?.length" class="overflow-hidden rounded-16rpx bg-white">
+        <view class="overflow-hidden rounded-16rpx bg-white">
           <view
             v-for="definition in groupedDefinitions[item.code]"
             :key="definition.id"
@@ -73,13 +73,10 @@
             <text class="text-28rpx text-[#333]">{{ definition.name }}</text>
           </view>
         </view>
-        <view v-else class="overflow-hidden rounded-16rpx bg-white p-24rpx text-center">
-          <text class="text-26rpx text-[#999]">该分类下暂无流程</text>
-        </view>
       </view>
 
       <!-- 空状态 -->
-      <view v-if="categoryList.length === 0" class="py-100rpx">
+      <view v-if="availableCategories.length === 0" class="py-100rpx">
         <wd-empty icon="content" tip="暂无可发起的流程" />
       </view>
     </scroll-view>
@@ -156,6 +153,11 @@ const groupedDefinitions = computed<Record<string, ProcessDefinition[]>>(() => {
   return grouped
 })
 
+/** 仅保留含流程定义的分类（空分类不展示 tab 与卡片） */
+const availableCategories = computed<Category[]>(() =>
+  categoryList.value.filter(item => groupedDefinitions.value[item.code]?.length),
+)
+
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages/bpm/index')
@@ -208,13 +210,14 @@ function updateCategoryPositions() {
       const positions: { code: string, top: number }[] = []
       const firstTop = res[0][0]?.top || 0
       res[0].forEach((item: { top: number, dataset?: { category?: string } }, index: number) => {
-        const cat = categoryList.value[index]
-        if (cat) {
-          positions.push({
-            code: cat.code,
-            top: item.top - firstTop,
-          })
+        const category = availableCategories.value[index]
+        if (!category) {
+          return
         }
+        positions.push({
+          code: category.code,
+          top: item.top - firstTop,
+        })
       })
       categoryPositions.value = positions
     }
@@ -261,9 +264,9 @@ onLoad(async (options) => {
     await restartProcessInstance(options.processInstanceId)
     return
   }
-  // 默认选中第一个分类
-  if (categoryList.value.length > 0) {
-    activeCategory.value = categoryList.value[0].code
+  // 默认选中第一个有流程定义的分类
+  if (availableCategories.value.length > 0) {
+    activeCategory.value = availableCategories.value[0].code
   }
   // 等待 DOM 渲染后计算分类位置
   await nextTick()

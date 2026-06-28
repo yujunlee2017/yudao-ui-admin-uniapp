@@ -28,9 +28,7 @@
               <view class="bpm-card-title">
                 {{ item.processInstance?.name }}
               </view>
-              <wd-tag type="primary" variant="plain">
-                待审批
-              </wd-tag>
+              <dict-tag :type="DICT_TYPE.BPM_TASK_STATUS" :value="item.status" />
             </view>
             <view v-if="item.processInstance?.summary?.length" class="bpm-summary">
               <view v-for="(s, idx) in item.processInstance.summary" :key="idx" class="bpm-summary-item">
@@ -64,8 +62,9 @@
 
 <script lang="ts" setup>
 import type { Task } from '@/api/bpm/task'
-import { ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { getTaskTodoPage } from '@/api/bpm/task'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatPast } from '@/utils/date'
 import TodoSearchForm from './todo-search-form.vue'
 import '../styles/index.scss'
@@ -120,4 +119,13 @@ function handleReject(item: Task) {
   uni.navigateTo({ url: `/pages-bpm/processInstance/detail/audit/index?processInstanceId=${item.processInstance.id}&taskId=${item.id}&pass=false` })
 }
 
+/** 初始化 */
+onMounted(() => {
+  uni.$on('bpm:task:reload', reload)
+})
+
+/** 卸载 */
+onUnmounted(() => {
+  uni.$off('bpm:task:reload', reload)
+})
 </script>

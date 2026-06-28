@@ -25,29 +25,17 @@
       </view>
       <yd-search-picker
         v-if="processDefinitionList.length > 0"
-        v-model="formData.processDefinitionId"
+        v-model="formData.processDefinitionKey"
         label="所属流程"
         :columns="processDefinitionList"
-        value-key="id"
+        value-key="key"
         label-key="name"
       />
       <yd-search-date-range v-model="formData.createTime" label="发起时间" />
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          流程状态
-        </view>
-        <wd-radio-group v-model="formData.status" type="button">
-          <wd-radio :value="-1">
-            全部
-          </wd-radio>
-          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.BPM_PROCESS_INSTANCE_STATUS)" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.status" label="流程状态" :dict-type="DICT_TYPE.BPM_PROCESS_INSTANCE_STATUS" all-option />
       <yd-search-picker
         v-if="categoryList.length > 0"
-        v-model="formData.categoryId"
+        v-model="formData.category"
         label="流程分类"
         :columns="categoryList"
         value-key="code"
@@ -71,7 +59,7 @@ import type { ProcessDefinition } from '@/api/bpm/definition'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { getCategorySimpleList } from '@/api/bpm/category'
 import { getProcessDefinitionList } from '@/api/bpm/definition'
-import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
+import { getDictLabel } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
@@ -83,10 +71,10 @@ const emit = defineEmits<{
 
 const formData = reactive({
   name: undefined as string | undefined,
-  processDefinitionId: undefined as string | undefined,
+  processDefinitionKey: undefined as string | undefined,
   createTime: [undefined, undefined] as [number | undefined, number | undefined],
   status: -1, // -1 表示全部
-  categoryId: undefined as string | undefined,
+  category: undefined as string | undefined,
 }) // 搜索表单数据
 const visible = ref(false) // 搜索弹窗显示状态
 
@@ -110,20 +98,12 @@ const processDefinitionList = ref<ProcessDefinition[]>([]) // 流程定义选项
 
 /** 获取流程分类列表 */
 async function getCategoryList() {
-  try {
-    categoryList.value = await getCategorySimpleList()
-  } catch (error) {
-    console.error('获取流程分类失败:', error)
-  }
+  categoryList.value = await getCategorySimpleList()
 }
 
 /** 获取流程定义列表 */
 async function getProcessDefinitions() {
-  try {
-    processDefinitionList.value = await getProcessDefinitionList({ suspensionState: 1 })
-  } catch (error) {
-    console.error('获取流程定义失败:', error)
-  }
+  processDefinitionList.value = await getProcessDefinitionList({ suspensionState: 1 })
 }
 
 /** 搜索按钮操作 */
@@ -139,10 +119,10 @@ function handleSearch() {
 /** 重置按钮操作 */
 function handleReset() {
   formData.name = undefined
-  formData.processDefinitionId = undefined
+  formData.processDefinitionKey = undefined
   formData.createTime = [undefined, undefined]
   formData.status = -1
-  formData.categoryId = undefined
+  formData.category = undefined
   visible.value = false
   emit('reset')
 }

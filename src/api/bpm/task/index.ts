@@ -77,12 +77,12 @@ export function getTaskManagerPage(params: PageParam) {
 }
 
 /** 委派任务 */
-export function delegateTask(data: { id: string, delegateUserId: string, reason: string }) {
+export function delegateTask(data: { id: string, delegateUserId: number, reason: string }) {
   return http.put<boolean>('/bpm/task/delegate', data)
 }
 
 /** 转办任务 */
-export function transferTask(data: { id: string, assigneeUserId: string, reason: string }) {
+export function transferTask(data: { id: string, assigneeUserId: number, reason: string }) {
   return http.put<boolean>('/bpm/task/transfer', data)
 }
 
@@ -109,4 +109,9 @@ export function signDeleteTask(data: { id: string, reason: string }) {
 /** 抄送任务 */
 export function copyTask(data: { id: string, copyUserIds: number[], reason: string }) {
   return http.put<boolean>('/bpm/task/copy', data)
+}
+
+/** 撤回任务 */
+export function withdrawTask(taskId: string) {
+  return http.put<boolean>('/bpm/task/withdraw', undefined, { taskId })
 }

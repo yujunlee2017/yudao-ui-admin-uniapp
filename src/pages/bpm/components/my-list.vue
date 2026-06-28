@@ -47,29 +47,33 @@
             </view>
           </view>
         </view>
-
-        <!-- 新增按钮 -->
-        <view
-          class="fixed bottom-200rpx right-32rpx z-10 h-100rpx w-100rpx flex items-center justify-center rounded-full bg-[#1890ff] shadow-lg"
-          @click="handleCreate"
-        >
-          <wd-icon name="plus" size="24px" color="#fff" />
-        </view>
       </view>
     </z-paging>
+
+    <!-- 新增按钮（工作台为 tabbar 页，底部留出 tabbar 高度避免遮挡） -->
+    <wd-fab
+      v-if="hasAccessByCodes(['bpm:process-instance:create'])"
+      position="right-bottom"
+      type="primary"
+      :gap="{ bottom: 100 }"
+      :expandable="false"
+      @click="handleCreate"
+    />
   </view>
 </template>
 
 <script lang="ts" setup>
 import type { ProcessInstance } from '@/api/bpm/processInstance'
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { getProcessInstanceMyPage } from '@/api/bpm/processInstance'
+import { useAccess } from '@/hooks/useAccess'
 import { useUserStore } from '@/store'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import MySearchForm from './my-search-form.vue'
 import '../styles/index.scss'
 
+const { hasAccessByCodes } = useAccess()
 const userStore = useUserStore()
 const userNickname = computed(() => userStore.userInfo?.nickname || '')
 
@@ -118,4 +122,13 @@ function handleCreate() {
   uni.navigateTo({ url: '/pages-bpm/processInstance/create/index' })
 }
 
+/** 初始化 */
+onMounted(() => {
+  uni.$on('bpm:task:reload', reload)
+})
+
+/** 卸载 */
+onUnmounted(() => {
+  uni.$off('bpm:task:reload', reload)
+})
 </script>

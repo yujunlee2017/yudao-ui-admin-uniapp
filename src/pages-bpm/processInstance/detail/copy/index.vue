@@ -51,10 +51,10 @@
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { copyTask } from '@/api/bpm/task'
 import UserPicker from '@/components/system-select/user-picker.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
@@ -105,11 +105,9 @@ async function handleSubmit() {
       reason: formData.reason,
     })
     toast.success('抄送成功')
-    setTimeout(() => {
-      uni.redirectTo({
-        url: `/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`,
-      })
-    }, 500)
+    uni.$emit('bpm:processInstance:reload')
+    uni.$emit('bpm:task:reload')
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

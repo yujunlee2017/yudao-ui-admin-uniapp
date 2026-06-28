@@ -52,6 +52,7 @@ import type { Action } from '@wot-ui/ui/components/wd-action-sheet/types'
 import type { ButtonType, ButtonVariant } from '@wot-ui/ui/components/wd-button/types'
 import type { ProcessInstance } from '@/api/bpm/processInstance'
 import type { Task } from '@/api/bpm/task'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { useUserStore } from '@/store'
 import {
   BpmProcessInstanceStatus,
@@ -92,7 +93,15 @@ const operationIconsMap: Record<number, string> = {
   [BpmTaskOperationButtonTypeEnum.DELETE_SIGN]: 'minus',
   [BpmTaskOperationButtonTypeEnum.PROCESS_START_CANCEL]: 'close-circle',
 }
+const optionalOperationTypes = [
+  BpmTaskOperationButtonTypeEnum.TRANSFER,
+  BpmTaskOperationButtonTypeEnum.COPY,
+  BpmTaskOperationButtonTypeEnum.DELEGATE,
+  BpmTaskOperationButtonTypeEnum.ADD_SIGN,
+  BpmTaskOperationButtonTypeEnum.RETURN,
+] // 可选操作按钮（未配置时默认显示）
 
+const toast = useToast()
 const userStore = useUserStore()
 const leftOperations = ref<LeftOperationType[]>([]) // 左侧操作按钮
 const rightOperations = ref<RightOperationType[]>([]) // 右侧操作按钮
@@ -117,9 +126,9 @@ function init(theProcessInstance: ProcessInstance, task: Task) {
       if (isShowButton(BpmTaskOperationButtonTypeEnum.APPROVE)) {
         addRightOperation(BpmTaskOperationButtonTypeEnum.APPROVE, 'primary', 'base')
       }
-      Object.keys(task.buttonsSetting || {}).forEach((key) => {
-        const operationType = Number(key)
-        if (task.buttonsSetting?.[operationType]?.enable && !isRightOperation(operationType)) {
+      // 遍历可选操作按钮，未配置 buttonsSetting 时默认显示
+      optionalOperationTypes.forEach((operationType) => {
+        if (isShowButton(operationType) && !isRightOperation(operationType)) {
           addLeftOrMoreOperation(operationType)
         }
       })
@@ -230,11 +239,13 @@ async function handleOperation(operationType: number) {
         url: `/pages-bpm/processInstance/detail/delete-sign/index?processInstanceId=${runningTask.value.processInstanceId}&taskId=${runningTask.value.id}&children=${encodeURIComponent(JSON.stringify(runningTask.value.children || []))}`,
       })
       break
-    case BpmTaskOperationButtonTypeEnum.PROCESS_START_CANCEL:
+    case BpmTaskOperationButtonTypeEnum.PROCESS_START_CANCEL: {
+      const taskIdQuery = runningTask.value?.id ? `&taskId=${runningTask.value.id}` : ''
       uni.navigateTo({
-        url: `/pages-bpm/processInstance/detail/process-cancel/index?processInstanceId=${processInstance.value.id}&taskId=${runningTask.value?.id}`,
+        url: `/pages-bpm/processInstance/detail/process-cancel/index?processInstanceId=${processInstance.value.id}${taskIdQuery}`,
       })
       break
+    }
   }
 }
 
@@ -243,10 +254,7 @@ async function saveNormalFormVariables() {
   // 先校验流程表单，避免带着无效变量进入审批页
   const valid = await props.validateNormalForm?.()
   if (valid === false) {
-    uni.showToast({
-      title: '表单校验不通过，请先完善表单',
-      icon: 'none',
-    })
+    toast.show('表单校验不通过，请先完善表单')
     return undefined
   }
 

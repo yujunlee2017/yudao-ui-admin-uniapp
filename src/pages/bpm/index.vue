@@ -16,15 +16,16 @@
       </wd-tabs>
     </view>
     <!-- 列表内容 -->
-    <TodoList v-show="tabType === 'todo'" class="min-h-0 flex-1" />
-    <DoneList v-show="tabType === 'done'" class="min-h-0 flex-1" />
-    <MyList v-show="tabType === 'my'" class="min-h-0 flex-1" />
-    <CopyList v-show="tabType === 'copy'" class="min-h-0 flex-1" />
+    <TodoList v-if="loadedTabs.has('todo')" v-show="tabType === 'todo'" class="min-h-0 flex-1" />
+    <DoneList v-if="loadedTabs.has('done')" v-show="tabType === 'done'" class="min-h-0 flex-1" />
+    <MyList v-if="loadedTabs.has('my')" v-show="tabType === 'my'" class="min-h-0 flex-1" />
+    <CopyList v-if="loadedTabs.has('copy')" v-show="tabType === 'copy'" class="min-h-0 flex-1" />
   </view>
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { computed, reactive, ref, watch } from 'vue'
 import { getAndClearTabParams } from '@/utils/url'
 import CopyList from './components/copy-list.vue'
 import DoneList from './components/done-list.vue'
@@ -41,6 +42,12 @@ definePage({
 const tabTypes: string[] = ['todo', 'done', 'my', 'copy']
 const tabIndex = ref(0) // 当前选中的审批列表页签下标
 const tabType = computed<string>(() => tabTypes[tabIndex.value])
+const loadedTabs = reactive<Set<string>>(new Set()) // 已挂载过的 tab，挂载后保留以保持各列表状态
+
+/** 挂载当前 tab 对应列表 */
+watch(tabType, (type) => {
+  loadedTabs.add(type)
+}, { immediate: true })
 
 /** Tab 切换 */
 function handleTabChange({ index }: { index: number }) {

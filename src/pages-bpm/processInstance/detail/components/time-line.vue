@@ -19,7 +19,7 @@
 
     <!-- 状态小图标 -->
     <view
-      v-if="showStatusIcon"
+      v-if="showStatusIcon && statusIconNodeTypes.includes(activity.nodeType)"
       class="absolute left-48rpx top-44rpx h-16rpx w-16rpx flex items-center justify-center border-2 border-white rounded-full"
       :style="{ backgroundColor: getApprovalNodeColor(activity.status) }"
     >
@@ -90,11 +90,13 @@
             class="mb-8rpx mr-16rpx flex items-center rounded-32rpx bg-[#f5f5f5] pr-16rpx"
           >
             <view class="mr-8rpx h-48rpx w-48rpx flex items-center justify-center overflow-hidden rounded-full bg-[#1890ff] text-24rpx text-white">
-              <image
+              <wd-img
                 v-if="shouldShowAvatar(user)"
                 :src="user.avatar"
-                class="h-48rpx w-48rpx rounded-full"
+                width="48rpx"
+                height="48rpx"
                 mode="aspectFill"
+                round
                 @error="handleAvatarError(user)"
               />
               <text v-else>{{ getUserInitial(user) }}</text>
@@ -117,11 +119,13 @@
             <view v-if="task.assigneeUser || task.ownerUser" class="mb-8rpx flex items-center">
               <view class="relative mr-8rpx h-48rpx w-48rpx">
                 <view class="h-48rpx w-48rpx flex items-center justify-center overflow-hidden rounded-full bg-[#1890ff] text-24rpx text-white">
-                  <image
+                  <wd-img
                     v-if="shouldShowAvatar(getTaskUser(task))"
                     :src="getTaskUser(task)?.avatar"
-                    class="h-48rpx w-48rpx rounded-full"
+                    width="48rpx"
+                    height="48rpx"
                     mode="aspectFill"
+                    round
                     @error="handleAvatarError(getTaskUser(task))"
                   />
                   <text v-else>{{ getUserInitial(getTaskUser(task)) }}</text>
@@ -178,11 +182,13 @@
                   class="flex items-center"
                   @click="handleOpenAttachment(attachment)"
                 >
-                  <image
+                  <wd-img
                     v-if="isImageAttachment(attachment)"
                     :src="attachment"
-                    class="h-88rpx w-88rpx rounded-8rpx bg-[#eee]"
+                    width="88rpx"
+                    height="88rpx"
                     mode="aspectFill"
+                    radius="8rpx"
                   />
                   <view v-else class="max-w-520rpx flex items-center rounded-8rpx bg-white px-12rpx py-8rpx">
                     <wd-icon name="file" size="28rpx" color="#666" />
@@ -200,11 +206,14 @@
               class="mt-8rpx flex items-center rounded-8rpx bg-[#f5f5f5] p-16rpx"
             >
               <text class="text-24rpx text-[#666]">签名：</text>
-              <image
+              <wd-img
                 :src="task.signPicUrl"
-                class="ml-8rpx h-96rpx w-288rpx"
+                width="288rpx"
+                height="96rpx"
                 mode="aspectFit"
-                @click="previewImage(task.signPicUrl)"
+                radius="8rpx"
+                class="ml-8rpx"
+                enable-preview
               />
             </view>
           </view>
@@ -219,11 +228,13 @@
           >
             <view class="relative mr-8rpx h-48rpx w-48rpx">
               <view class="h-48rpx w-48rpx flex items-center justify-center overflow-hidden rounded-full bg-[#1890ff] text-24rpx text-white">
-                <image
+                <wd-img
                   v-if="shouldShowAvatar(user)"
                   :src="user.avatar"
-                  class="h-48rpx w-48rpx rounded-full"
+                  width="48rpx"
+                  height="48rpx"
                   mode="aspectFill"
+                  round
                   @error="handleAvatarError(user)"
                 />
                 <text v-else>{{ getUserInitial(user) }}</text>
@@ -308,13 +319,17 @@ const nodeTypeSvgMap: Record<number, { color: string, icon: string }> = {
 }
 
 const onlyStatusIconShow = [BpmTaskStatusEnum.NOT_START, BpmTaskStatusEnum.RUNNING, BpmTaskStatusEnum.WAIT] // 只有状态是 -1、0、1 才展示头像右小角状态小 icon
+const statusIconNodeTypes = [
+  BpmNodeTypeEnum.START_USER_NODE,
+  BpmNodeTypeEnum.USER_TASK_NODE,
+  BpmNodeTypeEnum.TRANSACTOR_NODE,
+  BpmNodeTypeEnum.CHILD_PROCESS_NODE,
+  BpmNodeTypeEnum.END_EVENT_NODE,
+] // 仅这些节点类型展示状态 icon，分支/条件等节点不展示
 
 // 响应式数据
 const customApproveUsers = ref<Record<string, any[]>>({})
 const failedAvatarKeys = ref<Set<string>>(new Set())
-const showUserPicker = ref(false)
-const selectedUserIds = ref<number[]>([])
-const selectedActivityNodeId = ref<string>()
 
 /** 获取审批节点类型图标 */
 function getApprovalNodeTypeIcon(nodeType: number) {
@@ -326,7 +341,11 @@ function getApprovalNodeIcon(taskStatus: number, nodeType: number) {
   if (taskStatus === BpmTaskStatusEnum.NOT_START) {
     return statusIconMap[taskStatus]?.icon || 'clock-circle'
   }
-  return statusIconMap[taskStatus]?.icon || 'clock-circle'
+  // 仅任务类节点（发起人/审批人/办理人/子流程/结束）展示状态图标，分支/条件等节点不展示
+  if (statusIconNodeTypes.includes(nodeType)) {
+    return statusIconMap[taskStatus]?.icon || 'clock-circle'
+  }
+  return ''
 }
 
 /** 获取审批节点颜色 */

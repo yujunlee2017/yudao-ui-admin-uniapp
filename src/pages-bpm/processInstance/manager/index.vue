@@ -40,7 +40,7 @@
                   {{ item.categoryName || '-' }}
                 </view>
               </view>
-              <DictTag :type="DICT_TYPE.BPM_PROCESS_INSTANCE_STATUS" :value="item.status" />
+              <dict-tag :type="DICT_TYPE.BPM_PROCESS_INSTANCE_STATUS" :value="item.status" />
             </view>
             <view class="mb-12rpx flex items-center">
               <view class="mr-8rpx h-48rpx w-48rpx flex items-center justify-center rounded-full bg-[#1890ff] text-20rpx text-white">
@@ -85,7 +85,11 @@
               v-if="item.status === BpmProcessInstanceStatus.RUNNING"
               class="flex items-center justify-end border-t border-[#f0f0f0] -mt-8"
             >
-              <wd-button size="small" type="danger" variant="plain" @click.stop="handleCancel(item)">
+              <wd-button
+                v-if="hasAccessByCodes(['bpm:process-instance:cancel-by-admin'])"
+                size="small" type="danger" variant="plain"
+                @click.stop="handleCancel(item)"
+              >
                 取消流程
               </wd-button>
             </view>
@@ -98,25 +102,18 @@
 
 <script lang="ts" setup>
 import type { ProcessInstance } from '@/api/bpm/processInstance'
+import { onUnload } from '@dcloudio/uni-app'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import {
   cancelProcessInstanceByAdmin,
   getProcessInstanceManagerPage,
 } from '@/api/bpm/processInstance'
-import DictTag from '@/components/dict-tag/dict-tag.vue'
+import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
-import { DICT_TYPE } from '@/utils/constants'
+import { BpmProcessInstanceStatus, DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import SearchForm from './components/search-form.vue'
-
-// 流程实例状态枚举
-const BpmProcessInstanceStatus = {
-  RUNNING: 1, // 进行中
-  APPROVE: 2, // 审批通过
-  REJECT: 3, // 审批不通过
-  CANCEL: 4, // 已取消
-}
 
 definePage({
   style: {
@@ -125,8 +122,9 @@ definePage({
   },
 })
 
+const { hasAccessByCodes } = useAccess()
 const toast = useToast()
-const list = ref<(ProcessInstance & { tasks?: { id: string, name: string }[] })[]>([]) // 列表数据
+const list = ref<ProcessInstance[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({}) // 查询参数
 
@@ -191,15 +189,22 @@ function handleCancel(item: ProcessInstance) {
         toast.error('请输入取消原因')
         return
       }
-      try {
-        await cancelProcessInstanceByAdmin(item.id, reason)
-        toast.success('取消成功')
-        // 刷新列表
-        reload()
-      } catch (error) {
-        console.error('取消流程失败:', error)
-      }
+      await cancelProcessInstanceByAdmin(item.id, reason)
+      toast.success('取消成功')
+      // 刷新流程列表，并通知任务列表（待办/已办可能随之变化）
+      reload()
+      uni.$emit('bpm:task:reload')
     },
   })
 }
+
+/** 初始化 */
+onMounted(() => {
+  uni.$on('bpm:processInstance:reload', reload)
+})
+
+/** 卸载 */
+onUnload(() => {
+  uni.$off('bpm:processInstance:reload', reload)
+})
 </script>

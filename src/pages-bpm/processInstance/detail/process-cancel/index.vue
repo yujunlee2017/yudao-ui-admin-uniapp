@@ -51,9 +51,9 @@
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { cancelProcessInstanceByStartUser } from '@/api/bpm/processInstance'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
@@ -104,11 +104,9 @@ async function handleSubmit() {
       formData.cancelReason,
     )
     toast.success('流程取消成功')
-    setTimeout(() => {
-      uni.redirectTo({
-        url: `/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}`,
-      })
-    }, 500)
+    uni.$emit('bpm:processInstance:reload')
+    uni.$emit('bpm:task:reload')
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

@@ -39,19 +39,7 @@
         value-key="code"
         label-key="name"
       />
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          审批状态
-        </view>
-        <wd-radio-group v-model="formData.status" type="button">
-          <wd-radio :value="-1">
-            全部
-          </wd-radio>
-          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.BPM_TASK_STATUS)" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.status" label="审批状态" :dict-type="DICT_TYPE.BPM_TASK_STATUS" all-option />
       <yd-search-date-range v-model="formData.createTime" label="发起时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
@@ -71,7 +59,7 @@ import type { ProcessDefinition } from '@/api/bpm/definition'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { getCategorySimpleList } from '@/api/bpm/category'
 import { getProcessDefinitionList } from '@/api/bpm/definition'
-import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
+import { getDictLabel } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
@@ -110,20 +98,12 @@ const processDefinitionList = ref<ProcessDefinition[]>([]) // 流程定义选项
 
 /** 获取流程分类列表 */
 async function getCategoryList() {
-  try {
-    categoryList.value = await getCategorySimpleList()
-  } catch (error) {
-    console.error('获取流程分类失败:', error)
-  }
+  categoryList.value = await getCategorySimpleList()
 }
 
 /** 获取流程定义列表 */
 async function getProcessDefinitions() {
-  try {
-    processDefinitionList.value = await getProcessDefinitionList({ suspensionState: 1 })
-  } catch (error) {
-    console.error('获取流程定义失败:', error)
-  }
+  processDefinitionList.value = await getProcessDefinitionList({ suspensionState: 1 })
 }
 
 /** 搜索按钮操作 */

@@ -61,7 +61,7 @@ import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { getTaskListByReturn, returnTask } from '@/api/bpm/task'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
 
 const props = defineProps<{
@@ -101,6 +101,9 @@ function handleBack() {
 async function loadReturnTaskList() {
   const result = await getTaskListByReturn(taskId.value)
   activityOptions.value = result
+  if (result.length === 0) {
+    toast.show('当前没有可退回的节点')
+  }
 }
 
 /** 提交表单 */
@@ -121,11 +124,9 @@ async function handleSubmit() {
     })
 
     toast.success('退回成功')
-    setTimeout(() => {
-      uni.redirectTo({
-        url: `/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`,
-      })
-    }, 500)
+    uni.$emit('bpm:processInstance:reload')
+    uni.$emit('bpm:task:reload')
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

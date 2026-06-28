@@ -36,6 +36,10 @@
                 <text>{{ s.value }}</text>
               </view>
             </view>
+            <view class="bpm-summary-item">
+              <text class="text-[#999]">审批意见：</text>
+              <text>{{ item.reason || '-' }}</text>
+            </view>
             <view class="bpm-card-info">
               <view class="bpm-user">
                 <view class="bpm-avatar">
@@ -46,6 +50,11 @@
               <text class="bpm-time">{{ formatDateTime(item.createTime) }}</text>
             </view>
           </view>
+          <view class="bpm-actions">
+            <view class="bpm-action-btn" @click.stop="handleWithdraw(item)">
+              <text>撤回</text>
+            </view>
+          </view>
         </view>
       </view>
     </z-paging>
@@ -54,13 +63,17 @@
 
 <script lang="ts" setup>
 import type { Task } from '@/api/bpm/task'
-import { ref } from 'vue'
-import { getTaskDonePage } from '@/api/bpm/task'
+import { useDialog } from '@wot-ui/ui/components/wd-dialog'
+import { useToast } from '@wot-ui/ui/components/wd-toast'
+import { onMounted, onUnmounted, ref } from 'vue'
+import { getTaskDonePage, withdrawTask } from '@/api/bpm/task'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import DoneSearchForm from './done-search-form.vue'
 import '../styles/index.scss'
 
+const dialog = useDialog()
+const toast = useToast()
 const list = ref<Task[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
 const queryParams = ref<Record<string, any>>({}) // 查询参数
@@ -98,7 +111,31 @@ function handleReset() {
 
 /** 查看详情 */
 function handleDetail(item: Task) {
-  uni.navigateTo({ url: `/pages-bpm/processInstance/detail/index?id=${item.processInstance.id}` })
+  uni.navigateTo({ url: `/pages-bpm/processInstance/detail/index?id=${item.processInstance.id}&taskId=${item.id}` })
 }
 
+/** 撤回任务 */
+async function handleWithdraw(item: Task) {
+  try {
+    await dialog.confirm({
+      title: '提示',
+      msg: '确定要撤回该任务吗？',
+    })
+  } catch {
+    return
+  }
+  await withdrawTask(item.id)
+  toast.success('撤回成功')
+  uni.$emit('bpm:task:reload')
+}
+
+/** 初始化 */
+onMounted(() => {
+  uni.$on('bpm:task:reload', reload)
+})
+
+/** 卸载 */
+onUnmounted(() => {
+  uni.$off('bpm:task:reload', reload)
+})
 </script>
