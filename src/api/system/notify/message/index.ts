@@ -52,3 +52,8 @@ export function updateAllNotifyMessageRead() {
 export function getUnreadNotifyMessageCount() {
   return http.get<number>('/system/notify-message/get-unread-count')
 }
+
+/** 获取当前用户的最新站内信列表 */
+export function getUnreadNotifyMessageList() {
+  return http.get<NotifyMessage[]>('/system/notify-message/get-unread-list')
+}

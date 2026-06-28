@@ -30,6 +30,11 @@ export function getMailTemplatePage(params: PageParam) {
   return http.get<PageResult<MailTemplate>>('/system/mail-template/page', params)
 }
 
+/** 获取邮件模板精简列表 */
+export function getSimpleMailTemplateList() {
+  return http.get<MailTemplate[]>('/system/mail-template/simple-list')
+}
+
 /** 获取邮件模板详情 */
 export function getMailTemplate(id: number) {
   return http.get<MailTemplate>(`/system/mail-template/get?id=${id}`)

@@ -28,6 +28,11 @@ export function getNotifyTemplatePage(params: PageParam) {
   return http.get<PageResult<NotifyTemplate>>('/system/notify-template/page', params)
 }
 
+/** 获取站内信模板精简列表 */
+export function getSimpleNotifyTemplateList() {
+  return http.get<NotifyTemplate[]>('/system/notify-template/simple-list')
+}
+
 /** 查询站内信模板详情 */
 export function getNotifyTemplate(id: number) {
   return http.get<NotifyTemplate>(`/system/notify-template/get`, { id })

@@ -26,3 +26,8 @@ export function getSocialUserPage(params: PageParam) {
 export function getSocialUser(id: number) {
   return http.get<SocialUser>(`/system/social-user/get?id=${id}`)
 }
+
+/** 获取当前用户绑定的社交用户列表 */
+export function getBindSocialUserList() {
+  return http.get<SocialUser[]>('/system/social-user/get-bind-list')
+}
