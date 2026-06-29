@@ -13,31 +13,8 @@
     @close="visible = false"
   >
     <view class="yd-search-form-container">
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          产品
-        </view>
-        <!-- TODO @Yunai：搜索业务下拉对齐 yd-search-picker，删除 ErpPicker + selectedNames 的重复样板。 -->
-        <ErpPicker
-          v-model="formData.productId"
-          source="product"
-          form-item
-          placeholder="请选择产品"
-          @confirm="option => selectedNames.product = option?.name || ''"
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          仓库
-        </view>
-        <ErpPicker
-          v-model="formData.warehouseId"
-          source="warehouse"
-          form-item
-          placeholder="请选择仓库"
-          @confirm="option => selectedNames.warehouse = option?.name || ''"
-        />
-      </view>
+      <yd-search-picker v-model="formData.productId" label="产品" :columns="productOptions" label-key="name" value-key="id" placeholder="请选择产品" />
+      <yd-search-picker v-model="formData.warehouseId" label="仓库" :columns="warehouseOptions" label-key="name" value-key="id" placeholder="请选择仓库" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -51,8 +28,9 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue'
-import ErpPicker from '@/pages-erp/components/erp-picker.vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { erpOptionLoaders } from '@/pages-erp/config/options'
+import { normalizeOptions } from '@/pages-erp/utils/erp'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 
 const emit = defineEmits<{
@@ -61,23 +39,29 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const selectedNames = reactive({
-  product: '',
-  warehouse: '',
-}) // 选择器展示名称
+const productOptions = ref<Record<string, any>[]>([]) // 产品选项
+const warehouseOptions = ref<Record<string, any>[]>([]) // 仓库选项
 const formData = reactive({
   productId: undefined as number | undefined,
   warehouseId: undefined as number | undefined,
 }) // 搜索表单数据
 
+/** 获取选项名称 */
+function getOptionLabel(options: Record<string, any>[], id?: number) {
+  if (!id) {
+    return ''
+  }
+  return options.find(item => String(item.id) === String(id))?.name || String(id)
+}
+
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
   const conditions: string[] = []
   if (formData.productId) {
-    conditions.push(`产品:${selectedNames.product || formData.productId}`)
+    conditions.push(`产品:${getOptionLabel(productOptions.value, formData.productId)}`)
   }
   if (formData.warehouseId) {
-    conditions.push(`仓库:${selectedNames.warehouse || formData.warehouseId}`)
+    conditions.push(`仓库:${getOptionLabel(warehouseOptions.value, formData.warehouseId)}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索产品库存'
 })
@@ -95,9 +79,17 @@ function handleSearch() {
 function handleReset() {
   formData.productId = undefined
   formData.warehouseId = undefined
-  selectedNames.product = ''
-  selectedNames.warehouse = ''
   visible.value = false
   emit('reset')
 }
+
+/** 加载搜索下拉选项 */
+onMounted(async () => {
+  const [products, warehouses] = await Promise.all([
+    erpOptionLoaders.product(),
+    erpOptionLoaders.warehouse(),
+  ])
+  productOptions.value = normalizeOptions(products)
+  warehouseOptions.value = normalizeOptions(warehouses)
+})
 </script>

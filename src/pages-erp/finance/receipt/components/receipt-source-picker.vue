@@ -1,4 +1,3 @@
-<!-- TODO @Yunai：对齐 vue3 + ep 的位置和拆分方式，命名可按现有风格用 picker 或 select。 -->
 <template>
   <wd-popup
     v-model="visible"
@@ -21,24 +20,8 @@
 
       <view class="bg-white px-24rpx pb-20rpx">
         <wd-input v-model="queryParams.no" :placeholder="`请输入${sourceLabel}单号`" clearable />
-        <!-- TODO @Yunai：产品选择对齐 yd-form-picker/ErpPicker，不要在弹窗里直接散落 wd-picker。 -->
-        <wd-form-item class="mt-12rpx" :value="productDisplayValue" placeholder="请选择产品" is-link @click="productPickerVisible = true" />
-        <wd-picker v-model:visible="productPickerVisible" :model-value="queryParams.productId" :columns="productOptions" label-key="name" value-key="id" @confirm="({ value }) => queryParams.productId = value[0]" />
-        <!-- TODO @Yunai：时间范围对齐 yd-search-date-range 或抽公共组件，避免手写双 datetime-picker。 -->
-        <view class="mt-12rpx flex gap-12rpx">
-          <view class="flex-1" @click="dateVisible.start = true">
-            <view class="yd-search-form-date-range-picker">
-              {{ formatDate(queryParams.time[0]) || '开始日期' }}
-            </view>
-          </view>
-          <view class="flex-1" @click="dateVisible.end = true">
-            <view class="yd-search-form-date-range-picker">
-              {{ formatDate(queryParams.time[1]) || '结束日期' }}
-            </view>
-          </view>
-        </view>
-        <wd-datetime-picker v-model="queryParams.time[0]" v-model:visible="dateVisible.start" title="请选择开始日期" type="date" />
-        <wd-datetime-picker v-model="queryParams.time[1]" v-model:visible="dateVisible.end" title="请选择结束日期" type="date" />
+        <ErpPicker v-model="queryParams.productId" class="mt-12rpx" source="product" form-item placeholder="请选择产品" />
+        <yd-search-date-range v-model="queryParams.time" class="mt-12rpx" :label="timeLabel" />
         <view class="mt-16rpx flex gap-16rpx">
           <wd-button class="flex-1" variant="plain" @click="handleReset">
             重置
@@ -99,14 +82,12 @@
 </template>
 
 <script lang="ts" setup>
-import type { Product } from '@/api/erp/product/product'
 import { computed, reactive, ref } from 'vue'
-import { getProductSimpleList } from '@/api/erp/product/product'
 import { getSaleOutPage } from '@/api/erp/sale/out'
 import { getSaleReturnPage } from '@/api/erp/sale/return'
-import { formatDate, formatDateRange, formatDateTime } from '@/utils/date'
-import { getWotPickerFormValue } from '@/utils/wot'
-import { formatMoney } from '@/pages-erp/utils'
+import { formatDateRange, formatDateTime } from '@/utils/date'
+import ErpPicker from '@/pages-erp/components/erp-picker.vue'
+import { formatMoney } from '@/pages-erp/utils/erp'
 
 type SourceType = 'sale-out' | 'sale-return'
 
@@ -127,13 +108,10 @@ const total = ref(0)
 const customerId = ref<number>()
 const list = ref<Record<string, any>[]>([])
 const selectedRows = ref<Record<string, any>[]>([])
-const productOptions = ref<Product[]>([])
-const productPickerVisible = ref(false)
-const dateVisible = reactive({ start: false, end: false })
 const queryParams = reactive({
   no: undefined as string | undefined,
   productId: undefined as number | undefined,
-  time: ['', ''] as [any, any],
+  time: [undefined, undefined] as [number | undefined, number | undefined],
 })
 
 const isSaleOut = computed(() => props.source === 'sale-out')
@@ -144,7 +122,6 @@ const timeLabel = computed(() => isSaleOut.value ? '出库时间' : '退货时�
 const receivedField = computed(() => isSaleOut.value ? 'receiptPrice' : 'refundPrice')
 const receivedLabel = computed(() => isSaleOut.value ? '已收金额' : '已退金额')
 const totalLabel = computed(() => isSaleOut.value ? '应收金额' : '应退金额')
-const productDisplayValue = computed(() => getWotPickerFormValue(productOptions.value, queryParams.productId, { valueKey: 'id', labelKey: 'name' }))
 
 function isSelected(item: Record<string, any>) {
   return selectedRows.value.some(row => String(row.id) === String(item.id))
@@ -196,9 +173,6 @@ async function queryList(reset = false) {
 async function open(nextCustomerId: number) {
   customerId.value = nextCustomerId
   visible.value = true
-  if (productOptions.value.length === 0) {
-    productOptions.value = await getProductSimpleList()
-  }
   await queryList(true)
 }
 
@@ -210,7 +184,7 @@ function handleSearch() {
 function handleReset() {
   queryParams.no = undefined
   queryParams.productId = undefined
-  queryParams.time = ['', '']
+  queryParams.time = [undefined, undefined]
   queryList(true)
 }
 

@@ -1,7 +1,22 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
-// TODO @Yunai：按后端 VO 收窄类型，补 StockCheckItem 明细类型；导出接口改 downloadApiFile 或删除未用方法。
+/** ERP 库存盘点明细 */
+export interface StockCheckItem {
+  id?: number
+  warehouseId?: number
+  productId?: number
+  productName?: string
+  productUnitName?: string
+  productBarCode?: string
+  productPrice?: number
+  stockCount?: number
+  actualCount?: number
+  count?: number
+  totalPrice?: number
+  remark?: string
+}
+
 /** ERP 库存盘点 */
 export interface StockCheck {
   id?: number // 盘点编号
@@ -12,8 +27,7 @@ export interface StockCheck {
   status?: number // 状态
   remark?: string // 备注
   fileUrl?: string // 附件地址
-  items?: any[] // 盘点明细
-  [key: string]: any
+  items?: StockCheckItem[] // 盘点明细
 }
 
 /** 获取库存盘点分页列表 */
@@ -44,9 +58,4 @@ export function updateStockCheckStatus(id: number, status: number) {
 /** 删除库存盘点 */
 export function deleteStockCheck(ids: number[]) {
   return http.delete<boolean>('/erp/stock-check/delete', undefined, { ids: ids.join(',') })
-}
-
-/** 导出库存盘点 Excel */
-export function exportStockCheck(params: Record<string, any>) {
-  return http.get<Blob>('/erp/stock-check/export-excel', params)
 }

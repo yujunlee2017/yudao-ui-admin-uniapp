@@ -52,16 +52,12 @@ import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { Warehouse } from '@/api/erp/stock/warehouse'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { createWarehouse, getWarehouse, updateWarehouse } from '@/api/erp/stock/warehouse'
 import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{ id?: number | any }>()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/stock/warehouse/form/index')
-// TODO @Yunai：对齐 system 表单页，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
-const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -71,7 +67,7 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => currentId.value ? '编辑仓库' : '新增仓库')
+const getTitle = computed(() => props.id ? '编辑仓库' : '新增仓库')
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<Warehouse>({
   id: undefined,
@@ -97,14 +93,18 @@ function handleBack() {
 }
 
 /** 加载仓库详情 */
-// TODO @Yunai：加载详情对齐 system/tenant，补 toast.loading/finally close，并直接 getWarehouse(props.id)，不要 getWarehouse(Number(currentId.value))。
 async function getDetail() {
-  if (!currentId.value) {
+  if (!props.id) {
     return
   }
-  formData.value = {
-    ...formData.value,
-    ...await getWarehouse(Number(currentId.value)),
+  try {
+    toast.loading('加载中...')
+    formData.value = {
+      ...formData.value,
+      ...await getWarehouse(props.id),
+    }
+  } finally {
+    toast.close()
   }
 }
 
@@ -116,7 +116,7 @@ async function handleSubmit() {
   }
   formLoading.value = true
   try {
-    if (currentId.value) {
+    if (props.id) {
       await updateWarehouse(formData.value)
       toast.success('修改成功')
     } else {

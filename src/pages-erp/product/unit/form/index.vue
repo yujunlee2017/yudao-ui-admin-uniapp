@@ -48,16 +48,12 @@ import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { ProductUnit } from '@/api/erp/product/unit'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { createProductUnit, getProductUnit, updateProductUnit } from '@/api/erp/product/unit'
 import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{ id?: number | any }>()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/product/unit/form/index')
-// TODO @Yunai：对齐 system 表单页，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
-const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -67,7 +63,7 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => currentId.value ? '编辑产品单位' : '新增产品单位')
+const getTitle = computed(() => props.id ? '编辑产品单位' : '新增产品单位')
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<ProductUnit>({
   id: undefined,
@@ -86,12 +82,16 @@ function handleBack() {
 }
 
 /** 加载产品单位详情 */
-// TODO @Yunai：加载详情对齐 system/tenant，补 toast.loading/finally close，并直接 getProductUnit(props.id)，不要 getProductUnit(Number(currentId.value))。
 async function getDetail() {
-  if (!currentId.value) {
+  if (!props.id) {
     return
   }
-  formData.value = await getProductUnit(Number(currentId.value))
+  try {
+    toast.loading('加载中...')
+    formData.value = await getProductUnit(props.id)
+  } finally {
+    toast.close()
+  }
 }
 
 /** 提交表单 */
@@ -102,7 +102,7 @@ async function handleSubmit() {
   }
   formLoading.value = true
   try {
-    if (currentId.value) {
+    if (props.id) {
       await updateProductUnit(formData.value)
       toast.success('修改成功')
     } else {

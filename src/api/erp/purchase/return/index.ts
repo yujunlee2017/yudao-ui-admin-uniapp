@@ -1,7 +1,27 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
-// TODO @Yunai：按后端 VO 收窄类型，补 PurchaseReturnItem 明细类型；导出接口改 downloadApiFile 或删除未用方法。
+/** ERP 采购退货明细 */
+export interface PurchaseReturnItem {
+  id?: number
+  orderItemId?: number
+  warehouseId?: number
+  productId?: number
+  productName?: string
+  productUnitName?: string
+  productBarCode?: string
+  productPrice?: number
+  stockCount?: number
+  inCount?: number
+  returnCount?: number
+  count?: number
+  totalProductPrice?: number
+  taxPercent?: number
+  taxPrice?: number
+  totalPrice?: number
+  remark?: string
+}
+
 /** ERP 采购退货 */
 export interface PurchaseReturn {
   id?: number // 采购退货编号
@@ -19,8 +39,7 @@ export interface PurchaseReturn {
   status?: number // 状态
   remark?: string // 备注
   fileUrl?: string // 附件地址
-  items?: any[] // 退货明细
-  [key: string]: any
+  items?: PurchaseReturnItem[] // 退货明细
 }
 
 /** 获取采购退货分页列表 */
@@ -51,9 +70,4 @@ export function updatePurchaseReturnStatus(id: number, status: number) {
 /** 删除采购退货 */
 export function deletePurchaseReturn(ids: number[]) {
   return http.delete<boolean>('/erp/purchase-return/delete', undefined, { ids: ids.join(',') })
-}
-
-/** 导出采购退货 Excel */
-export function exportPurchaseReturn(params: Record<string, any>) {
-  return http.get<Blob>('/erp/purchase-return/export-excel', params)
 }

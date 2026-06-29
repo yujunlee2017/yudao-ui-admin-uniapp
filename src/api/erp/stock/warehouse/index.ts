@@ -1,7 +1,6 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
-// TODO @Yunai：按后端 VO 收窄类型，去掉 items?: any[] / [key: string]: any；导出接口改 downloadApiFile 或删除未用方法。
 /** ERP 仓库 */
 export interface Warehouse {
   id?: number // 仓库编号
@@ -14,8 +13,6 @@ export interface Warehouse {
   truckagePrice?: number // 搬运费，单位：元
   status?: number // 开启状态
   defaultStatus?: boolean // 是否默认
-  items?: any[] // 单据明细
-  [key: string]: any
 }
 
 /** 获取仓库分页列表 */
@@ -51,9 +48,4 @@ export function updateWarehouseDefaultStatus(id: number, defaultStatus: boolean)
 /** 删除仓库 */
 export function deleteWarehouse(id: number) {
   return http.delete<boolean>(`/erp/warehouse/delete?id=${id}`)
-}
-
-/** 导出仓库 Excel */
-export function exportWarehouse(params: Record<string, any>) {
-  return http.get<Blob>('/erp/warehouse/export-excel', params)
 }

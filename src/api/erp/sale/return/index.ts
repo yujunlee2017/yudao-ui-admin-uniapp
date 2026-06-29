@@ -1,7 +1,27 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
-// TODO @Yunai：按后端 VO 收窄类型，补 SaleReturnItem 明细类型；导出接口改 downloadApiFile 或删除未用方法。
+/** ERP 销售退货明细 */
+export interface SaleReturnItem {
+  id?: number
+  orderItemId?: number
+  warehouseId?: number
+  productId?: number
+  productName?: string
+  productUnitName?: string
+  productBarCode?: string
+  productPrice?: number
+  stockCount?: number
+  outCount?: number
+  returnCount?: number
+  count?: number
+  totalProductPrice?: number
+  taxPercent?: number
+  taxPrice?: number
+  totalPrice?: number
+  remark?: string
+}
+
 /** ERP 销售退货 */
 export interface SaleReturn {
   id?: number // 销售退货编号
@@ -20,8 +40,7 @@ export interface SaleReturn {
   status?: number // 状态
   remark?: string // 备注
   fileUrl?: string // 附件地址
-  items?: any[] // 退货明细
-  [key: string]: any
+  items?: SaleReturnItem[] // 退货明细
 }
 
 /** 获取销售退货分页列表 */
@@ -52,9 +71,4 @@ export function updateSaleReturnStatus(id: number, status: number) {
 /** 删除销售退货 */
 export function deleteSaleReturn(ids: number[]) {
   return http.delete<boolean>('/erp/sale-return/delete', undefined, { ids: ids.join(',') })
-}
-
-/** 导出销售退货 Excel */
-export function exportSaleReturn(params: Record<string, any>) {
-  return http.get<Blob>('/erp/sale-return/export-excel', params)
 }

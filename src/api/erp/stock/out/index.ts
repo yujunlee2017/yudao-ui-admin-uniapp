@@ -1,7 +1,21 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
-// TODO @Yunai：按后端 VO 收窄类型，补 StockOutItem 明细类型；导出接口改 downloadApiFile 或删除未用方法。
+/** ERP 其它出库明细 */
+export interface StockOutItem {
+  id?: number
+  warehouseId?: number
+  productId?: number
+  productName?: string
+  productUnitName?: string
+  productBarCode?: string
+  productPrice?: number
+  stockCount?: number
+  count?: number
+  totalPrice?: number
+  remark?: string
+}
+
 /** ERP 其它出库 */
 export interface StockOut {
   id?: number // 出库编号
@@ -13,8 +27,7 @@ export interface StockOut {
   status?: number // 状态
   remark?: string // 备注
   fileUrl?: string // 附件地址
-  items?: any[] // 出库明细
-  [key: string]: any
+  items?: StockOutItem[] // 出库明细
 }
 
 /** 获取其它出库分页列表 */
@@ -45,9 +58,4 @@ export function updateStockOutStatus(id: number, status: number) {
 /** 删除其它出库 */
 export function deleteStockOut(ids: number[]) {
   return http.delete<boolean>('/erp/stock-out/delete', undefined, { ids: ids.join(',') })
-}
-
-/** 导出其它出库 Excel */
-export function exportStockOut(params: Record<string, any>) {
-  return http.get<Blob>('/erp/stock-out/export-excel', params)
 }

@@ -27,24 +27,92 @@
       </wd-cell-group>
 
       <!-- 入库明细 -->
-      <ErpDetailItems title="入库产品清单" :items="items" :fields="itemFields" />
+      <view v-if="items.length > 0" class="mt-24rpx">
+        <view class="px-24rpx py-16rpx text-28rpx text-[#666]">
+          入库产品清单
+        </view>
+        <view class="px-24rpx">
+          <view
+            v-for="(item, index) in items"
+            :key="index"
+            class="mb-20rpx rounded-12rpx bg-white p-24rpx shadow-sm"
+          >
+            <view class="mb-12rpx text-28rpx text-[#333] font-semibold">
+              明细 {{ index + 1 }}
+            </view>
+            <view class="mb-10rpx flex text-26rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">仓库：</text>
+              <text class="min-w-0 flex-1">{{ item.warehouseName || '-' }}</text>
+            </view>
+            <view class="mb-10rpx flex text-26rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">产品：</text>
+              <text class="min-w-0 flex-1">{{ item.productName || '-' }}</text>
+            </view>
+            <view class="mb-10rpx flex text-26rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">条码：</text>
+              <text class="min-w-0 flex-1">{{ item.productBarCode || '-' }}</text>
+            </view>
+            <view class="mb-10rpx flex text-26rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">单位：</text>
+              <text class="min-w-0 flex-1">{{ item.productUnitName || '-' }}</text>
+            </view>
+            <view v-if="item.totalCount != null && item.totalCount !== ''" class="mb-10rpx flex text-26rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">原数量：</text>
+              <text class="min-w-0 flex-1">{{ formatCount(item.totalCount) }}</text>
+            </view>
+            <view v-if="item.inCount != null && item.inCount !== ''" class="mb-10rpx flex text-26rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">已入库：</text>
+              <text class="min-w-0 flex-1">{{ formatCount(item.inCount) }}</text>
+            </view>
+            <view class="mb-10rpx flex text-26rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">数量：</text>
+              <text class="min-w-0 flex-1">{{ formatCount(item.count) }}</text>
+            </view>
+            <view class="mb-10rpx flex text-26rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">采购单价：</text>
+              <text class="min-w-0 flex-1">{{ formatMoney(item.productPrice) }}</text>
+            </view>
+            <view class="mb-10rpx flex text-26rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">金额：</text>
+              <text class="min-w-0 flex-1">{{ formatMoney(item.totalProductPrice) }}</text>
+            </view>
+            <view class="mb-10rpx flex text-26rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">税率：</text>
+              <text class="min-w-0 flex-1">{{ formatPercent(item.taxPercent) }}</text>
+            </view>
+            <view class="mb-10rpx flex text-26rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">税额：</text>
+              <text class="min-w-0 flex-1">{{ formatMoney(item.taxPrice) }}</text>
+            </view>
+            <view class="mb-10rpx flex text-26rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">含税金额：</text>
+              <text class="min-w-0 flex-1">{{ formatMoney(item.totalPrice) }}</text>
+            </view>
+            <view v-if="item.remark" class="mb-10rpx flex text-26rpx text-[#666]">
+              <text class="mr-8rpx shrink-0 text-[#999]">备注：</text>
+              <text class="min-w-0 flex-1">{{ item.remark }}</text>
+            </view>
+          </view>
+        </view>
+      </view>
 
       <view class="h-160rpx" />
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <!-- TODO @Yunai：不做 ErpAuditActions 统一封装，参考其它模块把底部操作写回各自详情页。 -->
-    <ErpAuditActions
-      :can-update="canUpdate"
-      :can-update-status="canUpdateStatus"
-      :can-delete="canDelete"
-      :deleting="deleting"
-      :status-loading="statusLoading"
-      :next-status="nextStatus"
-      @edit="handleEdit"
-      @update-status="handleUpdateStatus"
-      @delete="handleDelete"
-    />
+    <view v-if="canUpdate || canUpdateStatus || canDelete" class="yd-detail-footer">
+      <view class="yd-detail-footer-actions">
+        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+          编辑
+        </wd-button>
+        <wd-button v-if="canUpdateStatus" class="flex-1" type="primary" :loading="statusLoading" @click="handleUpdateStatus(nextStatus)">
+          {{ nextStatus === ErpAuditStatusEnum.AUDITED ? '审批' : '反审批' }}
+        </wd-button>
+        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+          删除
+        </wd-button>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -53,22 +121,15 @@ import type { PurchaseIn } from '@/api/erp/purchase/in'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
+import { computed, onMounted, ref } from 'vue'
 import { deletePurchaseIn, getPurchaseIn, updatePurchaseInStatus } from '@/api/erp/purchase/in'
 import { useAccess } from '@/hooks/useAccess'
-import ErpDetailItems from '@/pages-erp/components/erp-detail-items.vue'
-import ErpAuditActions from '@/pages-erp/components/erp-audit-actions.vue'
-import type { ErpDetailItemField } from '@/pages-erp/components/types'
-import { enrichErpDocumentDetail, formatCount, formatMoney, formatPercent, openErpFile } from '@/pages-erp/utils'
+import { enrichErpDocumentDetail, formatCount, formatMoney, formatPercent, openErpFile } from '@/pages-erp/utils/erp'
 import { delay, navigateBackPlus } from '@/utils'
-import { DICT_TYPE } from '@/utils/constants'
+import { DICT_TYPE, ErpAuditStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/purchase/in/detail/index')
-// TODO @Yunai：对齐 system 页面，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
-const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -80,33 +141,15 @@ definePage({
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-// TODO @Yunai：状态变量缺尾注释，按 AGENTS.md 补 // 详情数据、// 删除状态、// 审批提交状态。
-const formData = ref<PurchaseIn>()
-const deleting = ref(false)
-const statusLoading = ref(false)
+const formData = ref<PurchaseIn>() // 详情数据
+const deleting = ref(false) // 删除状态
+const statusLoading = ref(false) // 审批提交状态
 const items = computed(() => Array.isArray(formData.value?.items) ? formData.value.items : [])
-// TODO @Yunai：明细字段按 AGENTS 改成逐字段模板，不再通过 itemFields 配置生成。
-const itemFields: ErpDetailItemField[] = [
-  { prop: 'warehouseName', label: '仓库' },
-  { prop: 'productName', label: '产品' },
-  { prop: 'productBarCode', label: '条码' },
-  { prop: 'productUnitName', label: '单位' },
-  { prop: 'totalCount', label: '原数量', type: 'count', hiddenWhenEmpty: true },
-  { prop: 'inCount', label: '已入库', type: 'count', hiddenWhenEmpty: true },
-  { prop: 'count', label: '数量', type: 'count' },
-  { prop: 'productPrice', label: '采购单价', type: 'money' },
-  { prop: 'totalProductPrice', label: '金额', type: 'money' },
-  { prop: 'taxPercent', label: '税率', type: 'percent' },
-  { prop: 'taxPrice', label: '税额', type: 'money' },
-  { prop: 'totalPrice', label: '含税金额', type: 'money' },
-  { prop: 'remark', label: '备注', hiddenWhenEmpty: true },
-] // 入库明细字段
 const unpaidPrice = computed(() => Number(formData.value?.totalPrice || 0) - Number(formData.value?.paymentPrice || 0))
-// TODO @Yunai：审批状态魔法数字 10/20 改 ErpAuditStatusEnum（同 purchase/order/detail，4 处）
-const canUpdate = computed(() => formData.value?.status !== 20 && hasAccessByCodes(['erp:purchase-in:update']))
+const canUpdate = computed(() => formData.value?.status !== ErpAuditStatusEnum.AUDITED && hasAccessByCodes(['erp:purchase-in:update']))
 const canDelete = computed(() => hasAccessByCodes(['erp:purchase-in:delete']))
-const canUpdateStatus = computed(() => hasAccessByCodes(['erp:purchase-in:update-status']) && (formData.value?.status === 10 || formData.value?.status === 20))
-const nextStatus = computed(() => formData.value?.status === 10 ? 20 : 10)
+const canUpdateStatus = computed(() => hasAccessByCodes(['erp:purchase-in:update-status']) && (formData.value?.status === ErpAuditStatusEnum.UNAUDITED || formData.value?.status === ErpAuditStatusEnum.AUDITED))
+const nextStatus = computed(() => formData.value?.status === ErpAuditStatusEnum.UNAUDITED ? ErpAuditStatusEnum.AUDITED : ErpAuditStatusEnum.UNAUDITED)
 
 /** 返回上一页 */
 function handleBack() {
@@ -115,12 +158,12 @@ function handleBack() {
 
 /** 加载详情 */
 async function getDetail() {
-  if (!currentId.value || deleting.value) {
+  if (!props.id || deleting.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await enrichErpDocumentDetail(await getPurchaseIn(Number(currentId.value)), 'purchase-in')
+    formData.value = await enrichErpDocumentDetail(await getPurchaseIn(props.id), 'purchase-in')
   } finally {
     toast.close()
   }
@@ -128,10 +171,10 @@ async function getDetail() {
 
 /** 编辑 */
 function handleEdit() {
-  uni.navigateTo({ url: `/pages-erp/purchase/in/form/index?id=${currentId.value}` })
+  uni.navigateTo({ url: `/pages-erp/purchase/in/form/index?id=${props.id}` })
 }
 
-// TODO @Yunai：补 /** 打开附件 */ JSDoc。
+/** 打开附件 */
 function handleOpenFile() {
   if (formData.value?.fileUrl) {
     openErpFile(formData.value.fileUrl)
@@ -140,7 +183,7 @@ function handleOpenFile() {
 
 /** 删除 */
 async function handleDelete() {
-  if (!currentId.value) {
+  if (!props.id) {
     return
   }
   try {
@@ -150,7 +193,7 @@ async function handleDelete() {
   }
   deleting.value = true
   try {
-    await deletePurchaseIn([Number(currentId.value)])
+    await deletePurchaseIn([props.id])
     toast.success('删除成功')
     uni.$emit('erp:purchase-in:reload')
     delay(handleBack)
@@ -161,11 +204,10 @@ async function handleDelete() {
 
 /** 审批或反审批 */
 async function handleUpdateStatus(status: number) {
-  if (!currentId.value) {
+  if (!props.id) {
     return
   }
-  // TODO @Yunai：审批状态 20 改用 ErpAuditStatusEnum.AUDITED。
-  const actionName = status === 20 ? '审批' : '反审批'
+  const actionName = status === ErpAuditStatusEnum.AUDITED ? '审批' : '反审批'
   try {
     await dialog.confirm({ title: '提示', msg: `确定要${actionName}该采购入库吗？` })
   } catch {
@@ -173,7 +215,7 @@ async function handleUpdateStatus(status: number) {
   }
   statusLoading.value = true
   try {
-    await updatePurchaseInStatus(Number(currentId.value), status)
+    await updatePurchaseInStatus(props.id, status)
     toast.success(`${actionName}成功`)
     uni.$emit('erp:purchase-in:reload')
     await getDetail()
@@ -189,11 +231,5 @@ onMounted(() => {
 
 onUnload(() => {
   uni.$off('erp:purchase-in:reload', getDetail)
-})
-
-// TODO @Yunai：watch currentId 对齐其它 detail，补 /** */ 注释并统一初始化/路由变化刷新写法。
-watch(currentId, () => {
-  formData.value = undefined
-  void getDetail()
 })
 </script>

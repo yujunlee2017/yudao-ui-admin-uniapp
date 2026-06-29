@@ -20,13 +20,20 @@
           </wd-form-item>
         </wd-cell-group>
 
-        <!-- TODO @AI：这里的交互，要不要对齐？pages-infra/demo/demo03-normal/form/index -->
-        <view class="px-24rpx py-16rpx text-28rpx text-[#666]">
-          采购入库、退货单
+        <view class="flex items-center justify-between px-24rpx py-16rpx">
+          <text class="text-28rpx text-[#333] font-semibold">采购入库、退货单</text>
+          <view class="flex gap-12rpx">
+            <wd-button size="small" type="primary" plain @click="itemEditorRef?.openPurchaseInPicker()">
+              采购入库
+            </wd-button>
+            <wd-button size="small" type="primary" plain @click="itemEditorRef?.openPurchaseReturnPicker()">
+              采购退货
+            </wd-button>
+          </view>
         </view>
         <wd-cell-group border>
           <wd-form-item title="付款明细" title-width="220rpx">
-            <PaymentItemEditor ref="itemEditorRef" v-model="formData.items" :supplier-id="formData.supplierId" />
+            <PaymentItemForm ref="itemEditorRef" v-model="formData.items" :supplier-id="formData.supplierId" />
           </wd-form-item>
         </wd-cell-group>
 
@@ -57,24 +64,19 @@
 
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
-import type { Account } from '@/api/erp/finance/account'
 import type { FinancePayment } from '@/api/erp/finance/payment'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { getAccountSimpleList } from '@/api/erp/finance/account'
 import { createFinancePayment, getFinancePayment, updateFinancePayment } from '@/api/erp/finance/payment'
 import { delay, navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 import ErpPicker from '@/pages-erp/components/erp-picker.vue'
-import PaymentItemEditor from '../components/payment-item-editor.vue'
-import { formatMoney, roundPrice, toNumber } from '@/pages-erp/utils'
+import { applyDefaultAccount } from '@/pages-erp/finance/account/components/use-default-account'
+import PaymentItemForm from '../components/payment-item-form.vue'
+import { formatMoney, roundPrice, toNumber } from '@/pages-erp/utils/erp'
 
 const props = defineProps<{ id?: number | any }>()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/finance/payment/form/index')
-// TODO @Yunai：对齐 system 表单页，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
-const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -84,9 +86,8 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => currentId.value ? '编辑付款单' : '新增付款单')
-// TODO @Yunai：状态变量缺尾注释，按 AGENTS.md 补 // 表单提交状态、// 表单数据。
-const formLoading = ref(false)
+const getTitle = computed(() => props.id ? '编辑付款单' : '新增付款单')
+const formLoading = ref(false) // 表单提交状态
 const formData = ref<FinancePayment>({
   id: undefined,
   no: undefined,
@@ -100,13 +101,12 @@ const formData = ref<FinancePayment>({
   discountPrice: 0,
   paymentPrice: 0,
   items: [],
-})
-const formRef = ref<FormInstance>()
-const itemEditorRef = ref<InstanceType<typeof PaymentItemEditor>>()
-const accountOptions = ref<Account[]>([])
+}) // 表单数据
+const formRef = ref<FormInstance>() // 表单组件引用
+const itemEditorRef = ref<InstanceType<typeof PaymentItemForm>>() // 明细组件引用
 const dateVisible = reactive({
   paymentTime: false,
-})
+}) // 日期选择器状态
 const formSchema = createFormSchema({
   supplierId: [{ required: true, message: '供应商不能为空' }],
   paymentTime: [{ required: true, message: '付款时间不能为空' }],
@@ -117,7 +117,7 @@ function handleBack() {
   navigateBackPlus('/pages-erp/finance/payment/index')
 }
 
-// TODO @AI：写下注释；
+/** 刷新付款金额 */
 function refreshAmount() {
   const items = Array.isArray(formData.value.items) ? formData.value.items : []
   const totalPrice = items.reduce((sum, item) => sum + toNumber(item.paymentPrice), 0)
@@ -125,25 +125,24 @@ function refreshAmount() {
   formData.value.paymentPrice = roundPrice(totalPrice - toNumber(formData.value.discountPrice))
 }
 
-// TODO @AI：在 src/pages-erp/finance/account 封装一个 picker 组件？
+/** 加载基础选项 */
 async function loadOptions() {
-  const accounts = await getAccountSimpleList()
-  accountOptions.value = accounts || []
-  const defaultAccount = accountOptions.value.find(item => item.defaultStatus)
-  if (!formData.value.accountId && defaultAccount?.id) {
-    formData.value.accountId = defaultAccount.id
-  }
+  await applyDefaultAccount(formData.value)
 }
 
 /** 加载详情 */
-// TODO @Yunai：加载详情对齐 system/tenant，补 toast.loading/finally close，并直接 getFinancePayment(props.id)，不要 getFinancePayment(Number(currentId.value))。
 async function getDetail() {
-  if (!currentId.value) {
+  if (!props.id) {
     return
   }
-  formData.value = {
-    ...formData.value,
-    ...await getFinancePayment(Number(currentId.value)),
+  try {
+    toast.loading('加载中...')
+    formData.value = {
+      ...formData.value,
+      ...await getFinancePayment(props.id),
+    }
+  } finally {
+    toast.close()
   }
   refreshAmount()
 }
@@ -157,7 +156,7 @@ async function handleSubmit() {
   refreshAmount()
   formLoading.value = true
   try {
-    if (currentId.value) {
+    if (props.id) {
       await updateFinancePayment(formData.value)
       toast.success('修改成功')
     } else {

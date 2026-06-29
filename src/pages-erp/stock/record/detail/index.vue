@@ -28,18 +28,14 @@
 <script lang="ts" setup>
 import type { StockRecord } from '@/api/erp/stock/record'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
+import { onMounted, ref } from 'vue'
 import { getStockRecord } from '@/api/erp/stock/record'
-import { enrichErpDocumentDetail, formatCount } from '@/pages-erp/utils'
+import { enrichErpDocumentDetail, formatCount } from '@/pages-erp/utils/erp'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/stock/record/detail/index')
-// TODO @Yunai：对齐 system 页面，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
-const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -58,12 +54,12 @@ function handleBack() {
 
 /** 加载库存明细详情 */
 async function getDetail() {
-  if (!currentId.value) {
+  if (!props.id) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await enrichErpDocumentDetail(await getStockRecord(Number(currentId.value)), 'stock-record') as StockRecord
+    formData.value = await enrichErpDocumentDetail(await getStockRecord(props.id), 'stock-record') as StockRecord
   } finally {
     toast.close()
   }
@@ -72,11 +68,5 @@ async function getDetail() {
 /** 初始化 */
 onMounted(() => {
   getDetail()
-})
-
-// TODO @Yunai：watch currentId 对齐其它 detail，补 /** */ 注释并统一初始化/路由变化刷新写法。
-watch(currentId, () => {
-  formData.value = undefined
-  void getDetail()
 })
 </script>

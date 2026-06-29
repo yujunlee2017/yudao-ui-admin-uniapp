@@ -1,7 +1,27 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
-// TODO @Yunai：按后端 VO 收窄类型，补 PurchaseInItem 明细类型；导出接口改 downloadApiFile 或删除未用方法。
+/** ERP 采购入库明细 */
+export interface PurchaseInItem {
+  id?: number
+  orderItemId?: number
+  warehouseId?: number
+  productId?: number
+  productName?: string
+  productUnitName?: string
+  productBarCode?: string
+  productPrice?: number
+  stockCount?: number
+  totalCount?: number
+  inCount?: number
+  count?: number
+  totalProductPrice?: number
+  taxPercent?: number
+  taxPrice?: number
+  totalPrice?: number
+  remark?: string
+}
+
 /** ERP 采购入库 */
 export interface PurchaseIn {
   id?: number // 入库工单编号
@@ -19,8 +39,7 @@ export interface PurchaseIn {
   status?: number // 状态
   remark?: string // 备注
   fileUrl?: string // 附件地址
-  items?: any[] // 入库明细
-  [key: string]: any
+  items?: PurchaseInItem[] // 入库明细
 }
 
 /** 获取采购入库分页列表 */
@@ -51,9 +70,4 @@ export function updatePurchaseInStatus(id: number, status: number) {
 /** 删除采购入库 */
 export function deletePurchaseIn(ids: number[]) {
   return http.delete<boolean>('/erp/purchase-in/delete', undefined, { ids: ids.join(',') })
-}
-
-/** 导出采购入库 Excel */
-export function exportPurchaseIn(params: Record<string, any>) {
-  return http.get<Blob>('/erp/purchase-in/export-excel', params)
 }

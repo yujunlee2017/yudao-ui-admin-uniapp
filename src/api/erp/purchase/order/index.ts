@@ -1,7 +1,23 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
-// TODO @Yunai：按后端 VO 收窄类型，补 PurchaseOrderItem 明细类型；导出接口改 downloadApiFile 或删除未用方法。
+/** ERP 采购订单明细 */
+export interface PurchaseOrderItem {
+  id?: number
+  productId?: number
+  productName?: string
+  productUnitName?: string
+  productBarCode?: string
+  productPrice?: number
+  stockCount?: number
+  count?: number
+  totalProductPrice?: number
+  taxPercent?: number
+  taxPrice?: number
+  totalPrice?: number
+  remark?: string
+}
+
 /** ERP 采购订单 */
 export interface PurchaseOrder {
   id?: number // 订单工单编号
@@ -19,8 +35,7 @@ export interface PurchaseOrder {
   fileUrl?: string // 附件地址
   inCount?: number // 采购入库数量
   returnCount?: number // 采购退货数量
-  items?: any[] // 订单明细
-  [key: string]: any
+  items?: PurchaseOrderItem[] // 订单明细
 }
 
 /** 获取采购订单分页列表 */
@@ -51,9 +66,4 @@ export function updatePurchaseOrderStatus(id: number, status: number) {
 /** 删除采购订单 */
 export function deletePurchaseOrder(ids: number[]) {
   return http.delete<boolean>('/erp/purchase-order/delete', undefined, { ids: ids.join(',') })
-}
-
-/** 导出采购订单 Excel */
-export function exportPurchaseOrder(params: Record<string, any>) {
-  return http.get<Blob>('/erp/purchase-order/export-excel', params)
 }

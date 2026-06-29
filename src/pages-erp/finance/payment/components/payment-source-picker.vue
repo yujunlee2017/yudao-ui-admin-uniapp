@@ -1,4 +1,3 @@
-<!-- TODO @Yunai：对齐 vue3 + ep 的位置和拆分方式，命名可按现有风格用 picker 或 select。 -->
 <template>
   <wd-popup
     v-model="visible"
@@ -12,33 +11,17 @@
           取消
         </wd-button>
         <view class="text-32rpx text-[#333] font-semibold">
-          选择可入库订单
+          {{ title }}
         </view>
-        <wd-button size="small" type="primary" :disabled="!currentOrder" @click="handleConfirm">
-          确定
+        <wd-button size="small" type="primary" :disabled="selectedRows.length === 0" @click="handleConfirm">
+          确定{{ selectedRows.length ? `(${selectedRows.length})` : '' }}
         </wd-button>
       </view>
 
       <view class="bg-white px-24rpx pb-20rpx">
-        <wd-input v-model="queryParams.no" placeholder="请输入订单单号" clearable />
+        <wd-input v-model="queryParams.no" :placeholder="`请输入${sourceLabel}单号`" clearable />
         <ErpPicker v-model="queryParams.productId" class="mt-12rpx" source="product" form-item placeholder="请选择产品" />
-        <view class="mt-12rpx flex gap-12rpx">
-          <!-- TODO @Yunai：时间范围手写 dateVisible + 两个 wd-datetime-picker，应改用全局 yd-search-date-range
-               （AGENTS.md：日期范围用全局 yd-search-date-range，已统一抽离，勿再手写）。
-               同款问题：purchase-order-return-selector、sale-order-out/return-selector、payment/receipt-source-selector。 -->
-          <view class="flex-1" @click="dateVisible.start = true">
-            <view class="yd-search-form-date-range-picker">
-              {{ formatDate(queryParams.orderTime[0]) || '开始日期' }}
-            </view>
-          </view>
-          <view class="flex-1" @click="dateVisible.end = true">
-            <view class="yd-search-form-date-range-picker">
-              {{ formatDate(queryParams.orderTime[1]) || '结束日期' }}
-            </view>
-          </view>
-        </view>
-        <wd-datetime-picker v-model="queryParams.orderTime[0]" v-model:visible="dateVisible.start" title="请选择开始日期" type="date" />
-        <wd-datetime-picker v-model="queryParams.orderTime[1]" v-model:visible="dateVisible.end" title="请选择结束日期" type="date" />
+        <yd-search-date-range v-model="queryParams.time" class="mt-12rpx" :label="timeLabel" />
         <view class="mt-16rpx flex gap-16rpx">
           <wd-button class="flex-1" variant="plain" @click="handleReset">
             重置
@@ -55,14 +38,14 @@
             v-for="item in list"
             :key="item.id"
             class="mb-20rpx rounded-12rpx bg-white p-24rpx shadow-sm"
-            :class="currentOrder?.id === item.id ? 'ring-2 ring-[#1677ff]' : ''"
-            @click="handleSelect(item)"
+            :class="isSelected(item) ? 'ring-2 ring-[#1677ff]' : ''"
+            @click="toggleSelect(item)"
           >
             <view class="mb-12rpx flex items-center justify-between gap-16rpx">
               <view class="min-w-0 flex-1 truncate text-30rpx text-[#333] font-semibold">
                 {{ item.no || '-' }}
               </view>
-              <wd-icon v-if="currentOrder?.id === item.id" name="check" size="18px" color="#1677ff" />
+              <text v-if="isSelected(item)" class="shrink-0 text-24rpx text-[#1677ff]">已选择</text>
             </view>
             <view class="mb-8rpx text-26rpx text-[#666]">
               <text class="mr-8rpx text-[#999]">供应商：</text>{{ item.supplierName || '-' }}
@@ -72,20 +55,19 @@
               <text class="line-clamp-1">{{ item.productNames }}</text>
             </view>
             <view class="mb-8rpx text-26rpx text-[#666]">
-              <text class="mr-8rpx text-[#999]">订单时间：</text>{{ formatDateTime(item.orderTime) || '-' }}
+              <text class="mr-8rpx text-[#999]">{{ timeLabel }}：</text>{{ formatDateTime(item[timeField]) || '-' }}
             </view>
             <view class="flex text-26rpx text-[#666]">
               <view class="flex-1">
-                <text class="mr-8rpx text-[#999]">总数量：</text>{{ formatCount(item.totalCount) }}
+                <text class="mr-8rpx text-[#999]">{{ totalLabel }}：</text>{{ formatMoney(item.totalPrice) }}
               </view>
               <view class="flex-1">
-                <text class="mr-8rpx text-[#999]">已入库：</text>{{ formatCount(item.inCount) }}
+                <text class="mr-8rpx text-[#999]">{{ paidLabel }}：</text>{{ formatMoney(item[paidField]) }}
               </view>
             </view>
           </view>
-
           <view v-if="!loading && list.length === 0" class="py-80rpx text-center">
-            <wd-empty icon="content" tip="暂无可入库订单" />
+            <wd-empty icon="content" :tip="`暂无可选择${sourceLabel}`" />
           </view>
           <view v-if="loading" class="py-24rpx text-center text-26rpx text-[#999]">
             加载中...
@@ -100,38 +82,60 @@
 </template>
 
 <script lang="ts" setup>
-import type { PurchaseOrder } from '@/api/erp/purchase/order'
-import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { reactive, ref } from 'vue'
-import { getPurchaseOrder, getPurchaseOrderPage } from '@/api/erp/purchase/order'
+import { computed, reactive, ref } from 'vue'
+import { getPurchaseInPage } from '@/api/erp/purchase/in'
+import { getPurchaseReturnPage } from '@/api/erp/purchase/return'
+import { formatDateRange, formatDateTime } from '@/utils/date'
 import ErpPicker from '@/pages-erp/components/erp-picker.vue'
-import { formatCount } from '@/pages-erp/utils'
-import { formatDate, formatDateRange, formatDateTime } from '@/utils/date'
+import { formatMoney } from '@/pages-erp/utils/erp'
 
-const emit = defineEmits<{
-  success: [order: PurchaseOrder]
+type SourceType = 'purchase-in' | 'purchase-return'
+
+const props = defineProps<{
+  source: SourceType
 }>()
 
-const toast = useToast()
+const emit = defineEmits<{
+  success: [rows: Record<string, any>[]]
+}>()
+
 const visible = ref(false)
 const loading = ref(false)
 const finished = ref(false)
 const pageNo = ref(1)
 const pageSize = 10
 const total = ref(0)
-const list = ref<PurchaseOrder[]>([])
-const currentOrder = ref<PurchaseOrder>()
-const dateVisible = reactive({
-  start: false,
-  end: false,
-})
+const supplierId = ref<number>()
+const list = ref<Record<string, any>[]>([])
+const selectedRows = ref<Record<string, any>[]>([])
 const queryParams = reactive({
   no: undefined as string | undefined,
   productId: undefined as number | undefined,
-  orderTime: ['', ''] as [any, any],
+  time: [undefined, undefined] as [number | undefined, number | undefined],
 })
 
-/** 查询可入库订单列表 */
+const isPurchaseIn = computed(() => props.source === 'purchase-in')
+const title = computed(() => isPurchaseIn.value ? '选择采购入库（仅展示可付款）' : '选择采购退货（仅展示可退款）')
+const sourceLabel = computed(() => isPurchaseIn.value ? '采购入库' : '采购退货')
+const timeField = computed(() => isPurchaseIn.value ? 'inTime' : 'returnTime')
+const timeLabel = computed(() => isPurchaseIn.value ? '入库时间' : '退货时间')
+const paidField = computed(() => isPurchaseIn.value ? 'paymentPrice' : 'refundPrice')
+const paidLabel = computed(() => isPurchaseIn.value ? '已付金额' : '已退金额')
+const totalLabel = computed(() => isPurchaseIn.value ? '应付金额' : '应退金额')
+
+function isSelected(item: Record<string, any>) {
+  return selectedRows.value.some(row => String(row.id) === String(item.id))
+}
+
+function toggleSelect(item: Record<string, any>) {
+  if (isSelected(item)) {
+    selectedRows.value = selectedRows.value.filter(row => String(row.id) !== String(item.id))
+  } else {
+    selectedRows.value.push(item)
+  }
+}
+
+/** 查询可选单据列表 */
 async function queryList(reset = false) {
   if (loading.value) {
     return
@@ -139,22 +143,24 @@ async function queryList(reset = false) {
   if (reset) {
     pageNo.value = 1
     list.value = []
+    selectedRows.value = []
     finished.value = false
-    currentOrder.value = undefined
   }
   if (finished.value) {
     return
   }
   loading.value = true
   try {
-    const data = await getPurchaseOrderPage({
+    const params = {
       pageNo: pageNo.value,
       pageSize,
       no: queryParams.no || undefined,
       productId: queryParams.productId,
-      orderTime: formatDateRange(queryParams.orderTime),
-      inEnable: true,
-    })
+      supplierId: supplierId.value,
+      [timeField.value]: formatDateRange(queryParams.time),
+      ...(isPurchaseIn.value ? { paymentEnable: true } : { refundEnable: true }),
+    }
+    const data = isPurchaseIn.value ? await getPurchaseInPage(params) : await getPurchaseReturnPage(params)
     list.value = reset ? data.list : list.value.concat(data.list)
     total.value = data.total
     finished.value = list.value.length >= total.value
@@ -164,13 +170,10 @@ async function queryList(reset = false) {
   }
 }
 
-async function open() {
+async function open(nextSupplierId: number) {
+  supplierId.value = nextSupplierId
   visible.value = true
   await queryList(true)
-}
-
-function handleSelect(item: PurchaseOrder) {
-  currentOrder.value = item
 }
 
 function handleSearch() {
@@ -181,7 +184,7 @@ function handleSearch() {
 function handleReset() {
   queryParams.no = undefined
   queryParams.productId = undefined
-  queryParams.orderTime = ['', '']
+  queryParams.time = [undefined, undefined]
   queryList(true)
 }
 
@@ -189,13 +192,8 @@ function handleLoadMore() {
   queryList()
 }
 
-async function handleConfirm() {
-  if (!currentOrder.value?.id) {
-    toast.warning('请选择采购订单')
-    return
-  }
-  const detail = await getPurchaseOrder(Number(currentOrder.value.id))
-  emit('success', detail)
+function handleConfirm() {
+  emit('success', selectedRows.value)
   visible.value = false
 }
 

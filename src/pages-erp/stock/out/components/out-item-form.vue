@@ -1,9 +1,8 @@
-<!-- TODO @Yunai：组件命名是否改成 return-item-form，和表单明细编辑职责对齐。 -->
 <template>
   <view class="w-full">
     <view v-for="(item, index) in items" :key="index" class="mb-24rpx rounded-12rpx bg-[#f8f8f8] p-20rpx">
       <view class="mb-16rpx flex items-center justify-between">
-        <text class="text-28rpx text-[#333] font-semibold">退货明细 {{ index + 1 }}</text>
+        <text class="text-28rpx text-[#333] font-semibold">出库明细 {{ index + 1 }}</text>
         <wd-button v-if="!disabled && items.length > 1" size="small" type="error" variant="plain" @click="handleRemove(index)">
           删除
         </wd-button>
@@ -18,6 +17,7 @@
         :disabled="disabled"
         @confirm="option => handleWarehouseConfirm(index, option?.id)"
       />
+
       <ErpPicker
         v-model="item.productId"
         label="产品"
@@ -31,27 +31,21 @@
       <wd-cell title="库存" :value="formatCount(item.stockCount)" />
       <wd-cell title="条码" :value="item.productBarCode || '-'" />
       <wd-cell title="单位" :value="item.productUnitName || '-'" />
-      <wd-cell v-if="item.outCount != null" title="已出库" :value="formatCount(item.outCount)" />
-      <wd-cell v-if="item.returnCount != null" title="已退货" :value="formatCount(item.returnCount)" />
+
       <wd-form-item title="数量" title-width="180rpx" center>
         <wd-input-number v-model="item.count" :min="0.001" :precision="3" :disabled="disabled" />
       </wd-form-item>
       <wd-form-item title="产品单价" title-width="180rpx" center>
         <wd-input-number v-model="item.productPrice" :min="0.01" :precision="2" :disabled="disabled" />
       </wd-form-item>
-      <wd-cell title="金额" :value="formatMoney(item.totalProductPrice)" />
-      <wd-form-item title="税率(%)" title-width="180rpx" center>
-        <wd-input-number v-model="item.taxPercent" :min="0" :precision="2" :disabled="disabled" />
-      </wd-form-item>
-      <wd-cell title="税额" :value="formatMoney(item.taxPrice)" />
-      <wd-cell title="含税金额" :value="formatMoney(item.totalPrice)" />
+      <wd-cell title="合计金额" :value="formatMoney(item.totalPrice)" />
       <wd-form-item title="备注" title-width="180rpx">
         <wd-input v-model="item.remark" placeholder="请输入备注" clearable :disabled="disabled" />
       </wd-form-item>
     </view>
 
     <wd-button v-if="!disabled" block variant="plain" @click="handleAdd">
-      添加退货产品
+      添加出库产品
     </wd-button>
   </view>
 </template>
@@ -62,7 +56,7 @@ import type { Warehouse } from '@/api/erp/stock/warehouse'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref, watch } from 'vue'
 import ErpPicker from '@/pages-erp/components/erp-picker.vue'
-import { formatCount, formatMoney, refreshSingleItemAmount, setItemStockCount } from '@/pages-erp/utils'
+import { formatCount, formatMoney, refreshSingleItemAmount, setItemStockCount } from '@/pages-erp/utils/erp'
 
 const props = defineProps<{
   disabled?: boolean
@@ -91,12 +85,22 @@ function createDefaultItem() {
     productPrice: undefined,
     stockCount: undefined,
     count: 1,
-    totalProductPrice: undefined,
-    taxPercent: 0,
-    taxPrice: undefined,
     totalPrice: undefined,
     remark: undefined,
   }
+}
+
+/** 补充默认仓库 */
+function applyDefaultWarehouse() {
+  const defaultWarehouse = props.warehouseOptions.find(item => item.defaultStatus)
+  if (!defaultWarehouse?.id) {
+    return
+  }
+  items.value.forEach((item) => {
+    if (!item.warehouseId) {
+      item.warehouseId = defaultWarehouse.id
+    }
+  })
 }
 
 /** 新增明细 */
@@ -131,7 +135,7 @@ async function handleProductConfirm(index: number, productId?: number | string) 
     item.productName = product.name
     item.productUnitName = product.unitName
     item.productBarCode = product.barCode
-    item.productPrice = product.salePrice
+    item.productPrice = product.minPrice
   }
   await setItemStockCount(item)
 }
@@ -139,12 +143,12 @@ async function handleProductConfirm(index: number, productId?: number | string) 
 /** 校验明细 */
 function validate() {
   if (items.value.length === 0) {
-    toast.warning('请至少添加一个退货产品')
+    toast.warning('请至少添加一个出库产品')
     return false
   }
   const invalidIndex = items.value.findIndex(item => !item.warehouseId || !item.productId || !item.count)
   if (invalidIndex >= 0) {
-    toast.warning(`请完善退货明细 ${invalidIndex + 1}`)
+    toast.warning(`请完善出库明细 ${invalidIndex + 1}`)
     return false
   }
   return true
@@ -152,7 +156,10 @@ function validate() {
 
 watch(() => props.modelValue, (value) => {
   items.value = Array.isArray(value) ? value : []
+  applyDefaultWarehouse()
 }, { immediate: true })
+
+watch(() => props.warehouseOptions, applyDefaultWarehouse, { deep: true })
 
 watch(items, (value) => {
   value.forEach(item => refreshSingleItemAmount(item))

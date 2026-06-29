@@ -78,16 +78,12 @@ import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { Supplier } from '@/api/erp/purchase/supplier'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { createSupplier, getSupplier, updateSupplier } from '@/api/erp/purchase/supplier'
 import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{ id?: number | any }>()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/purchase/supplier/form/index')
-// TODO @Yunai：对齐 system 表单页，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
-const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -97,7 +93,7 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => currentId.value ? '编辑供应商' : '新增供应商')
+const getTitle = computed(() => props.id ? '编辑供应商' : '新增供应商')
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<Supplier>({
   id: undefined,
@@ -131,14 +127,18 @@ function handleBack() {
 }
 
 /** 加载供应商详情 */
-// TODO @Yunai：加载详情对齐 system/tenant，补 toast.loading/finally close，并直接 getSupplier(props.id)，不要 getSupplier(Number(currentId.value))。
 async function getDetail() {
-  if (!currentId.value) {
+  if (!props.id) {
     return
   }
-  formData.value = {
-    ...formData.value,
-    ...await getSupplier(Number(currentId.value)),
+  try {
+    toast.loading('加载中...')
+    formData.value = {
+      ...formData.value,
+      ...await getSupplier(props.id),
+    }
+  } finally {
+    toast.close()
   }
 }
 
@@ -150,7 +150,7 @@ async function handleSubmit() {
   }
   formLoading.value = true
   try {
-    if (currentId.value) {
+    if (props.id) {
       await updateSupplier(formData.value)
       toast.success('修改成功')
     } else {

@@ -1,7 +1,5 @@
-import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
-// TODO @Yunai：按后端 VO 收窄类型，去掉 items?: any[] / [key: string]: any；导出接口改 downloadApiFile 或删除未用方法。
 /** ERP 产品分类 */
 export interface ProductCategory {
   id?: number // 分类编号
@@ -10,8 +8,6 @@ export interface ProductCategory {
   code?: string // 分类编码
   sort?: number // 分类排序
   status?: number // 开启状态
-  items?: any[] // 单据明细
-  [key: string]: any
 }
 
 /** 获取产品分类列表 */
@@ -42,9 +38,4 @@ export function updateProductCategory(data: ProductCategory) {
 /** 删除产品分类 */
 export function deleteProductCategory(id: number) {
   return http.delete<boolean>(`/erp/product-category/delete?id=${id}`)
-}
-
-/** 导出产品分类 Excel */
-export function exportProductCategory(params: Record<string, any>) {
-  return http.get<Blob>('/erp/product-category/export-excel', params)
 }

@@ -24,7 +24,7 @@
         </view>
         <wd-cell-group border>
           <wd-form-item title="调拨明细" title-width="220rpx">
-            <MoveItemEditor ref="itemEditorRef" v-model="formData.items" :product-options="productOptions" :warehouse-options="warehouseOptions" />
+            <MoveItemForm ref="itemEditorRef" v-model="formData.items" :product-options="productOptions" :warehouse-options="warehouseOptions" />
           </wd-form-item>
         </wd-cell-group>
 
@@ -58,20 +58,16 @@ import type { StockMove } from '@/api/erp/stock/move'
 import type { Warehouse } from '@/api/erp/stock/warehouse'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { getProductSimpleList } from '@/api/erp/product/product'
 import { createStockMove, getStockMove, updateStockMove } from '@/api/erp/stock/move'
 import { getWarehouseSimpleList } from '@/api/erp/stock/warehouse'
 import { delay, navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
-import MoveItemEditor from '../components/move-item-editor.vue'
-import { formatCount, formatMoney, roundPrice, toNumber } from '@/pages-erp/utils'
+import MoveItemForm from '../components/move-item-form.vue'
+import { formatCount, formatMoney, roundPrice, toNumber } from '@/pages-erp/utils/erp'
 
 const props = defineProps<{ id?: number | any }>()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/stock/move/form/index')
-// TODO @Yunai：对齐 system 表单页，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
-const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -81,7 +77,7 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => currentId.value ? '编辑库存调拨' : '新增库存调拨')
+const getTitle = computed(() => props.id ? '编辑库存调拨' : '新增库存调拨')
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<StockMove>({
   id: undefined,
@@ -94,7 +90,7 @@ const formData = ref<StockMove>({
   items: [],
 }) // 表单数据
 const formRef = ref<FormInstance>() // 表单组件引用
-const itemEditorRef = ref<InstanceType<typeof MoveItemEditor>>() // 明细组件引用
+const itemEditorRef = ref<InstanceType<typeof MoveItemForm>>() // 明细组件引用
 const productOptions = ref<Product[]>([]) // 产品选项
 const warehouseOptions = ref<Warehouse[]>([]) // 仓库选项
 const dateVisible = reactive({
@@ -129,14 +125,18 @@ async function loadOptions() {
 }
 
 /** 加载库存调拨详情 */
-// TODO @Yunai：加载详情对齐 system/tenant，补 toast.loading/finally close，并直接 getStockMove(props.id)，不要 getStockMove(Number(currentId.value))。
 async function getDetail() {
-  if (!currentId.value) {
+  if (!props.id) {
     return
   }
-  formData.value = {
-    ...formData.value,
-    ...await getStockMove(Number(currentId.value)),
+  try {
+    toast.loading('加载中...')
+    formData.value = {
+      ...formData.value,
+      ...await getStockMove(props.id),
+    }
+  } finally {
+    toast.close()
   }
   refreshAmount()
 }
@@ -150,7 +150,7 @@ async function handleSubmit() {
   refreshAmount()
   formLoading.value = true
   try {
-    if (currentId.value) {
+    if (props.id) {
       await updateStockMove(formData.value)
       toast.success('修改成功')
     } else {

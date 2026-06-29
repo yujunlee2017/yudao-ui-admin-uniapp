@@ -19,58 +19,11 @@
         </view>
         <wd-input v-model="formData.no" placeholder="请输入调拨单号" clearable />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          产品
-        </view>
-        <!-- TODO @Yunai：搜索业务下拉对齐 yd-search-picker，删除 ErpPicker + selectedNames 的重复样板。 -->
-        <ErpPicker
-          v-model="formData.productId"
-          source="product"
-          form-item
-          placeholder="请选择产品"
-          @confirm="option => selectedNames.product = option?.name || ''"
-        />
-      </view>
+      <yd-search-picker v-model="formData.productId" label="产品" :columns="productOptions" label-key="name" value-key="id" placeholder="请选择产品" />
       <yd-search-date-range v-model="formData.moveTime" label="调拨时间" />
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          仓库
-        </view>
-        <ErpPicker
-          v-model="formData.fromWarehouseId"
-          source="warehouse"
-          form-item
-          placeholder="请选择仓库"
-          @confirm="option => selectedNames.warehouse = option?.name || ''"
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          创建人
-        </view>
-        <ErpPicker
-          v-model="formData.creator"
-          source="user"
-          form-item
-          placeholder="请选择创建人"
-          @confirm="option => selectedNames.creator = option?.name || ''"
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          审核状态
-        </view>
-        <!-- TODO @Yunai：字典/状态筛选对齐 yd-search-picker（dict-type + all-option），不要手写 wd-radio-group + -1「全部」。 -->
-        <wd-radio-group v-model="formData.status" type="button">
-          <wd-radio :value="-1">
-            全部
-          </wd-radio>
-          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.ERP_AUDIT_STATUS)" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.fromWarehouseId" label="仓库" :columns="warehouseOptions" label-key="name" value-key="id" placeholder="请选择仓库" />
+      <yd-search-picker v-model="formData.creator" label="创建人" :columns="userOptions" label-key="name" value-key="id" placeholder="请选择创建人" />
+      <yd-search-picker v-model="formData.status" label="审核状态" :dict-type="DICT_TYPE.ERP_AUDIT_STATUS" all-option />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           备注
@@ -90,9 +43,10 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue'
-import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
-import ErpPicker from '@/pages-erp/components/erp-picker.vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { getDictLabel } from '@/hooks/useDict'
+import { erpOptionLoaders } from '@/pages-erp/config/options'
+import { normalizeOptions } from '@/pages-erp/utils/erp'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
@@ -103,11 +57,9 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const selectedNames = reactive({
-  creator: '',
-  product: '',
-  warehouse: '',
-}) // 选择器展示名称
+const productOptions = ref<Record<string, any>[]>([]) // 产品选项
+const warehouseOptions = ref<Record<string, any>[]>([]) // 仓库选项
+const userOptions = ref<Record<string, any>[]>([]) // 创建人选项
 const formData = reactive({
   no: undefined as string | undefined,
   productId: undefined as number | undefined,
@@ -118,6 +70,14 @@ const formData = reactive({
   remark: undefined as string | undefined,
 }) // 搜索表单数据
 
+/** 获取选项名称 */
+function getOptionLabel(options: Record<string, any>[], id?: number) {
+  if (!id) {
+    return ''
+  }
+  return options.find(item => String(item.id) === String(id))?.name || String(id)
+}
+
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
   const conditions: string[] = []
@@ -125,13 +85,13 @@ const placeholder = computed(() => {
     conditions.push(`单号:${formData.no}`)
   }
   if (formData.productId) {
-    conditions.push(`产品:${selectedNames.product || formData.productId}`)
+    conditions.push(`产品:${getOptionLabel(productOptions.value, formData.productId)}`)
   }
   if (formData.moveTime[0] && formData.moveTime[1]) {
     conditions.push(`调拨时间:${formatDate(formData.moveTime[0])}~${formatDate(formData.moveTime[1])}`)
   }
   if (formData.fromWarehouseId) {
-    conditions.push(`仓库:${selectedNames.warehouse || formData.fromWarehouseId}`)
+    conditions.push(`仓库:${getOptionLabel(warehouseOptions.value, formData.fromWarehouseId)}`)
   }
   if (formData.status !== -1) {
     conditions.push(`状态:${getDictLabel(DICT_TYPE.ERP_AUDIT_STATUS, formData.status)}`)
@@ -160,12 +120,21 @@ function handleReset() {
   formData.moveTime = ['', '']
   formData.fromWarehouseId = undefined
   formData.creator = undefined
-  selectedNames.product = ''
-  selectedNames.warehouse = ''
-  selectedNames.creator = ''
   formData.status = -1
   formData.remark = undefined
   visible.value = false
   emit('reset')
 }
+
+/** 加载搜索下拉选项 */
+onMounted(async () => {
+  const [products, warehouses, users] = await Promise.all([
+    erpOptionLoaders.product(),
+    erpOptionLoaders.warehouse(),
+    erpOptionLoaders.user(),
+  ])
+  productOptions.value = normalizeOptions(products)
+  warehouseOptions.value = normalizeOptions(warehouses)
+  userOptions.value = normalizeOptions(users)
+})
 </script>

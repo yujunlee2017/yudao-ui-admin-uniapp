@@ -24,7 +24,7 @@
         </view>
         <wd-cell-group border>
           <wd-form-item title="采购明细" title-width="220rpx">
-            <OrderItemEditor ref="itemEditorRef" v-model="formData.items" :product-options="productOptions" />
+            <OrderItemForm ref="itemEditorRef" v-model="formData.items" :product-options="productOptions" />
           </wd-form-item>
         </wd-cell-group>
 
@@ -58,26 +58,21 @@
 
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
-import type { Account } from '@/api/erp/finance/account'
 import type { Product } from '@/api/erp/product/product'
 import type { PurchaseOrder } from '@/api/erp/purchase/order'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { getAccountSimpleList } from '@/api/erp/finance/account'
 import { getProductSimpleList } from '@/api/erp/product/product'
 import { createPurchaseOrder, getPurchaseOrder, updatePurchaseOrder } from '@/api/erp/purchase/order'
 import { delay, navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 import ErpPicker from '@/pages-erp/components/erp-picker.vue'
-import OrderItemEditor from '../components/order-item-editor.vue'
-import { formatMoney, roundPrice, toNumber } from '@/pages-erp/utils'
+import { applyDefaultAccount } from '@/pages-erp/finance/account/components/use-default-account'
+import OrderItemForm from '../components/order-item-form.vue'
+import { formatMoney, roundPrice, toNumber } from '@/pages-erp/utils/erp'
 
 const props = defineProps<{ id?: number | any }>()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/purchase/order/form/index')
-// TODO @Yunai：对齐 system 表单页，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
-const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -87,9 +82,8 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => currentId.value ? '编辑采购订单' : '新增采购订单')
-// TODO @Yunai：状态变量缺尾注释，按 AGENTS.md 补 // 表单提交状态、// 表单数据。
-const formLoading = ref(false)
+const getTitle = computed(() => props.id ? '编辑采购订单' : '新增采购订单')
+const formLoading = ref(false) // 表单提交状态
 const formData = ref<PurchaseOrder>({
   id: undefined,
   no: undefined,
@@ -103,10 +97,9 @@ const formData = ref<PurchaseOrder>({
   totalPrice: 0,
   depositPrice: 0,
   items: [],
-})
+}) // 表单数据
 const formRef = ref<FormInstance>()
-const itemEditorRef = ref<InstanceType<typeof OrderItemEditor>>()
-const accountOptions = ref<Account[]>([])
+const itemEditorRef = ref<InstanceType<typeof OrderItemForm>>()
 const productOptions = ref<Product[]>([])
 const dateVisible = reactive({
   orderTime: false,
@@ -131,29 +124,28 @@ function refreshOrderAmount() {
   formData.value.totalPrice = roundPrice(totalPrice - discountPrice)
 }
 
-// TODO @Yunai：考虑在 src/pages-erp/finance/account 封装账户 picker/默认账户加载组件，避免采购/销售/财务重复。
+/** 加载基础选项 */
 async function loadOptions() {
-  const [accounts, products] = await Promise.all([
-    getAccountSimpleList(),
+  const [products] = await Promise.all([
     getProductSimpleList(),
+    applyDefaultAccount(formData.value),
   ])
-  accountOptions.value = accounts || []
   productOptions.value = products || []
-  const defaultAccount = accountOptions.value.find(item => item.defaultStatus)
-  if (!formData.value.accountId && defaultAccount?.id) {
-    formData.value.accountId = defaultAccount.id
-  }
 }
 
 /** 加载详情 */
-// TODO @Yunai：加载详情对齐 system/tenant，补 toast.loading/finally close，并直接 getPurchaseOrder(props.id)，不要 getPurchaseOrder(Number(currentId.value))。
 async function getDetail() {
-  if (!currentId.value) {
+  if (!props.id) {
     return
   }
-  formData.value = {
-    ...formData.value,
-    ...await getPurchaseOrder(Number(currentId.value)),
+  try {
+    toast.loading('加载中...')
+    formData.value = {
+      ...formData.value,
+      ...await getPurchaseOrder(props.id),
+    }
+  } finally {
+    toast.close()
   }
   refreshOrderAmount()
 }
@@ -167,7 +159,7 @@ async function handleSubmit() {
   refreshOrderAmount()
   formLoading.value = true
   try {
-    if (currentId.value) {
+    if (props.id) {
       await updatePurchaseOrder(formData.value)
       toast.success('修改成功')
     } else {

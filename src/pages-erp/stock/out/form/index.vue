@@ -25,7 +25,7 @@
         </view>
         <wd-cell-group border>
           <wd-form-item title="出库明细" title-width="220rpx">
-            <OutItemEditor ref="itemEditorRef" v-model="formData.items" :product-options="productOptions" :warehouse-options="warehouseOptions" />
+            <OutItemForm ref="itemEditorRef" v-model="formData.items" :product-options="productOptions" :warehouse-options="warehouseOptions" />
           </wd-form-item>
         </wd-cell-group>
 
@@ -59,7 +59,6 @@ import type { StockOut } from '@/api/erp/stock/out'
 import type { Warehouse } from '@/api/erp/stock/warehouse'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { getProductSimpleList } from '@/api/erp/product/product'
 import { createStockOut, getStockOut, updateStockOut } from '@/api/erp/stock/out'
 import { getWarehouseSimpleList } from '@/api/erp/stock/warehouse'
@@ -67,13 +66,10 @@ import { delay, navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 import ErpPicker from '@/pages-erp/components/erp-picker.vue'
-import OutItemEditor from '../components/out-item-editor.vue'
-import { formatCount, formatMoney, roundPrice, toNumber } from '@/pages-erp/utils'
+import OutItemForm from '../components/out-item-form.vue'
+import { formatCount, formatMoney, roundPrice, toNumber } from '@/pages-erp/utils/erp'
 
 const props = defineProps<{ id?: number | any }>()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/stock/out/form/index')
-// TODO @Yunai：对齐 system 表单页，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
-const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -83,7 +79,7 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => currentId.value ? '编辑其它出库' : '新增其它出库')
+const getTitle = computed(() => props.id ? '编辑其它出库' : '新增其它出库')
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<StockOut>({
   id: undefined,
@@ -97,7 +93,7 @@ const formData = ref<StockOut>({
   items: [],
 }) // 表单数据
 const formRef = ref<FormInstance>() // 表单组件引用
-const itemEditorRef = ref<InstanceType<typeof OutItemEditor>>() // 明细组件引用
+const itemEditorRef = ref<InstanceType<typeof OutItemForm>>() // 明细组件引用
 const productOptions = ref<Product[]>([]) // 产品选项
 const warehouseOptions = ref<Warehouse[]>([]) // 仓库选项
 const dateVisible = reactive({
@@ -133,14 +129,18 @@ async function loadOptions() {
 }
 
 /** 加载其它出库详情 */
-// TODO @Yunai：加载详情对齐 system/tenant，补 toast.loading/finally close，并直接 getStockOut(props.id)，不要 getStockOut(Number(currentId.value))。
 async function getDetail() {
-  if (!currentId.value) {
+  if (!props.id) {
     return
   }
-  formData.value = {
-    ...formData.value,
-    ...await getStockOut(Number(currentId.value)),
+  try {
+    toast.loading('加载中...')
+    formData.value = {
+      ...formData.value,
+      ...await getStockOut(props.id),
+    }
+  } finally {
+    toast.close()
   }
   refreshAmount()
 }
@@ -154,7 +154,7 @@ async function handleSubmit() {
   refreshAmount()
   formLoading.value = true
   try {
-    if (currentId.value) {
+    if (props.id) {
       await updateStockOut(formData.value)
       toast.success('修改成功')
     } else {
