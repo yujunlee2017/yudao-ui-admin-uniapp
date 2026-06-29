@@ -27,7 +27,7 @@
         </view>
         <wd-cell-group border>
           <wd-form-item title="退货明细" title-width="220rpx">
-            <ReturnItemEditor ref="itemEditorRef" v-model="formData.items" :warehouse-options="warehouseOptions" />
+            <ReturnItemForm ref="itemEditorRef" v-model="formData.items" :warehouse-options="warehouseOptions" />
           </wd-form-item>
         </wd-cell-group>
 
@@ -58,21 +58,18 @@
       </wd-button>
     </view>
 
-    <PurchaseOrderReturnSelector ref="orderSelectorRef" @success="handlePurchaseOrderChange" />
+    <PurchaseOrderReturnPicker ref="orderSelectorRef" @success="handlePurchaseOrderChange" />
   </view>
 </template>
 
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
-import type { Account } from '@/api/erp/finance/account'
 import type { PurchaseOrder } from '@/api/erp/purchase/order'
 import type { PurchaseReturn } from '@/api/erp/purchase/return'
 import type { Supplier } from '@/api/erp/purchase/supplier'
 import type { Warehouse } from '@/api/erp/stock/warehouse'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { getAccountSimpleList } from '@/api/erp/finance/account'
 import { getSupplierSimpleList } from '@/api/erp/purchase/supplier'
 import { createPurchaseReturn, getPurchaseReturn, updatePurchaseReturn } from '@/api/erp/purchase/return'
 import { getWarehouseSimpleList } from '@/api/erp/stock/warehouse'
@@ -80,14 +77,12 @@ import { delay, navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
 import ErpPicker from '@/pages-erp/components/erp-picker.vue'
-import PurchaseOrderReturnSelector from '../components/purchase-order-return-selector.vue'
-import ReturnItemEditor from '../components/return-item-editor.vue'
-import { formatMoney, roundPrice, toNumber } from '@/pages-erp/utils'
+import { applyDefaultAccount } from '@/pages-erp/finance/account/components/use-default-account'
+import PurchaseOrderReturnPicker from '../components/purchase-order-return-picker.vue'
+import ReturnItemForm from '../components/return-item-form.vue'
+import { formatMoney, roundPrice, toNumber } from '@/pages-erp/utils/erp'
 
 const props = defineProps<{ id?: number | any }>()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/purchase/return/form/index')
-// TODO @Yunai：对齐 system 表单页，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
-const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -97,9 +92,8 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => currentId.value ? '编辑采购退货' : '新增采购退货')
-// TODO @Yunai：状态变量缺尾注释，按 AGENTS.md 补 // 表单提交状态、// 表单数据。
-const formLoading = ref(false)
+const getTitle = computed(() => props.id ? '编辑采购退货' : '新增采购退货')
+const formLoading = ref(false) // 表单提交状态
 const formData = ref<PurchaseReturn>({
   id: undefined,
   no: undefined,
@@ -114,11 +108,10 @@ const formData = ref<PurchaseReturn>({
   totalPrice: 0,
   otherPrice: 0,
   items: [],
-})
+}) // 表单数据
 const formRef = ref<FormInstance>()
-const itemEditorRef = ref<InstanceType<typeof ReturnItemEditor>>()
-const orderSelectorRef = ref<InstanceType<typeof PurchaseOrderReturnSelector>>()
-const accountOptions = ref<Account[]>([])
+const itemEditorRef = ref<InstanceType<typeof ReturnItemForm>>()
+const orderSelectorRef = ref<InstanceType<typeof PurchaseOrderReturnPicker>>()
 const supplierOptions = ref<Supplier[]>([])
 const warehouseOptions = ref<Warehouse[]>([])
 const dateVisible = reactive({ returnTime: false })
@@ -134,7 +127,7 @@ function handleBack() {
   navigateBackPlus('/pages-erp/purchase/return/index')
 }
 
-// TODO @Yunai：补 /** 刷新退货金额 */ JSDoc。
+/** 刷新退货金额 */
 function refreshAmount() {
   const items = Array.isArray(formData.value.items) ? formData.value.items : []
   const totalCount = items.reduce((sum, item) => sum + toNumber(item.count), 0)
@@ -145,31 +138,30 @@ function refreshAmount() {
   formData.value.totalPrice = roundPrice(totalPrice - discountPrice + toNumber(formData.value.otherPrice))
 }
 
-// TODO @Yunai：考虑在 src/pages-erp/finance/account 封装账户 picker/默认账户加载组件，避免采购/销售/财务重复。
+/** 加载基础选项 */
 async function loadOptions() {
-  const [accounts, suppliers, warehouses] = await Promise.all([
-    getAccountSimpleList(),
+  const [suppliers, warehouses] = await Promise.all([
     getSupplierSimpleList(),
     getWarehouseSimpleList(),
+    applyDefaultAccount(formData.value),
   ])
-  accountOptions.value = accounts || []
   supplierOptions.value = suppliers || []
   warehouseOptions.value = warehouses || []
-  const defaultAccount = accountOptions.value.find(item => item.defaultStatus)
-  if (!formData.value.accountId && defaultAccount?.id) {
-    formData.value.accountId = defaultAccount.id
-  }
 }
 
 /** 加载详情 */
-// TODO @Yunai：加载详情对齐 system/tenant，补 toast.loading/finally close，并直接 getPurchaseReturn(props.id)，不要 getPurchaseReturn(Number(currentId.value))。
 async function getDetail() {
-  if (!currentId.value) {
+  if (!props.id) {
     return
   }
-  formData.value = {
-    ...formData.value,
-    ...await getPurchaseReturn(Number(currentId.value)),
+  try {
+    toast.loading('加载中...')
+    formData.value = {
+      ...formData.value,
+      ...await getPurchaseReturn(props.id),
+    }
+  } finally {
+    toast.close()
   }
   refreshAmount()
 }
@@ -210,7 +202,7 @@ async function handleSubmit() {
   refreshAmount()
   formLoading.value = true
   try {
-    if (currentId.value) {
+    if (props.id) {
       await updatePurchaseReturn(formData.value)
       toast.success('修改成功')
     } else {

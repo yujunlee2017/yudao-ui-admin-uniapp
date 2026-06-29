@@ -1,7 +1,27 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
-// TODO @Yunai：按后端 VO 收窄类型，补 SaleOutItem 明细类型；导出接口改 downloadApiFile 或删除未用方法。
+/** ERP 销售出库明细 */
+export interface SaleOutItem {
+  id?: number
+  orderItemId?: number
+  warehouseId?: number
+  productId?: number
+  productName?: string
+  productUnitName?: string
+  productBarCode?: string
+  productPrice?: number
+  stockCount?: number
+  totalCount?: number
+  outCount?: number
+  count?: number
+  totalProductPrice?: number
+  taxPercent?: number
+  taxPrice?: number
+  totalPrice?: number
+  remark?: string
+}
+
 /** ERP 销售出库 */
 export interface SaleOut {
   id?: number // 销售出库编号
@@ -20,8 +40,7 @@ export interface SaleOut {
   status?: number // 状态
   remark?: string // 备注
   fileUrl?: string // 附件地址
-  items?: any[] // 出库明细
-  [key: string]: any
+  items?: SaleOutItem[] // 出库明细
 }
 
 /** 获取销售出库分页列表 */
@@ -52,9 +71,4 @@ export function updateSaleOutStatus(id: number, status: number) {
 /** 删除销售出库 */
 export function deleteSaleOut(ids: number[]) {
   return http.delete<boolean>('/erp/sale-out/delete', undefined, { ids: ids.join(',') })
-}
-
-/** 导出销售出库 Excel */
-export function exportSaleOut(params: Record<string, any>) {
-  return http.get<Blob>('/erp/sale-out/export-excel', params)
 }

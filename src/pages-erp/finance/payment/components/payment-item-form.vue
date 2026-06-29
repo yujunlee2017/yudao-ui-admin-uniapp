@@ -1,4 +1,3 @@
-<!-- TODO @AI：改成 payment-item-form？ -->
 <template>
   <view class="w-full">
     <view v-for="(item, index) in items" :key="index" class="mb-24rpx rounded-12rpx bg-[#f8f8f8] p-20rpx">
@@ -20,25 +19,17 @@
       </wd-form-item>
     </view>
 
-    <view v-if="!disabled" class="flex gap-16rpx">
-      <wd-button class="flex-1" block variant="plain" @click="openPurchaseInSelector">
-        添加采购入库单
-      </wd-button>
-      <wd-button class="flex-1" block variant="plain" @click="openPurchaseReturnSelector">
-        添加采购退货单
-      </wd-button>
-    </view>
-
-    <PaymentSourceSelector ref="purchaseInSelectorRef" source="purchase-in" @success="handleAddPurchaseIn" />
-    <PaymentSourceSelector ref="purchaseReturnSelectorRef" source="purchase-return" @success="handleAddPurchaseReturn" />
+    <PaymentSourcePicker ref="purchaseInSelectorRef" source="purchase-in" @success="handleAddPurchaseIn" />
+    <PaymentSourcePicker ref="purchaseReturnSelectorRef" source="purchase-return" @success="handleAddPurchaseReturn" />
   </view>
 </template>
 
 <script lang="ts" setup>
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { ref, watch } from 'vue'
-import PaymentSourceSelector from './payment-source-selector.vue'
-import { formatMoney, toNumber } from '@/pages-erp/utils'
+import PaymentSourcePicker from './payment-source-picker.vue'
+import { formatMoney, toNumber } from '@/pages-erp/utils/erp'
+import { ErpBizType } from '@/utils/constants'
 
 const props = defineProps<{
   disabled?: boolean
@@ -52,24 +43,20 @@ const emit = defineEmits<{
 
 const toast = useToast()
 const items = ref<Record<string, any>[]>([])
-const purchaseInSelectorRef = ref<InstanceType<typeof PaymentSourceSelector>>()
-const purchaseReturnSelectorRef = ref<InstanceType<typeof PaymentSourceSelector>>()
-const ERP_BIZ_TYPE = { // TODO @Yunai：删除局部定义，统一用 utils/constants/biz-erp-enum.ts 的 ErpBizType。与 payment/detail、receipt 两处共 4 处重复。
-  PURCHASE_IN: 11,
-  PURCHASE_RETURN: 12,
-} as const
+const purchaseInSelectorRef = ref<InstanceType<typeof PaymentSourcePicker>>()
+const purchaseReturnSelectorRef = ref<InstanceType<typeof PaymentSourcePicker>>()
 
 function getBizTypeName(value?: number) {
-  if (value === ERP_BIZ_TYPE.PURCHASE_IN) {
+  if (value === ErpBizType.PURCHASE_IN) {
     return '采购入库'
   }
-  if (value === ERP_BIZ_TYPE.PURCHASE_RETURN) {
+  if (value === ErpBizType.PURCHASE_RETURN) {
     return '采购退货'
   }
   return '-'
 }
 
-function openPurchaseInSelector() {
+function openPurchaseInPicker() {
   if (!props.supplierId) {
     toast.warning('请先选择供应商')
     return
@@ -77,7 +64,7 @@ function openPurchaseInSelector() {
   purchaseInSelectorRef.value?.open(Number(props.supplierId))
 }
 
-function openPurchaseReturnSelector() {
+function openPurchaseReturnPicker() {
   if (!props.supplierId) {
     toast.warning('请先选择供应商')
     return
@@ -90,7 +77,7 @@ function handleAddPurchaseIn(rows: Record<string, any>[]) {
     const paidPrice = toNumber(row.paymentPrice)
     items.value.push({
       bizId: row.id,
-      bizType: ERP_BIZ_TYPE.PURCHASE_IN,
+      bizType: ErpBizType.PURCHASE_IN,
       bizNo: row.no,
       totalPrice: toNumber(row.totalPrice),
       paidPrice,
@@ -104,7 +91,7 @@ function handleAddPurchaseReturn(rows: Record<string, any>[]) {
     const refundPrice = toNumber(row.refundPrice)
     items.value.push({
       bizId: row.id,
-      bizType: ERP_BIZ_TYPE.PURCHASE_RETURN,
+      bizType: ErpBizType.PURCHASE_RETURN,
       bizNo: row.no,
       totalPrice: -toNumber(row.totalPrice),
       paidPrice: -refundPrice,
@@ -138,5 +125,5 @@ watch(items, (value) => {
   emit('update:modelValue', value)
 }, { deep: true })
 
-defineExpose({ validate })
+defineExpose({ openPurchaseInPicker, openPurchaseReturnPicker, validate })
 </script>

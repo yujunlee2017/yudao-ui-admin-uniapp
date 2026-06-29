@@ -25,14 +25,16 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <!-- TODO @Yunai：不做 ErpBasicActions 统一封装，参考其它模块把底部操作写回各自详情页。 -->
-    <ErpBasicActions
-      :can-update="canUpdate"
-      :can-delete="canDelete"
-      :deleting="deleting"
-      @edit="handleEdit"
-      @delete="handleDelete"
-    />
+    <view v-if="canUpdate || canDelete" class="yd-detail-footer">
+      <view class="yd-detail-footer-actions">
+        <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+          编辑
+        </wd-button>
+        <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+          删除
+        </wd-button>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -41,19 +43,14 @@ import type { ProductCategory } from '@/api/erp/product/category'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
+import { computed, onMounted, ref } from 'vue'
 import { deleteProductCategory, getProductCategory } from '@/api/erp/product/category'
 import { useAccess } from '@/hooks/useAccess'
-import ErpBasicActions from '@/pages-erp/components/erp-basic-actions.vue'
 import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/product/category/detail/index')
-// TODO @Yunai：对齐 system 页面，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
-const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -77,12 +74,12 @@ function handleBack() {
 
 /** 加载产品分类详情 */
 async function getDetail() {
-  if (!currentId.value || deleting.value) {
+  if (!props.id || deleting.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getProductCategory(Number(currentId.value))
+    formData.value = await getProductCategory(props.id)
   } finally {
     toast.close()
   }
@@ -90,12 +87,12 @@ async function getDetail() {
 
 /** 编辑产品分类 */
 function handleEdit() {
-  uni.navigateTo({ url: `/pages-erp/product/category/form/index?id=${currentId.value}` })
+  uni.navigateTo({ url: `/pages-erp/product/category/form/index?id=${props.id}` })
 }
 
 /** 删除产品分类 */
 async function handleDelete() {
-  if (!currentId.value) {
+  if (!props.id) {
     return
   }
   try {
@@ -108,7 +105,7 @@ async function handleDelete() {
   }
   deleting.value = true
   try {
-    await deleteProductCategory(Number(currentId.value))
+    await deleteProductCategory(props.id)
     toast.success('删除成功')
     uni.$emit('erp:product-category:reload')
     delay(handleBack)
@@ -121,12 +118,6 @@ async function handleDelete() {
 onMounted(() => {
   getDetail()
   uni.$on('erp:product-category:reload', getDetail)
-})
-
-// TODO @Yunai：watch currentId 对齐其它 detail，补 /** */ 注释并统一初始化/路由变化刷新写法。
-watch(currentId, () => {
-  formData.value = undefined
-  void getDetail()
 })
 
 /** 卸载 */

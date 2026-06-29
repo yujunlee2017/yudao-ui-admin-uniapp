@@ -1,9 +1,8 @@
-<!-- TODO @Yunai：组件命名是否改成 check-item-form，和表单明细编辑职责对齐。 -->
 <template>
   <view class="w-full">
     <view v-for="(item, index) in items" :key="index" class="mb-24rpx rounded-12rpx bg-[#f8f8f8] p-20rpx">
       <view class="mb-16rpx flex items-center justify-between">
-        <text class="text-28rpx text-[#333] font-semibold">盘点明细 {{ index + 1 }}</text>
+        <text class="text-28rpx text-[#333] font-semibold">入库明细 {{ index + 1 }}</text>
         <wd-button v-if="!disabled && items.length > 1" size="small" type="error" variant="plain" @click="handleRemove(index)">
           删除
         </wd-button>
@@ -29,14 +28,13 @@
         @confirm="option => handleProductConfirm(index, option?.id)"
       />
 
-      <wd-cell title="账面库存" :value="formatCount(item.stockCount)" />
+      <wd-cell title="库存" :value="formatCount(item.stockCount)" />
       <wd-cell title="条码" :value="item.productBarCode || '-'" />
       <wd-cell title="单位" :value="item.productUnitName || '-'" />
 
-      <wd-form-item title="实际库存" title-width="180rpx" center>
-        <wd-input-number v-model="item.actualCount" :precision="3" :disabled="disabled" />
+      <wd-form-item title="数量" title-width="180rpx" center>
+        <wd-input-number v-model="item.count" :min="0.001" :precision="3" :disabled="disabled" />
       </wd-form-item>
-      <wd-cell title="盈亏数量" :value="formatCount(item.count)" />
       <wd-form-item title="产品单价" title-width="180rpx" center>
         <wd-input-number v-model="item.productPrice" :min="0.01" :precision="2" :disabled="disabled" />
       </wd-form-item>
@@ -47,7 +45,7 @@
     </view>
 
     <wd-button v-if="!disabled" block variant="plain" @click="handleAdd">
-      添加盘点产品
+      添加入库产品
     </wd-button>
   </view>
 </template>
@@ -58,7 +56,7 @@ import type { Warehouse } from '@/api/erp/stock/warehouse'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref, watch } from 'vue'
 import ErpPicker from '@/pages-erp/components/erp-picker.vue'
-import { formatCount, formatMoney, roundCount, roundPrice, setItemStockCount, toNumber } from '@/pages-erp/utils'
+import { formatCount, formatMoney, refreshSingleItemAmount, setItemStockCount } from '@/pages-erp/utils/erp'
 
 const props = defineProps<{
   disabled?: boolean
@@ -74,11 +72,6 @@ const emit = defineEmits<{
 const toast = useToast()
 const items = ref<Record<string, any>[]>([]) // 明细数据
 
-/** 是否有值 */
-function hasValue(value: any) {
-  return value !== undefined && value !== null && value !== ''
-}
-
 /** 创建默认明细 */
 function createDefaultItem() {
   const defaultWarehouse = props.warehouseOptions.find(item => item.defaultStatus)
@@ -91,8 +84,7 @@ function createDefaultItem() {
     productBarCode: undefined,
     productPrice: undefined,
     stockCount: undefined,
-    actualCount: undefined,
-    count: undefined,
+    count: 1,
     totalPrice: undefined,
     remark: undefined,
   }
@@ -129,9 +121,6 @@ async function handleWarehouseConfirm(index: number, warehouseId?: number | stri
   }
   item.warehouseId = warehouseId
   await setItemStockCount(item)
-  // TODO @Yunai：业务退化——vue3+ep 盘点选仓库/产品后默认「实际库存=账面库存」(row.actualCount = row.stockCount)，
-  // 用户只调整有差异的项。当前 actualCount 保持 undefined，每行都得手填、易漏填。
-  // 需补：if (item.stockCount != null) item.actualCount = item.stockCount（handleProductConfirm 同款）。
 }
 
 /** 选择产品 */
@@ -149,28 +138,17 @@ async function handleProductConfirm(index: number, productId?: number | string) 
     item.productPrice = product.minPrice
   }
   await setItemStockCount(item)
-  // TODO @Yunai：同 handleWarehouseConfirm，补 item.actualCount = item.stockCount。
-}
-function refreshItemAmount(item: Record<string, any>) {
-  if (hasValue(item.stockCount) && hasValue(item.actualCount)) {
-    item.count = roundCount(toNumber(item.actualCount) - toNumber(item.stockCount))
-  } else {
-    item.count = undefined
-  }
-  if (hasValue(item.count) && hasValue(item.productPrice)) {
-    item.totalPrice = roundPrice(toNumber(item.count) * toNumber(item.productPrice))
-  }
 }
 
 /** 校验明细 */
 function validate() {
   if (items.value.length === 0) {
-    toast.warning('请至少添加一个盘点产品')
+    toast.warning('请至少添加一个入库产品')
     return false
   }
-  const invalidIndex = items.value.findIndex(item => !item.warehouseId || !item.productId || !hasValue(item.actualCount))
+  const invalidIndex = items.value.findIndex(item => !item.warehouseId || !item.productId || !item.count)
   if (invalidIndex >= 0) {
-    toast.warning(`请完善盘点明细 ${invalidIndex + 1}`)
+    toast.warning(`请完善入库明细 ${invalidIndex + 1}`)
     return false
   }
   return true
@@ -184,7 +162,7 @@ watch(() => props.modelValue, (value) => {
 watch(() => props.warehouseOptions, applyDefaultWarehouse, { deep: true })
 
 watch(items, (value) => {
-  value.forEach(item => refreshItemAmount(item))
+  value.forEach(item => refreshSingleItemAmount(item))
   emit('update:modelValue', value)
 }, { deep: true })
 

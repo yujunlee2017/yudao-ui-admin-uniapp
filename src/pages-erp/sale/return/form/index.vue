@@ -27,7 +27,7 @@
         </view>
         <wd-cell-group border>
           <wd-form-item title="退货明细" title-width="220rpx">
-            <ReturnItemEditor ref="itemEditorRef" v-model="formData.items" :product-options="productOptions" :warehouse-options="warehouseOptions" />
+            <ReturnItemForm ref="itemEditorRef" v-model="formData.items" :product-options="productOptions" :warehouse-options="warehouseOptions" />
           </wd-form-item>
         </wd-cell-group>
 
@@ -61,21 +61,18 @@
     </view>
 
     <!-- 可退货订单选择器 -->
-    <SaleOrderReturnSelector ref="orderSelectorRef" @success="handleSaleOrderChange" />
+    <SaleOrderReturnPicker ref="orderSelectorRef" @success="handleSaleOrderChange" />
   </view>
 </template>
 
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
-import type { Account } from '@/api/erp/finance/account'
 import type { Product } from '@/api/erp/product/product'
 import type { SaleOrder } from '@/api/erp/sale/order'
 import type { SaleReturn } from '@/api/erp/sale/return'
 import type { Warehouse } from '@/api/erp/stock/warehouse'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { getAccountSimpleList } from '@/api/erp/finance/account'
 import { getProductSimpleList } from '@/api/erp/product/product'
 import { createSaleReturn, getSaleReturn, updateSaleReturn } from '@/api/erp/sale/return'
 import { getWarehouseSimpleList } from '@/api/erp/stock/warehouse'
@@ -83,14 +80,12 @@ import { delay, navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 import ErpPicker from '@/pages-erp/components/erp-picker.vue'
-import ReturnItemEditor from '../components/return-item-editor.vue'
-import SaleOrderReturnSelector from '../components/sale-order-return-selector.vue'
-import { formatMoney, roundPrice, toNumber } from '@/pages-erp/utils'
+import { applyDefaultAccount } from '@/pages-erp/finance/account/components/use-default-account'
+import ReturnItemForm from '../components/return-item-form.vue'
+import SaleOrderReturnPicker from '../components/sale-order-return-picker.vue'
+import { formatMoney, roundPrice, toNumber } from '@/pages-erp/utils/erp'
 
 const props = defineProps<{ id?: number | any }>()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/sale/return/form/index')
-// TODO @Yunai：对齐 system 表单页，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
-const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -100,7 +95,7 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => currentId.value ? '编辑销售退货' : '新增销售退货')
+const getTitle = computed(() => props.id ? '编辑销售退货' : '新增销售退货')
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<SaleReturn>({
   id: undefined,
@@ -119,9 +114,8 @@ const formData = ref<SaleReturn>({
   items: [],
 }) // 表单数据
 const formRef = ref<FormInstance>() // 表单组件引用
-const itemEditorRef = ref<InstanceType<typeof ReturnItemEditor>>() // 明细组件引用
-const orderSelectorRef = ref<InstanceType<typeof SaleOrderReturnSelector>>() // 可退货订单选择器引用
-const accountOptions = ref<Account[]>([]) // 账户选项
+const itemEditorRef = ref<InstanceType<typeof ReturnItemForm>>() // 明细组件引用
+const orderSelectorRef = ref<InstanceType<typeof SaleOrderReturnPicker>>() // 可退货订单选择器引用
 const productOptions = ref<Product[]>([]) // 产品选项
 const warehouseOptions = ref<Warehouse[]>([]) // 仓库选项
 const dateVisible = reactive({ returnTime: false }) // 日期选择器状态
@@ -148,31 +142,29 @@ function refreshAmount() {
 }
 
 /** 加载基础选项 */
-// TODO @Yunai：考虑在 src/pages-erp/finance/account 封装账户 picker/默认账户加载组件，避免采购/销售/财务重复。
 async function loadOptions() {
-  const [accounts, products, warehouses] = await Promise.all([
-    getAccountSimpleList(),
+  const [products, warehouses] = await Promise.all([
     getProductSimpleList(),
     getWarehouseSimpleList(),
+    applyDefaultAccount(formData.value),
   ])
-  accountOptions.value = accounts || []
   productOptions.value = products || []
   warehouseOptions.value = warehouses || []
-  const defaultAccount = accountOptions.value.find(item => item.defaultStatus)
-  if (!formData.value.accountId && defaultAccount?.id) {
-    formData.value.accountId = defaultAccount.id
-  }
 }
 
 /** 加载销售退货详情 */
-// TODO @Yunai：加载详情对齐 system/tenant，补 toast.loading/finally close，并直接 getSaleReturn(props.id)，不要 getSaleReturn(Number(currentId.value))。
 async function getDetail() {
-  if (!currentId.value) {
+  if (!props.id) {
     return
   }
-  formData.value = {
-    ...formData.value,
-    ...await getSaleReturn(Number(currentId.value)),
+  try {
+    toast.loading('加载中...')
+    formData.value = {
+      ...formData.value,
+      ...await getSaleReturn(props.id),
+    }
+  } finally {
+    toast.close()
   }
   refreshAmount()
 }
@@ -216,7 +208,7 @@ async function handleSubmit() {
   refreshAmount()
   formLoading.value = true
   try {
-    if (currentId.value) {
+    if (props.id) {
       await updateSaleReturn(formData.value)
       toast.success('修改成功')
     } else {

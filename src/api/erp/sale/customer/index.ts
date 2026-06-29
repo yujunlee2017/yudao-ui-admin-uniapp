@@ -1,7 +1,6 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
-// TODO @Yunai：按后端 VO 收窄类型，去掉 items?: any[] / [key: string]: any；导出接口改 downloadApiFile 或删除未用方法。
 /** ERP 客户 */
 export interface Customer {
   id?: number // 客户编号
@@ -19,8 +18,6 @@ export interface Customer {
   bankName?: string // 开户行
   bankAccount?: string // 开户账号
   bankAddress?: string // 开户地址
-  items?: any[] // 单据明细
-  [key: string]: any
 }
 
 /** 获取客户分页列表 */
@@ -51,9 +48,4 @@ export function updateCustomer(data: Customer) {
 /** 删除客户 */
 export function deleteCustomer(id: number) {
   return http.delete<boolean>(`/erp/customer/delete?id=${id}`)
-}
-
-/** 导出客户 Excel */
-export function exportCustomer(params: Record<string, any>) {
-  return http.get<Blob>('/erp/customer/export-excel', params)
 }

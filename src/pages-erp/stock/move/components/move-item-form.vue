@@ -1,4 +1,3 @@
-<!-- TODO @Yunai：组件命名是否改成 move-item-form，和表单明细编辑职责对齐。 -->
 <template>
   <view class="w-full">
     <view v-for="(item, index) in items" :key="index" class="mb-24rpx rounded-12rpx bg-[#f8f8f8] p-20rpx">
@@ -67,7 +66,7 @@ import type { Warehouse } from '@/api/erp/stock/warehouse'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref, watch } from 'vue'
 import ErpPicker from '@/pages-erp/components/erp-picker.vue'
-import { formatCount, formatMoney, refreshSingleItemAmount, setItemStockCount } from '@/pages-erp/utils'
+import { formatCount, formatMoney, refreshSingleItemAmount, setItemStockCount } from '@/pages-erp/utils/erp'
 
 const props = defineProps<{
   disabled?: boolean

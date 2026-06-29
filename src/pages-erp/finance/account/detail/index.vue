@@ -11,8 +11,9 @@
         <wd-cell title="账户状态">
           <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="formData?.status" />
         </wd-cell>
-        <!-- TODO @Yunai：是否默认对齐 boolean dict-tag，不要手写「是/否」文本。 -->
-        <wd-cell title="是否默认" :value="formData?.defaultStatus ? '是' : '否'" />
+        <wd-cell title="是否默认">
+          <dict-tag :type="DICT_TYPE.INFRA_BOOLEAN_STRING" :value="formData?.defaultStatus" />
+        </wd-cell>
         <wd-cell title="排序" :value="formData?.sort ?? '-'" />
         <wd-cell title="备注" :value="formData?.remark || '-'" />
         <wd-cell title="创建时间" :value="formatDateTime(formData?.createTime) || '-'" />
@@ -23,12 +24,12 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="hasFooter" class="yd-detail-footer">
+    <view v-if="hasAccessByCodes(['erp:account:update']) || hasAccessByCodes(['erp:account:delete'])" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <wd-button v-if="hasAccessByCodes(['erp:account:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canSetDefault" class="flex-1" type="primary" :loading="defaultLoading" @click="handleSetDefault">
+        <wd-button v-if="hasAccessByCodes(['erp:account:update']) && !formData?.defaultStatus" class="flex-1" type="primary" :loading="defaultLoading" @click="handleSetDefault">
           设为默认
         </wd-button>
         <wd-button v-if="hasAccessByCodes(['erp:account:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
@@ -44,8 +45,7 @@ import type { Account } from '@/api/erp/finance/account'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
+import { onMounted, ref } from 'vue'
 import { deleteAccount, getAccount, updateAccountDefaultStatus } from '@/api/erp/finance/account'
 import { useAccess } from '@/hooks/useAccess'
 import { delay, navigateBackPlus } from '@/utils'
@@ -53,9 +53,6 @@ import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{ id?: number | any }>()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/finance/account/detail/index')
-// TODO @Yunai：对齐 system 页面，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
-const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -70,9 +67,6 @@ const toast = useToast()
 const formData = ref<Account>() // 详情数据
 const deleting = ref(false) // 删除状态
 const defaultLoading = ref(false) // 默认状态修改状态
-// TODO @Yunai：简单页脚判断对齐 system 风格，看看 canSetDefault、hasFooter 能不能直接写到模板里。
-const canSetDefault = computed(() => hasAccessByCodes(['erp:account:update']) && !formData.value?.defaultStatus)
-const hasFooter = computed(() => hasAccessByCodes(['erp:account:update']) || hasAccessByCodes(['erp:account:delete']) || canSetDefault.value)
 
 /** 返回上一页 */
 function handleBack() {
@@ -81,12 +75,12 @@ function handleBack() {
 
 /** 加载结算账户详情 */
 async function getDetail() {
-  if (!currentId.value || deleting.value) {
+  if (!props.id || deleting.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getAccount(Number(currentId.value))
+    formData.value = await getAccount(props.id)
   } finally {
     toast.close()
   }
@@ -94,12 +88,12 @@ async function getDetail() {
 
 /** 编辑结算账户 */
 function handleEdit() {
-  uni.navigateTo({ url: `/pages-erp/finance/account/form/index?id=${currentId.value}` })
+  uni.navigateTo({ url: `/pages-erp/finance/account/form/index?id=${props.id}` })
 }
 
 /** 删除结算账户 */
 async function handleDelete() {
-  if (!currentId.value) {
+  if (!props.id) {
     return
   }
   try {
@@ -109,7 +103,7 @@ async function handleDelete() {
   }
   deleting.value = true
   try {
-    await deleteAccount(Number(currentId.value))
+    await deleteAccount(props.id)
     toast.success('删除成功')
     uni.$emit('erp:account:reload')
     delay(handleBack)
@@ -120,7 +114,7 @@ async function handleDelete() {
 
 /** 设为默认 */
 async function handleSetDefault() {
-  if (!currentId.value || !formData.value) {
+  if (!props.id || !formData.value) {
     return
   }
   try {
@@ -130,7 +124,7 @@ async function handleSetDefault() {
   }
   defaultLoading.value = true
   try {
-    await updateAccountDefaultStatus(Number(currentId.value), true)
+    await updateAccountDefaultStatus(props.id, true)
     toast.success('设置成功')
     uni.$emit('erp:account:reload')
     await getDetail()
@@ -143,11 +137,6 @@ async function handleSetDefault() {
 onMounted(() => {
   getDetail()
   uni.$on('erp:account:reload', getDetail)
-})
-
-watch(currentId, () => {
-  formData.value = undefined
-  void getDetail()
 })
 
 /** 卸载 */

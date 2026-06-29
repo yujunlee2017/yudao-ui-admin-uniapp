@@ -11,8 +11,9 @@
         <wd-cell title="仓库状态">
           <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="formData?.status" />
         </wd-cell>
-        <!-- TODO @Yunai：是否默认对齐 boolean dict-tag，不要手写「是/否」文本。 -->
-        <wd-cell title="是否默认" :value="formData?.defaultStatus ? '是' : '否'" />
+        <wd-cell title="是否默认">
+          <dict-tag :type="DICT_TYPE.INFRA_BOOLEAN_STRING" :value="formData?.defaultStatus" />
+        </wd-cell>
         <wd-cell title="仓储费" :value="formatMoney(formData?.warehousePrice)" />
         <wd-cell title="搬运费" :value="formatMoney(formData?.truckagePrice)" />
         <wd-cell title="负责人" :value="formData?.principal || '-'" />
@@ -25,12 +26,12 @@
     </scroll-view>
 
     <!-- 底部操作按钮 -->
-    <view v-if="hasFooter" class="yd-detail-footer">
+    <view v-if="hasAccessByCodes(['erp:warehouse:update']) || hasAccessByCodes(['erp:warehouse:delete'])" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <wd-button v-if="hasAccessByCodes(['erp:warehouse:update'])" class="flex-1" type="warning" @click="handleEdit">
           编辑
         </wd-button>
-        <wd-button v-if="canSetDefault" class="flex-1" type="primary" :loading="defaultLoading" @click="handleSetDefault">
+        <wd-button v-if="hasAccessByCodes(['erp:warehouse:update']) && !formData?.defaultStatus" class="flex-1" type="primary" :loading="defaultLoading" @click="handleSetDefault">
           设为默认
         </wd-button>
         <wd-button v-if="hasAccessByCodes(['erp:warehouse:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
@@ -46,18 +47,14 @@ import type { Warehouse } from '@/api/erp/stock/warehouse'
 import { onUnload } from '@dcloudio/uni-app'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
+import { onMounted, ref } from 'vue'
 import { deleteWarehouse, getWarehouse, updateWarehouseDefaultStatus } from '@/api/erp/stock/warehouse'
 import { useAccess } from '@/hooks/useAccess'
 import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
-import { formatMoney } from '@/pages-erp/utils'
+import { formatMoney } from '@/pages-erp/utils/erp'
 
 const props = defineProps<{ id?: number | any }>()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/stock/warehouse/detail/index')
-// TODO @Yunai：对齐 system 页面，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
-const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -72,9 +69,6 @@ const toast = useToast()
 const formData = ref<Warehouse>() // 详情数据
 const deleting = ref(false) // 删除状态
 const defaultLoading = ref(false) // 默认状态修改状态
-// TODO @Yunai：简单页脚判断对齐 system 风格，看看 canSetDefault、hasFooter 能不能直接写到模板里。
-const canSetDefault = computed(() => hasAccessByCodes(['erp:warehouse:update']) && !formData.value?.defaultStatus)
-const hasFooter = computed(() => hasAccessByCodes(['erp:warehouse:update']) || hasAccessByCodes(['erp:warehouse:delete']) || canSetDefault.value)
 
 /** 返回上一页 */
 function handleBack() {
@@ -83,12 +77,12 @@ function handleBack() {
 
 /** 加载仓库详情 */
 async function getDetail() {
-  if (!currentId.value || deleting.value) {
+  if (!props.id || deleting.value) {
     return
   }
   try {
     toast.loading('加载中...')
-    formData.value = await getWarehouse(Number(currentId.value))
+    formData.value = await getWarehouse(props.id)
   } finally {
     toast.close()
   }
@@ -96,12 +90,12 @@ async function getDetail() {
 
 /** 编辑仓库 */
 function handleEdit() {
-  uni.navigateTo({ url: `/pages-erp/stock/warehouse/form/index?id=${currentId.value}` })
+  uni.navigateTo({ url: `/pages-erp/stock/warehouse/form/index?id=${props.id}` })
 }
 
 /** 删除仓库 */
 async function handleDelete() {
-  if (!currentId.value) {
+  if (!props.id) {
     return
   }
   try {
@@ -111,7 +105,7 @@ async function handleDelete() {
   }
   deleting.value = true
   try {
-    await deleteWarehouse(Number(currentId.value))
+    await deleteWarehouse(props.id)
     toast.success('删除成功')
     uni.$emit('erp:warehouse:reload')
     delay(handleBack)
@@ -122,7 +116,7 @@ async function handleDelete() {
 
 /** 设为默认 */
 async function handleSetDefault() {
-  if (!currentId.value || !formData.value) {
+  if (!props.id || !formData.value) {
     return
   }
   try {
@@ -132,7 +126,7 @@ async function handleSetDefault() {
   }
   defaultLoading.value = true
   try {
-    await updateWarehouseDefaultStatus(Number(currentId.value), true)
+    await updateWarehouseDefaultStatus(props.id, true)
     toast.success('设置成功')
     uni.$emit('erp:warehouse:reload')
     await getDetail()
@@ -145,12 +139,6 @@ async function handleSetDefault() {
 onMounted(() => {
   getDetail()
   uni.$on('erp:warehouse:reload', getDetail)
-})
-
-// TODO @Yunai：watch currentId 对齐其它 detail，补 /** */ 注释并统一初始化/路由变化刷新写法。
-watch(currentId, () => {
-  formData.value = undefined
-  void getDetail()
 })
 
 /** 卸载 */

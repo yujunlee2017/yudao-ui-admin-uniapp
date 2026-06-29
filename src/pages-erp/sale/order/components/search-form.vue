@@ -19,63 +19,13 @@
         </view>
         <wd-input v-model="formData.no" placeholder="请输入订单单号" clearable />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          产品
-        </view>
-        <!-- TODO @Yunai：搜索业务下拉对齐 yd-search-picker，删除 ErpPicker + selectedNames 的重复样板。 -->
-        <ErpPicker
-          v-model="formData.productId"
-          source="product"
-          form-item
-          placeholder="请选择产品"
-          @confirm="option => selectedNames.product = option?.name || ''"
-        />
-      </view>
+      <yd-search-picker v-model="formData.productId" label="产品" :columns="productOptions" label-key="name" value-key="id" placeholder="请选择产品" />
       <yd-search-date-range v-model="formData.orderTime" label="订单时间" />
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          客户
-        </view>
-        <ErpPicker
-          v-model="formData.customerId"
-          source="customer"
-          form-item
-          placeholder="请选择客户"
-          @confirm="option => selectedNames.customer = option?.name || ''"
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          创建人
-        </view>
-        <ErpPicker
-          v-model="formData.creator"
-          source="user"
-          form-item
-          placeholder="请选择创建人"
-          @confirm="option => selectedNames.creator = option?.name || ''"
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          状态
-        </view>
-        <!-- TODO @Yunai：字典/状态筛选对齐 yd-search-picker（dict-type + all-option），不要手写 wd-radio-group + -1「全部」。 -->
-        <wd-radio-group v-model="formData.status" type="button">
-          <wd-radio :value="-1">
-            全部
-          </wd-radio>
-          <wd-radio
-            v-for="dict in getIntDictOptions(DICT_TYPE.ERP_AUDIT_STATUS)"
-            :key="dict.value"
-            :value="dict.value"
-          >
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
-      <!-- TODO @Yunai：对齐 PC 和后端 ErpSaleOrderPageReqVO，补 outStatus / returnStatus 两个筛选项。 -->
+      <yd-search-picker v-model="formData.customerId" label="客户" :columns="customerOptions" label-key="name" value-key="id" placeholder="请选择客户" />
+      <yd-search-picker v-model="formData.creator" label="创建人" :columns="userOptions" label-key="name" value-key="id" placeholder="请选择创建人" />
+      <yd-search-picker v-model="formData.status" label="状态" :dict-type="DICT_TYPE.ERP_AUDIT_STATUS" all-option />
+      <yd-search-picker v-model="formData.outStatus" label="出库数量" :columns="getProgressStatusColumns('出库')" all-option />
+      <yd-search-picker v-model="formData.returnStatus" label="退货数量" :columns="getProgressStatusColumns('退货')" all-option />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           备注
@@ -95,9 +45,10 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue'
-import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
-import ErpPicker from '@/pages-erp/components/erp-picker.vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { getDictLabel } from '@/hooks/useDict'
+import { erpOptionLoaders } from '@/pages-erp/config/options'
+import { normalizeOptions } from '@/pages-erp/utils/erp'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
@@ -108,11 +59,9 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const selectedNames = reactive({
-  customer: '',
-  creator: '',
-  product: '',
-}) // 选择器展示名称
+const productOptions = ref<Record<string, any>[]>([]) // 产品选项
+const customerOptions = ref<Record<string, any>[]>([]) // 客户选项
+const userOptions = ref<Record<string, any>[]>([]) // 创建人选项
 const formData = reactive({
   no: undefined as string | undefined,
   productId: undefined as number | undefined,
@@ -120,8 +69,27 @@ const formData = reactive({
   customerId: undefined as number | undefined,
   creator: undefined as number | undefined,
   status: -1,
+  outStatus: -1,
+  returnStatus: -1,
   remark: undefined as string | undefined,
 }) // 搜索表单数据
+
+/** 获取进度状态选项 */
+function getProgressStatusColumns(label: string) {
+  return [
+    { label: `未${label}`, value: 0 },
+    { label: `部分${label}`, value: 1 },
+    { label: `全部${label}`, value: 2 },
+  ]
+}
+
+/** 获取选项名称 */
+function getOptionLabel(options: Record<string, any>[], id?: number) {
+  if (!id) {
+    return ''
+  }
+  return options.find(item => String(item.id) === String(id))?.name || String(id)
+}
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
@@ -130,19 +98,39 @@ const placeholder = computed(() => {
     conditions.push(`单号:${formData.no}`)
   }
   if (formData.productId) {
-    conditions.push(`产品:${selectedNames.product || formData.productId}`)
+    conditions.push(`产品:${getOptionLabel(productOptions.value, formData.productId)}`)
   }
   if (formData.orderTime[0] && formData.orderTime[1]) {
     conditions.push(`订单时间:${formatDate(formData.orderTime[0])}~${formatDate(formData.orderTime[1])}`)
   }
   if (formData.customerId) {
-    conditions.push(`客户:${selectedNames.customer || formData.customerId}`)
+    conditions.push(`客户:${getOptionLabel(customerOptions.value, formData.customerId)}`)
   }
   if (formData.status !== -1) {
     conditions.push(`状态:${getDictLabel(DICT_TYPE.ERP_AUDIT_STATUS, formData.status)}`)
   }
+  if (formData.outStatus !== -1) {
+    conditions.push(`出库:${getProgressStatusLabel(formData.outStatus, '出库')}`)
+  }
+  if (formData.returnStatus !== -1) {
+    conditions.push(`退货:${getProgressStatusLabel(formData.returnStatus, '退货')}`)
+  }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索销售订单'
 })
+
+/** 获取进度状态文本 */
+function getProgressStatusLabel(status: number, label: string) {
+  if (status === 0) {
+    return `未${label}`
+  }
+  if (status === 1) {
+    return `部分${label}`
+  }
+  if (status === 2) {
+    return `全部${label}`
+  }
+  return '全部'
+}
 
 /** 搜索按钮操作 */
 function handleSearch() {
@@ -154,6 +142,8 @@ function handleSearch() {
     customerId: formData.customerId,
     creator: formData.creator,
     status: formData.status === -1 ? undefined : formData.status,
+    outStatus: formData.outStatus === -1 ? undefined : formData.outStatus,
+    returnStatus: formData.returnStatus === -1 ? undefined : formData.returnStatus,
     remark: formData.remark || undefined,
   })
 }
@@ -165,12 +155,23 @@ function handleReset() {
   formData.orderTime = ['', '']
   formData.customerId = undefined
   formData.creator = undefined
-  selectedNames.product = ''
-  selectedNames.customer = ''
-  selectedNames.creator = ''
   formData.status = -1
+  formData.outStatus = -1
+  formData.returnStatus = -1
   formData.remark = undefined
   visible.value = false
   emit('reset')
 }
+
+/** 加载搜索下拉选项 */
+onMounted(async () => {
+  const [products, customers, users] = await Promise.all([
+    erpOptionLoaders.product(),
+    erpOptionLoaders.customer(),
+    erpOptionLoaders.user(),
+  ])
+  productOptions.value = normalizeOptions(products)
+  customerOptions.value = normalizeOptions(customers)
+  userOptions.value = normalizeOptions(users)
+})
 </script>

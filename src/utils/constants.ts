@@ -1,4 +1,5 @@
 export * from './constants/biz-bpm-enum'
+export * from './constants/biz-erp-enum'
 export * from './constants/biz-im-enum'
 export * from './constants/biz-infra-enum'
 export * from './constants/biz-mall-enum'

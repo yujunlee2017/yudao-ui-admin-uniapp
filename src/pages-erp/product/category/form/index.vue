@@ -55,8 +55,7 @@
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { ProductCategory } from '@/api/erp/product/category'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
+import { computed, onMounted, ref } from 'vue'
 import { createProductCategory, getProductCategory, getProductCategoryList, updateProductCategory } from '@/api/erp/product/category'
 import YdTreeSelect from '@/components/yudao-ui/yd-tree-select/yd-tree-select.vue'
 import { delay, navigateBackPlus } from '@/utils'
@@ -65,10 +64,6 @@ import { handleTree } from '@/utils/tree'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{ id?: number | string, parentId?: number | string }>()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/product/category/form/index')
-// TODO @Yunai：对齐 system 表单页，直接用 props.id / props.parentId 接参，删除 useRouteQuery/currentId 包装。
-const currentId = computed(() => getRouteQueryNumber('id'))
-const currentParentId = computed(() => getRouteQueryNumber('parentId'))
 
 definePage({
   style: {
@@ -78,7 +73,7 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => currentId.value ? '编辑产品分类' : '新增产品分类')
+const getTitle = computed(() => props.id ? '编辑产品分类' : '新增产品分类')
 const formLoading = ref(false) // 表单提交状态
 function createDefaultFormData(): ProductCategory {
   return {
@@ -125,23 +120,28 @@ async function loadCategoryTree() {
 
 /** 应用页面预填参数 */
 function applyQueryDefaults() {
-  if (currentId.value) {
+  if (props.id) {
     return
   }
-  if (currentParentId.value !== undefined) {
-    formData.value.parentId = currentParentId.value
+  const parentId = parseRouteNumber(props.parentId)
+  if (parentId !== undefined) {
+    formData.value.parentId = parentId
   }
 }
 
 /** 加载产品分类详情 */
-// TODO @Yunai：加载详情对齐 system/tenant，补 toast.loading/finally close，并直接 getProductCategory(props.id)，不要 getProductCategory(Number(currentId.value))。
 async function getDetail() {
-  if (!currentId.value) {
+  if (!props.id) {
     return
   }
-  formData.value = {
-    ...formData.value,
-    ...await getProductCategory(Number(currentId.value)),
+  try {
+    toast.loading('加载中...')
+    formData.value = {
+      ...formData.value,
+      ...await getProductCategory(props.id),
+    }
+  } finally {
+    toast.close()
   }
 }
 
@@ -160,7 +160,7 @@ async function handleSubmit() {
   }
   formLoading.value = true
   try {
-    if (currentId.value) {
+    if (props.id) {
       await updateProductCategory(formData.value)
       toast.success('修改成功')
     } else {
@@ -180,7 +180,11 @@ onMounted(async () => {
   await loadPageData()
 })
 
-watch([currentId, currentParentId], () => {
-  void loadPageData()
-})
+function parseRouteNumber(value?: number | string) {
+  if (value === undefined || value === null || value === '') {
+    return undefined
+  }
+  const numberValue = Number(value)
+  return Number.isNaN(numberValue) ? undefined : numberValue
+}
 </script>

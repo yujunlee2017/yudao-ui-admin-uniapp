@@ -17,102 +17,19 @@
         </view>
         <wd-input v-model="formData.no" placeholder="请输入订单单号" clearable />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          产品
-        </view>
-        <!-- TODO @Yunai：搜索业务下拉对齐 yd-search-picker，删除 ErpPicker + selectedNames 的重复样板。 -->
-        <ErpPicker
-          v-model="formData.productId"
-          source="product"
-          form-item
-          placeholder="请选择产品"
-          @confirm="option => selectedNames.product = option?.name || ''"
-        />
-      </view>
+      <yd-search-picker v-model="formData.productId" label="产品" :columns="productOptions" label-key="name" value-key="id" placeholder="请选择产品" />
       <yd-search-date-range v-model="formData.orderTime" label="订单时间" />
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          供应商
-        </view>
-        <ErpPicker
-          v-model="formData.supplierId"
-          source="supplier"
-          form-item
-          placeholder="请选择供应商"
-          @confirm="option => selectedNames.supplier = option?.name || ''"
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          创建人
-        </view>
-        <ErpPicker
-          v-model="formData.creator"
-          source="user"
-          form-item
-          placeholder="请选择创建人"
-          @confirm="option => selectedNames.creator = option?.name || ''"
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          状态
-        </view>
-        <!-- TODO @Yunai：字典/状态筛选对齐 yd-search-picker（columns/dict-type + all-option），不要手写 wd-radio-group + -1「全部」。 -->
-        <wd-radio-group v-model="formData.status" type="button">
-          <wd-radio :value="-1">
-            全部
-          </wd-radio>
-          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.ERP_AUDIT_STATUS)" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.supplierId" label="供应商" :columns="supplierOptions" label-key="name" value-key="id" placeholder="请选择供应商" />
+      <yd-search-picker v-model="formData.creator" label="创建人" :columns="userOptions" label-key="name" value-key="id" placeholder="请选择创建人" />
+      <yd-search-picker v-model="formData.status" label="状态" :dict-type="DICT_TYPE.ERP_AUDIT_STATUS" all-option />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           备注
         </view>
         <wd-input v-model="formData.remark" placeholder="请输入备注" clearable />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          入库数量
-        </view>
-        <wd-radio-group v-model="formData.inStatus" type="button">
-          <wd-radio :value="-1">
-            全部
-          </wd-radio>
-          <wd-radio :value="0">
-            未入库
-          </wd-radio>
-          <wd-radio :value="1">
-            部分入库
-          </wd-radio>
-          <wd-radio :value="2">
-            全部入库
-          </wd-radio>
-        </wd-radio-group>
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          退货数量
-        </view>
-        <wd-radio-group v-model="formData.returnStatus" type="button">
-          <wd-radio :value="-1">
-            全部
-          </wd-radio>
-          <wd-radio :value="0">
-            未退货
-          </wd-radio>
-          <wd-radio :value="1">
-            部分退货
-          </wd-radio>
-          <wd-radio :value="2">
-            全部退货
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.inStatus" label="入库数量" :columns="getProgressStatusColumns('入库')" all-option />
+      <yd-search-picker v-model="formData.returnStatus" label="退货数量" :columns="getProgressStatusColumns('退货')" all-option />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -126,9 +43,10 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue'
-import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
-import ErpPicker from '@/pages-erp/components/erp-picker.vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { getDictLabel } from '@/hooks/useDict'
+import { erpOptionLoaders } from '@/pages-erp/config/options'
+import { normalizeOptions } from '@/pages-erp/utils/erp'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
@@ -139,11 +57,9 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false)
-const selectedNames = reactive({
-  creator: '',
-  product: '',
-  supplier: '',
-})
+const productOptions = ref<Record<string, any>[]>([]) // 产品选项
+const supplierOptions = ref<Record<string, any>[]>([]) // 供应商选项
+const userOptions = ref<Record<string, any>[]>([]) // 创建人选项
 const formData = reactive({
   no: undefined as string | undefined,
   productId: undefined as number | undefined,
@@ -156,19 +72,36 @@ const formData = reactive({
   returnStatus: -1,
 })
 
+/** 获取进度状态选项 */
+function getProgressStatusColumns(label: string) {
+  return [
+    { label: `未${label}`, value: 0 },
+    { label: `部分${label}`, value: 1 },
+    { label: `全部${label}`, value: 2 },
+  ]
+}
+
+/** 获取选项名称 */
+function getOptionLabel(options: Record<string, any>[], id?: number) {
+  if (!id) {
+    return ''
+  }
+  return options.find(item => String(item.id) === String(id))?.name || String(id)
+}
+
 const placeholder = computed(() => {
   const conditions: string[] = []
   if (formData.no) {
     conditions.push(`单号:${formData.no}`)
   }
   if (formData.productId) {
-    conditions.push(`产品:${selectedNames.product || formData.productId}`)
+    conditions.push(`产品:${getOptionLabel(productOptions.value, formData.productId)}`)
   }
   if (formData.orderTime[0] && formData.orderTime[1]) {
     conditions.push(`订单时间:${formatDate(formData.orderTime[0])}~${formatDate(formData.orderTime[1])}`)
   }
   if (formData.supplierId) {
-    conditions.push(`供应商:${selectedNames.supplier || formData.supplierId}`)
+    conditions.push(`供应商:${getOptionLabel(supplierOptions.value, formData.supplierId)}`)
   }
   if (formData.status !== -1) {
     conditions.push(`状态:${getDictLabel(DICT_TYPE.ERP_AUDIT_STATUS, formData.status)}`)
@@ -198,9 +131,6 @@ function handleReset() {
   formData.orderTime = ['', '']
   formData.supplierId = undefined
   formData.creator = undefined
-  selectedNames.product = ''
-  selectedNames.supplier = ''
-  selectedNames.creator = ''
   formData.status = -1
   formData.remark = undefined
   formData.inStatus = -1
@@ -208,4 +138,16 @@ function handleReset() {
   visible.value = false
   emit('reset')
 }
+
+/** 加载搜索下拉选项 */
+onMounted(async () => {
+  const [products, suppliers, users] = await Promise.all([
+    erpOptionLoaders.product(),
+    erpOptionLoaders.supplier(),
+    erpOptionLoaders.user(),
+  ])
+  productOptions.value = normalizeOptions(products)
+  supplierOptions.value = normalizeOptions(suppliers)
+  userOptions.value = normalizeOptions(users)
+})
 </script>

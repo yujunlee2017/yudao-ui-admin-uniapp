@@ -1,4 +1,3 @@
-<!-- TODO @Yunai：组件命名是否改成 receipt-item-form，和表单明细编辑职责对齐。 -->
 <template>
   <view class="w-full">
     <view v-for="(item, index) in items" :key="index" class="mb-24rpx rounded-12rpx bg-[#f8f8f8] p-20rpx">
@@ -20,25 +19,17 @@
       </wd-form-item>
     </view>
 
-    <view v-if="!disabled" class="flex gap-16rpx">
-      <wd-button class="flex-1" block variant="plain" @click="openSaleOutSelector">
-        添加销售出库单
-      </wd-button>
-      <wd-button class="flex-1" block variant="plain" @click="openSaleReturnSelector">
-        添加销售退货单
-      </wd-button>
-    </view>
-
-    <ReceiptSourceSelector ref="saleOutSelectorRef" source="sale-out" @success="handleAddSaleOut" />
-    <ReceiptSourceSelector ref="saleReturnSelectorRef" source="sale-return" @success="handleAddSaleReturn" />
+    <ReceiptSourcePicker ref="saleOutSelectorRef" source="sale-out" @success="handleAddSaleOut" />
+    <ReceiptSourcePicker ref="saleReturnSelectorRef" source="sale-return" @success="handleAddSaleReturn" />
   </view>
 </template>
 
 <script lang="ts" setup>
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { ref, watch } from 'vue'
-import ReceiptSourceSelector from './receipt-source-selector.vue'
-import { formatMoney, toNumber } from '@/pages-erp/utils'
+import ReceiptSourcePicker from './receipt-source-picker.vue'
+import { formatMoney, toNumber } from '@/pages-erp/utils/erp'
+import { ErpBizType } from '@/utils/constants'
 
 const props = defineProps<{
   disabled?: boolean
@@ -52,24 +43,20 @@ const emit = defineEmits<{
 
 const toast = useToast()
 const items = ref<Record<string, any>[]>([])
-const saleOutSelectorRef = ref<InstanceType<typeof ReceiptSourceSelector>>()
-const saleReturnSelectorRef = ref<InstanceType<typeof ReceiptSourceSelector>>()
-const ERP_BIZ_TYPE = { // TODO @Yunai：删除局部定义，统一用 utils/constants/biz-erp-enum.ts 的 ErpBizType。与 receipt/detail、payment 两处共 4 处重复。
-  SALE_OUT: 21,
-  SALE_RETURN: 22,
-} as const
+const saleOutSelectorRef = ref<InstanceType<typeof ReceiptSourcePicker>>()
+const saleReturnSelectorRef = ref<InstanceType<typeof ReceiptSourcePicker>>()
 
 function getBizTypeName(value?: number) {
-  if (value === ERP_BIZ_TYPE.SALE_OUT) {
+  if (value === ErpBizType.SALE_OUT) {
     return '销售出库'
   }
-  if (value === ERP_BIZ_TYPE.SALE_RETURN) {
+  if (value === ErpBizType.SALE_RETURN) {
     return '销售退货'
   }
   return '-'
 }
 
-function openSaleOutSelector() {
+function openSaleOutPicker() {
   if (!props.customerId) {
     toast.warning('请先选择客户')
     return
@@ -77,7 +64,7 @@ function openSaleOutSelector() {
   saleOutSelectorRef.value?.open(Number(props.customerId))
 }
 
-function openSaleReturnSelector() {
+function openSaleReturnPicker() {
   if (!props.customerId) {
     toast.warning('请先选择客户')
     return
@@ -90,7 +77,7 @@ function handleAddSaleOut(rows: Record<string, any>[]) {
     const receiptedPrice = toNumber(row.receiptPrice)
     items.value.push({
       bizId: row.id,
-      bizType: ERP_BIZ_TYPE.SALE_OUT,
+      bizType: ErpBizType.SALE_OUT,
       bizNo: row.no,
       totalPrice: toNumber(row.totalPrice),
       receiptedPrice,
@@ -104,7 +91,7 @@ function handleAddSaleReturn(rows: Record<string, any>[]) {
     const refundPrice = toNumber(row.refundPrice)
     items.value.push({
       bizId: row.id,
-      bizType: ERP_BIZ_TYPE.SALE_RETURN,
+      bizType: ErpBizType.SALE_RETURN,
       bizNo: row.no,
       totalPrice: -toNumber(row.totalPrice),
       receiptedPrice: -refundPrice,
@@ -138,5 +125,5 @@ watch(items, (value) => {
   emit('update:modelValue', value)
 }, { deep: true })
 
-defineExpose({ validate })
+defineExpose({ openSaleOutPicker, openSaleReturnPicker, validate })
 </script>

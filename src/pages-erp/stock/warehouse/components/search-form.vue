@@ -19,20 +19,7 @@
         </view>
         <wd-input v-model="formData.name" placeholder="请输入仓库名称" clearable />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          仓库状态
-        </view>
-        <!-- TODO @Yunai：字典/状态筛选对齐 yd-search-picker（dict-type + all-option），不要手写 wd-radio-group + -1「全部」。 -->
-        <wd-radio-group v-model="formData.status" type="button">
-          <wd-radio :value="-1">
-            全部
-          </wd-radio>
-          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.status" label="仓库状态" :dict-type="DICT_TYPE.COMMON_STATUS" all-option />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -47,7 +34,7 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
-import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
+import { getDictLabel } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 

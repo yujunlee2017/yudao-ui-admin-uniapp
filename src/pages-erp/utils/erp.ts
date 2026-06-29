@@ -1,49 +1,9 @@
-import type { ErpField, ErpModule, ErpOptionKey } from './config'
-import { erpOptionLoaders, getErpModule } from './config'
-import { getDictLabel } from '@/hooks/useDict'
-import { currRoute } from '@/utils'
-import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
-import { formatDate, formatDateTime } from '@/utils/date'
+import type { ErpOptionKey } from '../config/options'
+import { erpOptionLoaders } from '../config/options'
 import { staticUrl } from '@/utils/download'
-import { createFormSchema } from '@/utils/wot'
 import { getStockByProductAndWarehouse, getStockCount } from '@/api/erp/stock/stock'
 
-// TODO @Yunai：看看怎么尽量去掉这个工具类；如果有必要保留的；新建一个 pages-erp/utils/erp.ts；
-
-// TODO @Yunai：本文件存在大量「字段配置引擎」死代码，全局 grep 零引用，建议整块删除：
-//   createErpFormData / createErpFormSchema / formatErpValue / getPickerText / getListFields / getFormFields /
-//   getSearchFields / getFieldDictType / getTitleField / isDateField / isMoneyField / getOptionName /
-//   refreshErpItemsAmount / getCurrentRouteQuery / getFileName（getFileName 仅被 formatErpValue 调用）。
-// 保留的有用函数：roundPrice / roundCount / toNumber / formatMoney / formatCount / formatNumber / formatPercent /
-//   openErpFile / resolveErpFileUrl / refreshSingleItemAmount / normalizeOptions。
-// 删除后，本文件对 config.ts 的 ErpField/ErpModule/erpOptionLoaders/getErpModule 依赖也可一并清理。
-
 export type ErpOptionsMap = Partial<Record<ErpOptionKey, Array<Record<string, any>>>>
-
-/** 获取当前路由参数 */
-export function getCurrentRouteQuery() {
-  const query = { ...currRoute().query }
-  // #ifdef H5
-  const hashQuery = window.location.hash.split('?')[1] || ''
-  hashQuery.split('&').forEach((item) => {
-    if (!item) {
-      return
-    }
-    const [key, value] = item.split('=')
-    query[key] = value ? decodeURIComponent(value) : ''
-  })
-  // #endif
-  return query
-}
-
-/** 解析附件文件名 */
-export function getFileName(url?: string) {
-  if (!url) {
-    return '附件'
-  }
-  const path = url.split('?')[0]
-  return decodeURIComponent(path.slice(Math.max(0, path.lastIndexOf('/') + 1))) || '附件'
-}
 
 /** 补全附件访问地址 */
 export function resolveErpFileUrl(url?: string) {
@@ -56,7 +16,6 @@ export function resolveErpFileUrl(url?: string) {
   return staticUrl(url)
 }
 
-// TODO @Yunai：全局方法替代下；
 /** 打开附件（图片预览 / 文档下载） */
 export function openErpFile(url?: string) {
   const fullUrl = resolveErpFileUrl(url)
@@ -133,55 +92,8 @@ export async function enrichErpDocumentDetail(data: Record<string, any>, moduleK
         }))
       : [],
   }
-  refreshErpItemsAmount(result, getErpModule(moduleKey))
+  refreshErpItemsAmount(result, moduleKey)
   return result
-}
-
-/** 判断字段是否为时间字段 */
-export function isDateField(field: ErpField) {
-  return field.type === 'date' || field.prop.endsWith('Time') || field.prop.endsWith('Date')
-}
-
-/** 判断字段是否为金额字段 */
-export function isMoneyField(field: ErpField) {
-  return field.type === 'money' || field.prop.endsWith('Price')
-}
-
-/** 获取模块标题字段 */
-export function getTitleField(module: ErpModule) {
-  return module.fields.find(field => ['name', 'no', 'bizNo'].includes(field.prop)) || module.fields[0]
-}
-
-/** 获取列表展示字段 */
-export function getListFields(module: ErpModule) {
-  const titleProp = getTitleField(module)?.prop
-  return module.fields
-    .filter(field => field.prop !== titleProp && !field.hiddenInList && field.type !== 'items')
-    .slice(0, 6)
-}
-
-/** 获取搜索字段 */
-export function getSearchFields(module: ErpModule) {
-  return module.fields.filter(field => field.searchable && field.type !== 'items')
-}
-
-/** 获取表单字段 */
-export function getFormFields(module: ErpModule) {
-  return module.fields.filter(field => !field.hiddenInForm)
-}
-
-/** 获取字段字典类型 */
-export function getFieldDictType(field: ErpField) {
-  if (field.dictType) {
-    return field.dictType
-  }
-  if (field.type === 'status') {
-    return DICT_TYPE.COMMON_STATUS
-  }
-  if (field.type === 'audit-status') {
-    return 'erp_audit_status'
-  }
-  return ''
 }
 
 /** 获取选项展示名称 */
@@ -192,84 +104,6 @@ export function getOptionName(option: Record<string, any>) {
 /** 规范化选择器选项 */
 export function normalizeOptions(list: Record<string, any>[] = []) {
   return list.map(item => ({ ...item, id: item.id ?? item.value, name: getOptionName(item) }))
-}
-
-/** 读取选择器展示值 */
-export function getPickerText(field: ErpField, value: any, optionsMap: ErpOptionsMap, row?: Record<string, any>) {
-  if (field.labelField && row?.[field.labelField]) {
-    return row[field.labelField]
-  }
-  if (value === undefined || value === null || value === '') {
-    return '-'
-  }
-  const options = field.optionsKey ? optionsMap[field.optionsKey] || [] : []
-  const option = options.find(item => String(item.id) === String(value))
-  return option?.name || String(value)
-}
-
-/** 格式化 ERP 字段展示值 */
-export function formatErpValue(field: ErpField, row: Record<string, any> = {}, optionsMap: ErpOptionsMap = {}) {
-  const value = row[field.prop]
-  if (value === undefined || value === null || value === '') {
-    return '-'
-  }
-  if (field.type === 'picker') {
-    return getPickerText(field, value, optionsMap, row)
-  }
-  if (field.type === 'dict' || field.type === 'status' || field.type === 'audit-status') {
-    return getDictLabel(getFieldDictType(field), value) || String(value)
-  }
-  if (field.type === 'boolean') {
-    return value ? '是' : '否'
-  }
-  if (field.type === 'file') {
-    return getFileName(String(value))
-  }
-  if (isDateField(field)) {
-    return formatDateTime(value) || formatDate(value) || String(value)
-  }
-  if (isMoneyField(field)) {
-    const price = Number(value)
-    return Number.isNaN(price) ? String(value) : price.toFixed(2)
-  }
-  return String(value)
-}
-
-/** 创建 ERP 表单默认值 */
-export function createErpFormData(module: ErpModule) {
-  const data: Record<string, any> = {}
-  module.fields.forEach((field) => {
-    if (field.prop === 'id' || field.readonly) {
-      return
-    }
-    if (field.type === 'items') {
-      data[field.prop] = []
-    } else if (field.type === 'file') {
-      data[field.prop] = ''
-    } else if (field.type === 'status') {
-      data[field.prop] = CommonStatusEnum.ENABLE
-    } else if (field.type === 'boolean') {
-      data[field.prop] = false
-    } else if (isDateField(field)) {
-      data[field.prop] = ''
-    } else if (field.type === 'number' || field.type === 'money') {
-      data[field.prop] = undefined
-    } else {
-      data[field.prop] = undefined
-    }
-  })
-  return data
-}
-
-/** 创建 ERP 表单校验规则 */
-export function createErpFormSchema(module: ErpModule) {
-  const rules: Record<string, any[]> = {}
-  getFormFields(module).forEach((field) => {
-    if (field.required && !field.readonly) {
-      rules[field.prop] = [{ required: true, message: `${field.label}不能为空` }]
-    }
-  })
-  return createFormSchema(rules)
 }
 
 /** 四舍五入金额 */
@@ -306,7 +140,6 @@ export function formatCount(value?: any) {
   return Number.isNaN(count) ? String(value) : String(Number(count.toFixed(3)))
 }
 
-// TODO @Yunai：这种抽到全局
 /** 格式化数字（原样转字符串，空值返回 -） */
 export function formatNumber(value?: any) {
   if (value === undefined || value === null || value === '') {
@@ -315,7 +148,6 @@ export function formatNumber(value?: any) {
   return String(value)
 }
 
-// TODO @Yunai：这种抽到全局
 /** 格式化百分比（保留两位小数） */
 export function formatPercent(value?: any) {
   if (value === undefined || value === null || value === '') {
@@ -325,16 +157,15 @@ export function formatPercent(value?: any) {
   return Number.isNaN(percent) ? String(value) : percent.toFixed(2)
 }
 
-// TODO @Yunai：这种抽到全局
 /** 计算单据明细金额 */
-export function refreshErpItemsAmount(data: Record<string, any>, module?: ErpModule) {
+export function refreshErpItemsAmount(data: Record<string, any>, moduleKey?: string) {
   if (!Array.isArray(data.items)) {
     return
   }
   let totalCount = 0
   let totalPrice = 0
   data.items.forEach((item) => {
-    if (module?.key === 'stock-check' && item.stockCount != null && item.actualCount != null) {
+    if (moduleKey === 'stock-check' && item.stockCount != null && item.actualCount != null) {
       item.count = roundCount(toNumber(item.actualCount) - toNumber(item.stockCount))
     }
 
@@ -357,13 +188,13 @@ export function refreshErpItemsAmount(data: Record<string, any>, module?: ErpMod
   })
 
   if (data.items.length > 0) {
-    if (module?.key === 'finance-payment') {
+    if (moduleKey === 'finance-payment') {
       const paymentPrice = data.items.reduce((sum, item) => sum + toNumber(item.paymentPrice), 0)
       data.totalPrice = roundPrice(paymentPrice)
       data.paymentPrice = roundPrice(paymentPrice - toNumber(data.discountPrice))
       return
     }
-    if (module?.key === 'finance-receipt') {
+    if (moduleKey === 'finance-receipt') {
       const receiptPrice = data.items.reduce((sum, item) => sum + toNumber(item.receiptPrice), 0)
       data.totalPrice = roundPrice(receiptPrice)
       data.receiptPrice = roundPrice(receiptPrice - toNumber(data.discountPrice))
@@ -395,7 +226,6 @@ export async function setItemStockCount(item: Record<string, any>, warehouseFiel
   item.stockCount = await getStockCount(Number(item.productId))
 }
 
-// TODO @Yunai：看看是不是抽到全局做计算？？？或者每个逻辑自己写号了；
 /**
  * 刷新单条明细金额（count × price → totalPrice）
  * 不处理税额，税额逻辑见 refreshErpItemsAmount

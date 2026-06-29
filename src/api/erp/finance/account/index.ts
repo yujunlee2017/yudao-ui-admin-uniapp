@@ -1,7 +1,6 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
-// TODO @Yunai：按后端 VO 收窄类型，去掉 items?: any[] / [key: string]: any；导出接口改 downloadApiFile 或删除未用方法。
 /** ERP 结算账户 */
 export interface Account {
   id?: number // 结算账户编号
@@ -11,8 +10,6 @@ export interface Account {
   sort?: number // 排序
   defaultStatus?: boolean // 是否默认
   name?: string // 账户名称
-  items?: any[] // 单据明细
-  [key: string]: any
 }
 
 /** 获取结算账户分页列表 */
@@ -48,9 +45,4 @@ export function updateAccountDefaultStatus(id: number, defaultStatus: boolean) {
 /** 删除结算账户 */
 export function deleteAccount(id: number) {
   return http.delete<boolean>(`/erp/account/delete?id=${id}`)
-}
-
-/** 导出结算账户 Excel */
-export function exportAccount(params: Record<string, any>) {
-  return http.get<Blob>('/erp/account/export-excel', params)
 }

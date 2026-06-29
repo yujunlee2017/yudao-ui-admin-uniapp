@@ -1,10 +1,4 @@
 <!-- ERP 通用单选选择器：按 source 加载 ERP 基础资料选项，支持表单项 / 单元格 / 自定义插槽三种展示形态 -->
-<!-- TODO @AI：看看是不是直接复用 yd-form-picker，不高太复杂哈。 -->
-<!-- TODO @Yunai：本选择器在 40 处复用（表单 + 搜索弹窗），功能强于 yd-form-picker（支持远程分页/搜索），保留合理。
-     但「搜索弹窗」场景应优先用 yd-search-picker（AGENTS.md 搜索组件规范），目前 19 个 search-form 的业务下拉
-     全走本组件。建议：表单/单元格形态继续用 erp-picker；search-form 内的业务下拉改 yd-search-picker
-     （:columns 传 simpleList + label-key/value-key + all-option），并删除各 search-form 里为 erp-picker
-     重复维护的 selectedNames placeholder 拼接样板。 -->
 <template>
   <view v-if="useDefaultSlot" @click="handleOpen">
     <slot />
@@ -41,11 +35,16 @@
 </template>
 
 <script lang="ts" setup>
-import type { ErpOptionKey } from '@/pages-erp/config'
-import type { ErpPickerOption } from './types'
+import type { ErpOptionKey } from '@/pages-erp/config/options'
 import { computed, onMounted, ref, watch } from 'vue'
-import { erpOptionLoaders } from '@/pages-erp/config'
-import { normalizeOptions } from '@/pages-erp/utils'
+import { erpOptionLoaders } from '@/pages-erp/config/options'
+import { normalizeOptions } from '@/pages-erp/utils/erp'
+
+interface ErpPickerOption {
+  id: number | string
+  name: string
+  raw?: Record<string, any>
+}
 
 const props = withDefaults(defineProps<{
   labelWidth?: string

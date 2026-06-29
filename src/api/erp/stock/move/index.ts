@@ -1,7 +1,22 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
-// TODO @Yunai：按后端 VO 收窄类型，补 StockMoveItem 明细类型；导出接口改 downloadApiFile 或删除未用方法。
+/** ERP 库存调拨明细 */
+export interface StockMoveItem {
+  id?: number
+  fromWarehouseId?: number
+  toWarehouseId?: number
+  productId?: number
+  productName?: string
+  productUnitName?: string
+  productBarCode?: string
+  productPrice?: number
+  stockCount?: number
+  count?: number
+  totalPrice?: number
+  remark?: string
+}
+
 /** ERP 库存调拨 */
 export interface StockMove {
   id?: number // 调拨编号
@@ -12,8 +27,7 @@ export interface StockMove {
   status?: number // 状态
   remark?: string // 备注
   fileUrl?: string // 附件地址
-  items?: any[] // 调拨明细
-  [key: string]: any
+  items?: StockMoveItem[] // 调拨明细
 }
 
 /** 获取库存调拨分页列表 */
@@ -44,9 +58,4 @@ export function updateStockMoveStatus(id: number, status: number) {
 /** 删除库存调拨 */
 export function deleteStockMove(ids: number[]) {
   return http.delete<boolean>('/erp/stock-move/delete', undefined, { ids: ids.join(',') })
-}
-
-/** 导出库存调拨 Excel */
-export function exportStockMove(params: Record<string, any>) {
-  return http.get<Blob>('/erp/stock-move/export-excel', params)
 }

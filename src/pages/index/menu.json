@@ -1283,19 +1283,6 @@
       "name": "ERP 系统",
       "subGroups": [
         {
-          "key": "overview",
-          "name": "概览",
-          "menus": [
-            {
-              "key": "erpOverview",
-              "name": "ERP 首页",
-              "icon": "dashboard",
-              "iconColor": "#1677ff",
-              "url": "/pages-erp/index"
-            }
-          ]
-        },
-        {
           "key": "product",
           "name": "产品管理",
           "menus": [

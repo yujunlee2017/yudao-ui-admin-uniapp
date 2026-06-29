@@ -43,7 +43,7 @@
         </view>
         <wd-cell-group border>
           <wd-form-item title="产品明细" title-width="220rpx">
-            <OrderItemEditor
+            <OrderItemForm
               ref="itemEditorRef"
               v-model="formData.items"
               :product-options="productOptions"
@@ -83,26 +83,21 @@
 
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
-import type { Account } from '@/api/erp/finance/account'
 import type { Product } from '@/api/erp/product/product'
 import type { SaleOrder } from '@/api/erp/sale/order'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { getAccountSimpleList } from '@/api/erp/finance/account'
 import { getProductSimpleList } from '@/api/erp/product/product'
 import { createSaleOrder, getSaleOrder, updateSaleOrder } from '@/api/erp/sale/order'
 import { delay, navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 import ErpPicker from '@/pages-erp/components/erp-picker.vue'
-import OrderItemEditor from '../components/order-item-editor.vue'
-import { formatMoney, roundPrice, toNumber } from '@/pages-erp/utils'
+import { applyDefaultAccount } from '@/pages-erp/finance/account/components/use-default-account'
+import OrderItemForm from '../components/order-item-form.vue'
+import { formatMoney, roundPrice, toNumber } from '@/pages-erp/utils/erp'
 
 const props = defineProps<{ id?: number | any }>()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/sale/order/form/index')
-// TODO @Yunai：对齐 system 表单页，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
-const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -112,7 +107,7 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => currentId.value ? '编辑销售订单' : '新增销售订单')
+const getTitle = computed(() => props.id ? '编辑销售订单' : '新增销售订单')
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<SaleOrder>({
   id: undefined,
@@ -130,8 +125,7 @@ const formData = ref<SaleOrder>({
   items: [],
 }) // 表单数据
 const formRef = ref<FormInstance>() // 表单组件引用
-const itemEditorRef = ref<InstanceType<typeof OrderItemEditor>>() // 明细组件引用
-const accountOptions = ref<Account[]>([]) // 账户选项
+const itemEditorRef = ref<InstanceType<typeof OrderItemForm>>() // 明细组件引用
 const productOptions = ref<Product[]>([]) // 产品选项
 const dateVisible = reactive({
   orderTime: false,
@@ -158,29 +152,28 @@ function refreshOrderAmount() {
 }
 
 /** 加载基础选项 */
-// TODO @Yunai：考虑在 src/pages-erp/finance/account 封装账户 picker/默认账户加载组件，避免采购/销售/财务重复。
+/** 加载基础选项 */
 async function loadOptions() {
-  const [accounts, products] = await Promise.all([
-    getAccountSimpleList(),
+  const [products] = await Promise.all([
     getProductSimpleList(),
+    applyDefaultAccount(formData.value),
   ])
-  accountOptions.value = accounts || []
   productOptions.value = products || []
-  const defaultAccount = accountOptions.value.find(item => item.defaultStatus)
-  if (!formData.value.accountId && defaultAccount?.id) {
-    formData.value.accountId = defaultAccount.id
-  }
 }
 
 /** 加载销售订单详情 */
-// TODO @Yunai：加载详情对齐 system/tenant，补 toast.loading/finally close，并直接 getSaleOrder(props.id)，不要 getSaleOrder(Number(currentId.value))。
 async function getDetail() {
-  if (!currentId.value) {
+  if (!props.id) {
     return
   }
-  formData.value = {
-    ...formData.value,
-    ...await getSaleOrder(Number(currentId.value)),
+  try {
+    toast.loading('加载中...')
+    formData.value = {
+      ...formData.value,
+      ...await getSaleOrder(props.id),
+    }
+  } finally {
+    toast.close()
   }
   refreshOrderAmount()
 }
@@ -194,7 +187,7 @@ async function handleSubmit() {
   refreshOrderAmount()
   formLoading.value = true
   try {
-    if (currentId.value) {
+    if (props.id) {
       await updateSaleOrder(formData.value)
       toast.success('修改成功')
     } else {

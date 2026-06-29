@@ -1,10 +1,13 @@
-<!-- TODO @Yunai：组件命名是否改成 order-item-form，和表单明细编辑职责对齐。 -->
 <template>
   <view class="w-full">
-    <view v-for="(item, index) in items" :key="index" class="mb-24rpx rounded-12rpx bg-[#f8f8f8] p-20rpx">
+    <view
+      v-for="(item, index) in items"
+      :key="index"
+      class="mb-24rpx rounded-12rpx bg-[#f8f8f8] p-20rpx"
+    >
       <view class="mb-16rpx flex items-center justify-between">
-        <text class="text-28rpx text-[#333] font-semibold">采购明细 {{ index + 1 }}</text>
-        <wd-button v-if="!disabled && items.length > 1" size="small" type="error" variant="plain" @click="handleRemove(index)">
+        <text class="text-28rpx text-[#333] font-semibold">产品明细 {{ index + 1 }}</text>
+        <wd-button v-if="!disabled" size="small" type="error" variant="plain" @click="handleRemove(index)">
           删除
         </wd-button>
       </view>
@@ -26,7 +29,7 @@
       <wd-form-item title="数量" title-width="180rpx" center>
         <wd-input-number v-model="item.count" :min="0.001" :precision="3" :disabled="disabled" />
       </wd-form-item>
-      <wd-form-item title="采购单价" title-width="180rpx" center>
+      <wd-form-item title="产品单价" title-width="180rpx" center>
         <wd-input-number v-model="item.productPrice" :min="0.01" :precision="2" :disabled="disabled" />
       </wd-form-item>
       <wd-cell title="金额" :value="formatMoney(item.totalProductPrice)" />
@@ -41,7 +44,7 @@
     </view>
 
     <wd-button v-if="!disabled" block variant="plain" @click="handleAdd">
-      添加采购产品
+      添加销售产品
     </wd-button>
   </view>
 </template>
@@ -52,7 +55,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { onMounted, ref, watch } from 'vue'
 import { getStockCount } from '@/api/erp/stock/stock'
 import ErpPicker from '@/pages-erp/components/erp-picker.vue'
-import { formatCount, formatMoney, roundPrice, toNumber } from '@/pages-erp/utils'
+import { formatCount, formatMoney, roundPrice, toNumber } from '@/pages-erp/utils/erp'
 
 const props = defineProps<{
   disabled?: boolean
@@ -65,18 +68,13 @@ const emit = defineEmits<{
 }>()
 
 const toast = useToast()
-const items = ref<Record<string, any>[]>([])
+const items = ref<Record<string, any>[]>([]) // 明细数据
 
-// TODO @Yunai：风格对齐——以下函数缺 /** */ JSDoc（system/mall 标准每个函数/生命周期都补）：
-//   createDefaultItem / handleRemove / handleProductConfirm / refreshItemAmount / validate / watch / onMounted。
-//   13 个单据 item-editor（purchase/{order,in,return}、sale/{order,out,return}、stock/{in,out,move,check}、finance/{payment,receipt}）
-//   及 4 个 selector（purchase-order-in/return-selector、sale-order-out/return-selector、payment/receipt-source-selector）
-//   均为同款问题，建议统一补全。
+/** 创建默认明细 */
 function createDefaultItem() {
   return {
     id: undefined,
     productId: undefined,
-    productName: undefined,
     productUnitName: undefined,
     productBarCode: undefined,
     productPrice: undefined,
@@ -95,10 +93,12 @@ function handleAdd() {
   items.value.push(createDefaultItem())
 }
 
+/** 删除明细 */
 function handleRemove(index: number) {
   items.value.splice(index, 1)
 }
 
+/** 选择产品 */
 async function handleProductConfirm(index: number, productId?: number | string) {
   const item = items.value[index]
   if (!item) {
@@ -110,13 +110,14 @@ async function handleProductConfirm(index: number, productId?: number | string) 
     item.productName = product.name
     item.productUnitName = product.unitName
     item.productBarCode = product.barCode
-    item.productPrice = product.purchasePrice
+    item.productPrice = product.salePrice
   }
   if (productId) {
     item.stockCount = await getStockCount(Number(productId))
   }
 }
 
+/** 刷新明细金额 */
 function refreshItemAmount(item: Record<string, any>) {
   const count = toNumber(item.count)
   const price = toNumber(item.productPrice)
@@ -127,14 +128,15 @@ function refreshItemAmount(item: Record<string, any>) {
   }
 }
 
+/** 校验明细 */
 function validate() {
   if (items.value.length === 0) {
-    toast.warning('请至少添加一个采购产品')
+    toast.warning('请至少添加一个销售产品')
     return false
   }
-  const invalidIndex = items.value.findIndex(item => !item.productId || !item.count || !item.productPrice)
+  const invalidIndex = items.value.findIndex(item => !item.productId || !item.count)
   if (invalidIndex >= 0) {
-    toast.warning(`请完善采购明细 ${invalidIndex + 1}`)
+    toast.warning(`请完善产品明细 ${invalidIndex + 1}`)
     return false
   }
   return true
@@ -149,6 +151,7 @@ watch(items, (value) => {
   emit('update:modelValue', value)
 }, { deep: true })
 
+/** 初始化 */
 onMounted(() => {
   if (items.value.length === 0 && !props.disabled) {
     handleAdd()

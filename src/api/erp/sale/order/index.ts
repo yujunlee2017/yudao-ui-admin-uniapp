@@ -1,7 +1,23 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
-// TODO @Yunai：按后端 VO 收窄类型，补 SaleOrderItem 明细类型；导出接口改 downloadApiFile 或删除未用方法。
+/** ERP 销售订单明细 */
+export interface SaleOrderItem {
+  id?: number
+  productId?: number
+  productName?: string
+  productUnitName?: string
+  productBarCode?: string
+  productPrice?: number
+  stockCount?: number
+  count?: number
+  totalProductPrice?: number
+  taxPercent?: number
+  taxPrice?: number
+  totalPrice?: number
+  remark?: string
+}
+
 /** ERP 销售订单 */
 export interface SaleOrder {
   id?: number // 订单工单编号
@@ -20,8 +36,7 @@ export interface SaleOrder {
   fileUrl?: string // 附件地址
   outCount?: number // 销售出库数量
   returnCount?: number // 销售退货数量
-  items?: any[] // 订单明细
-  [key: string]: any
+  items?: SaleOrderItem[] // 订单明细
 }
 
 /** 获取销售订单分页列表 */
@@ -52,9 +67,4 @@ export function updateSaleOrderStatus(id: number, status: number) {
 /** 删除销售订单 */
 export function deleteSaleOrder(ids: number[]) {
   return http.delete<boolean>('/erp/sale-order/delete', undefined, { ids: ids.join(',') })
-}
-
-/** 导出销售订单 Excel */
-export function exportSaleOrder(params: Record<string, any>) {
-  return http.get<Blob>('/erp/sale-order/export-excel', params)
 }

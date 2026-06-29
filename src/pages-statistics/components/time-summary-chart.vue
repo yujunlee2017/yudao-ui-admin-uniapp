@@ -1,4 +1,3 @@
-<!-- TODO @AI：可能可以去掉，或者封装到 src/pages-statistics/components 看看怎么搞成一个通用组件 -->
 <template>
   <view class="overflow-hidden rounded-12rpx bg-white shadow-sm">
     <!-- 标题 -->
@@ -39,12 +38,16 @@
 </template>
 
 <script lang="ts" setup>
+import type { ErpPurchaseTimeSummaryResp } from '@/api/erp/statistics/purchase'
+import type { ErpSaleTimeSummaryResp } from '@/api/erp/statistics/sale'
 import { computed } from 'vue'
-import { toNumber } from '@/pages-erp/utils'
+import { toNumber } from '@/pages-erp/utils/erp'
+
+type TimeSummary = ErpSaleTimeSummaryResp | ErpPurchaseTimeSummaryResp
 
 const props = withDefaults(defineProps<{
   title: string // 标题
-  value?: Array<{ time: string, price: number }> // 时段统计数据
+  value?: TimeSummary[] // 时段统计数据
   color?: string // 柱体颜色
 }>(), {
   value: () => [],

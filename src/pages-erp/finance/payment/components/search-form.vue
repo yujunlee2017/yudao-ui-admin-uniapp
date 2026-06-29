@@ -18,69 +18,11 @@
         <wd-input v-model="formData.no" placeholder="请输入付款单号" clearable />
       </view>
       <yd-search-date-range v-model="formData.paymentTime" label="付款时间" />
-      <!-- TODO @Yunai：搜索业务下拉对齐 yd-search-picker，删除 ErpPicker + selectedNames 的重复样板。 -->
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          供应商
-        </view>
-        <ErpPicker
-          v-model="formData.supplierId"
-          source="supplier"
-          form-item
-          placeholder="请选择供应商"
-          @confirm="option => selectedNames.supplier = option?.name || ''"
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          创建人
-        </view>
-        <ErpPicker
-          v-model="formData.creator"
-          source="user"
-          form-item
-          placeholder="请选择创建人"
-          @confirm="option => selectedNames.creator = option?.name || ''"
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          财务人员
-        </view>
-        <ErpPicker
-          v-model="formData.financeUserId"
-          source="user"
-          form-item
-          placeholder="请选择财务人员"
-          @confirm="option => selectedNames.financeUser = option?.name || ''"
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          付款账户
-        </view>
-        <ErpPicker
-          v-model="formData.accountId"
-          source="account"
-          form-item
-          placeholder="请选择付款账户"
-          @confirm="option => selectedNames.account = option?.name || ''"
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          状态
-        </view>
-        <!-- TODO @Yunai：字典/状态筛选对齐 yd-search-picker（dict-type + all-option），不要手写 wd-radio-group + -1「全部」。 -->
-        <wd-radio-group v-model="formData.status" type="button">
-          <wd-radio :value="-1">
-            全部
-          </wd-radio>
-          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.ERP_AUDIT_STATUS)" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.supplierId" label="供应商" :columns="supplierOptions" label-key="name" value-key="id" placeholder="请选择供应商" />
+      <yd-search-picker v-model="formData.creator" label="创建人" :columns="userOptions" label-key="name" value-key="id" placeholder="请选择创建人" />
+      <yd-search-picker v-model="formData.financeUserId" label="财务人员" :columns="userOptions" label-key="name" value-key="id" placeholder="请选择财务人员" />
+      <yd-search-picker v-model="formData.accountId" label="付款账户" :columns="accountOptions" label-key="name" value-key="id" placeholder="请选择付款账户" />
+      <yd-search-picker v-model="formData.status" label="状态" :dict-type="DICT_TYPE.ERP_AUDIT_STATUS" all-option />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           采购单号
@@ -106,9 +48,10 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue'
-import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
-import ErpPicker from '@/pages-erp/components/erp-picker.vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { getDictLabel } from '@/hooks/useDict'
+import { erpOptionLoaders } from '@/pages-erp/config/options'
+import { normalizeOptions } from '@/pages-erp/utils/erp'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
@@ -119,12 +62,9 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false)
-const selectedNames = reactive({
-  account: '',
-  creator: '',
-  financeUser: '',
-  supplier: '',
-})
+const supplierOptions = ref<Record<string, any>[]>([]) // 供应商选项
+const userOptions = ref<Record<string, any>[]>([]) // 用户选项
+const accountOptions = ref<Record<string, any>[]>([]) // 账户选项
 const formData = reactive({
   no: undefined as string | undefined,
   paymentTime: ['', ''] as [any, any],
@@ -137,6 +77,14 @@ const formData = reactive({
   bizNo: undefined as string | undefined,
 })
 
+/** 获取选项名称 */
+function getOptionLabel(options: Record<string, any>[], id?: number) {
+  if (!id) {
+    return ''
+  }
+  return options.find(item => String(item.id) === String(id))?.name || String(id)
+}
+
 const placeholder = computed(() => {
   const conditions: string[] = []
   if (formData.no) {
@@ -146,10 +94,10 @@ const placeholder = computed(() => {
     conditions.push(`付款时间:${formatDate(formData.paymentTime[0])}~${formatDate(formData.paymentTime[1])}`)
   }
   if (formData.supplierId) {
-    conditions.push(`供应商:${selectedNames.supplier || formData.supplierId}`)
+    conditions.push(`供应商:${getOptionLabel(supplierOptions.value, formData.supplierId)}`)
   }
   if (formData.accountId) {
-    conditions.push(`账户:${selectedNames.account || formData.accountId}`)
+    conditions.push(`账户:${getOptionLabel(accountOptions.value, formData.accountId)}`)
   }
   if (formData.status !== -1) {
     conditions.push(`状态:${getDictLabel(DICT_TYPE.ERP_AUDIT_STATUS, formData.status)}`)
@@ -180,14 +128,22 @@ function handleReset() {
   formData.creator = undefined
   formData.financeUserId = undefined
   formData.accountId = undefined
-  selectedNames.supplier = ''
-  selectedNames.creator = ''
-  selectedNames.financeUser = ''
-  selectedNames.account = ''
   formData.status = -1
   formData.remark = undefined
   formData.bizNo = undefined
   visible.value = false
   emit('reset')
 }
+
+/** 加载搜索下拉选项 */
+onMounted(async () => {
+  const [suppliers, users, accounts] = await Promise.all([
+    erpOptionLoaders.supplier(),
+    erpOptionLoaders.user(),
+    erpOptionLoaders.account(),
+  ])
+  supplierOptions.value = normalizeOptions(suppliers)
+  userOptions.value = normalizeOptions(users)
+  accountOptions.value = normalizeOptions(accounts)
+})
 </script>

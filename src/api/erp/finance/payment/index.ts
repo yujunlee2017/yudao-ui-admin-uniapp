@@ -1,7 +1,18 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
-// TODO @Yunai：按后端 VO 收窄类型，补 FinancePaymentItem 明细类型；导出接口改 downloadApiFile 或删除未用方法。
+/** ERP 付款单明细 */
+export interface FinancePaymentItem {
+  id?: number
+  bizType?: number
+  bizId?: number
+  bizNo?: string
+  totalPrice?: number
+  paidPrice?: number
+  paymentPrice?: number
+  remark?: string
+}
+
 /** ERP 付款单 */
 export interface FinancePayment {
   id?: number // 付款单编号
@@ -16,8 +27,7 @@ export interface FinancePayment {
   status?: number // 状态
   remark?: string // 备注
   fileUrl?: string // 附件地址
-  items?: any[] // 付款明细
-  [key: string]: any
+  items?: FinancePaymentItem[] // 付款明细
 }
 
 /** 获取付款单分页列表 */
@@ -48,9 +58,4 @@ export function updateFinancePaymentStatus(id: number, status: number) {
 /** 删除付款单 */
 export function deleteFinancePayment(ids: number[]) {
   return http.delete<boolean>('/erp/finance-payment/delete', undefined, { ids: ids.join(',') })
-}
-
-/** 导出付款单 Excel */
-export function exportFinancePayment(params: Record<string, any>) {
-  return http.get<Blob>('/erp/finance-payment/export-excel', params)
 }

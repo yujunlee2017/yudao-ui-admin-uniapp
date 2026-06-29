@@ -76,7 +76,6 @@ import type { ProductCategory } from '@/api/erp/product/category'
 import type { Product } from '@/api/erp/product/product'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref } from 'vue'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { getProductCategorySimpleList } from '@/api/erp/product/category'
 import { createProduct, getProduct, updateProduct } from '@/api/erp/product/product'
 import YdTreeSelect from '@/components/yudao-ui/yd-tree-select/yd-tree-select.vue'
@@ -87,9 +86,6 @@ import { createFormSchema } from '@/utils/wot'
 import ErpPicker from '@/pages-erp/components/erp-picker.vue'
 
 const props = defineProps<{ id?: number | any }>()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-erp/product/product/form/index')
-// TODO @Yunai：对齐 system 表单页，直接用 props.id 接参，删除 useRouteQuery/currentId 包装。
-const currentId = computed(() => getRouteQueryNumber('id'))
 
 definePage({
   style: {
@@ -99,7 +95,7 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => currentId.value ? '编辑产品' : '新增产品')
+const getTitle = computed(() => props.id ? '编辑产品' : '新增产品')
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<Product>({
   id: undefined,
@@ -138,14 +134,18 @@ async function loadOptions() {
 }
 
 /** 加载产品详情 */
-// TODO @Yunai：加载详情对齐 system/tenant，补 toast.loading/finally close，并直接 getProduct(props.id)，不要 getProduct(Number(currentId.value))。
 async function getDetail() {
-  if (!currentId.value) {
+  if (!props.id) {
     return
   }
-  formData.value = {
-    ...formData.value,
-    ...await getProduct(Number(currentId.value)),
+  try {
+    toast.loading('加载中...')
+    formData.value = {
+      ...formData.value,
+      ...await getProduct(props.id),
+    }
+  } finally {
+    toast.close()
   }
 }
 
@@ -157,7 +157,7 @@ async function handleSubmit() {
   }
   formLoading.value = true
   try {
-    if (currentId.value) {
+    if (props.id) {
       await updateProduct(formData.value)
       toast.success('修改成功')
     } else {

@@ -1,4 +1,3 @@
-<!-- TODO @Yunai：挪到 src/pages-statistics/erp/home 目录下：增加报表，对齐 vue3 + ep、crm、mall 报表风格；去掉菜单入口。 -->
 <template>
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
@@ -152,12 +151,14 @@
 </template>
 
 <script lang="ts" setup>
+import type { ErpPurchaseSummaryResp, ErpPurchaseTimeSummaryResp } from '@/api/erp/statistics/purchase'
+import type { ErpSaleSummaryResp, ErpSaleTimeSummaryResp } from '@/api/erp/statistics/sale'
 import { computed, onMounted, ref } from 'vue'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
-import { erpGroups, erpStatistics, getErpGroupModules, getErpModule } from './config'
-import TimeSummaryChart from './components/time-summary-chart.vue'
-import { toNumber } from '@/pages-erp/utils'
+import { erpGroups, erpStatistics, getErpGroupModules, getErpModule } from './modules'
+import TimeSummaryChart from '@/pages-statistics/components/time-summary-chart.vue'
+import { toNumber } from '@/pages-erp/utils/erp'
 
 definePage({
   style: {
@@ -170,11 +171,10 @@ const { hasAccessByCodes } = useAccess()
 const loading = ref(false) // 统计加载状态
 const loaded = ref(false) // 是否已完成首次加载
 const loadError = ref(false) // 是否存在统计加载失败
-// TODO @Yunai：统计状态直接使用 ErpSaleSummaryResp / ErpPurchaseSummaryResp / TimeSummaryResp，不要用 Record<string, any> 和手写数组类型兜底。
-const saleSummary = ref<Record<string, any>>({}) // 销售概况统计
-const purchaseSummary = ref<Record<string, any>>({}) // 采购概况统计
-const saleTimeSummaryList = ref<Array<{ time: string, price: number }>>([]) // 销售时段统计
-const purchaseTimeSummaryList = ref<Array<{ time: string, price: number }>>([]) // 采购时段统计
+const saleSummary = ref<Partial<ErpSaleSummaryResp>>({}) // 销售概况统计
+const purchaseSummary = ref<Partial<ErpPurchaseSummaryResp>>({}) // 采购概况统计
+const saleTimeSummaryList = ref<ErpSaleTimeSummaryResp[]>([]) // 销售时段统计
+const purchaseTimeSummaryList = ref<ErpPurchaseTimeSummaryResp[]>([]) // 采购时段统计
 
 const quickActionOptions = [
   { moduleKey: 'sale-order', title: '销售开单', desc: '销售订单', tip: '客户下单、价格与明细', icon: 'cart', color: '#52c41a' },

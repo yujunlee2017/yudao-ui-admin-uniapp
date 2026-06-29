@@ -19,89 +19,20 @@
         </view>
         <wd-input v-model="formData.no" placeholder="请输入出库单号" clearable />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          产品
-        </view>
-        <!-- TODO @Yunai：搜索业务下拉对齐 yd-search-picker，删除 ErpPicker + selectedNames 的重复样板。 -->
-        <ErpPicker
-          v-model="formData.productId"
-          source="product"
-          form-item
-          placeholder="请选择产品"
-          @confirm="option => selectedNames.product = option?.name || ''"
-        />
-      </view>
+      <yd-search-picker v-model="formData.productId" label="产品" :columns="productOptions" label-key="name" value-key="id" placeholder="请选择产品" />
       <yd-search-date-range v-model="formData.outTime" label="出库时间" />
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          客户
-        </view>
-        <ErpPicker
-          v-model="formData.customerId"
-          source="customer"
-          form-item
-          placeholder="请选择客户"
-          @confirm="option => selectedNames.customer = option?.name || ''"
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          仓库
-        </view>
-        <ErpPicker
-          v-model="formData.warehouseId"
-          source="warehouse"
-          form-item
-          placeholder="请选择仓库"
-          @confirm="option => selectedNames.warehouse = option?.name || ''"
-        />
-      </view>
+      <yd-search-picker v-model="formData.customerId" label="客户" :columns="customerOptions" label-key="name" value-key="id" placeholder="请选择客户" />
+      <yd-search-picker v-model="formData.warehouseId" label="仓库" :columns="warehouseOptions" label-key="name" value-key="id" placeholder="请选择仓库" />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           关联订单
         </view>
         <wd-input v-model="formData.orderNo" placeholder="请输入关联订单" clearable />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          结算账户
-        </view>
-        <ErpPicker
-          v-model="formData.accountId"
-          source="account"
-          form-item
-          placeholder="请选择结算账户"
-          @confirm="option => selectedNames.account = option?.name || ''"
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          创建人
-        </view>
-        <ErpPicker
-          v-model="formData.creator"
-          source="user"
-          form-item
-          placeholder="请选择创建人"
-          @confirm="option => selectedNames.creator = option?.name || ''"
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          审核状态
-        </view>
-        <!-- TODO @Yunai：字典/状态筛选对齐 yd-search-picker（dict-type + all-option），不要手写 wd-radio-group + -1「全部」。 -->
-        <wd-radio-group v-model="formData.status" type="button">
-          <wd-radio :value="-1">
-            全部
-          </wd-radio>
-          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.ERP_AUDIT_STATUS)" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
-      <!-- TODO @Yunai：对齐 PC 和后端 ErpSaleOutPageReqVO，补 receiptStatus 收款状态筛选及 placeholder/reset/emit。 -->
+      <yd-search-picker v-model="formData.accountId" label="结算账户" :columns="accountOptions" label-key="name" value-key="id" placeholder="请选择结算账户" />
+      <yd-search-picker v-model="formData.creator" label="创建人" :columns="userOptions" label-key="name" value-key="id" placeholder="请选择创建人" />
+      <yd-search-picker v-model="formData.status" label="审核状态" :dict-type="DICT_TYPE.ERP_AUDIT_STATUS" all-option />
+      <yd-search-picker v-model="formData.receiptStatus" label="收款状态" :columns="receiptStatusColumns" all-option />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           备注
@@ -121,9 +52,10 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue'
-import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
-import ErpPicker from '@/pages-erp/components/erp-picker.vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { getDictLabel } from '@/hooks/useDict'
+import { erpOptionLoaders } from '@/pages-erp/config/options'
+import { normalizeOptions } from '@/pages-erp/utils/erp'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
@@ -134,13 +66,11 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const selectedNames = reactive({
-  account: '',
-  creator: '',
-  customer: '',
-  product: '',
-  warehouse: '',
-}) // 选择器展示名称
+const productOptions = ref<Record<string, any>[]>([]) // 产品选项
+const customerOptions = ref<Record<string, any>[]>([]) // 客户选项
+const warehouseOptions = ref<Record<string, any>[]>([]) // 仓库选项
+const accountOptions = ref<Record<string, any>[]>([]) // 账户选项
+const userOptions = ref<Record<string, any>[]>([]) // 创建人选项
 const formData = reactive({
   no: undefined as string | undefined,
   productId: undefined as number | undefined,
@@ -151,8 +81,22 @@ const formData = reactive({
   accountId: undefined as number | undefined,
   creator: undefined as number | undefined,
   status: -1,
+  receiptStatus: -1,
   remark: undefined as string | undefined,
 }) // 搜索表单数据
+const receiptStatusColumns = [
+  { label: '未收款', value: 0 },
+  { label: '部分收款', value: 1 },
+  { label: '全部收款', value: 2 },
+] // 收款状态选项
+
+/** 获取选项名称 */
+function getOptionLabel(options: Record<string, any>[], id?: number) {
+  if (!id) {
+    return ''
+  }
+  return options.find(item => String(item.id) === String(id))?.name || String(id)
+}
 
 /** 搜索条件 placeholder 拼接 */
 const placeholder = computed(() => {
@@ -161,22 +105,39 @@ const placeholder = computed(() => {
     conditions.push(`单号:${formData.no}`)
   }
   if (formData.productId) {
-    conditions.push(`产品:${selectedNames.product || formData.productId}`)
+    conditions.push(`产品:${getOptionLabel(productOptions.value, formData.productId)}`)
   }
   if (formData.outTime[0] && formData.outTime[1]) {
     conditions.push(`出库时间:${formatDate(formData.outTime[0])}~${formatDate(formData.outTime[1])}`)
   }
   if (formData.customerId) {
-    conditions.push(`客户:${selectedNames.customer || formData.customerId}`)
+    conditions.push(`客户:${getOptionLabel(customerOptions.value, formData.customerId)}`)
   }
   if (formData.warehouseId) {
-    conditions.push(`仓库:${selectedNames.warehouse || formData.warehouseId}`)
+    conditions.push(`仓库:${getOptionLabel(warehouseOptions.value, formData.warehouseId)}`)
   }
   if (formData.status !== -1) {
     conditions.push(`状态:${getDictLabel(DICT_TYPE.ERP_AUDIT_STATUS, formData.status)}`)
   }
+  if (formData.receiptStatus !== -1) {
+    conditions.push(`收款:${getReceiptStatusLabel(formData.receiptStatus)}`)
+  }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索销售出库'
 })
+
+/** 获取收款状态文本 */
+function getReceiptStatusLabel(status: number) {
+  if (status === 0) {
+    return '未收款'
+  }
+  if (status === 1) {
+    return '部分收款'
+  }
+  if (status === 2) {
+    return '全部收款'
+  }
+  return '全部'
+}
 
 /** 搜索按钮操作 */
 function handleSearch() {
@@ -191,6 +152,7 @@ function handleSearch() {
     accountId: formData.accountId,
     creator: formData.creator,
     status: formData.status === -1 ? undefined : formData.status,
+    receiptStatus: formData.receiptStatus === -1 ? undefined : formData.receiptStatus,
     remark: formData.remark || undefined,
   })
 }
@@ -205,14 +167,26 @@ function handleReset() {
   formData.orderNo = undefined
   formData.accountId = undefined
   formData.creator = undefined
-  selectedNames.product = ''
-  selectedNames.customer = ''
-  selectedNames.warehouse = ''
-  selectedNames.account = ''
-  selectedNames.creator = ''
   formData.status = -1
+  formData.receiptStatus = -1
   formData.remark = undefined
   visible.value = false
   emit('reset')
 }
+
+/** 加载搜索下拉选项 */
+onMounted(async () => {
+  const [products, customers, warehouses, accounts, users] = await Promise.all([
+    erpOptionLoaders.product(),
+    erpOptionLoaders.customer(),
+    erpOptionLoaders.warehouse(),
+    erpOptionLoaders.account(),
+    erpOptionLoaders.user(),
+  ])
+  productOptions.value = normalizeOptions(products)
+  customerOptions.value = normalizeOptions(customers)
+  warehouseOptions.value = normalizeOptions(warehouses)
+  accountOptions.value = normalizeOptions(accounts)
+  userOptions.value = normalizeOptions(users)
+})
 </script>
