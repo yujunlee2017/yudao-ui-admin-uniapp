@@ -65,7 +65,7 @@ import { getRouteProcessListByProduct } from '@/api/mes/pro/route/process'
 import { finishWorkOrder, getWorkOrder } from '@/api/mes/pro/workorder'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
 import ProcessTaskList from '../components/process-task-list.vue'
@@ -89,8 +89,8 @@ const finishing = ref(false) // 完成工单状态
 const formData = ref<ProWorkOrderVO>() // 工单详情
 const routeProcessList = ref<ProRouteProcessVO[]>([]) // 工艺路线工序列表
 const currentRouteId = ref(0) // 当前工艺路线编号
-const { getRouteQueryNumber, getRouteQueryValue } = useRouteQuery(props, '/pages-mes/pro/task/detail/index')
-const workOrderId = computed(() => getRouteQueryNumber('id') || 0)
+const { getRouteQueryValue } = useRouteQuery(props, '/pages-mes/pro/task/detail/index')
+const workOrderId = computed(() => props.id ? Number(props.id) : 0)
 const routeMode = computed(() => getRouteQueryValue('mode') || props.mode)
 const isReadonly = computed(() => routeMode.value !== 'schedule')
 const pageTitle = computed(() => isReadonly.value ? '排产详情' : '生产排产')
@@ -119,8 +119,7 @@ async function getDetail() {
     const detailData = await getWorkOrder(workOrderId.value)
     if (!detailData) {
       uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
-      // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 2 处 setTimeout(() => handleBack())）
-      setTimeout(() => handleBack(), 300)
+      delay(handleBack)
       return
     }
     formData.value = detailData
@@ -161,7 +160,7 @@ async function handleFinish() {
     await finishWorkOrder(formData.value.id)
     toast.success('工单已完成')
     uni.$emit('mes:pro:task:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     finishing.value = false
   }

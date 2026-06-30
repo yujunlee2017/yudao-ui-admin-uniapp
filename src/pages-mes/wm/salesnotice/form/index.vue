@@ -157,8 +157,8 @@ definePage({
 
 const dialog = useDialog()
 const toast = useToast()
-const { getRouteQueryNumber, getRouteQueryValue } = useRouteQuery(props, '/pages-mes/wm/salesnotice/form/index')
-const routeId = computed(() => getRouteQueryNumber('id')) // 路由编号
+const { getRouteQueryValue } = useRouteQuery(props, '/pages-mes/wm/salesnotice/form/index')
+const routeId = computed(() => props.id ? Number(props.id) : undefined) // 路由编号
 const routeMode = computed(() => String(getRouteQueryValue('mode') || '')) // 路由模式
 const currentId = ref<number>() // 当前编辑编号
 const currentMode = ref<string>() // 当前操作模式

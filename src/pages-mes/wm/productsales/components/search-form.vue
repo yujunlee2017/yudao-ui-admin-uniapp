@@ -43,16 +43,7 @@
           @clear="clearClient"
         />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          单据状态
-        </view>
-        <wd-radio-group v-model="formData.status" type="button">
-          <wd-radio v-for="dict in statusOptions" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.status" label="单据状态" :columns="statusOptions" all-option :all-value="undefined" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -68,7 +59,6 @@
 </template>
 
 <script lang="ts" setup>
-// TODO @YunaiV：搜索风格对齐 system/infra——① wd-radio-group 状态筛选改 yd-search-picker（status，配 dict-kind + all-option）；② 客户选择器 MesSearchSelectorField+ClientSelector 后续评估收敛为 yd-search-picker
 import type { MdClientVO } from '@/api/mes/md/client'
 import type { WmProductSalesQueryParams } from '@/api/mes/wm/productsales'
 import { computed, reactive, ref } from 'vue'

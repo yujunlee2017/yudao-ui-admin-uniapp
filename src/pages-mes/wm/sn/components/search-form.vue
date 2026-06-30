@@ -41,12 +41,7 @@
           clearable
         />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          创建时间
-        </view>
-        <wd-calendar v-model="createTimeRange" type="daterange" placeholder="请选择创建时间范围" />
-      </view>
+      <yd-search-date-range v-model="createTimeRange" label="创建时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -62,7 +57,6 @@
 </template>
 
 <script lang="ts" setup>
-// TODO @YunaiV：搜索风格对齐 system/infra——① wd-calendar 日期范围改全局 yd-search-date-range（createTime）；② 物料选择器 MesSearchSelectorField+ItemSelector 后续评估收敛为 yd-search-picker
 import type { MdItemVO } from '@/api/mes/md/item'
 import type { WmSnQueryParams } from '@/api/mes/wm/sn'
 import { computed, reactive, ref } from 'vue'
@@ -79,7 +73,7 @@ const emit = defineEmits<{
 const visible = ref(false) // 搜索弹窗显示状态
 const itemSelectorRef = ref<InstanceType<typeof ItemSelector>>() // 物料选择器
 const selectedItem = ref<MdItemVO>() // 已选物料
-const createTimeRange = ref<[string, string]>() // 创建时间范围
+const createTimeRange = ref<[number | undefined, number | undefined]>() // 创建时间范围
 const formData = reactive<Pick<WmSnQueryParams, 'code' | 'itemId' | 'batchCode'>>({
   code: '',
   itemId: undefined,

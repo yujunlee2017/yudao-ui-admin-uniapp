@@ -5,12 +5,9 @@
   </view>
 
   <!-- 搜索弹窗 -->
-  <!-- TODO @YunaiV：本 wd-popup 去掉 transition="fade" :duration="0"，对齐 system/infra（基线不带这俩属性） -->
   <wd-popup
     v-model="visible"
     position="top"
-    transition="fade"
-    :duration="0"
     :custom-style="getTopPopupStyle()"
     :modal-style="getTopPopupModalStyle()"
     @close="visible = false"
@@ -48,26 +45,8 @@
           @clear="clearMachinery"
         />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          维修结果
-        </view>
-        <wd-radio-group v-model="formData.result" type="button">
-          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_DV_REPAIR_RESULT)" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          单据状态
-        </view>
-        <wd-radio-group v-model="formData.status" type="button">
-          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_DV_REPAIR_STATUS)" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.result" label="维修结果" :dict-type="DICT_TYPE.MES_DV_REPAIR_RESULT" all-option :all-value="undefined" />
+      <yd-search-picker v-model="formData.status" label="单据状态" :dict-type="DICT_TYPE.MES_DV_REPAIR_STATUS" all-option :all-value="undefined" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -83,11 +62,10 @@
 </template>
 
 <script lang="ts" setup>
-// TODO @YunaiV：搜索风格对齐 system/infra——wd-radio-group 状态/类型筛选改 yd-search-picker（配 dict-kind + all-option）；业务选择器（Selector/MesSearchSelectorField）后续评估收敛为 yd-search-picker
 import type { DvMachineryVO } from '@/api/mes/dv/machinery'
 import type { DvRepairQueryParams } from '@/api/mes/dv/repair'
 import { computed, reactive, ref } from 'vue'
-import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
+import { getDictLabel } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import MesSearchSelectorField from '@/pages-mes/components/mes-search-selector-field.vue'

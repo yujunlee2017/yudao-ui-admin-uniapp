@@ -42,32 +42,8 @@
           <wd-icon name="arrow-right" size="28rpx" color="#999" />
         </view>
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          单据状态
-        </view>
-        <wd-picker
-          :model-value="statusPickerValue"
-          :columns="statusColumns"
-          label-key="label"
-          value-key="value"
-          placeholder="请选择单据状态"
-          clearable
-          @confirm="handleStatusConfirm"
-          @clear="handleStatusClear"
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          入库日期
-        </view>
-        <wd-calendar
-          v-model="formData.receiptDate"
-          type="daterange"
-          placeholder="请选择入库日期"
-          clearable
-        />
-      </view>
+      <yd-search-picker v-model="formData.status" label="单据状态" :dict-type="DICT_TYPE.MES_WM_OUTSOURCE_RECEIPT_STATUS" all-option :all-value="undefined" />
+      <yd-search-date-range v-model="formData.receiptDate" label="入库日期" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -83,11 +59,10 @@
 </template>
 
 <script lang="ts" setup>
-// TODO @YunaiV：搜索风格对齐 system/infra——① wd-picker（仓库/库位）改 yd-search-picker（:columns + all-option）；② wd-calendar 日期范围改全局 yd-search-date-range；③ 供应商选择器后续评估收敛为 yd-search-picker
 import type { MdVendorVO } from '@/api/mes/md/vendor'
 import type { WmOutsourceReceiptQueryParams } from '@/api/mes/wm/outsourcereceipt'
 import { computed, reactive, ref } from 'vue'
-import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
+import { getDictLabel } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateRange } from '@/utils/date'
@@ -99,7 +74,7 @@ interface SearchFormData {
   workOrderCode?: string
   vendorId?: number
   status?: number
-  receiptDate?: string[]
+  receiptDate?: [number | undefined, number | undefined]
 }
 
 const emit = defineEmits<{
@@ -118,8 +93,6 @@ const formData = reactive<SearchFormData>({
   status: undefined,
   receiptDate: undefined,
 }) // 搜索表单数据
-const statusColumns = getIntDictOptions(DICT_TYPE.MES_WM_OUTSOURCE_RECEIPT_STATUS)
-const statusPickerValue = computed(() => formData.status == null ? [] : [formData.status])
 const selectedVendorText = computed(() => {
   return selectedVendor.value
     ? `${selectedVendor.value.code || '-'} ${selectedVendor.value.name || ''}`.trim()
@@ -155,16 +128,6 @@ function handleVendorConfirm(vendors: MdVendorVO[]) {
   const vendor = vendors[0]
   selectedVendor.value = vendor
   formData.vendorId = vendor?.id
-}
-
-/** 确认状态 */
-function handleStatusConfirm({ value }: { value: number[] }) {
-  formData.status = value[0]
-}
-
-/** 清空状态 */
-function handleStatusClear() {
-  formData.status = undefined
 }
 
 /** 构造搜索参数 */

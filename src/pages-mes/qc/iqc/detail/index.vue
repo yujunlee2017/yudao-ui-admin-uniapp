@@ -86,9 +86,8 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref, watch } from 'vue'
 import { deleteIqc, finishIqc, getIqc } from '@/api/mes/qc/iqc'
 import { useAccess } from '@/hooks/useAccess'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import QcIndicatorResultSection from '../../components/qc-indicator-result-section.vue'
@@ -115,15 +114,13 @@ const MesQcTypeEnum = {
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/qc/iqc/detail/index')
 const formData = ref<QcIqcVO>() // 详情数据
 const deleting = ref(false) // 删除状态
 const finishing = ref(false) // 完成状态
 const canUpdate = computed(() => hasAccessByCodes(['mes:qc-iqc:update']))
 const canDelete = computed(() => hasAccessByCodes(['mes:qc-iqc:delete']))
 const isDraft = computed(() => formData.value?.status === MesQcStatusEnum.DRAFT)
-// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
-const currentId = computed(() => getRouteQueryNumber('id'))
+const currentId = computed(() => props.id ? Number(props.id) : undefined)
 
 /** 返回上一页 */
 function handleBack() {
@@ -156,8 +153,7 @@ async function getDetail() {
     const detailData = await getIqc(currentId.value)
     if (!detailData) {
       uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
-      // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 2 处 setTimeout(() => handleBack())）
-      setTimeout(() => handleBack(), 300)
+      delay(handleBack)
       return
     }
     formData.value = detailData
@@ -213,7 +209,7 @@ async function handleDelete() {
     await deleteIqc(currentId.value)
     toast.success('删除成功')
     uni.$emit('mes:qc:iqc:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

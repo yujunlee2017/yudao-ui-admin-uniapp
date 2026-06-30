@@ -62,7 +62,6 @@ import { createWorkshop, getWorkshop, updateWorkshop } from '@/api/mes/md/workst
 import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { getSimpleUserList } from '@/api/system/user'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
@@ -73,9 +72,7 @@ const props = defineProps<{ id?: number | string }>()
 definePage({ style: { navigationBarTitleText: '', navigationStyle: 'custom' } })
 
 const toast = useToast()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/md/workstation/workshop/form/index')
-// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
-const currentId = computed(() => getRouteQueryNumber('id'))
+const currentId = computed(() => props.id ? Number(props.id) : undefined)
 const getTitle = computed(() => currentId.value ? '编辑车间' : '新增车间')
 const formLoading = ref(false)
 interface MdWorkshopFormData extends MdWorkshopCreateReqVO {

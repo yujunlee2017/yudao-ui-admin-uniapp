@@ -39,7 +39,7 @@ import { computed, onMounted, ref } from 'vue'
 import { getHolidayByDay } from '@/api/mes/cal/holiday'
 import { useAccess } from '@/hooks/useAccess'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 
 const props = defineProps<{ day?: string }>()
@@ -71,8 +71,7 @@ async function getDetail() {
     const detailData = await getHolidayByDay(`${dayText.value} 00:00:00`)
     if (!detailData) {
       uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
-      // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 1 处 setTimeout(() => handleBack())）
-      setTimeout(() => handleBack(), 300)
+      delay(handleBack)
       return
     }
     formData.value = detailData

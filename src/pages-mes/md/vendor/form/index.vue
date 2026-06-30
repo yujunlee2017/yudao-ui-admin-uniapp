@@ -101,7 +101,6 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { createVendor, getVendor, updateVendor } from '@/api/mes/md/vendor'
 import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { getIntDictOptions, getStrDictOptions } from '@/hooks/useDict'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
@@ -110,9 +109,7 @@ import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 const props = defineProps<{ id?: number | string }>()
 definePage({ style: { navigationBarTitleText: '', navigationStyle: 'custom' } })
 const toast = useToast()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/md/vendor/form/index')
-// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
-const currentId = computed(() => getRouteQueryNumber('id'))
+const currentId = computed(() => props.id ? Number(props.id) : undefined)
 const getTitle = computed(() => currentId.value ? '编辑供应商' : '新增供应商')
 const formLoading = ref(false)
 interface MdVendorFormData extends MdVendorCreateReqVO {

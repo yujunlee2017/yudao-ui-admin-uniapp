@@ -42,16 +42,7 @@
           </wd-button>
         </view>
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          检验类型
-        </view>
-        <wd-radio-group v-model="formData.qcType" type="button">
-          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_QC_TYPE)" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.qcType" label="检验类型" :dict-type="DICT_TYPE.MES_QC_TYPE" all-option :all-value="undefined" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -67,10 +58,9 @@
 </template>
 
 <script lang="ts" setup>
-// TODO @YunaiV：搜索风格对齐 system/infra——wd-radio-group 状态/类型筛选改 yd-search-picker（配 dict-kind + all-option）；业务选择器（Selector/MesSearchSelectorField）后续评估收敛为 yd-search-picker
 import type { MdItemVO } from '@/api/mes/md/item'
 import { computed, reactive, ref } from 'vue'
-import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
+import { getDictLabel } from '@/hooks/useDict'
 import { DICT_TYPE } from '@/utils/constants'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import ItemSelector from '@/pages-mes/md/item/components/item-selector.vue'

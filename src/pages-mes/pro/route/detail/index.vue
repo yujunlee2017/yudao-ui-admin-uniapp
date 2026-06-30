@@ -40,14 +40,14 @@
       <view class="h-180rpx" />
     </scroll-view>
 
-    <MesFooterActions v-if="hasFooter" content-class="yd-detail-footer-actions">
-      <wd-button v-if="canUpdate" class="flex-1" type="primary" variant="plain" @click="handleStatusChange">
+    <MesFooterActions v-if="hasAccessByCodes(['mes:pro-route:update']) || hasAccessByCodes(['mes:pro-route:delete'])" content-class="yd-detail-footer-actions">
+      <wd-button v-if="hasAccessByCodes(['mes:pro-route:update'])" class="flex-1" type="primary" variant="plain" @click="handleStatusChange">
         {{ formData?.status === CommonStatusEnum.ENABLE ? '停用' : '启用' }}
       </wd-button>
-      <wd-button v-if="canUpdate" class="flex-1" type="warning" :disabled="!isDisabled" @click="handleEdit">
+      <wd-button v-if="hasAccessByCodes(['mes:pro-route:update'])" class="flex-1" type="warning" :disabled="!isDisabled" @click="handleEdit">
         编辑
       </wd-button>
-      <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" :disabled="!isDisabled" @click="handleDelete">
+      <wd-button v-if="hasAccessByCodes(['mes:pro-route:delete'])" class="flex-1" type="danger" :loading="deleting" :disabled="!isDisabled" @click="handleDelete">
         删除
       </wd-button>
     </MesFooterActions>
@@ -65,9 +65,8 @@ import { getRouteProcessListByRoute } from '@/api/mes/pro/route/process'
 import { getRouteProductListByRoute } from '@/api/mes/pro/route/product'
 import { getRouteProductBomList } from '@/api/mes/pro/route/productbom'
 import { useAccess } from '@/hooks/useAccess'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import RouteProcessList from '../components/route-process-list.vue'
@@ -90,12 +89,7 @@ const deleting = ref(false)
 const routeProcessCount = ref(0)
 const routeProductCount = ref(0)
 const routeBomCount = ref(0)
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/pro/route/detail/index')
-const routeId = computed(() => getRouteQueryNumber('id'))
-const canUpdate = computed(() => hasAccessByCodes(['mes:pro-route:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:pro-route:delete']))
-// TODO @YunaiV：纯权限的 canUpdate/canDelete/hasFooter 尽量内联到模板，避免额外 computed；只有状态条件组合才保留具名 computed。
-const hasFooter = computed(() => canUpdate.value || canDelete.value)
+const routeId = computed(() => props.id ? Number(props.id) : undefined)
 const isDisabled = computed(() => formData.value?.status === CommonStatusEnum.DISABLE)
 
 /** 返回上一页 */
@@ -113,8 +107,7 @@ async function getDetail() {
     const detailData = await getRoute(routeId.value)
     if (!detailData) {
       uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
-      // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 2 处 setTimeout(() => handleBack())）
-      setTimeout(() => handleBack(), 300)
+      delay(handleBack)
       return
     }
     formData.value = detailData
@@ -201,7 +194,7 @@ async function handleDelete() {
     toast.close()
     toast.success('删除成功')
     uni.$emit('mes:pro:route:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } catch {
     toast.close()
   } finally {

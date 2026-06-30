@@ -38,12 +38,12 @@
     </view>
 
     <!-- 底部操作按钮 -->
-    <MesFooterActions v-if="hasFooter" content-class="yd-detail-footer-actions">
-      <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+    <MesFooterActions v-if="hasAccessByCodes(['mes:md-unit-measure:update']) || hasAccessByCodes(['mes:md-unit-measure:delete'])" content-class="yd-detail-footer-actions">
+      <wd-button v-if="hasAccessByCodes(['mes:md-unit-measure:update'])" class="flex-1" type="warning" @click="handleEdit">
         编辑
       </wd-button>
       <wd-button
-        v-if="canDelete"
+        v-if="hasAccessByCodes(['mes:md-unit-measure:delete'])"
         class="flex-1"
         type="danger"
         :loading="deleting"
@@ -63,8 +63,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref, watch } from 'vue'
 import { deleteUnitMeasure, getUnitMeasure, getUnitMeasureSimpleList } from '@/api/mes/md/unitmeasure'
 import { useAccess } from '@/hooks/useAccess'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
@@ -81,16 +80,10 @@ definePage({
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/md/unitmeasure/detail/index')
 const formData = ref<MdUnitMeasureVO>() // 详情数据
 const unitOptions = ref<MdUnitMeasureVO[]>([]) // 单位选项
-// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
-const currentId = computed(() => getRouteQueryNumber('id')) // 当前详情编号
+const currentId = computed(() => props.id ? Number(props.id) : undefined) // 当前详情编号
 const deleting = ref(false) // 删除状态
-const canUpdate = computed(() => hasAccessByCodes(['mes:md-unit-measure:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:md-unit-measure:delete']))
-// TODO @YunaiV：纯权限的 canUpdate/canDelete/hasFooter 尽量内联到模板，避免额外 computed；只有状态条件组合才保留具名 computed。
-const hasFooter = computed(() => canUpdate.value || canDelete.value)
 const primaryUnitName = computed(() => {
   const primaryId = formData.value?.primaryId
   if (!primaryId) {
@@ -163,8 +156,7 @@ async function handleDelete() {
     toast.close()
     toast.success('删除成功')
     uni.$emit('mes:md:unitmeasure:reload')
-    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 1 处 setTimeout(() => handleBack())）
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } catch {
     toast.close()
   } finally {

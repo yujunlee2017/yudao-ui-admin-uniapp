@@ -225,7 +225,7 @@ definePage({
 const dialog = useDialog()
 const toast = useToast()
 const { getRouteQueryNumber, getRouteQueryValue } = useRouteQuery(props, '/pages-mes/wm/productsales/form/index')
-const routeId = computed(() => getRouteQueryNumber('id')) // 路由编号
+const routeId = computed(() => props.id ? Number(props.id) : undefined) // 路由编号
 const routeNoticeId = computed(() => getRouteQueryNumber('noticeId')) // 路由发货通知编号
 const routeMode = computed(() => String(getRouteQueryValue('mode') || '')) // 路由模式
 const currentId = ref<number>() // 当前编辑编号

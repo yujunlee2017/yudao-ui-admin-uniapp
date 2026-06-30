@@ -70,9 +70,8 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref, watch } from 'vue'
 import { deletePackage, finishPackage, getPackage } from '@/api/mes/wm/packages'
 import { useAccess } from '@/hooks/useAccess'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmPackageStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import PackageLineList from '../components/package-line-list.vue'
@@ -92,11 +91,10 @@ definePage({
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/wm/packages/detail/index')
 const formData = ref<WmPackageVO>() // 详情数据
 const deleting = ref(false) // 删除状态
 const finishLoading = ref(false) // 完成状态
-const packageId = computed(() => getRouteQueryNumber('id'))
+const packageId = computed(() => props.id ? Number(props.id) : undefined)
 const canUpdate = computed(() => {
   return formData.value?.status === MesWmPackageStatusEnum.PREPARE && hasAccessByCodes(['mes:wm-package:update'])
 })
@@ -126,8 +124,7 @@ async function getDetail() {
   const detailData = await getPackage(packageId.value)
   if (!detailData) {
     uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
-    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 2 处 setTimeout(() => handleBack())）
-    setTimeout(() => handleBack(), 300)
+    delay(handleBack)
     return
   }
   formData.value = detailData

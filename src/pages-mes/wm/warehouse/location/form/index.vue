@@ -50,17 +50,14 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { createWarehouseLocation, getWarehouseLocation, updateWarehouseLocation } from '@/api/mes/wm/warehouse/location'
 import { getWarehouseSimpleList } from '@/api/mes/wm/warehouse'
 import { generateAutoCode } from '@/api/mes/md/autocode/record'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{ id?: number | string }>()
 definePage({ style: { navigationBarTitleText: '', navigationStyle: 'custom' } })
 const toast = useToast()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/wm/warehouse/location/form/index')
-// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
-const currentId = computed(() => getRouteQueryNumber('id'))
+const currentId = computed(() => props.id ? Number(props.id) : undefined)
 const getTitle = computed(() => currentId.value ? '编辑库区' : '新增库区')
 const formLoading = ref(false)
 interface WmWarehouseLocationFormData extends Omit<WmWarehouseLocationCreateReqVO, 'warehouseId'> {
@@ -147,8 +144,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:wm:warehouse-location:reload')
-    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 1 处 setTimeout(() => handleBack())）
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

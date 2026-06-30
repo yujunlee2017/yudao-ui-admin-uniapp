@@ -16,17 +16,14 @@
           <wd-form-item title="仓库名称" title-width="220rpx" prop="name">
             <wd-input v-model="formData.name" placeholder="请输入仓库名称" clearable />
           </wd-form-item>
-          <wd-form-item title="负责人" title-width="220rpx">
-            <view class="min-w-0 flex flex-1 items-center justify-end gap-12rpx">
-              <view class="min-w-0 flex-1 truncate text-right text-28rpx" :class="chargeUserDisplayValue ? 'text-[#333]' : 'text-[#999]'" @click="userPickerVisible = true">
-                {{ chargeUserDisplayValue || '请选择负责人' }}
-              </view>
-              <wd-button v-if="formData.chargeUserId !== undefined" size="small" variant="plain" @click.stop="formData.chargeUserId = undefined">
-                清空
-              </wd-button>
-            </view>
-          </wd-form-item>
-          <wd-picker v-model:visible="userPickerVisible" :model-value="userPickerValue" :columns="userOptions" label-key="nickname" value-key="id" @confirm="handleUserConfirm" /> <!-- TODO @YunaiV：仓库负责人选择改用 system-select/user-picker.vue（wm 内 packages/stocktaking-task 已用，对齐基线） -->
+          <UserPicker
+            v-model="formData.chargeUserId"
+            label="负责人"
+            label-width="220rpx"
+            prop="chargeUserId"
+            type="radio"
+            placeholder="请选择负责人"
+          />
           <wd-form-item title="仓库地址" title-width="220rpx" prop="address">
             <wd-textarea v-model="formData.address" placeholder="请输入仓库地址" :maxlength="200" show-word-limit clearable />
           </wd-form-item>
@@ -56,15 +53,13 @@
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { WmWarehouseCreateReqVO } from '@/api/mes/wm/warehouse'
-import type { User } from '@/api/system/user'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref, watch } from 'vue'
 import { createWarehouse, getWarehouse, updateWarehouse } from '@/api/mes/wm/warehouse'
 import { generateAutoCode } from '@/api/mes/md/autocode/record'
-import { getSimpleUserList } from '@/api/system/user'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
+import UserPicker from '@/components/system-select/user-picker.vue'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{ id?: number | string }>()
@@ -77,9 +72,7 @@ definePage({
 })
 
 const toast = useToast()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/wm/warehouse/form/index')
-// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
-const currentId = computed(() => getRouteQueryNumber('id'))
+const currentId = computed(() => props.id ? Number(props.id) : undefined)
 const getTitle = computed(() => currentId.value ? '编辑仓库' : '新增仓库')
 const formLoading = ref(false)
 interface WmWarehouseFormData extends WmWarehouseCreateReqVO {
@@ -107,28 +100,9 @@ const formSchema = createFormSchema({
   name: [{ required: true, message: '仓库名称不能为空' }],
 })
 const formRef = ref<FormInstance>()
-const userOptions = ref<User[]>([])
-const userPickerVisible = ref(false)
-const userPickerValue = computed(() => formData.value.chargeUserId === undefined ? [] : [formData.value.chargeUserId])
-
-const chargeUserDisplayValue = computed(() => {
-  if (formData.value.chargeUserId === undefined) {
-    return ''
-  }
-  const user = userOptions.value.find(u => u.id === formData.value.chargeUserId)
-  return user?.nickname || user?.name || String(formData.value.chargeUserId)
-})
 
 function handleBack() {
   navigateBackPlus('/pages-mes/wm/warehouse/index')
-}
-
-async function loadOptions() {
-  userOptions.value = await getSimpleUserList() || []
-}
-
-function handleUserConfirm({ value }: { value: Array<number | string> }) {
-  formData.value.chargeUserId = Number(value[0])
 }
 
 async function getDetail() {
@@ -136,6 +110,11 @@ async function getDetail() {
     return
   }
   const data = await getWarehouse(currentId.value)
+  if (!data) {
+    uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+    delay(handleBack)
+    return
+  }
   formData.value = { id: data.id, code: data.code, name: data.name, address: data.address || '', area: Number(data.area ?? 0), chargeUserId: data.chargeUserId ?? undefined, frozen: data.frozen, remark: data.remark || '' }
 }
 
@@ -176,16 +155,14 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:wm:warehouse:reload')
-    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 1 处 setTimeout(() => handleBack())）
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }
 }
 
-onMounted(async () => {
-  await loadOptions()
-  await loadPageData()
+onMounted(() => {
+  loadPageData()
 })
 
 watch(currentId, () => {

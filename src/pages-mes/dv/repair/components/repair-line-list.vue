@@ -31,12 +31,13 @@
       </view>
       <view v-if="item.malfunctionUrl" class="mb-8rpx flex text-26rpx text-[#666]">
         <text class="mr-8rpx shrink-0 text-[#999]">故障图片：</text>
-        <!-- TODO @YunaiV：图片展示改用 wd-img（width/height/mode="aspectFill"/enable-preview，去掉手写占位），对齐 AGENTS.md -->
-        <image
+        <wd-img
           :src="item.malfunctionUrl"
+          width="96rpx"
+          height="96rpx"
+          radius="8rpx"
           mode="aspectFill"
-          class="h-96rpx w-96rpx rounded-8rpx"
-          @click="handlePreviewImage(item.malfunctionUrl)"
+          enable-preview
         />
       </view>
       <view class="mb-8rpx flex text-26rpx text-[#666]">
@@ -59,12 +60,9 @@
   </MesLineListShell>
 
   <!-- 明细表单弹窗 -->
-  <!-- TODO @YunaiV：本 wd-popup 去掉 transition="fade" :duration="0"，对齐 system/infra（基线不带这俩属性） -->
   <wd-popup
     v-model="formVisible"
     position="top"
-    transition="fade"
-    :duration="0"
     :custom-style="getTopPopupStyle()"
     :modal-style="getTopPopupModalStyle()"
   >
@@ -237,14 +235,6 @@ function openSubjectSelector() {
 function handleSubjectConfirm(item: DvSubjectVO) {
   selectedSubject.value = item
   formData.value.subjectId = item.id
-}
-
-/** 预览故障图片 */
-function handlePreviewImage(url: string) {
-  uni.previewImage({
-    urls: [url],
-    current: url,
-  })
 }
 
 /** 提交明细 */

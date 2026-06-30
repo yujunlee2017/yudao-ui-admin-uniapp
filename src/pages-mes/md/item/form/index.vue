@@ -107,9 +107,8 @@ import { createItem, getItem, updateItem } from '@/api/mes/md/item'
 import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { getItemTypeList } from '@/api/mes/md/item/type'
 import { getUnitMeasureSimpleList } from '@/api/mes/md/unitmeasure'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { handleTree } from '@/utils/tree'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
@@ -132,9 +131,7 @@ interface MdItemFormData extends Omit<MdItemCreateReqVO, 'unitMeasureId' | 'item
 }
 
 const toast = useToast()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/md/item/form/index')
-// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
-const currentId = computed(() => getRouteQueryNumber('id')) // 当前物料编号
+const currentId = computed(() => props.id ? Number(props.id) : undefined) // 当前物料编号
 const getTitle = computed(() => currentId.value ? '编辑物料产品' : '新增物料产品')
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<MdItemFormData>(getDefaultFormData()) // 表单数据
@@ -311,8 +308,7 @@ async function handleSubmit() {
       await updateItem(updateReq)
       toast.success('修改成功')
       uni.$emit('mes:md:item:reload')
-      // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 2 处 setTimeout(() => handleBack())）
-      setTimeout(() => handleBack(), 500)
+      delay(handleBack)
     } else {
       const id = await createItem(req)
       toast.success('新增成功')

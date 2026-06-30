@@ -128,7 +128,8 @@ const toast = useToast()
 const list = ref<QcOqcVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<QcOqcVO>>() // 分页组件引用
 const queryParams = ref<Partial<QcOqcPageParam>>({}) // 查询参数
-const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索组件引用const canUpdate = computed(() => hasAccessByCodes(['mes:qc-oqc:update']))
+const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索组件引用
+const canUpdate = computed(() => hasAccessByCodes(['mes:qc-oqc:update']))
 const canDelete = computed(() => hasAccessByCodes(['mes:qc-oqc:delete']))
 
 /** 返回上一页 */

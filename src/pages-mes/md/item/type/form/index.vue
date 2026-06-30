@@ -88,7 +88,7 @@ import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { getIntDictOptions, getStrDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { handleTree } from '@/utils/tree'
 import { createFormSchema } from '@/utils/wot'
@@ -104,7 +104,7 @@ definePage({
 
 const toast = useToast()
 const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/md/item/type/form/index')
-const routeId = computed(() => getRouteQueryNumber('id')) // 当前路由编号
+const routeId = computed(() => props.id ? Number(props.id) : undefined) // 当前路由编号
 const routeParentId = computed(() => getRouteQueryNumber('parentId')) // 当前父分类编号
 const isEdit = computed(() => routeId.value !== undefined)
 const getTitle = computed(() => isEdit.value ? '编辑物料产品分类' : '新增物料产品分类')
@@ -246,8 +246,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:md:item:type:reload')
-    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 1 处 setTimeout(() => handleBack())）
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

@@ -106,7 +106,6 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref, watch } from 'vue'
 import { createAutoCodeRule, getAutoCodeRule, updateAutoCodeRule } from '@/api/mes/md/autocode/rule'
 import { getBoolDictOptions, getIntDictOptions } from '@/hooks/useDict'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
@@ -125,8 +124,7 @@ definePage({
 })
 
 const toast = useToast()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/md/autocode/form/index')
-const numericRouteId = computed(() => getRouteQueryNumber('id')) // 当前路由编号
+const numericRouteId = computed(() => props.id ? Number(props.id) : undefined) // 当前路由编号
 const isEdit = computed(() => numericRouteId.value !== undefined)
 const getTitle = computed(() => isEdit.value ? '编辑编码规则' : '新增编码规则')
 const formLoading = ref(false) // 表单提交状态
@@ -207,7 +205,6 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:md:autocode:reload')
-    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 1 处 setTimeout(() => handleBack())）
     setTimeout(() => {
       handleBack()
     }, 500)

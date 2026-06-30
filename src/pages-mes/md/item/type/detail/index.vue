@@ -58,9 +58,8 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref, watch } from 'vue'
 import { deleteItemType, getItemType, getItemTypeList } from '@/api/mes/md/item/type'
 import { useAccess } from '@/hooks/useAccess'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 
@@ -76,9 +75,7 @@ definePage({
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/md/item/type/detail/index')
-// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
-const currentId = computed(() => getRouteQueryNumber('id')) // 当前分类编号
+const currentId = computed(() => props.id ? Number(props.id) : undefined) // 当前分类编号
 const formData = ref<MdItemTypeVO>() // 详情数据
 const deleting = ref(false) // 删除状态
 const parentName = ref<string>() // 上级分类名称
@@ -172,8 +169,7 @@ async function handleDelete() {
     toast.close()
     toast.success('删除成功')
     uni.$emit('mes:md:item:type:reload')
-    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 1 处 setTimeout(() => handleBack())）
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } catch {
     toast.close()
   } finally {

@@ -22,13 +22,7 @@
         <!-- SOP 卡片列表 -->
         <view class="p-24rpx">
           <view v-for="sop in list" :key="sop.id" class="mb-20rpx overflow-hidden rounded-12rpx bg-white shadow-sm">
-            <view class="h-320rpx bg-[#f5f7fa]" @click="handlePreview(sop.url)">
-              <!-- TODO @YunaiV：图片展示改用 wd-img（width/height/mode="aspectFill"/enable-preview，去掉手写占位），对齐 AGENTS.md -->
-              <image v-if="sop.url" :src="sop.url" mode="aspectFill" class="h-full w-full" />
-              <view v-else class="h-full flex items-center justify-center">
-                <wd-icon name="picture" size="64rpx" color="#c0c4cc" />
-              </view>
-            </view>
+            <wd-img v-if="sop.url" :src="sop.url" width="100%" height="320rpx" mode="aspectFill" enable-preview />
             <view class="p-24rpx">
               <view class="mb-12rpx truncate text-30rpx text-[#333] font-semibold">
                 {{ sop.title }}
@@ -130,7 +124,7 @@ import { createProductSop, deleteProductSop, getProductSopListByItemId, updatePr
 import { getProcessSimpleList } from '@/api/mes/pro/process'
 import { useAccess } from '@/hooks/useAccess'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 
@@ -192,14 +186,6 @@ function getProcessLabel(sop: MdProductSopVO): string {
     return `${name} (${code})`
   }
   return name || code || '-'
-}
-
-/** 预览图片 */
-function handlePreview(url?: string) {
-  if (!url) {
-    return
-  }
-  uni.previewImage({ urls: [url] })
 }
 
 /** 加载工序选项 */
@@ -351,8 +337,7 @@ async function handleDelete(sop: MdProductSopVO) {
 onMounted(async () => {
   if (!props.itemId) {
     uni.showToast({ icon: 'none', title: '缺少物料编号' })
-    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 1 处 setTimeout(() => handleBack())）
-    setTimeout(() => handleBack(), 1000)
+    delay(handleBack)
     return
   }
   await Promise.all([loadProcessOptions(), loadList()])

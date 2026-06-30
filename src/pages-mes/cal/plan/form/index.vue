@@ -86,9 +86,8 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { confirmPlan, createPlan, getPlan, updatePlan } from '@/api/mes/cal/plan'
 import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import PlanShiftList from '../components/plan-shift-list.vue'
@@ -118,9 +117,7 @@ definePage({
 
 const dialog = useDialog()
 const toast = useToast()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/cal/plan/form/index')
-// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
-const currentId = computed(() => getRouteQueryNumber('id'))
+const currentId = computed(() => props.id ? Number(props.id) : undefined)
 const getTitle = computed(() => currentId.value ? '编辑排班计划' : '新增排班计划')
 const formLoading = ref(false) // 表单提交状态
 const confirmLoading = ref(false) // 确认状态
@@ -226,8 +223,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:cal:plan:reload')
-    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 2 处 setTimeout(() => handleBack())）
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }
@@ -256,7 +252,7 @@ async function handleConfirm() {
     await confirmPlan(currentId.value)
     toast.success('确认成功')
     uni.$emit('mes:cal:plan:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     confirmLoading.value = false
   }

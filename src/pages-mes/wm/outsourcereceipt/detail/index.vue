@@ -84,9 +84,8 @@ import {
   submitOutsourceReceipt,
 } from '@/api/mes/wm/outsourcereceipt'
 import { useAccess } from '@/hooks/useAccess'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MesWmOutsourceReceiptStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import OutsourceReceiptLineList from '../components/outsource-receipt-line-list.vue'
@@ -106,9 +105,7 @@ const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
 const formData = ref<WmOutsourceReceiptVO>() // 详情数据
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/wm/outsourcereceipt/detail/index')
-// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
-const currentId = computed(() => getRouteQueryNumber('id')) // 当前详情编号
+const currentId = computed(() => props.id ? Number(props.id) : undefined) // 当前详情编号
 const deleting = ref(false) // 删除状态
 const submitting = ref(false) // 提交状态
 const canceling = ref(false) // 取消状态
@@ -160,8 +157,7 @@ async function getDetail() {
     const detailData = await getOutsourceReceipt(currentId.value)
     if (!detailData) {
       uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
-      // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 2 处 setTimeout(() => handleBack())）
-      setTimeout(() => handleBack(), 300)
+      delay(handleBack)
       return
     }
     formData.value = detailData

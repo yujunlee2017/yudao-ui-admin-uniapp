@@ -19,16 +19,7 @@
         </view>
         <wd-input v-model="formData.code" placeholder="请输入报工单号" clearable />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          报工类型
-        </view>
-        <wd-radio-group v-model="formData.type" type="button">
-          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_PRO_FEEDBACK_TYPE)" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.type" label="报工类型" :dict-type="DICT_TYPE.MES_PRO_FEEDBACK_TYPE" all-option :all-value="undefined" />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           生产工单
@@ -61,22 +52,8 @@
         type="radio"
         placeholder="请选择记录人"
       />
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          状态
-        </view>
-        <wd-radio-group v-model="formData.status" type="button">
-          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_PRO_FEEDBACK_STATUS)" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          报工时间
-        </view>
-        <wd-calendar v-model="formData.feedbackTime" type="daterange" />
-      </view>
+      <yd-search-picker v-model="formData.status" label="状态" :dict-type="DICT_TYPE.MES_PRO_FEEDBACK_STATUS" all-option :all-value="undefined" />
+      <yd-search-date-range v-model="formData.feedbackTime" label="报工时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -93,13 +70,12 @@
 </template>
 
 <script lang="ts" setup>
-// TODO @YunaiV：搜索风格对齐 system/infra——wd-radio-group 状态/类型筛选改 yd-search-picker（配 dict-kind + all-option）；wd-calendar 日期范围改全局 yd-search-date-range；业务选择器（Selector/MesSearchSelectorField）后续评估收敛为 yd-search-picker
 import type { ProFeedbackQueryParams } from '@/api/mes/pro/feedback'
 import type { MdItemVO } from '@/api/mes/md/item'
 import type { ProWorkOrderVO } from '@/api/mes/pro/workorder'
 import { computed, reactive, ref } from 'vue'
 import UserPicker from '@/components/system-select/user-picker.vue'
-import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
+import { getDictLabel } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateRange } from '@/utils/date'

@@ -130,7 +130,6 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { createStockTakingPlan, getStockTakingPlan, updateStockTakingPlan } from '@/api/mes/wm/stocktaking/plan'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import { navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE, MesAutoCodeRuleCode, MesWmStockTakingTypeEnum } from '@/utils/constants'
@@ -163,8 +162,7 @@ definePage({
 })
 
 const toast = useToast()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/wm/stocktaking/plan/form/index')
-const routeId = computed(() => getRouteQueryNumber('id')) // 路由编号
+const routeId = computed(() => props.id ? Number(props.id) : undefined) // 路由编号
 const currentId = ref<number>() // 当前编辑编号
 const getTitle = computed(() => currentId.value ? '编辑盘点方案' : '新增盘点方案')
 const formLoading = ref(false) // 表单提交状态
