@@ -13,16 +13,7 @@
     @close="visible = false"
   >
     <view class="yd-search-form-container">
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          业务类型
-        </view>
-        <wd-radio-group v-model="formData.bizType" type="button">
-          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_WM_BARCODE_BIZ_TYPE)" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.bizType" label="业务类型" :dict-type="DICT_TYPE.MES_WM_BARCODE_BIZ_TYPE" all-option :all-value="undefined" />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           业务编码
@@ -66,10 +57,9 @@
 </template>
 
 <script lang="ts" setup>
-// TODO @YunaiV：搜索风格对齐 system/infra——wd-radio-group 业务类型筛选改 yd-search-picker（bizType，dict-kind=MES_WM_BARCODE_BIZ_TYPE + all-option）
 import type { WmBarcodeQueryParams } from '@/api/mes/wm/barcode'
 import { computed, reactive, ref } from 'vue'
-import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
+import { getDictLabel } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 

@@ -65,7 +65,6 @@
 </template>
 
 <script lang="ts" setup>
-// TODO @YunaiV：搜索风格对齐 system/infra——工单/物料选择器 MesSearchSelectorField+XxxSelector 后续评估收敛为 yd-search-picker
 import type { MdItemVO } from '@/api/mes/md/item'
 import type { ProWorkOrderVO } from '@/api/mes/pro/workorder'
 import type { WmProductReceiptQueryParams } from '@/api/mes/wm/productreceipt'

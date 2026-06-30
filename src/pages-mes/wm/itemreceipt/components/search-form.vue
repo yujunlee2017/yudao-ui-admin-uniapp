@@ -8,8 +8,6 @@
   <wd-popup
     v-model="visible"
     position="top"
-    transition="fade"
-    :duration="0"
     :custom-style="getTopPopupStyle()"
     :modal-style="getTopPopupModalStyle()"
     @close="visible = false"
@@ -39,16 +37,7 @@
           @clear="clearVendor"
         />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          入库日期
-        </view>
-        <wd-calendar
-          v-model="receiptDateRange"
-          type="daterange"
-          placeholder="请选择入库日期范围"
-        />
-      </view>
+      <yd-search-date-range v-model="receiptDateRange" label="入库日期" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -64,7 +53,6 @@
 </template>
 
 <script lang="ts" setup>
-// TODO @YunaiV：搜索风格对齐 system/infra——① wd-calendar 日期范围改全局 yd-search-date-range；② wd-popup 去掉 transition="fade" :duration="0"；③ 供应商选择器 MesSearchSelectorField+VendorSelector 后续评估收敛为 yd-search-picker
 import type { MdVendorVO } from '@/api/mes/md/vendor'
 import type { WmItemReceiptQueryParams } from '@/api/mes/wm/itemreceipt'
 import { computed, reactive, ref } from 'vue'
@@ -81,7 +69,7 @@ const emit = defineEmits<{
 const visible = ref(false) // 搜索弹窗显示状态
 const vendorSelectorRef = ref<InstanceType<typeof VendorSelector>>() // 供应商选择器
 const selectedVendor = ref<MdVendorVO>() // 已选供应商
-const receiptDateRange = ref<[string, string]>() // 入库日期范围
+const receiptDateRange = ref<[number | undefined, number | undefined]>() // 入库日期范围
 const formData = reactive({
   code: '',
   name: '',

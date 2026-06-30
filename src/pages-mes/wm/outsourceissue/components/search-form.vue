@@ -8,8 +8,6 @@
   <wd-popup
     v-model="visible"
     position="top"
-    transition="fade"
-    :duration="0"
     :custom-style="getTopPopupStyle()"
     :modal-style="getTopPopupModalStyle()"
     @close="visible = false"
@@ -38,12 +36,7 @@
           <wd-icon name="arrow-right" size="28rpx" color="#999" />
         </view>
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          发料日期
-        </view>
-        <wd-calendar v-model="issueDateRange" type="daterange" placeholder="请选择发料日期范围" />
-      </view>
+      <yd-search-date-range v-model="issueDateRange" label="发料日期" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -59,7 +52,6 @@
 </template>
 
 <script lang="ts" setup>
-// TODO @YunaiV：搜索风格对齐 system/infra——① wd-calendar 日期范围改全局 yd-search-date-range（issueDate）；② wd-popup 去掉 transition="fade" :duration="0"；③ 供应商选择器 MesSearchSelectorField/VendorSelector 后续评估收敛为 yd-search-picker
 import type { MdVendorVO } from '@/api/mes/md/vendor'
 import type { WmOutsourceIssueQueryParams } from '@/api/mes/wm/outsourceissue'
 import { computed, reactive, ref } from 'vue'
@@ -73,7 +65,7 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const issueDateRange = ref<[string, string]>() // 发料日期范围
+const issueDateRange = ref<[number | undefined, number | undefined]>() // 发料日期范围
 const selectedVendor = ref<MdVendorVO>() // 当前选择供应商
 const vendorSelectorRef = ref<InstanceType<typeof VendorSelector>>() // 供应商选择器引用
 const formData = reactive({

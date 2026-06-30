@@ -58,7 +58,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { getHolidayByDay, saveHoliday } from '@/api/mes/cal/holiday'
 import { getIntDictOptions } from '@/hooks/useDict'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 
@@ -142,8 +142,7 @@ async function handleSubmit() {
     })
     toast.success('设置成功')
     uni.$emit('mes:cal:holiday:reload')
-    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 1 处 setTimeout(() => handleBack())）
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

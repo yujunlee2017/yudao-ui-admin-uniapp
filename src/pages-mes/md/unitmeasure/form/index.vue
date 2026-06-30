@@ -82,7 +82,6 @@ import {
   getUnitMeasureSimpleList,
   updateUnitMeasure,
 } from '@/api/mes/md/unitmeasure'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum } from '@/utils/constants'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
@@ -98,9 +97,7 @@ definePage({
 })
 
 const toast = useToast()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/md/unitmeasure/form/index')
-// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
-const currentId = computed(() => getRouteQueryNumber('id'))
+const currentId = computed(() => props.id ? Number(props.id) : undefined)
 const getTitle = computed(() => currentId.value ? '编辑计量单位' : '新增计量单位')
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<MdUnitMeasureVO>(getDefaultFormData()) // 表单数据

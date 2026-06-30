@@ -19,16 +19,7 @@
         </view>
         <wd-input v-model="formData.code" placeholder="请输入检验单编号" clearable />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          来源单据类型
-        </view>
-        <wd-radio-group v-model="formData.sourceDocType" type="button">
-          <wd-radio v-for="dict in sourceDocTypeOptions" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.sourceDocType" label="来源单据类型" :columns="sourceDocTypeOptions" all-option :all-value="undefined" />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           来源单据编号
@@ -60,16 +51,7 @@
         </view>
         <wd-input v-model="formData.batchCode" placeholder="请输入批次号" clearable />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          检测结果
-        </view>
-        <wd-radio-group v-model="formData.checkResult" type="button">
-          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_QC_CHECK_RESULT)" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.checkResult" label="检测结果" :dict-type="DICT_TYPE.MES_QC_CHECK_RESULT" all-option :all-value="undefined" />
       <view class="yd-search-form-item">
         <UserPicker v-model="formData.inspectorUserId" label="检测人员" type="radio" placeholder="请选择检测人员" />
       </view>
@@ -88,7 +70,6 @@
 </template>
 
 <script lang="ts" setup>
-// TODO @YunaiV：搜索风格对齐 system/infra——wd-radio-group 状态/类型筛选改 yd-search-picker（配 dict-kind + all-option）；业务选择器（Selector/MesSearchSelectorField）后续评估收敛为 yd-search-picker
 import type { MdItemVO } from '@/api/mes/md/item'
 import type { QcRqcPageParam } from '@/api/mes/qc/rqc'
 import UserPicker from '@/components/system-select/user-picker.vue'

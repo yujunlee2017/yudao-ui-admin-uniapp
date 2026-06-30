@@ -22,11 +22,11 @@
       <WorkstationResourceList :workstation-id="currentId" mode="detail" />
       <view class="h-160rpx" />
     </scroll-view>
-    <MesFooterActions v-if="hasFooter" content-class="yd-detail-footer-actions">
-      <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+    <MesFooterActions v-if="hasAccessByCodes(['mes:md-workstation:update']) || hasAccessByCodes(['mes:md-workstation:delete'])" content-class="yd-detail-footer-actions">
+      <wd-button v-if="hasAccessByCodes(['mes:md-workstation:update'])" class="flex-1" type="warning" @click="handleEdit">
         编辑
       </wd-button>
-      <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+      <wd-button v-if="hasAccessByCodes(['mes:md-workstation:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
         删除
       </wd-button>
     </MesFooterActions>
@@ -46,8 +46,7 @@ import { getWarehouseSimpleList } from '@/api/mes/wm/warehouse'
 import { getWarehouseLocationSimpleList } from '@/api/mes/wm/warehouse/location'
 import { getWarehouseAreaSimpleList } from '@/api/mes/wm/warehouse/area'
 import { useAccess } from '@/hooks/useAccess'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
@@ -59,9 +58,7 @@ definePage({ style: { navigationBarTitleText: '', navigationStyle: 'custom' } })
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/md/workstation/detail/index')
-// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
-const currentId = computed(() => getRouteQueryNumber('id'))
+const currentId = computed(() => props.id ? Number(props.id) : undefined)
 interface MdWorkstationDetail extends MdWorkstationVO {
   warehouseName?: string
   locationName?: string
@@ -69,10 +66,6 @@ interface MdWorkstationDetail extends MdWorkstationVO {
 }
 const formData = ref<MdWorkstationDetail>()
 const deleting = ref(false)
-const canUpdate = computed(() => hasAccessByCodes(['mes:md-workstation:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:md-workstation:delete']))
-// TODO @YunaiV：纯权限的 canUpdate/canDelete/hasFooter 尽量内联到模板，避免额外 computed；只有状态条件组合才保留具名 computed。
-const hasFooter = computed(() => canUpdate.value || canDelete.value)
 
 function handleBack() {
   navigateBackPlus('/pages-mes/md/workstation/index')
@@ -139,8 +132,7 @@ async function handleDelete() {
     toast.close()
     toast.success('删除成功')
     uni.$emit('mes:md:workstation:reload')
-    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 1 处 setTimeout(() => handleBack())）
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } catch {
     toast.close()
   } finally {

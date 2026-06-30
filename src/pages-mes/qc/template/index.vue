@@ -97,7 +97,9 @@ const toast = useToast()
 const list = ref<QcTemplateVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<QcTemplateVO>>() // 分页组件引用
 const queryParams = ref<Partial<QcTemplatePageParam>>({}) // 查询参数
-const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索组件引用/** 返回上一页 */
+const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索组件引用
+
+/** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
 }

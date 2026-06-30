@@ -137,7 +137,7 @@ import { getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { useUserStore } from '@/store/user'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import ItemConsumeList from '../components/item-consume-list.vue'
@@ -214,9 +214,8 @@ const dialog = useDialog()
 const userStore = useUserStore()
 const formLoading = ref(false) // 表单提交状态
 const formRef = ref<FormInstance>() // 表单组件引用
-const { getRouteQueryNumber, getRouteQueryValue } = useRouteQuery(props, '/pages-mes/pro/feedback/form/index')
-// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
-const currentId = computed(() => getRouteQueryNumber('id'))
+const { getRouteQueryValue } = useRouteQuery(props, '/pages-mes/pro/feedback/form/index')
+const currentId = computed(() => props.id ? Number(props.id) : undefined)
 const routeMode = computed(() => (getRouteQueryValue('mode') as FormMode) || 'create')
 const formMode = ref<FormMode>(routeMode.value)
 const workOrderSelectorRef = ref<InstanceType<typeof WorkOrderSelector>>() // 工单选择器引用
@@ -577,8 +576,7 @@ async function handleSubmitFeedback() {
     }
     toast.success('报工单已提交')
     uni.$emit('mes:pro:feedback:reload')
-    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 3 处 setTimeout(() => handleBack())）
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }
@@ -599,7 +597,7 @@ async function handleApprove() {
     const finished = await approveFeedback(formData.value.id)
     toast.success(finished ? '报工单已审批完成' : '报工成功，请等待质量检验完成')
     uni.$emit('mes:pro:feedback:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }
@@ -620,7 +618,7 @@ async function handleReject() {
     await rejectFeedback(formData.value.id)
     toast.success('报工单已驳回')
     uni.$emit('mes:pro:feedback:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

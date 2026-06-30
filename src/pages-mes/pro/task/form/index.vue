@@ -65,7 +65,7 @@ import { getWorkstation } from '@/api/mes/md/workstation'
 import { createTask, getTask, updateTask } from '@/api/mes/pro/task'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 import { createFormSchema } from '@/utils/wot'
 import TaskStatusTag from '../components/task-status-tag.vue'
@@ -110,8 +110,7 @@ const formLoading = ref(false) // 表单提交状态
 const taskDetail = ref<ProTaskVO>() // 编辑详情
 const selectedWorkstation = ref<MdWorkstationVO>() // 当前工作站
 const { getRouteQueryNumber, getRouteQueryValue } = useRouteQuery(props, '/pages-mes/pro/task/form/index')
-// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
-const currentId = computed(() => getRouteQueryNumber('id')) // 当前任务编号
+const currentId = computed(() => props.id ? Number(props.id) : undefined) // 当前任务编号
 const readonly = computed(() => getRouteQueryValue('readonly') === true || getRouteQueryValue('readonly') === 'true')
 const currentColorCode = computed(() => String(getRouteQueryValue('colorCode') || '#00AEF3')) // 当前甘特颜色
 const getTitle = computed(() => readonly.value ? '生产任务详情' : currentId.value ? '编辑生产任务' : '新增生产任务')
@@ -274,8 +273,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:pro:task:reload')
-    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 1 处 setTimeout(() => handleBack())）
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

@@ -13,8 +13,7 @@
         <wd-cell title="供应商评分" :value="formData?.score ?? '-'" />
         <wd-cell title="供应商简介" :value="formData?.description || '-'" />
         <wd-cell title="供应商 LOGO">
-          <!-- TODO @YunaiV：图片展示改用 wd-img（width/height/mode="aspectFill"/enable-preview，去掉手写占位），对齐 AGENTS.md -->
-          <image v-if="formData?.logo" :src="formData.logo" mode="aspectFit" class="h-96rpx w-96rpx rounded-8rpx" @click="handlePreviewLogo" />
+          <wd-img v-if="formData?.logo" :src="formData.logo" width="96rpx" height="96rpx" radius="8rpx" mode="aspectFill" enable-preview />
           <text v-else>-</text>
         </wd-cell>
         <wd-cell title="供应商地址" :value="formData?.address || '-'" />
@@ -37,11 +36,11 @@
       <VendorItemReceiptList :vendor-id="currentId" />
       <view class="h-160rpx" />
     </scroll-view>
-    <MesFooterActions v-if="hasFooter" content-class="yd-detail-footer-actions">
-      <wd-button v-if="canUpdate" class="flex-1" type="warning" @click="handleEdit">
+    <MesFooterActions v-if="hasAccessByCodes(['mes:md-vendor:update']) || hasAccessByCodes(['mes:md-vendor:delete'])" content-class="yd-detail-footer-actions">
+      <wd-button v-if="hasAccessByCodes(['mes:md-vendor:update'])" class="flex-1" type="warning" @click="handleEdit">
         编辑
       </wd-button>
-      <wd-button v-if="canDelete" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
+      <wd-button v-if="hasAccessByCodes(['mes:md-vendor:delete'])" class="flex-1" type="danger" :loading="deleting" @click="handleDelete">
         删除
       </wd-button>
     </MesFooterActions>
@@ -56,8 +55,7 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref, watch } from 'vue'
 import { deleteVendor, getVendor } from '@/api/mes/md/vendor'
 import { useAccess } from '@/hooks/useAccess'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
@@ -68,15 +66,9 @@ definePage({ style: { navigationBarTitleText: '', navigationStyle: 'custom' } })
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/md/vendor/detail/index')
 const formData = ref<MdVendorVO>()
-// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
-const currentId = computed(() => getRouteQueryNumber('id'))
+const currentId = computed(() => props.id ? Number(props.id) : undefined)
 const deleting = ref(false)
-const canUpdate = computed(() => hasAccessByCodes(['mes:md-vendor:update']))
-const canDelete = computed(() => hasAccessByCodes(['mes:md-vendor:delete']))
-// TODO @YunaiV：纯权限的 canUpdate/canDelete/hasFooter 尽量内联到模板，避免额外 computed；只有状态条件组合才保留具名 computed。
-const hasFooter = computed(() => canUpdate.value || canDelete.value)
 
 function handleBack() {
   navigateBackPlus('/pages-mes/md/vendor/index')
@@ -91,8 +83,7 @@ async function getDetail() {
     const detailData = await getVendor(currentId.value)
     if (!detailData) {
       uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
-      // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 2 处 setTimeout(() => handleBack())）
-      setTimeout(() => handleBack(), 300)
+      delay(handleBack)
       return
     }
     formData.value = detailData
@@ -115,12 +106,6 @@ function handleEdit() {
   uni.navigateTo({ url: `/pages-mes/md/vendor/form/index?id=${currentId.value}` })
 }
 
-/** 预览供应商 LOGO */
-function handlePreviewLogo() {
-  if (formData.value?.logo)
-    uni.previewImage({ urls: [formData.value.logo], current: formData.value.logo })
-}
-
 async function handleDelete() {
   if (!currentId.value) {
     return
@@ -137,7 +122,7 @@ async function handleDelete() {
     toast.close()
     toast.success('删除成功')
     uni.$emit('mes:md:vendor:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } catch {
     toast.close()
   } finally {

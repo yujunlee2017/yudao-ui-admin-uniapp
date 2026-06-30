@@ -31,12 +31,7 @@
         </view>
         <wd-input v-model="formData.orderSourceCode" placeholder="请输入来源单据编号" clearable />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          需求日期
-        </view>
-        <wd-calendar v-model="formData.requestDate" type="daterange" placeholder="请选择需求日期范围" />
-      </view>
+      <yd-search-date-range v-model="formData.requestDate" label="需求日期" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -50,7 +45,6 @@
 </template>
 
 <script lang="ts" setup>
-// TODO @YunaiV：搜索风格对齐 system/infra——wd-calendar 日期范围改全局 yd-search-date-range
 import type { ProWorkOrderQueryParams } from '@/api/mes/pro/workorder'
 import { computed, reactive, ref } from 'vue'
 import { formatDateRange } from '@/utils/date'
@@ -60,7 +54,7 @@ interface SearchFormData {
   code?: string
   name?: string
   orderSourceCode?: string
-  requestDate?: [number, number]
+  requestDate?: [number | undefined, number | undefined]
 }
 
 const emit = defineEmits<{

@@ -31,36 +31,9 @@
         </view>
         <wd-input v-model="formData.orderSourceCode" placeholder="请输入来源单据编号" clearable />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          工单类型
-        </view>
-        <wd-radio-group v-model="formData.type" type="button">
-          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_PRO_WORK_ORDER_TYPE)" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          工单状态
-        </view>
-        <wd-radio-group v-model="formData.status" type="button">
-          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_PRO_WORK_ORDER_STATUS)" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          需求日期
-        </view>
-        <wd-calendar
-          v-model="requestDateRange"
-          type="daterange"
-          placeholder="请选择需求日期范围"
-        />
-      </view>
+      <yd-search-picker v-model="formData.type" label="工单类型" :dict-type="DICT_TYPE.MES_PRO_WORK_ORDER_TYPE" all-option :all-value="undefined" />
+      <yd-search-picker v-model="formData.status" label="工单状态" :dict-type="DICT_TYPE.MES_PRO_WORK_ORDER_STATUS" all-option :all-value="undefined" />
+      <yd-search-date-range v-model="requestDateRange" label="需求日期" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -74,10 +47,9 @@
 </template>
 
 <script lang="ts" setup>
-// TODO @YunaiV：搜索风格对齐 system/infra——wd-radio-group 状态/类型筛选改 yd-search-picker（配 dict-kind + all-option）；wd-calendar 日期范围改全局 yd-search-date-range
 import type { ProWorkOrderQueryParams } from '@/api/mes/pro/workorder'
 import { computed, reactive, ref } from 'vue'
-import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
+import { getDictLabel } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateRange } from '@/utils/date'
@@ -88,7 +60,7 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const requestDateRange = ref<[string, string]>() // 需求日期范围
+const requestDateRange = ref<[number | undefined, number | undefined]>() // 需求日期范围
 const formData = reactive({
   code: '',
   name: '',

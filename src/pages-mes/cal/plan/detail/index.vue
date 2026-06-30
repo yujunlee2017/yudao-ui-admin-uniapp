@@ -54,9 +54,8 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref, watch } from 'vue'
 import { deletePlan, getPlan } from '@/api/mes/cal/plan'
 import { useAccess } from '@/hooks/useAccess'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
 import PlanShiftList from '../components/plan-shift-list.vue'
@@ -79,9 +78,7 @@ const dialog = useDialog()
 const toast = useToast()
 const formData = ref<CalPlanVO>() // 详情数据
 const deleting = ref(false) // 删除状态
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/cal/plan/detail/index')
-// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
-const planId = computed(() => getRouteQueryNumber('id'))
+const planId = computed(() => props.id ? Number(props.id) : undefined)
 const isPrepare = computed(() => formData.value?.status === MesCalPlanStatusEnum.PREPARE)
 
 /** 返回上一页 */
@@ -99,8 +96,7 @@ async function getDetail() {
     const detailData = await getPlan(planId.value)
     if (!detailData) {
       uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
-      // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 2 处 setTimeout(() => handleBack())）
-      setTimeout(() => handleBack(), 300)
+      delay(handleBack)
       return
     }
     formData.value = detailData
@@ -135,7 +131,7 @@ async function handleDelete() {
     await deletePlan(planId.value)
     toast.success('删除成功')
     uni.$emit('mes:cal:plan:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

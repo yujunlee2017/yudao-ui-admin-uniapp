@@ -89,7 +89,6 @@
 </template>
 
 <script lang="ts" setup>
-// TODO @YunaiV：搜索风格对齐 system/infra——业务选择器（Selector/MesSearchSelectorField）后续评估收敛为 yd-search-picker
 import { computed, reactive, ref } from 'vue'
 import type { MdClientVO } from '@/api/mes/md/client'
 import type { MdItemVO } from '@/api/mes/md/item'

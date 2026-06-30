@@ -164,7 +164,7 @@ import { getItem } from '@/api/mes/md/item'
 import { getBatchConfigByItemId, saveBatchConfig } from '@/api/mes/md/item/batchConfig'
 import { useAccess } from '@/hooks/useAccess'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 
 const props = defineProps<{ itemId?: number | string, mode?: string }>()
@@ -245,8 +245,7 @@ async function loadAll() {
     item.value = itemData
     if (!itemData.batchFlag) {
       uni.showToast({ icon: 'none', title: '该物料未启用批次管理' })
-      // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 2 处 setTimeout(() => handleBack())）
-      setTimeout(() => handleBack(), 1500)
+      delay(handleBack)
       return
     }
     formData.value = hydrateConfig(config)
@@ -316,7 +315,7 @@ async function handleSave() {
 onMounted(() => {
   if (!props.itemId) {
     uni.showToast({ icon: 'none', title: '缺少物料编号' })
-    setTimeout(() => handleBack(), 1000)
+    delay(handleBack)
     return
   }
   loadAll()

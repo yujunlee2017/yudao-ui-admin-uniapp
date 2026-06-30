@@ -47,7 +47,6 @@ import type { WmMaterialStockVO } from '@/api/mes/wm/materialstock'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref, watch } from 'vue'
 import { getMaterialStock, updateMaterialStockFrozen } from '@/api/mes/wm/materialstock'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import { navigateBackPlus } from '@/utils'
 import { formatDate } from '@/utils/date'
@@ -64,9 +63,7 @@ definePage({
 })
 
 const toast = useToast()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/wm/materialstock/form/index')
-// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
-const currentId = computed(() => getRouteQueryNumber('id'))
+const currentId = computed(() => props.id ? Number(props.id) : undefined)
 const formLoading = ref(false) // 表单提交状态
 const formData = ref<WmMaterialStockVO>() // 库存详情
 const frozen = ref(false) // 冻结状态
@@ -138,7 +135,6 @@ async function handleSubmit() {
     await updateMaterialStockFrozen({ id: formData.value.id, frozen: frozen.value })
     toast.success(`${actionText}成功`)
     uni.$emit('mes:wm:materialstock:reload')
-    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 1 处 setTimeout(() => handleBack())）
     setTimeout(() => {
       handleBack()
     }, 500)

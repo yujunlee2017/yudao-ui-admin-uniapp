@@ -75,19 +75,7 @@
         </view>
         <wd-input v-model="formData.lotNumber" placeholder="请输入生产批号" clearable />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          质量状态
-        </view>
-        <wd-radio-group v-model="formData.qualityStatus" type="button">
-          <wd-radio :value="undefined">
-            全部
-          </wd-radio>
-          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_WM_QUALITY_STATUS)" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.qualityStatus" label="质量状态" :dict-type="DICT_TYPE.MES_WM_QUALITY_STATUS" all-option :all-value="undefined" />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           采购订单编号
@@ -117,7 +105,6 @@
 </template>
 
 <script lang="ts" setup>
-// TODO @YunaiV：搜索风格对齐 system/infra——① wd-radio-group 质量状态筛选改 yd-search-picker（qualityStatus，配 dict-kind + all-option）；② 物料/供应商/客户选择器 MesSearchSelectorField+XxxSelector 后续评估收敛为 yd-search-picker
 import type { MdClientVO } from '@/api/mes/md/client'
 import type { MdItemVO } from '@/api/mes/md/item'
 import type { MdVendorVO } from '@/api/mes/md/vendor'

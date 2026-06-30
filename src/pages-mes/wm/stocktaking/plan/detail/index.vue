@@ -63,9 +63,8 @@ import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, ref, watch } from 'vue'
 import { deleteStockTakingPlan, getStockTakingPlan } from '@/api/mes/wm/stocktaking/plan'
 import { useAccess } from '@/hooks/useAccess'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import PlanParamList from '../components/plan-param-list.vue'
@@ -84,11 +83,9 @@ definePage({
 const { hasAccessByCodes } = useAccess()
 const dialog = useDialog()
 const toast = useToast()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/wm/stocktaking/plan/detail/index')
 const formData = ref<StockTakingPlanVO>() // 详情数据
 const deleting = ref(false) // 删除状态
-// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
-const planId = computed(() => getRouteQueryNumber('id'))
+const planId = computed(() => props.id ? Number(props.id) : undefined)
 const canUpdate = computed(() => {
   return formData.value?.status === CommonStatusEnum.DISABLE && hasAccessByCodes(['mes:wm-stock-taking-plan:update'])
 })
@@ -108,13 +105,12 @@ async function getDetail() {
     return
   }
   const detailData = await getStockTakingPlan(planId.value)
-    if (!detailData) {
-      uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
-      // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 2 处 setTimeout(() => handleBack())）
-      setTimeout(() => handleBack(), 300)
-      return
-    }
-    formData.value = detailData
+  if (!detailData) {
+    uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+    delay(handleBack)
+    return
+  }
+  formData.value = detailData
 }
 
 /** 初始化页面数据 */

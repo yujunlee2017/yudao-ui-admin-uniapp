@@ -64,7 +64,6 @@ import { getMachineryTypeList } from '@/api/mes/dv/machinery/type'
 import { getWorkshopSimpleList } from '@/api/mes/md/workstation/workshop'
 import { generateAutoCode } from '@/api/mes/md/autocode/record'
 import { getIntDictOptions } from '@/hooks/useDict'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
@@ -87,9 +86,7 @@ definePage({
 })
 
 const toast = useToast()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/dv/machinery/form/index')
-// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
-const currentId = computed(() => getRouteQueryNumber('id')) // 当前设备编号
+const currentId = computed(() => props.id ? Number(props.id) : undefined) // 当前设备编号
 const getTitle = computed(() => currentId.value ? '编辑设备' : '新增设备')
 const formLoading = ref(false)
 const formData = ref<Partial<DvMachineryVO>>(getDefaultFormData())

@@ -66,9 +66,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { cancelCard, deleteCard, finishCard, getCard, submitCard } from '@/api/mes/pro/card'
 import { getBarcodeByBusiness } from '@/api/mes/wm/barcode'
 import { useAccess } from '@/hooks/useAccess'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import CardProcessList from '../components/card-process-list.vue'
@@ -98,8 +97,7 @@ const toast = useToast()
 const formData = ref<ProCardVO>() // 详情数据
 const barcodeData = ref<WmBarcodeVO>() // 条码数据
 const deleting = ref(false) // 删除状态
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/pro/card/detail/index')
-const cardId = computed(() => getRouteQueryNumber('id') || 0)
+const cardId = computed(() => props.id ? Number(props.id) : 0)
 const workOrderText = computed(() => `${formData.value?.workOrderCode || '-'} / ${formData.value?.workOrderName || '-'}`)
 const isPrepare = computed(() => formData.value?.status === MesProCardStatusEnum.PREPARE)
 const isConfirmed = computed(() => formData.value?.status === MesProCardStatusEnum.CONFIRMED)
@@ -123,13 +121,12 @@ async function getDetail() {
     return
   }
   const detailData = await getCard(cardId.value)
-    if (!detailData) {
-      uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
-      // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 2 处 setTimeout(() => handleBack())）
-      setTimeout(() => handleBack(), 300)
-      return
-    }
-    formData.value = detailData
+  if (!detailData) {
+    uni.showToast({ icon: 'none', title: '详情不存在，已返回列表' })
+    delay(handleBack)
+    return
+  }
+  formData.value = detailData
   await getBarcodeDetail()
 }
 
@@ -216,7 +213,7 @@ async function handleDelete() {
     await deleteCard(formData.value.id)
     toast.success('删除成功')
     uni.$emit('mes:pro:card:reload')
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     deleting.value = false
   }

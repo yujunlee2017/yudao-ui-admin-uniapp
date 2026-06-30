@@ -95,7 +95,9 @@ const MesQcResultValueType = {
 const list = ref<QcIndicatorVO[]>([]) // 列表数据
 const pagingRef = ref<ZPagingRef<QcIndicatorVO>>() // 分页组件引用
 const queryParams = ref<Partial<QcIndicatorPageParam>>({}) // 查询参数
-const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索组件引用/** 返回上一页 */
+const searchFormRef = ref<InstanceType<typeof SearchForm>>() // 搜索组件引用
+
+/** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-mes/home/index')
 }

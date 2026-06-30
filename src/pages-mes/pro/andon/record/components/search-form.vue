@@ -51,22 +51,8 @@
           />
         </UserPicker>
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          处置状态
-        </view>
-        <wd-radio-group v-model="formData.status" type="button">
-          <wd-radio v-for="dict in getIntDictOptions(DICT_TYPE.MES_PRO_ANDON_STATUS)" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          发起时间
-        </view>
-        <wd-calendar v-model="createTimeRange" type="daterange" placeholder="请选择发起时间范围" />
-      </view>
+      <yd-search-picker v-model="formData.status" label="处置状态" :dict-type="DICT_TYPE.MES_PRO_ANDON_STATUS" all-option :all-value="undefined" />
+      <yd-search-date-range v-model="createTimeRange" label="发起时间" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -82,12 +68,11 @@
 </template>
 
 <script lang="ts" setup>
-// TODO @YunaiV：搜索风格对齐 system/infra——wd-radio-group 状态/类型筛选改 yd-search-picker（配 dict-kind + all-option）；wd-calendar 日期范围改全局 yd-search-date-range；业务选择器（Selector/MesSearchSelectorField）后续评估收敛为 yd-search-picker
 import type { User } from '@/api/system/user'
 import type { MdWorkstationVO } from '@/api/mes/md/workstation'
 import type { ProAndonRecordQueryParams } from '@/api/mes/pro/andon/record'
 import { computed, reactive, ref } from 'vue'
-import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
+import { getDictLabel } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDateRange } from '@/utils/date'
@@ -101,7 +86,7 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
-const createTimeRange = ref<[string, string]>() // 发起时间范围
+const createTimeRange = ref<[number | undefined, number | undefined]>() // 发起时间范围
 const workstationSelectorRef = ref<InstanceType<typeof WorkstationSelector>>() // 工作站选择器
 const selectedWorkstation = ref<MdWorkstationVO>() // 已选工作站
 const selectedUserName = ref('') // 已选发起人

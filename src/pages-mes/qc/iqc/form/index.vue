@@ -114,7 +114,7 @@ import { createIqc, getIqc, updateIqc } from '@/api/mes/qc/iqc'
 import { getIntDictOptions } from '@/hooks/useDict'
 import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
-import { navigateBackPlus } from '@/utils'
+import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { createFormSchema } from '@/utils/wot'
 import QcIndicatorResultSection from '../../components/qc-indicator-result-section.vue'
@@ -179,9 +179,8 @@ definePage({
 })
 
 const toast = useToast()
-const { getRouteQueryNumber, getRouteQueryValue } = useRouteQuery(props, '/pages-mes/qc/iqc/form/index')
-// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
-const currentId = computed(() => getRouteQueryNumber('id'))
+const { getRouteQueryValue } = useRouteQuery(props, '/pages-mes/qc/iqc/form/index')
+const currentId = computed(() => props.id ? Number(props.id) : undefined)
 const getTitle = computed(() => currentId.value ? '编辑来料检验单（IQC）' : '新增来料检验单（IQC）')
 const formLoading = ref(false) // 表单提交状态
 const vendorSelectorRef = ref<InstanceType<typeof VendorSelector>>() // 供应商选择器引用
@@ -449,8 +448,7 @@ async function handleSubmit() {
       toast.success('新增成功')
     }
     uni.$emit('mes:qc:iqc:reload')
-    // TODO @YunaiV：成功后延迟返回统一改 delay(handleBack)，对齐 system/infra（本文件共 1 处 setTimeout(() => handleBack())）
-    setTimeout(() => handleBack(), 500)
+    delay(handleBack)
   } finally {
     formLoading.value = false
   }

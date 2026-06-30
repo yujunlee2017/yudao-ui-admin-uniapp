@@ -120,7 +120,6 @@
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { MdVendorVO } from '@/api/mes/md/vendor'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import MesFooterActions from '@/pages-mes/components/mes-footer-actions.vue'
 import type { WmArrivalNoticeCreateReqVO } from '@/api/mes/wm/arrivalnotice'
 import { onShow } from '@dcloudio/uni-app'
@@ -154,8 +153,7 @@ definePage({
 
 const dialog = useDialog()
 const toast = useToast()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/wm/arrivalnotice/form/index')
-const routeId = computed(() => getRouteQueryNumber('id')) // 路由编号
+const routeId = computed(() => props.id ? Number(props.id) : undefined) // 路由编号
 const currentId = ref<number>() // 当前编辑编号
 const getTitle = computed(() => currentId.value ? '编辑到货通知' : '新增到货通知')
 const formLoading = ref(false) // 表单提交状态

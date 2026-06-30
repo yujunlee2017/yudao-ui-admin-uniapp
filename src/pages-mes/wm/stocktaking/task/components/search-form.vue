@@ -25,43 +25,9 @@
         </view>
         <wd-input v-model="formData.name" placeholder="请输入任务名称" clearable />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          盘点类型
-        </view>
-        <wd-radio-group v-model="formData.type" type="button">
-          <wd-radio :value="undefined">
-            全部
-          </wd-radio>
-          <wd-radio v-for="dict in stockTakingTypeOptions" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          盘点日期
-        </view>
-        <wd-calendar
-          v-model="formData.takingDate"
-          type="daterange"
-          placeholder="请选择盘点日期"
-          clearable
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          单据状态
-        </view>
-        <wd-radio-group v-model="formData.status" type="button">
-          <wd-radio :value="undefined">
-            全部
-          </wd-radio>
-          <wd-radio v-for="dict in statusOptions" :key="dict.value" :value="dict.value">
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.type" label="盘点类型" :columns="stockTakingTypeOptions" all-option :all-value="undefined" />
+      <yd-search-date-range v-model="formData.takingDate" label="盘点日期" />
+      <yd-search-picker v-model="formData.status" label="单据状态" :columns="statusOptions" all-option :all-value="undefined" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -75,7 +41,6 @@
 </template>
 
 <script lang="ts" setup>
-// TODO @YunaiV：搜索风格对齐 system/infra——① wd-radio-group 类型/状态筛选改 yd-search-picker（type/status，配 dict-kind + all-option）；② wd-calendar 日期范围改全局 yd-search-date-range
 import type { StockTakingTaskQueryParams } from '@/api/mes/wm/stocktaking/task'
 import { computed, reactive, ref } from 'vue'
 import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
@@ -87,7 +52,7 @@ interface SearchFormData {
   code?: string
   name?: string
   type?: number
-  takingDate?: string[]
+  takingDate?: [number | undefined, number | undefined]
   status?: number
 }
 

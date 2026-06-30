@@ -224,7 +224,6 @@ import { getSimpleUserList } from '@/api/system/user'
 import { getWarehouseAreaSimpleList } from '@/api/mes/wm/warehouse/area'
 import { getWarehouseLocationSimpleList } from '@/api/mes/wm/warehouse/location'
 import { getWarehouseSimpleList } from '@/api/mes/wm/warehouse'
-import { useRouteQuery } from '@/hooks/useRouteQuery'
 import { delay, navigateBackPlus } from '@/utils'
 import { BarcodeBizTypeEnum, CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
@@ -252,9 +251,7 @@ interface BarcodeFormData {
 }
 
 const toast = useToast()
-const { getRouteQueryNumber } = useRouteQuery(props, '/pages-mes/wm/barcode/form/index')
-// TODO @YunaiV：简单 id 参数优先直接用 props.id 接收，不需要 useRouteQuery/getRouteQueryNumber 包一层；多参数页面只保留其它 query 的 helper。
-const currentId = computed(() => getRouteQueryNumber('id')) // 当前条码编号
+const currentId = computed(() => props.id ? Number(props.id) : undefined) // 当前条码编号
 const formLoading = ref(false) // 表单提交状态
 const loadingDetail = ref(false) // 详情加载状态
 const formRef = ref<FormInstance>() // 表单组件引用
