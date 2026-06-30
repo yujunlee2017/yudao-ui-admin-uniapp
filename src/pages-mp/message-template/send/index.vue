@@ -70,21 +70,18 @@
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { MsgTemplate, MsgTemplateSend } from '@/api/mp/messageTemplate'
 import type { MpUser } from '@/api/mp/user'
-import { onLoad } from '@dcloudio/uni-app'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { getMessageTemplate, sendMessageTemplate } from '@/api/mp/messageTemplate'
 import { getUserPage } from '@/api/mp/user'
 import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
-import { getMpRouteNumber, getMpRouteString, useMpRouteParams } from '../../utils/route'
 
 const props = defineProps<{
   id?: number | any
   accountId?: number | any
   title?: string
 }>()
-const { routeParams, syncRouteParams } = useMpRouteParams(props)
 
 definePage({
   style: {
@@ -94,8 +91,7 @@ definePage({
 })
 
 const toast = useToast()
-const id = computed(() => getMpRouteNumber(routeParams.id))
-const accountId = computed(() => getMpRouteNumber(routeParams.accountId))
+const accountId = computed(() => props.accountId ? Number(props.accountId) : undefined)
 const template = ref<MsgTemplate>() // 模板详情
 const templateParams = ref<string[]>([]) // 模板内容里的参数名（{{xxx.DATA}}）
 const paramValues = reactive<Record<string, string>>({}) // 各参数填写值
@@ -103,7 +99,7 @@ const templateTitle = computed(() => {
   if (template.value?.title) {
     return template.value.title
   }
-  const title = getMpRouteString(routeParams.title)
+  const title = props.title || ''
   try {
     return decodeURIComponent(title)
   } catch {
@@ -114,7 +110,7 @@ const loading = ref(false) // 发送状态
 const userPickerVisible = ref(false) // 用户选择弹窗
 const userList = ref<MpUser[]>([]) // 用户列表
 const formData = ref<MsgTemplateSend>({
-  id: id.value,
+  id: props.id ? Number(props.id) : undefined,
   userId: undefined!,
   data: {},
   url: '',
@@ -138,10 +134,10 @@ function handleBack() {
 
 /** 加载模板详情：解析内容里的参数占位 {{xxx.DATA}} */
 async function loadTemplate() {
-  if (!id.value) {
+  if (!props.id) {
     return
   }
-  template.value = await getMessageTemplate(id.value)
+  template.value = await getMessageTemplate(Number(props.id))
   const content = template.value?.content || ''
   const names = Array.from(content.matchAll(/\{\{(\w+)\.DATA\}\}/g), match => match[1])
   const params = Array.from(new Set(names))
@@ -182,12 +178,12 @@ async function handleSubmit() {
   if (!valid) {
     return
   }
-  if (!id.value) {
+  if (!props.id) {
     toast.show('缺少模板编号')
     return
   }
 
-  const data: MsgTemplateSend = { ...formData.value, id: id.value }
+  const data: MsgTemplateSend = { ...formData.value, id: Number(props.id) }
   // 按模板参数构建微信 data：{ 参数名: 参数值 }
   data.data = Object.fromEntries(templateParams.value.map(param => [param, paramValues[param] || '']))
   if (data.miniProgramAppId && data.miniProgramPagePath) {
@@ -208,9 +204,8 @@ async function handleSubmit() {
 }
 
 /** 初始化 */
-onLoad((query) => {
-  syncRouteParams(query)
-  formData.value.id = id.value
+onMounted(() => {
+  formData.value.id = props.id ? Number(props.id) : undefined
   loadTemplate()
   loadUserList()
 })

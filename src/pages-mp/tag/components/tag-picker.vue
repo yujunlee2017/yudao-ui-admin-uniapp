@@ -35,7 +35,7 @@ const props = withDefaults(defineProps<{
   placeholder?: string // 未选择占位
 }>(), {
   label: '标签',
-  titleWidth: '180rpx',
+  titleWidth: '220rpx',
   placeholder: '请选择标签',
 })
 

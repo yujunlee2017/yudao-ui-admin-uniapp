@@ -26,10 +26,10 @@
     </view>
 
     <view v-else-if="type === 'news'">
-      <NewsCard :articles="articles" @article-click="article => openExternalUrl(article.url)" />
+      <NewsCard :articles="articles" @article-click="article => openUrl(article.url)" />
     </view>
 
-    <view v-else-if="type === 'music'" class="active:opacity-70" @click="openExternalUrl(hqMusicUrl || musicUrl)">
+    <view v-else-if="type === 'music'" class="active:opacity-70" @click="openUrl(hqMusicUrl || musicUrl)">
       <wd-img
         v-if="thumbMediaUrl"
         :src="thumbMediaUrl"
@@ -50,7 +50,7 @@
       </view>
     </view>
 
-    <view v-else-if="type === 'link'" class="active:opacity-70" @click="openExternalUrl(url)">
+    <view v-else-if="type === 'link'" class="active:opacity-70" @click="openUrl(url)">
       <view class="text-28rpx text-[#333]">
         {{ title || url || '-' }}
       </view>
@@ -97,7 +97,7 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue'
-import { openExternalUrl } from '@/pages-mp/utils/link'
+import { openUrl } from '@/utils/url'
 import MediaPreview from './media-preview.vue'
 import NewsCard from './news-card.vue'
 

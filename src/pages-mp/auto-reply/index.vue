@@ -38,17 +38,17 @@
           :key="item.id"
           class="mb-24rpx rounded-12rpx bg-white p-24rpx shadow-sm"
         >
-          <view v-if="currentType === AutoReplyType.Message" class="mb-12rpx text-28rpx text-[#666]">
+          <view v-if="currentType === MpAutoReplyTypeEnum.MESSAGE" class="mb-12rpx text-28rpx text-[#666]">
             请求类型：<dict-tag :type="DICT_TYPE.MP_MESSAGE_TYPE" :value="item.requestMessageType" />
           </view>
-          <view v-if="currentType === AutoReplyType.Keyword" class="mb-12rpx text-28rpx text-[#666]">
+          <view v-if="currentType === MpAutoReplyTypeEnum.KEYWORD" class="mb-12rpx text-28rpx text-[#666]">
             关键词：{{ item.requestKeyword || '-' }}
           </view>
-          <view v-if="currentType === AutoReplyType.Keyword" class="mb-12rpx text-28rpx text-[#666]">
+          <view v-if="currentType === MpAutoReplyTypeEnum.KEYWORD" class="mb-12rpx text-28rpx text-[#666]">
             匹配类型：<dict-tag :type="DICT_TYPE.MP_AUTO_REPLY_REQUEST_MATCH" :value="item.requestMatch" />
           </view>
-          <view class="mb-12rpx">
-            <dict-tag :type="DICT_TYPE.MP_MESSAGE_TYPE" :value="item.responseMessageType" />
+          <view class="mb-12rpx text-28rpx text-[#666]">
+            回复类型：<dict-tag :type="DICT_TYPE.MP_MESSAGE_TYPE" :value="item.responseMessageType" />
           </view>
           <view class="mb-20rpx rounded-8rpx bg-[#f8f8f8] p-20rpx text-28rpx text-[#333]">
             <ReplyContent
@@ -116,7 +116,7 @@ definePage({
   },
 })
 
-const typeList = [AutoReplyType.Follow, AutoReplyType.Message, AutoReplyType.Keyword]
+const typeList = [MpAutoReplyTypeEnum.FOLLOW, MpAutoReplyTypeEnum.MESSAGE, MpAutoReplyTypeEnum.KEYWORD]
 const { hasAccessByCodes } = useAccess()
 const toast = useToast()
 const dialog = useDialog()
@@ -130,7 +130,7 @@ const canCreate = computed(() => {
   if (!hasAccessByCodes(['mp:auto-reply:create'])) {
     return false
   }
-  return currentType.value !== AutoReplyType.Follow || list.value.length === 0
+  return currentType.value !== MpAutoReplyTypeEnum.FOLLOW || list.value.length === 0
 })
 
 /** 返回上一页 */

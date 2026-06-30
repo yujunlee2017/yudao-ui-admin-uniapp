@@ -10,8 +10,8 @@
     <!-- 表单区域 -->
     <view>
       <wd-form ref="formRef" :model="formData" :schema="formSchema">
-        <wd-cell-group border title="请求配置">
-          <template v-if="formData.type === AutoReplyType.Message">
+        <wd-cell-group v-if="formData.type !== MpAutoReplyTypeEnum.FOLLOW" border title="请求配置">
+          <template v-if="formData.type === MpAutoReplyTypeEnum.MESSAGE">
             <wd-form-item
               title="消息类型"
               title-width="220rpx"
@@ -28,7 +28,7 @@
               @confirm="({ value }) => formData.requestMessageType = value[0]"
             />
           </template>
-          <template v-if="formData.type === AutoReplyType.Keyword">
+          <template v-if="formData.type === MpAutoReplyTypeEnum.KEYWORD">
             <wd-form-item title="关键词" title-width="220rpx" prop="requestKeyword">
               <wd-input v-model="formData.requestKeyword" clearable placeholder="请输入关键词" />
             </wd-form-item>
@@ -138,7 +138,7 @@
                 </wd-button>
                 <wd-button
                   v-if="formData.responseArticles?.length"
-                  size="small" plain type="error"
+                  size="small" plain type="danger"
                   @click="formData.responseArticles = []"
                 >
                   清空
@@ -203,26 +203,23 @@
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { AutoReply } from '@/api/mp/autoReply'
 import type { MaterialUploadType } from '@/pages-mp/utils/upload'
-import { onLoad } from '@dcloudio/uni-app'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, nextTick, ref, watch } from 'vue'
-import { AutoReplyType, createAutoReply, getAutoReply, updateAutoReply } from '@/api/mp/autoReply'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { createAutoReply, getAutoReply, updateAutoReply } from '@/api/mp/autoReply'
 import { getIntDictOptions, getStrDictOptions } from '@/hooks/useDict'
 import MediaPreview from '@/pages-mp/components/media-preview.vue'
 import NewsCard from '@/pages-mp/components/news-card.vue'
 import MaterialPicker from '@/pages-mp/material/components/material-picker.vue'
 import { useMaterialUpload } from '@/pages-mp/utils/upload'
 import { delay, navigateBackPlus } from '@/utils'
-import { DICT_TYPE, MpAutoReplyRequestMatchEnum } from '@/utils/constants'
+import { DICT_TYPE, MpAutoReplyRequestMatchEnum, MpAutoReplyTypeEnum } from '@/utils/constants'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
-import { getMpRouteNumber, useMpRouteParams } from '../../utils/route'
 
 const props = defineProps<{
   id?: number | any
   accountId?: number | any
   type?: number | any
 }>()
-const { routeParams, syncRouteParams } = useMpRouteParams(props)
 
 definePage({
   style: {
@@ -236,34 +233,31 @@ const requestMessageTypes = ['text', 'image', 'voice', 'video', 'shortvideo', 'l
 const responseMessageTypes = ['text', 'image', 'voice', 'video', 'news', 'music']
 const toast = useToast()
 const { uploading, chooseAndUpload } = useMaterialUpload()
-const id = computed(() => getMpRouteNumber(routeParams.id))
-const accountId = computed(() => getMpRouteNumber(routeParams.accountId))
-const replyType = computed(() => getMpRouteNumber(routeParams.type) || AutoReplyType.Keyword)
-const getTitle = computed(() => id.value ? '编辑自动回复' : '新增自动回复')
+const accountId = computed(() => props.accountId ? Number(props.accountId) : undefined)
+const replyType = computed(() => props.type ? Number(props.type) : MpAutoReplyTypeEnum.KEYWORD)
+const getTitle = computed(() => props.id ? '编辑自动回复' : '新增自动回复')
 const formLoading = ref(false) // 表单提交状态
 const pickerVisible = ref<Record<string, boolean>>({}) // 选择器显示状态
 const materialPickerVisible = ref(false) // 素材选择弹窗
 const formData = ref<AutoReply>({
   id: undefined,
-  accountId: accountId.value || 0,
+  accountId: accountId.value,
   type: replyType.value,
   requestKeyword: undefined,
-  requestMatch: replyType.value === AutoReplyType.Keyword ? MpAutoReplyRequestMatchEnum.ALL : undefined,
+  requestMatch: replyType.value === MpAutoReplyTypeEnum.KEYWORD ? MpAutoReplyRequestMatchEnum.ALL : undefined,
   requestMessageType: undefined,
   responseMessageType: 'text',
   responseContent: '',
   responseArticles: [],
 }) // 表单数据
 const formSchema = createFormSchema({
-  requestKeyword: [{ required: () => formData.value.type === AutoReplyType.Keyword, message: '关键词不能为空' }],
-  requestMatch: [{ required: () => formData.value.type === AutoReplyType.Keyword, message: '匹配类型不能为空' }],
-  requestMessageType: [{ required: () => formData.value.type === AutoReplyType.Message, message: '消息类型不能为空' }],
+  requestKeyword: [{ required: () => formData.value.type === MpAutoReplyTypeEnum.KEYWORD, message: '关键词不能为空' }],
+  requestMatch: [{ required: () => formData.value.type === MpAutoReplyTypeEnum.KEYWORD, message: '匹配类型不能为空' }],
+  requestMessageType: [{ required: () => formData.value.type === MpAutoReplyTypeEnum.MESSAGE, message: '消息类型不能为空' }],
   responseMessageType: [{ required: true, message: '回复类型不能为空' }],
   responseContent: [{ required: () => formData.value.responseMessageType === 'text', message: '回复内容不能为空' }],
-  responseMediaId: [{ required: () => ['image', 'voice', 'video'].includes(String(formData.value.responseMessageType)), message: '请选择或上传素材' }],
   responseTitle: [{ required: () => formData.value.responseMessageType === 'video', message: '视频标题不能为空' }],
   responseDescription: [{ required: () => formData.value.responseMessageType === 'video', message: '视频描述不能为空' }],
-  responseThumbMediaId: [{ required: () => formData.value.responseMessageType === 'music', message: '请选择音乐缩略图' }],
   responseMusicUrl: [
     { required: () => formData.value.responseMessageType === 'music', message: '音乐链接不能为空' },
     { pattern: URL_PATTERN, message: '音乐链接格式不正确' },
@@ -272,7 +266,8 @@ const formSchema = createFormSchema({
     { required: () => formData.value.responseMessageType === 'music', message: '高质量音乐链接不能为空' },
     { pattern: URL_PATTERN, message: '高质量音乐链接格式不正确' },
   ],
-  responseArticles: [{ required: () => formData.value.responseMessageType === 'news', message: '请选择图文素材' }],
+  // 注：responseMediaId / responseThumbMediaId / responseArticles 渲染为 wd-cell（无 wd-form-item），
+  // wd-form 不会展示其 schema 错误，改由 handleSubmit 显式判空 toast，避免「保存」静默失败
 })
 const formRef = ref<FormInstance>() // 表单组件引用
 
@@ -310,10 +305,10 @@ function handleBack() {
 
 /** 加载详情 */
 async function getDetail() {
-  if (!id.value) {
+  if (!props.id) {
     return
   }
-  formData.value = await getAutoReply(id.value)
+  formData.value = await getAutoReply(Number(props.id))
   formData.value.responseArticles = formData.value.responseArticles || []
 }
 
@@ -375,14 +370,31 @@ async function handleSubmit() {
   if (!valid) {
     return
   }
-  const data: AutoReply = { ...formData.value }
-  data.id = id.value || data.id
-  data.accountId = data.accountId || accountId.value || 0
-  data.type = data.type || replyType.value
+  // 参数校验
+  const responseType = formData.value.responseMessageType
+  if (['image', 'voice', 'video'].includes(String(responseType)) && !formData.value.responseMediaId) {
+    toast.show('请选择或上传素材')
+    return
+  }
+  if (responseType === 'music' && !formData.value.responseThumbMediaId) {
+    toast.show('请选择音乐缩略图')
+    return
+  }
+  if (responseType === 'news' && !formData.value.responseArticles?.length) {
+    toast.show('请选择图文素材')
+    return
+  }
 
+  // 表单提交
+  const data: AutoReply = { ...formData.value }
+  data.id = props.id ? Number(props.id) : data.id
+  if (!props.id) {
+    data.accountId = accountId.value
+    data.type = replyType.value
+  }
   formLoading.value = true
   try {
-    if (id.value) {
+    if (props.id) {
       await updateAutoReply(data)
       toast.success('修改成功')
     } else {
@@ -397,12 +409,11 @@ async function handleSubmit() {
 }
 
 /** 初始化 */
-onLoad(async (query) => {
-  syncRouteParams(query)
-  if (!id.value) {
-    formData.value.accountId = accountId.value || 0
+onMounted(async () => {
+  if (!props.id) {
+    formData.value.accountId = accountId.value
     formData.value.type = replyType.value
-    formData.value.requestMatch = replyType.value === AutoReplyType.Keyword ? MpAutoReplyRequestMatchEnum.ALL : undefined
+    formData.value.requestMatch = replyType.value === MpAutoReplyTypeEnum.KEYWORD ? MpAutoReplyRequestMatchEnum.ALL : undefined
   }
   await getDetail()
   // 等回填触发的 watch 跑完再放开清字段

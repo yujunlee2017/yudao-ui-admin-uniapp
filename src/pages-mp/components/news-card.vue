@@ -57,6 +57,6 @@ const safeArticles = computed(() => props.articles || [])
 
 /** 获取图文封面 */
 function getImageUrl(article: any) {
-  return article?.picUrl || article?.thumbUrl || article?.thumbMediaUrl || article?.url || ''
+  return article?.picUrl || article?.thumbUrl || article?.thumbMediaUrl || ''
 }
 </script>

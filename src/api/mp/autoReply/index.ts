@@ -1,16 +1,10 @@
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
-export enum AutoReplyType {
-  Follow = 1,
-  Message = 2,
-  Keyword = 3,
-}
-
 export interface AutoReply {
   id?: number
   accountId?: number
-  type?: AutoReplyType | number
+  type?: number
   requestKeyword?: string
   requestMatch?: number
   requestMessageType?: string

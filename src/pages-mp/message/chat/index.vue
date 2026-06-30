@@ -72,7 +72,7 @@
           >
             <view
               class="h-64rpx w-64rpx flex shrink-0 items-center justify-center rounded-full text-24rpx text-white"
-              :class="item.sendFrom === 2 ? 'bg-[#1677ff]' : 'bg-[#07c160]'"
+              :class="item.sendFrom === 2 ? 'bg-[#1890ff]' : 'bg-[#07c160]'"
             >
               {{ item.sendFrom === 2 ? '号' : '粉' }}
             </view>
@@ -186,7 +186,7 @@
         <NewsCard
           v-if="sendForm.articles.length"
           :articles="sendForm.articles"
-          @article-click="article => openExternalUrl(article.url)"
+          @article-click="article => openUrl(article.url)"
         />
         <view v-else class="text-26rpx text-[#999]">
           请从「素材库」选择图文（最多发送 1 条）
@@ -215,7 +215,7 @@
         <view class="h-12rpx" />
         <wd-input v-model="sendForm.musicUrl" clearable placeholder="请输入音乐链接" />
         <view class="h-12rpx" />
-        <wd-input v-model="sendForm.hqMusicUrl" clearable placeholder="请输入高质量音乐链接" />
+        <wd-input v-model="sendForm.hqMusicUrl" clearable placeholder="请输入高质量音乐链接（选填）" />
       </template>
 
       <wd-button class="mt-16rpx" type="primary" block :loading="sending" @click="handleSend">
@@ -236,9 +236,8 @@
 <script lang="ts" setup>
 import type { MpMessage, MpMessageSend } from '@/api/mp/message'
 import type { MpUser } from '@/api/mp/user'
-import { onLoad } from '@dcloudio/uni-app'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, nextTick, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { getMessagePage, sendMessage } from '@/api/mp/message'
 import { getUser } from '@/api/mp/user'
 import { navigateBackPlus } from '@/utils'
@@ -246,17 +245,15 @@ import { formatDateTime } from '@/utils/date'
 import MediaPreview from '@/pages-mp/components/media-preview.vue'
 import NewsCard from '@/pages-mp/components/news-card.vue'
 import MaterialPicker from '@/pages-mp/material/components/material-picker.vue'
-import { openExternalUrl } from '@/pages-mp/utils/link'
+import { openUrl } from '@/utils/url'
 import { useMaterialUpload } from '@/pages-mp/utils/upload'
 import ReplyContent from '../../components/reply-content.vue'
-import { getMpRouteNumber, getMpRouteString, useMpRouteParams } from '../../utils/route'
 
 const props = defineProps<{
   userId?: number | any
   accountId?: number | any
   openid?: string
 }>()
-const { routeParams, syncRouteParams } = useMpRouteParams(props)
 
 definePage({
   style: {
@@ -267,9 +264,9 @@ definePage({
 
 const toast = useToast()
 const { uploading, chooseAndUpload } = useMaterialUpload()
-const userId = computed(() => getMpRouteNumber(routeParams.userId))
-const routeAccountId = computed(() => getMpRouteNumber(routeParams.accountId))
-const routeOpenid = computed(() => getMpRouteString(routeParams.openid))
+const userId = computed(() => props.userId ? Number(props.userId) : undefined)
+const routeAccountId = computed(() => props.accountId ? Number(props.accountId) : undefined)
+const routeOpenid = computed(() => props.openid || '')
 const accountId = ref<number>() // 当前公众号编号
 const userInfo = reactive<MpUser>({
   id: undefined,
@@ -491,8 +488,8 @@ async function handleSend() {
     toast.show('请填写视频标题与描述')
     return
   }
-  if (sendForm.type === 'music' && (!sendForm.thumbMediaId || !sendForm.musicUrl || !sendForm.hqMusicUrl)) {
-    toast.show('请上传音乐缩略图并填写音乐链接与高质量链接')
+  if (sendForm.type === 'music' && (!sendForm.thumbMediaId || !sendForm.musicUrl)) {
+    toast.show('请上传音乐缩略图并填写音乐链接')
     return
   }
 
@@ -541,8 +538,7 @@ async function handleSend() {
 }
 
 /** 初始化 */
-onLoad(async (query) => {
-  syncRouteParams(query)
+onMounted(async () => {
   await initUser()
   await getList(true)
 })

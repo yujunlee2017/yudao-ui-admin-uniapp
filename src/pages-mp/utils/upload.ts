@@ -70,12 +70,18 @@ export function useMaterialUpload() {
     try {
       // thumb 仅用于临时素材（音乐缩略图），永久上传按 image 处理
       if (options.permanent !== false) {
-        return await uploadPermanentMaterial(file.path, {
+        // 仅视频素材带 title/introduction；非视频不带这两个 key，避免 H5 下 formData 把 undefined 写成字符串 "undefined"
+        const data: { accountId: number, type: string, title?: string, introduction?: string } = {
           accountId: options.accountId,
           type: type === 'thumb' ? 'image' : type,
-          title: options.title,
-          introduction: options.introduction,
-        })
+        }
+        if (options.title !== undefined) {
+          data.title = options.title
+        }
+        if (options.introduction !== undefined) {
+          data.introduction = options.introduction
+        }
+        return await uploadPermanentMaterial(file.path, data)
       }
       return await uploadTemporaryMaterial(file.path, {
         accountId: options.accountId,
