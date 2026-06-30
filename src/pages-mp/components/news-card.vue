@@ -4,7 +4,8 @@
     <view
       v-for="(article, index) in safeArticles"
       :key="index"
-      class="border-b border-[#f0f0f0] last:border-b-0"
+      class="border-b border-[#f0f0f0] last:border-b-0 active:opacity-70"
+      @click="emit('articleClick', article)"
     >
       <view v-if="index === 0" class="relative h-260rpx bg-[#f5f5f5]">
         <wd-img
@@ -46,6 +47,10 @@ import { computed } from 'vue'
 
 const props = defineProps<{
   articles?: any[]
+}>()
+
+const emit = defineEmits<{
+  (e: 'articleClick', article: any): void
 }>()
 
 const safeArticles = computed(() => props.articles || [])

@@ -53,6 +53,12 @@
             <view class="mb-20rpx text-32rpx text-[#333] font-semibold">
               {{ section.title }}
             </view>
+            <YdChart
+              :option="section.chartOption"
+              :empty="section.rows.length === 0"
+              :height="section.chartHeight"
+              class="mb-8rpx"
+            />
             <view v-if="section.rows.length === 0" class="py-24rpx text-center text-24rpx text-[#999]">
               暂无数据
             </view>
@@ -98,6 +104,9 @@ import {
 import { navigateBackPlus } from '@/utils'
 import { formatDate, formatDateTime } from '@/utils/date'
 import AccountPicker from '@/pages-mp/account/components/account-picker.vue'
+import YdChart from '../components/yd-chart/yd-chart.vue'
+
+const CHART_COLORS = ['#67C23A', '#E5323E', '#E6A23C', '#409EFF'] // 图表配色
 
 definePage({
   style: {
@@ -121,9 +130,108 @@ const userCumulateList = ref<any[]>([]) // 累计用户数据
 const upstreamMessageList = ref<any[]>([]) // 消息概况数据
 const interfaceSummaryList = ref<any[]>([]) // 接口分析数据
 
+/** 统一坐标轴样式（窄屏小字号 + 隐藏轴刻度） */
+function axisLabelStyle() {
+  return { color: '#999', fontSize: 10 }
+}
+
+const userSummaryOption = computed(() => { // 用户增减：新增用户 / 取消关注 双柱
+  const list = userSummaryList.value
+  return {
+    color: [CHART_COLORS[0], CHART_COLORS[1]],
+    tooltip: { trigger: 'axis', confine: true },
+    legend: { top: 0, data: ['新增用户', '取消关注'], textStyle: { color: '#666', fontSize: 11 } },
+    grid: { left: 8, right: 12, top: 48, bottom: 8, containLabel: true },
+    xAxis: {
+      type: 'category',
+      data: list.map(item => formatDate(item.refDate)),
+      axisLabel: { ...axisLabelStyle(), rotate: 30 },
+      axisTick: { show: false },
+    },
+    yAxis: { type: 'value', minInterval: 1, axisLabel: axisLabelStyle(), splitLine: { lineStyle: { color: '#f0f0f0' } } },
+    series: [
+      { name: '新增用户', type: 'bar', barGap: 0, barMaxWidth: 24, data: list.map(item => Number(item.newUser || 0)) },
+      { name: '取消关注', type: 'bar', barMaxWidth: 24, data: list.map(item => Number(item.cancelUser || 0)) },
+    ],
+  }
+})
+
+const userCumulateOption = computed(() => { // 累计用户：累计用户量 折线
+  const list = userCumulateList.value
+  return {
+    color: [CHART_COLORS[3]],
+    tooltip: { trigger: 'axis', confine: true },
+    legend: { top: 0, data: ['累计用户量'], textStyle: { color: '#666', fontSize: 11 } },
+    grid: { left: 8, right: 12, top: 48, bottom: 8, containLabel: true },
+    xAxis: {
+      type: 'category',
+      data: list.map(item => formatDate(item.refDate)),
+      axisLabel: { ...axisLabelStyle(), rotate: 30 },
+      axisTick: { show: false },
+    },
+    yAxis: { type: 'value', minInterval: 1, axisLabel: axisLabelStyle(), splitLine: { lineStyle: { color: '#f0f0f0' } } },
+    series: [
+      { name: '累计用户量', type: 'line', smooth: true, showSymbol: false, areaStyle: { opacity: 0.12 }, data: list.map(item => Number(item.cumulateUser || 0)) },
+    ],
+  }
+})
+
+const upstreamMessageOption = computed(() => { // 消息概况：发送人数 / 发送条数 双折线
+  const list = upstreamMessageList.value
+  return {
+    color: [CHART_COLORS[0], CHART_COLORS[1]],
+    tooltip: { trigger: 'axis', confine: true },
+    legend: { top: 0, data: ['发送人数', '发送条数'], textStyle: { color: '#666', fontSize: 11 } },
+    grid: { left: 8, right: 12, top: 48, bottom: 8, containLabel: true },
+    xAxis: {
+      type: 'category',
+      data: list.map(item => formatDate(item.refDate)),
+      axisLabel: { ...axisLabelStyle(), rotate: 30 },
+      axisTick: { show: false },
+    },
+    yAxis: { type: 'value', minInterval: 1, axisLabel: axisLabelStyle(), splitLine: { lineStyle: { color: '#f0f0f0' } } },
+    series: [
+      { name: '发送人数', type: 'line', smooth: true, showSymbol: false, data: list.map(item => Number(item.messageUser || 0)) },
+      { name: '发送条数', type: 'line', smooth: true, showSymbol: false, data: list.map(item => Number(item.messageCount || 0)) },
+    ],
+  }
+})
+
+const interfaceSummaryOption = computed(() => { // 接口分析：回复 / 失败 / 最大耗时 / 总耗时 四柱
+  const list = interfaceSummaryList.value
+  return {
+    color: CHART_COLORS,
+    tooltip: { trigger: 'axis', confine: true },
+    legend: {
+      top: 0,
+      type: 'scroll',
+      data: ['回复次数', '失败次数', '最大耗时', '总耗时'],
+      textStyle: { color: '#666', fontSize: 10 },
+      itemWidth: 14,
+      itemGap: 8,
+    },
+    grid: { left: 8, right: 12, top: 52, bottom: 8, containLabel: true },
+    xAxis: {
+      type: 'category',
+      data: list.map(item => formatDate(item.refDate)),
+      axisLabel: { ...axisLabelStyle(), rotate: 40, interval: 0 },
+      axisTick: { show: false },
+    },
+    yAxis: { type: 'value', axisLabel: axisLabelStyle(), splitLine: { lineStyle: { color: '#f0f0f0' } } },
+    series: [
+      { name: '回复次数', type: 'bar', barGap: 0, barMaxWidth: 14, data: list.map(item => Number(item.callbackCount || 0)) },
+      { name: '失败次数', type: 'bar', barMaxWidth: 14, data: list.map(item => Number(item.failCount || 0)) },
+      { name: '最大耗时', type: 'bar', barMaxWidth: 14, data: list.map(item => Number(item.maxTimeCost || 0)) },
+      { name: '总耗时', type: 'bar', barMaxWidth: 14, data: list.map(item => Number(item.totalTimeCost || 0)) },
+    ],
+  }
+})
+
 const sections = computed(() => [
   {
     title: '用户增减数据',
+    chartOption: userSummaryOption.value,
+    chartHeight: '460rpx',
     rows: userSummaryList.value.map(item => ({
       date: formatDate(item.refDate),
       metrics: [
@@ -134,6 +242,8 @@ const sections = computed(() => [
   },
   {
     title: '累计用户数据',
+    chartOption: userCumulateOption.value,
+    chartHeight: '460rpx',
     rows: userCumulateList.value.map(item => ({
       date: formatDate(item.refDate),
       metrics: [
@@ -143,6 +253,8 @@ const sections = computed(() => [
   },
   {
     title: '消息概况数据',
+    chartOption: upstreamMessageOption.value,
+    chartHeight: '460rpx',
     rows: upstreamMessageList.value.map(item => ({
       date: formatDate(item.refDate),
       metrics: [
@@ -153,6 +265,8 @@ const sections = computed(() => [
   },
   {
     title: '接口分析数据',
+    chartOption: interfaceSummaryOption.value,
+    chartHeight: '520rpx',
     rows: interfaceSummaryList.value.map(item => ({
       date: formatDate(item.refDate),
       metrics: [

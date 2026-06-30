@@ -53,22 +53,36 @@
           <wd-form-item title="作者" title-width="220rpx" prop="author">
             <wd-input v-model="formData.author" clearable placeholder="请输入作者" />
           </wd-form-item>
-          <wd-cell title="封面图片" is-link value="选择封面" @click="materialPickerVisible = true" />
-          <wd-form-item title="封面 MediaID" title-width="220rpx" prop="thumbMediaId">
-            <wd-input v-model="formData.thumbMediaId" clearable placeholder="请选择图片素材或输入封面 MediaID" />
-          </wd-form-item>
-          <wd-form-item title="封面 URL" title-width="220rpx" prop="thumbUrl">
-            <wd-input v-model="formData.thumbUrl" clearable placeholder="请输入封面 URL" />
-          </wd-form-item>
+          <wd-cell title="封面图片" is-link value="素材库选择" @click="materialPickerVisible = true" />
+          <wd-cell title="本地上传" is-link value="从相册选择并上传" @click="handleUploadCover" />
+          <view v-if="formData.thumbUrl" class="px-24rpx py-16rpx">
+            <wd-img :src="formData.thumbUrl" width="240rpx" height="240rpx" mode="aspectFit" radius="8rpx" enable-preview />
+          </view>
           <wd-form-item title="摘要" title-width="220rpx" prop="digest">
             <wd-textarea v-model="formData.digest" clearable placeholder="请输入摘要" :maxlength="120" show-word-limit />
           </wd-form-item>
           <wd-form-item title="原文地址" title-width="220rpx" prop="contentSourceUrl">
             <wd-input v-model="formData.contentSourceUrl" clearable placeholder="请输入原文地址" />
           </wd-form-item>
+          <wd-form-item title="显示封面" title-width="220rpx" prop="showCoverPic" center>
+            <wd-switch v-model="formData.showCoverPic" :active-value="1" :inactive-value="0" />
+          </wd-form-item>
+          <wd-form-item title="打开评论" title-width="220rpx" prop="needOpenComment" center>
+            <wd-switch v-model="formData.needOpenComment" :active-value="1" :inactive-value="0" />
+          </wd-form-item>
+          <wd-form-item title="仅粉丝可评论" title-width="220rpx" prop="onlyFansCanComment" center>
+            <wd-switch v-model="formData.onlyFansCanComment" :active-value="1" :inactive-value="0" />
+          </wd-form-item>
           <wd-form-item title="正文" title-width="220rpx" prop="content">
             <wd-textarea v-model="formData.content" clearable placeholder="请输入正文 HTML 或文本（正文配图请在 PC 端插入）" :maxlength="20000" />
           </wd-form-item>
+        </wd-cell-group>
+
+        <!-- 正文预览 -->
+        <wd-cell-group v-if="formData.content" border title="正文预览">
+          <view class="px-24rpx py-16rpx">
+            <rich-text :nodes="formData.content" />
+          </view>
         </wd-cell-group>
       </wd-form>
     </view>
@@ -100,6 +114,7 @@ import { createDraft, createEmptyNewsItem, updateDraft } from '@/api/mp/draft'
 import { delay, navigateBackPlus } from '@/utils'
 import { createFormSchema } from '@/utils/wot'
 import MaterialPicker from '@/pages-mp/material/components/material-picker.vue'
+import { useMaterialUpload } from '@/pages-mp/utils/upload'
 import { getMpRouteNumber, getMpRouteString, useMpRouteParams } from '../../utils/route'
 
 const props = defineProps<{
@@ -131,6 +146,7 @@ const formSchema = createFormSchema({
 })
 const formRef = ref<FormInstance>() // 表单组件引用
 const materialPickerVisible = ref(false) // 封面素材选择弹窗
+const { chooseAndUpload } = useMaterialUpload()
 
 /** 返回上一页 */
 function handleBack() {
@@ -141,6 +157,20 @@ function handleBack() {
 function handleCoverSelect(item: any) {
   formData.value.thumbMediaId = item.mediaId || ''
   formData.value.thumbUrl = item.url || ''
+}
+
+/** 本地上传封面图片 */
+async function handleUploadCover() {
+  if (!accountId.value) {
+    toast.show('缺少公众号编号')
+    return
+  }
+  const material = await chooseAndUpload('image', { accountId: accountId.value, permanent: true })
+  if (!material) {
+    return
+  }
+  formData.value.thumbMediaId = material.mediaId || ''
+  formData.value.thumbUrl = material.url || ''
 }
 
 /** 加载编辑数据 */

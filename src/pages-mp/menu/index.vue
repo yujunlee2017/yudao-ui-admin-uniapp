@@ -154,15 +154,15 @@
                   <wd-cell
                     title="素材库"
                     is-link
-                    value="选择图文"
+                    :value="activeMenu.replyArticles?.length ? '重新选择图文' : '选择图文'"
                     @click="materialPickerVisible = true"
                   />
-                  <wd-form-item title="图文 ArticleID" title-width="220rpx">
-                    <wd-input v-model="activeMenu.articleId" clearable placeholder="请输入图文 ArticleID" />
-                  </wd-form-item>
-                  <wd-form-item title="图文 JSON" title-width="220rpx">
-                    <wd-textarea v-model="replyArticlesText" clearable placeholder="请输入图文数组 JSON" />
-                  </wd-form-item>
+                  <view v-if="activeMenu.replyArticles?.length" class="px-24rpx py-16rpx">
+                    <NewsCard :articles="activeMenu.replyArticles" />
+                    <wd-button class="mt-16rpx" type="danger" size="small" variant="plain" block @click="handleDeleteArticles">
+                      删除图文
+                    </wd-button>
+                  </view>
                 </template>
                 <template v-if="activeMenu.type === 'click' || activeMenu.type === 'scancode_waitmsg'">
                   <wd-form-item
@@ -179,35 +179,60 @@
                     :columns="replyTypeOptions"
                     @confirm="handleReplyTypeConfirm"
                   />
-                  <wd-cell
-                    v-if="canPickReplyMaterial"
-                    title="素材库"
-                    is-link
-                    :value="activeMenu.reply?.type === 'music' ? '选择缩略图' : '选择素材'"
-                    @click="materialPickerVisible = true"
-                  />
-                  <wd-form-item title="回复内容" title-width="220rpx">
+                  <!-- 文本：直接输入回复内容 -->
+                  <wd-form-item v-if="activeMenu.reply?.type === 'text'" title="回复内容" title-width="220rpx">
                     <wd-textarea v-model="activeMenu.reply.content" clearable placeholder="请输入文本内容" />
                   </wd-form-item>
-                  <wd-form-item title="素材 MediaID" title-width="220rpx">
-                    <wd-input v-model="activeMenu.reply.mediaId" clearable placeholder="请输入素材 MediaID" />
-                  </wd-form-item>
-                  <wd-form-item title="素材 URL" title-width="220rpx">
-                    <wd-input v-model="activeMenu.reply.url" clearable placeholder="请输入素材 URL" />
-                  </wd-form-item>
-                  <wd-form-item title="标题" title-width="220rpx">
-                    <wd-input v-model="activeMenu.reply.title" clearable placeholder="请输入标题" />
-                  </wd-form-item>
-                  <wd-form-item title="描述" title-width="220rpx">
-                    <wd-textarea v-model="activeMenu.reply.description" clearable placeholder="请输入描述" />
-                  </wd-form-item>
-                  <!-- 音乐：缩略图（选图片素材回填）+ 音乐链接 -->
-                  <template v-if="activeMenu.reply?.type === 'music'">
-                    <wd-form-item title="缩略图 MediaID" title-width="220rpx">
-                      <wd-input v-model="activeMenu.reply.thumbMediaId" clearable placeholder="请选择图片素材作为缩略图" />
+                  <!-- 图片 / 语音 / 视频 / 图文 / 音乐：素材库选择 + 本地上传 -->
+                  <template v-if="canPickReplyMaterial">
+                    <wd-cell
+                      title="素材库"
+                      is-link
+                      :value="replyMaterialPicked ? '重新选择' : (activeMenu.reply?.type === 'music' ? '选择缩略图' : '选择素材')"
+                      @click="materialPickerVisible = true"
+                    />
+                    <wd-cell
+                      v-if="canUploadReplyMaterial"
+                      title="本地上传"
+                      is-link
+                      :value="uploading ? '上传中...' : '从本地选择并上传'"
+                      @click="handleUploadReplyMaterial"
+                    />
+                  </template>
+                  <!-- 图片：缩略图预览 -->
+                  <view v-if="activeMenu.reply?.type === 'image' && activeMenu.reply?.url" class="px-24rpx py-16rpx">
+                    <wd-img :src="activeMenu.reply.url" width="200rpx" height="200rpx" mode="aspectFill" radius="8rpx" />
+                  </view>
+                  <!-- 语音 / 视频：媒体预览 -->
+                  <view v-if="(activeMenu.reply?.type === 'voice' || activeMenu.reply?.type === 'video') && activeMenu.reply?.url" class="px-24rpx py-16rpx">
+                    <MediaPreview :type="activeMenu.reply.type" :url="activeMenu.reply.url" />
+                  </view>
+                  <!-- 图文：图文卡片预览 -->
+                  <view v-if="activeMenu.reply?.type === 'news' && activeMenu.reply?.articles?.length" class="px-24rpx py-16rpx">
+                    <NewsCard :articles="activeMenu.reply.articles" />
+                    <wd-button class="mt-16rpx" type="danger" size="small" variant="plain" block @click="handleDeleteReplyArticles">
+                      删除图文
+                    </wd-button>
+                  </view>
+                  <!-- 视频：标题 / 描述 -->
+                  <template v-if="activeMenu.reply?.type === 'video'">
+                    <wd-form-item title="标题" title-width="220rpx">
+                      <wd-input v-model="activeMenu.reply.title" clearable placeholder="请输入标题" />
                     </wd-form-item>
-                    <wd-form-item title="缩略图 URL" title-width="220rpx">
-                      <wd-input v-model="activeMenu.reply.thumbMediaUrl" clearable placeholder="请选择图片素材作为缩略图" />
+                    <wd-form-item title="描述" title-width="220rpx">
+                      <wd-textarea v-model="activeMenu.reply.description" clearable placeholder="请输入描述" />
+                    </wd-form-item>
+                  </template>
+                  <!-- 音乐：缩略图预览 + 标题 / 描述 + 音乐链接 -->
+                  <template v-if="activeMenu.reply?.type === 'music'">
+                    <view v-if="activeMenu.reply?.thumbMediaUrl" class="px-24rpx py-16rpx">
+                      <wd-img :src="activeMenu.reply.thumbMediaUrl" width="200rpx" height="200rpx" mode="aspectFill" radius="8rpx" />
+                    </view>
+                    <wd-form-item title="标题" title-width="220rpx">
+                      <wd-input v-model="activeMenu.reply.title" clearable placeholder="请输入标题" />
+                    </wd-form-item>
+                    <wd-form-item title="描述" title-width="220rpx">
+                      <wd-textarea v-model="activeMenu.reply.description" clearable placeholder="请输入描述" />
                     </wd-form-item>
                     <wd-form-item title="音乐链接" title-width="220rpx">
                       <wd-input v-model="activeMenu.reply.musicUrl" clearable placeholder="请输入音乐链接" />
@@ -252,7 +277,10 @@ import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { handleTree } from '@/utils/tree'
 import AccountPicker from '@/pages-mp/account/components/account-picker.vue'
+import MediaPreview from '@/pages-mp/components/media-preview.vue'
+import NewsCard from '@/pages-mp/components/news-card.vue'
 import MaterialPicker from '@/pages-mp/material/components/material-picker.vue'
+import { useMaterialUpload } from '@/pages-mp/utils/upload'
 
 definePage({
   style: {
@@ -300,11 +328,23 @@ const pickerVisible = reactive({
   replyType: false,
 }) // 选择器状态
 const materialPickerVisible = ref(false) // 素材选择弹窗
-const replyArticlesText = ref('') // 图文 JSON
-const replyCache: Record<string, MenuReply> = {} // 按回复类型缓存已填内容，切换类型时保留
+const { uploading, chooseAndUpload } = useMaterialUpload() // 回复素材本地上传
+let replyCache: Record<string, MenuReply> = {} // 当前菜单编辑期内按回复类型缓存已填内容，切换类型时保留
+let replyCacheMenu: MpMenu | null = null // replyCache 所属的菜单，切换到别的菜单才清空
 
 const isLeafMenu = computed(() => !(activeMenu.value.children && activeMenu.value.children.length > 0))
 const canPickReplyMaterial = computed(() => ['image', 'voice', 'video', 'news', 'music'].includes(String(activeMenu.value.reply?.type)))
+const canUploadReplyMaterial = computed(() => ['image', 'voice', 'video'].includes(String(activeMenu.value.reply?.type)))
+const replyMaterialPicked = computed(() => {
+  const reply = activeMenu.value.reply
+  if (reply?.type === 'news') {
+    return !!reply.articles?.length
+  }
+  if (reply?.type === 'music') {
+    return !!reply.thumbMediaUrl
+  }
+  return !!reply?.url
+})
 const materialPickerType = computed(() => {
   if (activeMenu.value.type === 'article_view_limited' || activeMenu.value.reply?.type === 'news') {
     return 'news'
@@ -542,7 +582,6 @@ function handleEditParent(menu: MpMenu, parentIndex: number) {
   activeMenu.value = ensureMenu(menu)
   activePosition.parentIndex = parentIndex
   activePosition.childIndex = -1
-  replyArticlesText.value = JSON.stringify(activeMenu.value.replyArticles || activeMenu.value.reply?.articles || [])
   editorVisible.value = true
 }
 
@@ -551,7 +590,6 @@ function handleEditChild(menu: MpMenu, parentIndex: number, childIndex: number) 
   activeMenu.value = ensureMenu(menu)
   activePosition.parentIndex = parentIndex
   activePosition.childIndex = childIndex
-  replyArticlesText.value = JSON.stringify(activeMenu.value.replyArticles || activeMenu.value.reply?.articles || [])
   editorVisible.value = true
 }
 
@@ -559,8 +597,11 @@ function handleEditChild(menu: MpMenu, parentIndex: number, childIndex: number) 
 function ensureMenu(menu: MpMenu) {
   menu.reply = menu.reply || { type: 'text', accountId: accountId.value }
   menu.children = menu.children || []
-  // 回复类型缓存按当前编辑的菜单隔离，避免跨菜单串数据
-  Object.keys(replyCache).forEach(key => delete replyCache[key])
+  // 回复类型缓存按菜单隔离：切到别的菜单才重置，同一菜单编辑期内（含重入）保留各类型已填内容
+  if (replyCacheMenu !== menu) {
+    replyCache = {}
+    replyCacheMenu = menu
+  }
   return menu
 }
 
@@ -582,10 +623,6 @@ function handleReplyTypeConfirm({ value }: { value: string[] }) {
   }
   const cached = replyCache[nextType]
   activeMenu.value.reply = cached || { type: nextType, accountId: accountId.value }
-  // 同步图文 JSON 文本框
-  replyArticlesText.value = activeMenu.value.reply.articles?.length
-    ? JSON.stringify(activeMenu.value.reply.articles)
-    : ''
 }
 
 /** 图文素材转后端 Article 结构（title/description/picUrl/url） */
@@ -607,13 +644,11 @@ function handleMaterialSelect(item: any) {
     }
     activeMenu.value.articleId = item.articleId
     activeMenu.value.replyArticles = toReplyArticles(articles)
-    replyArticlesText.value = JSON.stringify(activeMenu.value.replyArticles)
     return
   }
   activeMenu.value.reply = activeMenu.value.reply || {}
   if (activeMenu.value.reply.type === 'news') {
     activeMenu.value.reply.articles = toReplyArticles(articles)
-    replyArticlesText.value = JSON.stringify(activeMenu.value.reply.articles)
     return
   }
   // 音乐：选图片素材作为缩略图
@@ -628,16 +663,44 @@ function handleMaterialSelect(item: any) {
   activeMenu.value.reply.description = item.introduction || item.description || ''
 }
 
+/** 本地上传回复素材（临时素材），回填 mediaId / url */
+async function handleUploadReplyMaterial() {
+  if (uploading.value) {
+    return
+  }
+  const type = activeMenu.value.reply?.type
+  if (type !== 'image' && type !== 'voice' && type !== 'video') {
+    return
+  }
+  if (!accountId.value) {
+    toast.show('请先选择公众号')
+    return
+  }
+  const material = await chooseAndUpload(type, { accountId: accountId.value, permanent: false })
+  if (!material) {
+    return
+  }
+  activeMenu.value.reply = activeMenu.value.reply || {}
+  activeMenu.value.reply.mediaId = material.mediaId || ''
+  activeMenu.value.reply.url = material.url || ''
+  toast.success('上传成功')
+}
+
+/** 删除图文跳转已选图文 */
+function handleDeleteArticles() {
+  activeMenu.value.articleId = undefined
+  activeMenu.value.replyArticles = []
+}
+
+/** 删除图文回复已选图文 */
+function handleDeleteReplyArticles() {
+  if (activeMenu.value.reply) {
+    activeMenu.value.reply.articles = []
+  }
+}
+
 /** 关闭编辑弹窗 */
 function handleCloseEditor() {
-  if (activeMenu.value.type === 'article_view_limited' && replyArticlesText.value) {
-    try {
-      activeMenu.value.replyArticles = JSON.parse(replyArticlesText.value)
-    } catch {
-      toast.show('图文 JSON 格式不正确')
-      return
-    }
-  }
   editorVisible.value = false
 }
 

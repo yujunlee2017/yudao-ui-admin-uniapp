@@ -54,6 +54,7 @@
               :content="item.content"
               :media-url="item.mediaUrl"
               :recognition="item.recognition"
+              :format="item.format"
               :title="item.title"
               :description="item.description"
               :url="item.url"
@@ -65,6 +66,7 @@
               :hq-music-url="item.hqMusicUrl"
               :location-x="item.locationX"
               :location-y="item.locationY"
+              :scale="item.scale"
               :label="item.label"
             />
           </view>

@@ -1,27 +1,35 @@
-<!-- 公众号消息内容展示：按消息 type 渲染文本 / 图片 / 语音 / 视频 / 图文 / 音乐 -->
+<!-- 公众号消息内容展示：按 type 渲染文本/图片/语音/视频/图文/音乐/链接/位置/事件 -->
 <template>
   <view>
     <text v-if="type === 'text'">{{ content || '-' }}</text>
+
     <view v-else-if="type === 'image'">
       <wd-img v-if="mediaUrl" :src="mediaUrl" width="180rpx" height="180rpx" radius="8rpx" mode="aspectFill" enable-preview />
       <text v-else>-</text>
     </view>
+
     <view v-else-if="type === 'voice'">
-      <text>{{ mediaUrl ? '语音素材' : '-' }}</text>
+      <MediaPreview type="voice" :url="mediaUrl" :format="format" />
       <view v-if="recognition" class="mt-8rpx text-24rpx text-[#999]">
         {{ recognition }}
       </view>
     </view>
+
     <view v-else-if="type === 'video' || type === 'shortvideo'">
-      <text>{{ title || mediaUrl || '视频素材' }}</text>
-      <view v-if="description" class="mt-8rpx text-24rpx text-[#999]">
+      <view v-if="title" class="mb-8rpx text-28rpx text-[#333]">
+        {{ title }}
+      </view>
+      <view v-if="description" class="mb-8rpx text-24rpx text-[#999]">
         {{ description }}
       </view>
+      <MediaPreview type="video" :url="mediaUrl" />
     </view>
+
     <view v-else-if="type === 'news'">
-      <NewsCard :articles="articles" />
+      <NewsCard :articles="articles" @article-click="article => openExternalUrl(article.url)" />
     </view>
-    <view v-else-if="type === 'music'">
+
+    <view v-else-if="type === 'music'" class="active:opacity-70" @click="openExternalUrl(hqMusicUrl || musicUrl)">
       <wd-img
         v-if="thumbMediaUrl"
         :src="thumbMediaUrl"
@@ -37,39 +45,70 @@
       <view v-if="description" class="mt-8rpx text-24rpx text-[#999]">
         {{ description }}
       </view>
-      <view v-if="musicUrl || hqMusicUrl" class="mt-8rpx break-all text-24rpx text-[#666]">
-        {{ musicUrl || hqMusicUrl }}
+      <view v-if="musicUrl || hqMusicUrl" class="mt-8rpx text-24rpx text-[#576b95]">
+        点击播放音乐 ›
       </view>
     </view>
-    <view v-else-if="type === 'link'">
+
+    <view v-else-if="type === 'link'" class="active:opacity-70" @click="openExternalUrl(url)">
       <view class="text-28rpx text-[#333]">
         {{ title || url || '-' }}
       </view>
       <view v-if="description" class="mt-8rpx text-24rpx text-[#999]">
         {{ description }}
       </view>
-      <view v-if="url" class="mt-8rpx break-all text-24rpx text-[#576b95]">
-        {{ url }}
+      <view v-if="url" class="mt-8rpx text-24rpx text-[#576b95]">
+        点击打开链接 ›
       </view>
     </view>
+
     <view v-else-if="type === 'location'">
-      <text>{{ label || `${locationX || '-'}, ${locationY || '-'}` }}</text>
+      <map
+        v-if="hasLocation"
+        class="w-full rounded-12rpx"
+        style="height: 280rpx"
+        :latitude="locationX"
+        :longitude="locationY"
+        :markers="markers"
+        :scale="scale || 16"
+        @tap="handleOpenLocation"
+      />
+      <view v-if="label" class="mt-8rpx text-26rpx text-[#333]">
+        {{ label }}
+      </view>
+      <view v-if="hasLocation" class="mt-8rpx text-24rpx text-[#576b95]" @click="handleOpenLocation">
+        在地图中查看 ›
+      </view>
+      <text v-else-if="!label">-</text>
     </view>
-    <view v-else-if="type === 'event'">
-      <text>{{ getEventLabel(event) }}{{ eventKey ? `：${eventKey}` : '' }}</text>
+
+    <view v-else-if="type === 'event'" class="flex flex-wrap items-center gap-8rpx">
+      <wd-tag :type="eventTagType">
+        {{ eventLabel }}
+      </wd-tag>
+      <text v-if="eventKey" class="text-24rpx text-[#999]">
+        {{ eventKey }}
+      </text>
     </view>
+
     <text v-else>{{ type || '-' }}</text>
   </view>
 </template>
 
 <script lang="ts" setup>
+import { computed } from 'vue'
+import { openExternalUrl } from '@/pages-mp/utils/link'
+import MediaPreview from './media-preview.vue'
 import NewsCard from './news-card.vue'
 
-defineProps<{
+type TagType = 'primary' | 'success' | 'danger' | 'warning'
+
+const props = defineProps<{
   type?: string
   content?: string
   mediaUrl?: string
   recognition?: string
+  format?: string
   title?: string
   description?: string
   url?: string
@@ -79,26 +118,43 @@ defineProps<{
   thumbMediaUrl?: string
   musicUrl?: string
   hqMusicUrl?: string
-  locationX?: string
-  locationY?: string
+  locationX?: number
+  locationY?: number
+  scale?: number
   label?: string
 }>()
 
-/** 获取事件展示文案 */
-function getEventLabel(event?: string) {
-  const eventMap: Record<string, string> = {
-    subscribe: '关注',
-    unsubscribe: '取消关注',
-    CLICK: '点击菜单',
-    VIEW: '点击菜单链接',
-    SCAN: '扫码',
-    scancode_waitmsg: '扫码结果',
-    scancode_push: '扫码结果',
-    pic_sysphoto: '系统拍照发图',
-    pic_photo_or_album: '拍照或者相册',
-    pic_weixin: '微信相册',
-    location_select: '选择地理位置',
+const EVENT_CONFIG: Record<string, { label: string, type: TagType }> = {
+  subscribe: { label: '关注', type: 'success' },
+  unsubscribe: { label: '取消关注', type: 'danger' },
+  CLICK: { label: '点击菜单', type: 'primary' },
+  VIEW: { label: '点击菜单链接', type: 'primary' },
+  SCAN: { label: '扫码', type: 'success' },
+  scancode_waitmsg: { label: '扫码结果', type: 'success' },
+  scancode_push: { label: '扫码结果', type: 'success' },
+  pic_sysphoto: { label: '系统拍照发图', type: 'warning' },
+  pic_photo_or_album: { label: '拍照或者相册', type: 'warning' },
+  pic_weixin: { label: '微信相册', type: 'warning' },
+  location_select: { label: '选择地理位置', type: 'warning' },
+}
+
+const hasLocation = computed(() => props.locationX != null && props.locationY != null)
+const markers = computed<any[]>(() => hasLocation.value
+  ? [{ id: 0, latitude: props.locationX!, longitude: props.locationY! }]
+  : [])
+const eventLabel = computed(() => props.event ? (EVENT_CONFIG[props.event]?.label || '未知事件类型') : '-')
+const eventTagType = computed<TagType>(() => props.event ? (EVENT_CONFIG[props.event]?.type || 'danger') : 'primary')
+
+/** 打开位置 */
+function handleOpenLocation() {
+  if (!hasLocation.value) {
+    return
   }
-  return event ? eventMap[event] || event : '-'
+  uni.openLocation({
+    latitude: props.locationX!,
+    longitude: props.locationY!,
+    name: props.label,
+    scale: props.scale || 16,
+  })
 }
 </script>

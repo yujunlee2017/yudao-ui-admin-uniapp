@@ -67,28 +67,25 @@
             </view>
           </template>
           <template v-else>
-            <view class="mb-12rpx text-30rpx text-[#333] font-semibold">
-              {{ item.title || item.name || item.mediaId || materialTypeLabel }}
+            <view v-if="currentType === 'video' && item.title" class="mb-12rpx text-30rpx text-[#333] font-semibold">
+              {{ item.title }}
             </view>
-            <view v-if="item.introduction" class="mb-12rpx text-26rpx text-[#666]">
+            <view v-if="currentType === 'video' && item.introduction" class="mb-12rpx text-26rpx text-[#666]">
               {{ item.introduction }}
             </view>
+            <MediaPreview :type="currentType" :url="item.url" class="mb-12rpx" />
+            <view class="mb-8rpx text-24rpx text-[#999]">
+              文件名：{{ item.name || '-' }}
+            </view>
             <view class="mb-12rpx break-all text-24rpx text-[#999]">
-              {{ item.url || '-' }}
+              编号：{{ item.mediaId || '-' }}
             </view>
           </template>
           <view class="mb-20rpx text-24rpx text-[#999]">
             上传时间：{{ formatDateTime(item.createTime) || '-' }}
           </view>
-          <view class="flex gap-16rpx">
+          <view v-if="hasAccessByCodes(['mp:material:delete'])" class="flex">
             <wd-button
-              v-if="item.url"
-              class="flex-1" size="small" variant="plain" @click="handlePreview(item)"
-            >
-              查看
-            </wd-button>
-            <wd-button
-              v-if="hasAccessByCodes(['mp:material:delete'])"
               class="flex-1" size="small" type="danger" @click="handleDelete(item)"
             >
               删除
@@ -125,11 +122,13 @@ import type { Material } from '@/api/mp/material'
 import { useDialog } from '@wot-ui/ui/components/wd-dialog'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, reactive, ref } from 'vue'
-import { deletePermanentMaterial, getMaterialPage, uploadPermanentMaterial } from '@/api/mp/material'
+import { deletePermanentMaterial, getMaterialPage } from '@/api/mp/material'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 import AccountPicker from '@/pages-mp/account/components/account-picker.vue'
+import MediaPreview from '@/pages-mp/components/media-preview.vue'
+import { useMaterialUpload } from '@/pages-mp/utils/upload'
 
 definePage({
   style: {
@@ -141,39 +140,14 @@ definePage({
 type MaterialUploadType = 'image' | 'voice' | 'video'
 
 const typeList: MaterialUploadType[] = ['image', 'voice', 'video']
-const UPLOAD_LIMITS: Record<MaterialUploadType, {
-  label: string
-  maxSize: number
-  types: string[]
-  extensions: string[]
-}> = {
-  image: {
-    label: '图片',
-    maxSize: 2 * 1024 * 1024,
-    types: ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/jpg'],
-    extensions: ['jpg', 'jpeg', 'png', 'gif', 'bmp'],
-  },
-  voice: {
-    label: '语音',
-    maxSize: 2 * 1024 * 1024,
-    types: ['audio/mp3', 'audio/mpeg', 'audio/wma', 'audio/wav', 'audio/amr'],
-    extensions: ['mp3', 'wma', 'wav', 'amr'],
-  },
-  video: {
-    label: '视频',
-    maxSize: 10 * 1024 * 1024,
-    types: ['video/mp4'],
-    extensions: ['mp4'],
-  },
-}
 const { hasAccessByCodes } = useAccess()
 const toast = useToast()
 const dialog = useDialog()
+const { uploading, chooseAndUpload } = useMaterialUpload()
 const accountId = ref<number>() // 当前公众号编号
 const tabIndex = ref(0) // 素材类型索引
 const list = ref<Material[]>([]) // 列表数据
 const pagingRef = ref<any>() // 分页组件引用
-const uploading = ref(false) // 上传状态
 const videoFormVisible = ref(false) // 视频表单弹窗
 const videoForm = reactive({
   title: '',
@@ -181,7 +155,6 @@ const videoForm = reactive({
 }) // 视频上传信息
 
 const currentType = computed(() => typeList[tabIndex.value])
-const materialTypeLabel = computed(() => currentType.value === 'voice' ? '语音素材' : '视频素材')
 const uploadButtonText = computed(() => {
   if (currentType.value === 'image') {
     return '上传图片'
@@ -236,156 +209,46 @@ function reload() {
 }
 
 /** 上传素材 */
-function handleUpload() {
+async function handleUpload() {
   if (!accountId.value) {
     toast.show('请先选择公众号')
     return
   }
-  if (currentType.value === 'image') {
-    chooseImage()
-  } else if (currentType.value === 'video') {
+  // 视频需先在弹窗收集标题与描述
+  if (currentType.value === 'video') {
     videoFormVisible.value = true
-  } else {
-    chooseVoice()
+    return
   }
-}
-
-/** 选择图片 */
-function chooseImage() {
-  uni.chooseImage({
-    count: 1,
-    success: (res) => {
-      const file = normalizeSelectedFile(res)
-      if (file && validateUploadFile('image', file)) {
-        uploadFile(file.path, { type: 'image' })
-      }
-    },
+  const material = await chooseAndUpload(currentType.value, {
+    accountId: accountId.value,
+    permanent: true,
   })
+  if (material) {
+    toast.success('上传成功')
+    reload()
+  }
 }
 
-/** 选择语音 */
-function chooseVoice() {
-  const chooseFile = (uni as any).chooseFile
-  const chooseMessageFile = (uni as any).chooseMessageFile
-  if (chooseFile) {
-    chooseFile({
-      count: 1,
-      type: 'all',
-      extension: UPLOAD_LIMITS.voice.extensions.map(item => `.${item}`),
-      success: (res: any) => {
-        const file = normalizeSelectedFile(res)
-        if (file && validateUploadFile('voice', file)) {
-          uploadFile(file.path, { type: 'voice' })
-        }
-      },
-    })
+/** 选择并上传视频 */
+async function handleChooseVideo() {
+  if (!accountId.value) {
     return
   }
-  if (chooseMessageFile) {
-    chooseMessageFile({
-      count: 1,
-      type: 'file',
-      extension: UPLOAD_LIMITS.voice.extensions,
-      success: (res: any) => {
-        const file = normalizeSelectedFile(res)
-        if (file && validateUploadFile('voice', file)) {
-          uploadFile(file.path, { type: 'voice' })
-        }
-      },
-    })
-    return
-  }
-  toast.show('当前端不支持选择语音文件')
-}
-
-/** 选择视频 */
-function handleChooseVideo() {
   if (!videoForm.title || !videoForm.introduction) {
     toast.show('请输入标题和描述')
     return
   }
-  uni.chooseVideo({
-    extension: UPLOAD_LIMITS.video.extensions.map(item => `.${item}`),
-    success: (res) => {
-      const file = normalizeSelectedFile(res)
-      if (!file || !validateUploadFile('video', file)) {
-        return
-      }
-      videoFormVisible.value = false
-      uploadFile(file.path, {
-        type: 'video',
-        title: videoForm.title,
-        introduction: videoForm.introduction,
-      })
-    },
+  videoFormVisible.value = false
+  const material = await chooseAndUpload('video', {
+    accountId: accountId.value,
+    permanent: true,
+    title: videoForm.title,
+    introduction: videoForm.introduction,
   })
-}
-
-/** 规范选择文件结果 */
-function normalizeSelectedFile(res: any) {
-  const tempFiles = Array.isArray(res.tempFiles) ? res.tempFiles : [res.tempFiles]
-  const tempFilePaths = Array.isArray(res.tempFilePaths) ? res.tempFilePaths : [res.tempFilePaths]
-  const file = tempFiles.find(Boolean) || {}
-  const path = res.tempFilePath || file.tempFilePath || file.path || tempFilePaths.find(Boolean)
-  if (!path) {
-    toast.show('未获取到文件路径')
-    return undefined
-  }
-  return {
-    path,
-    name: file.name || path,
-    size: file.size || res.size || 0,
-    type: file.type || res.type || '',
-  }
-}
-
-/** 校验上传文件 */
-function validateUploadFile(type: MaterialUploadType, file: { name?: string, size?: number, type?: string }) {
-  const limit = UPLOAD_LIMITS[type]
-  const mimeType = file.type?.toLowerCase()
-  const extension = file.name?.split('.').pop()?.toLowerCase()
-  const isValidType = (!!mimeType && limit.types.includes(mimeType))
-    || (!!extension && limit.extensions.includes(extension))
-  if (!isValidType) {
-    toast.show(`上传${limit.label}格式不对`)
-    return false
-  }
-  if (file.size && file.size > limit.maxSize) {
-    toast.show(`上传${limit.label}大小不能超过${limit.maxSize / 1024 / 1024}M`)
-    return false
-  }
-  return true
-}
-
-/** 上传文件 */
-async function uploadFile(filePath: string, data: { type: string, title?: string, introduction?: string }) {
-  if (!accountId.value) {
-    return
-  }
-  uploading.value = true
-  try {
-    await uploadPermanentMaterial(filePath, {
-      accountId: accountId.value,
-      ...data,
-    })
+  if (material) {
     toast.success('上传成功')
     reload()
-  } finally {
-    uploading.value = false
   }
-}
-
-/** 查看素材 */
-function handlePreview(item: Material) {
-  if (!item.url) {
-    return
-  }
-  // #ifdef H5
-  window.open(item.url, '_blank')
-  // #endif
-  // #ifndef H5
-  uni.setClipboardData({ data: item.url })
-  // #endif
 }
 
 /** 删除素材 */

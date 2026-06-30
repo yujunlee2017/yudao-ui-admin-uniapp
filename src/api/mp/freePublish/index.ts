@@ -13,13 +13,11 @@ export interface FreePublish {
   accountId?: number
   articleId?: string
   mediaId?: string
-  status?: number
   articles?: FreePublishArticle[]
   content?: {
     newsItem?: FreePublishArticle[]
   }
-  publishTime?: string | Date
-  createTime?: string | Date
+  updateTime?: string
 }
 
 /** 获得公众号发布分页 */

@@ -35,7 +35,7 @@
               Media ID：{{ item.mediaId || '-' }}
             </view>
             <view class="mb-20rpx text-24rpx text-[#999]">
-              更新时间：{{ formatDateTime(item.updateTime || item.createTime) || '-' }}
+              更新时间：{{ item.updateTime ? formatDateTime(item.updateTime * 1000) : '-' }}
             </view>
             <view class="flex gap-16rpx">
               <wd-button

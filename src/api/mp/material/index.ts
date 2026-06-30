@@ -10,10 +10,13 @@ const baseUrl = '/mp/material'
 export interface Material {
   id: number
   accountId?: number
+  appId?: string
   type?: string
+  permanent?: boolean
   name?: string
   mediaId?: string
   url?: string
+  mpUrl?: string
   title?: string
   introduction?: string
   createTime?: Date
@@ -41,12 +44,25 @@ export function uploadPermanentMaterial(
   filePath: string,
   data: { accountId: number, type: string, title?: string, introduction?: string },
 ) {
+  return doUploadMaterial('upload-permanent', filePath, data)
+}
+
+/** 上传公众号临时素材（自动回复 / 客服 / 菜单回复用临时素材） */
+export function uploadTemporaryMaterial(
+  filePath: string,
+  data: { accountId: number, type: string },
+) {
+  return doUploadMaterial('upload-temporary', filePath, data)
+}
+
+/** 执行素材上传 */
+function doUploadMaterial(path: string, filePath: string, data: Record<string, any>) {
   const tokenStore = useTokenStore()
   const userStore = useUserStore()
   const token = tokenStore.updateNowTime().validToken
   return new Promise<Material>((resolve, reject) => {
     uni.uploadFile({
-      url: getUploadUrl(),
+      url: getUploadUrl(path),
       filePath,
       name: 'file',
       header: {
@@ -69,11 +85,11 @@ export function uploadPermanentMaterial(
 }
 
 /** 获取素材上传地址 */
-function getUploadUrl() {
+function getUploadUrl(path: string) {
   // #ifdef H5
   if (JSON.parse(import.meta.env.VITE_APP_PROXY_ENABLE)) {
-    return `${import.meta.env.VITE_APP_PROXY_PREFIX}${baseUrl}/upload-permanent`
+    return `${import.meta.env.VITE_APP_PROXY_PREFIX}${baseUrl}/${path}`
   }
   // #endif
-  return `${getEnvBaseUrl()}${baseUrl}/upload-permanent`
+  return `${getEnvBaseUrl()}${baseUrl}/${path}`
 }

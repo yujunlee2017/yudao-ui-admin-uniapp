@@ -31,11 +31,8 @@
         >
           <NewsCard :articles="getArticles(item)" />
           <view class="p-24rpx">
-            <view class="mb-12rpx break-all text-26rpx text-[#666]">
+            <view class="mb-20rpx break-all text-26rpx text-[#666]">
               Article ID：{{ item.articleId || '-' }}
-            </view>
-            <view class="mb-20rpx text-24rpx text-[#999]">
-              发布时间：{{ formatDateTime(item.publishTime || item.createTime) || '-' }}
             </view>
             <wd-button
               v-if="hasAccessByCodes(['mp:free-publish:delete'])"
@@ -61,7 +58,6 @@ import { ref } from 'vue'
 import { deleteFreePublish, getFreePublishPage } from '@/api/mp/freePublish'
 import { useAccess } from '@/hooks/useAccess'
 import { navigateBackPlus } from '@/utils'
-import { formatDateTime } from '@/utils/date'
 import AccountPicker from '@/pages-mp/account/components/account-picker.vue'
 import NewsCard from '../components/news-card.vue'
 

@@ -45,7 +45,7 @@
               v-model:visible="pickerVisible.requestMatch"
               :model-value="[formData.requestMatch]"
               :columns="getIntDictOptions(DICT_TYPE.MP_AUTO_REPLY_REQUEST_MATCH)"
-              @confirm="({ value }) => formData.requestMatch = value[0]"
+              @confirm="({ value }) => formData.requestMatch = Number(value[0])"
             />
           </template>
         </wd-cell-group>
@@ -66,64 +66,117 @@
             :columns="responseMessageOptions"
             @confirm="({ value }) => formData.responseMessageType = value[0]"
           />
+
+          <!-- 文本 -->
           <wd-form-item v-if="formData.responseMessageType === 'text'" title="回复内容" title-width="220rpx" prop="responseContent">
             <wd-textarea v-model="formData.responseContent" clearable placeholder="请输入回复内容" />
           </wd-form-item>
-          <template v-else>
-            <wd-cell
-              v-if="canPickMaterial"
-              title="素材库"
-              is-link
-              :value="formData.responseMessageType === 'music' ? '选择缩略图' : '选择素材'"
-              @click="materialPickerVisible = true"
-            />
-            <!-- 图片：上传到素材库 + 预览 -->
-            <wd-cell
-              v-if="formData.responseMessageType === 'image'"
-              title="上传图片"
-              is-link
-              value="从相册选择并上传"
-              @click="handleUploadImage"
-            />
-            <view v-if="formData.responseMessageType === 'image' && formData.responseMediaUrl" class="px-24rpx py-16rpx">
+
+          <!-- 图片：素材库选择 / 本地上传 + 预览 -->
+          <template v-else-if="formData.responseMessageType === 'image'">
+            <wd-cell title="回复素材">
+              <view class="flex gap-16rpx py-8rpx">
+                <wd-button size="small" plain @click="materialPickerVisible = true">
+                  素材库选择
+                </wd-button>
+                <wd-button size="small" plain :loading="uploading" @click="handleUploadMaterial('image')">
+                  本地上传
+                </wd-button>
+              </view>
+            </wd-cell>
+            <view v-if="formData.responseMediaUrl" class="px-24rpx pb-16rpx">
               <wd-img :src="formData.responseMediaUrl" width="200rpx" height="200rpx" mode="aspectFill" radius="8rpx" />
             </view>
-            <!-- 图片/语音/视频：素材媒体；音乐不使用 responseMediaId/Url -->
-            <template v-if="formData.responseMessageType !== 'music'">
-              <wd-form-item title="素材 MediaID" title-width="220rpx" prop="responseMediaId">
-                <wd-input v-model="formData.responseMediaId" clearable placeholder="请输入素材 MediaID" />
-              </wd-form-item>
-              <wd-form-item title="素材 URL" title-width="220rpx" prop="responseMediaUrl">
-                <wd-input v-model="formData.responseMediaUrl" clearable placeholder="请输入素材 URL" />
-              </wd-form-item>
-            </template>
-            <!-- 音乐：缩略图（选图片素材回填）+ 音乐链接 -->
-            <template v-if="formData.responseMessageType === 'music'">
-              <wd-form-item title="缩略图 MediaID" title-width="220rpx" prop="responseThumbMediaId">
-                <wd-input v-model="formData.responseThumbMediaId" clearable placeholder="请选择图片素材作为缩略图" />
-              </wd-form-item>
-              <wd-form-item title="缩略图 URL" title-width="220rpx" prop="responseThumbMediaUrl">
-                <wd-input v-model="formData.responseThumbMediaUrl" clearable placeholder="请选择图片素材作为缩略图" />
-              </wd-form-item>
-              <wd-form-item title="音乐链接" title-width="220rpx" prop="responseMusicUrl">
-                <wd-input v-model="formData.responseMusicUrl" clearable placeholder="请输入音乐链接" />
-              </wd-form-item>
-              <wd-form-item title="高质量链接" title-width="220rpx" prop="responseHqMusicUrl">
-                <wd-input v-model="formData.responseHqMusicUrl" clearable placeholder="请输入高质量音乐链接" />
-              </wd-form-item>
-            </template>
+          </template>
+
+          <!-- 语音：素材库选择 / 本地上传 + 预览 -->
+          <template v-else-if="formData.responseMessageType === 'voice'">
+            <wd-cell title="回复素材">
+              <view class="flex gap-16rpx py-8rpx">
+                <wd-button size="small" plain @click="materialPickerVisible = true">
+                  素材库选择
+                </wd-button>
+                <wd-button size="small" plain :loading="uploading" @click="handleUploadMaterial('voice')">
+                  本地上传
+                </wd-button>
+              </view>
+            </wd-cell>
+            <view v-if="formData.responseMediaUrl" class="px-24rpx pb-16rpx">
+              <MediaPreview type="voice" :url="formData.responseMediaUrl" />
+            </view>
+          </template>
+
+          <!-- 视频：标题 / 描述 + 素材库选择 / 本地上传 + 预览 -->
+          <template v-else-if="formData.responseMessageType === 'video'">
             <wd-form-item title="标题" title-width="220rpx" prop="responseTitle">
               <wd-input v-model="formData.responseTitle" clearable placeholder="请输入标题" />
             </wd-form-item>
             <wd-form-item title="描述" title-width="220rpx" prop="responseDescription">
               <wd-textarea v-model="formData.responseDescription" clearable placeholder="请输入描述" />
             </wd-form-item>
-            <wd-form-item v-if="formData.responseMessageType === 'news'" title="图文 JSON" title-width="220rpx">
-              <wd-textarea v-model="responseArticlesText" clearable placeholder="请输入图文数组 JSON" />
-            </wd-form-item>
-            <view v-if="formData.responseMessageType === 'news' && formData.responseArticles?.length" class="px-24rpx pb-16rpx">
+            <wd-cell title="回复素材">
+              <view class="flex gap-16rpx py-8rpx">
+                <wd-button size="small" plain @click="materialPickerVisible = true">
+                  素材库选择
+                </wd-button>
+                <wd-button size="small" plain :loading="uploading" @click="handleUploadMaterial('video')">
+                  本地上传
+                </wd-button>
+              </view>
+            </wd-cell>
+            <view v-if="formData.responseMediaUrl" class="px-24rpx pb-16rpx">
+              <MediaPreview type="video" :url="formData.responseMediaUrl" />
+            </view>
+          </template>
+
+          <!-- 图文：素材库选择 + 卡片预览 -->
+          <template v-else-if="formData.responseMessageType === 'news'">
+            <wd-cell title="回复素材">
+              <view class="flex gap-16rpx py-8rpx">
+                <wd-button size="small" plain @click="materialPickerVisible = true">
+                  选择图文
+                </wd-button>
+                <wd-button
+                  v-if="formData.responseArticles?.length"
+                  size="small" plain type="error"
+                  @click="formData.responseArticles = []"
+                >
+                  清空
+                </wd-button>
+              </view>
+            </wd-cell>
+            <view v-if="formData.responseArticles?.length" class="px-24rpx pb-16rpx">
               <NewsCard :articles="formData.responseArticles" />
             </view>
+          </template>
+
+          <!-- 音乐：缩略图（素材库 / 本地上传）+ 标题 / 描述 + 音乐链接 -->
+          <template v-else-if="formData.responseMessageType === 'music'">
+            <wd-cell title="缩略图">
+              <view class="flex gap-16rpx py-8rpx">
+                <wd-button size="small" plain @click="materialPickerVisible = true">
+                  素材库选择
+                </wd-button>
+                <wd-button size="small" plain :loading="uploading" @click="handleUploadMaterial('thumb')">
+                  本地上传
+                </wd-button>
+              </view>
+            </wd-cell>
+            <view v-if="formData.responseThumbMediaUrl" class="px-24rpx pb-16rpx">
+              <wd-img :src="formData.responseThumbMediaUrl" width="160rpx" height="160rpx" mode="aspectFill" radius="8rpx" />
+            </view>
+            <wd-form-item title="标题" title-width="220rpx" prop="responseTitle">
+              <wd-input v-model="formData.responseTitle" clearable placeholder="请输入标题" />
+            </wd-form-item>
+            <wd-form-item title="描述" title-width="220rpx" prop="responseDescription">
+              <wd-textarea v-model="formData.responseDescription" clearable placeholder="请输入描述" />
+            </wd-form-item>
+            <wd-form-item title="音乐链接" title-width="220rpx" prop="responseMusicUrl">
+              <wd-input v-model="formData.responseMusicUrl" clearable placeholder="请输入音乐链接" />
+            </wd-form-item>
+            <wd-form-item title="高质量链接" title-width="220rpx" prop="responseHqMusicUrl">
+              <wd-input v-model="formData.responseHqMusicUrl" clearable placeholder="请输入高质量音乐链接" />
+            </wd-form-item>
           </template>
         </wd-cell-group>
       </wd-form>
@@ -149,17 +202,19 @@
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { AutoReply } from '@/api/mp/autoReply'
+import type { MaterialUploadType } from '@/pages-mp/utils/upload'
 import { onLoad } from '@dcloudio/uni-app'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { AutoReplyType, createAutoReply, getAutoReply, updateAutoReply } from '@/api/mp/autoReply'
-import { uploadPermanentMaterial } from '@/api/mp/material'
 import { getIntDictOptions, getStrDictOptions } from '@/hooks/useDict'
+import MediaPreview from '@/pages-mp/components/media-preview.vue'
+import NewsCard from '@/pages-mp/components/news-card.vue'
+import MaterialPicker from '@/pages-mp/material/components/material-picker.vue'
+import { useMaterialUpload } from '@/pages-mp/utils/upload'
 import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE, MpAutoReplyRequestMatchEnum } from '@/utils/constants'
 import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
-import MaterialPicker from '@/pages-mp/material/components/material-picker.vue'
-import NewsCard from '../../components/news-card.vue'
 import { getMpRouteNumber, useMpRouteParams } from '../../utils/route'
 
 const props = defineProps<{
@@ -176,8 +231,11 @@ definePage({
   },
 })
 
+const URL_PATTERN = /^https?:\/\/.+/i // 音乐链接格式校验
 const requestMessageTypes = ['text', 'image', 'voice', 'video', 'shortvideo', 'location', 'link']
+const responseMessageTypes = ['text', 'image', 'voice', 'video', 'news', 'music']
 const toast = useToast()
+const { uploading, chooseAndUpload } = useMaterialUpload()
 const id = computed(() => getMpRouteNumber(routeParams.id))
 const accountId = computed(() => getMpRouteNumber(routeParams.accountId))
 const replyType = computed(() => getMpRouteNumber(routeParams.type) || AutoReplyType.Keyword)
@@ -185,8 +243,6 @@ const getTitle = computed(() => id.value ? '编辑自动回复' : '新增自动�
 const formLoading = ref(false) // 表单提交状态
 const pickerVisible = ref<Record<string, boolean>>({}) // 选择器显示状态
 const materialPickerVisible = ref(false) // 素材选择弹窗
-const uploading = ref(false) // 图片上传状态
-const responseArticlesText = ref('') // 图文 JSON
 const formData = ref<AutoReply>({
   id: undefined,
   accountId: accountId.value || 0,
@@ -196,6 +252,7 @@ const formData = ref<AutoReply>({
   requestMessageType: undefined,
   responseMessageType: 'text',
   responseContent: '',
+  responseArticles: [],
 }) // 表单数据
 const formSchema = createFormSchema({
   requestKeyword: [{ required: () => formData.value.type === AutoReplyType.Keyword, message: '关键词不能为空' }],
@@ -203,23 +260,47 @@ const formSchema = createFormSchema({
   requestMessageType: [{ required: () => formData.value.type === AutoReplyType.Message, message: '消息类型不能为空' }],
   responseMessageType: [{ required: true, message: '回复类型不能为空' }],
   responseContent: [{ required: () => formData.value.responseMessageType === 'text', message: '回复内容不能为空' }],
-  responseMediaId: [{ required: () => ['image', 'voice', 'video'].includes(String(formData.value.responseMessageType)), message: '素材 MediaID 不能为空' }],
-  responseMediaUrl: [{ required: () => ['image', 'voice', 'video'].includes(String(formData.value.responseMessageType)), message: '素材 URL 不能为空' }],
+  responseMediaId: [{ required: () => ['image', 'voice', 'video'].includes(String(formData.value.responseMessageType)), message: '请选择或上传素材' }],
   responseTitle: [{ required: () => formData.value.responseMessageType === 'video', message: '视频标题不能为空' }],
   responseDescription: [{ required: () => formData.value.responseMessageType === 'video', message: '视频描述不能为空' }],
   responseThumbMediaId: [{ required: () => formData.value.responseMessageType === 'music', message: '请选择音乐缩略图' }],
-  responseThumbMediaUrl: [{ required: () => formData.value.responseMessageType === 'music', message: '请选择音乐缩略图' }],
-  responseMusicUrl: [{ required: () => formData.value.responseMessageType === 'music', message: '音乐链接不能为空' }],
-  responseHqMusicUrl: [{ required: () => formData.value.responseMessageType === 'music', message: '高质量音乐链接不能为空' }],
+  responseMusicUrl: [
+    { required: () => formData.value.responseMessageType === 'music', message: '音乐链接不能为空' },
+    { pattern: URL_PATTERN, message: '音乐链接格式不正确' },
+  ],
+  responseHqMusicUrl: [
+    { required: () => formData.value.responseMessageType === 'music', message: '高质量音乐链接不能为空' },
+    { pattern: URL_PATTERN, message: '高质量音乐链接格式不正确' },
+  ],
+  responseArticles: [{ required: () => formData.value.responseMessageType === 'news', message: '请选择图文素材' }],
 })
 const formRef = ref<FormInstance>() // 表单组件引用
 
 const requestMessageOptions = computed(() => getStrDictOptions(DICT_TYPE.MP_MESSAGE_TYPE).filter(item => requestMessageTypes.includes(String(item.value))))
-const responseMessageOptions = computed(() => getStrDictOptions(DICT_TYPE.MP_MESSAGE_TYPE).filter(item => ['text', 'image', 'voice', 'video', 'news', 'music'].includes(String(item.value))))
-const canPickMaterial = computed(() => ['image', 'voice', 'video', 'news', 'music'].includes(String(formData.value.responseMessageType)))
+const responseMessageOptions = computed(() => getStrDictOptions(DICT_TYPE.MP_MESSAGE_TYPE).filter(item => responseMessageTypes.includes(String(item.value))))
+// 音乐选图片素材作为缩略图，其余按自身类型选择
 const materialPickerType = computed<'image' | 'voice' | 'video' | 'news'>(() => {
   const type = formData.value.responseMessageType
   return type === 'voice' || type === 'video' || type === 'news' ? type : 'image'
+})
+
+const ready = ref(false) // 详情回填完成后才允许换类型清字段，避免回填触发清空
+
+/** 切换回复类型时清空与新类型无关的 response* 字段 */
+watch(() => formData.value.responseMessageType, () => {
+  if (!ready.value) {
+    return
+  }
+  formData.value.responseContent = ''
+  formData.value.responseMediaId = undefined
+  formData.value.responseMediaUrl = undefined
+  formData.value.responseTitle = undefined
+  formData.value.responseDescription = undefined
+  formData.value.responseThumbMediaId = undefined
+  formData.value.responseThumbMediaUrl = undefined
+  formData.value.responseMusicUrl = undefined
+  formData.value.responseHqMusicUrl = undefined
+  formData.value.responseArticles = []
 })
 
 /** 返回上一页 */
@@ -233,59 +314,59 @@ async function getDetail() {
     return
   }
   formData.value = await getAutoReply(id.value)
-  responseArticlesText.value = formData.value.responseArticles ? JSON.stringify(formData.value.responseArticles) : ''
+  formData.value.responseArticles = formData.value.responseArticles || []
 }
 
-/** 上传图片到素材库并回填 MediaID / URL */
-function handleUploadImage() {
-  if (uploading.value) {
+/** 本地上传素材并回填 */
+async function handleUploadMaterial(type: MaterialUploadType) {
+  const material = await chooseAndUpload(type, { accountId: formData.value.accountId!, permanent: false })
+  if (!material) {
     return
   }
-  if (!formData.value.accountId) {
-    toast.show('请先选择公众号')
-    return
-  }
-  uni.chooseImage({
-    count: 1,
-    success: async (res) => {
-      const path = res.tempFilePaths?.[0]
-      if (!path) {
-        return
-      }
-      uploading.value = true
-      toast.loading('上传中...')
-      try {
-        const material = await uploadPermanentMaterial(path, { accountId: formData.value.accountId!, type: 'image' })
-        formData.value.responseMediaId = material.mediaId || ''
-        formData.value.responseMediaUrl = material.url || ''
-        toast.success('上传成功')
-      } catch {
-        toast.close()
-      } finally {
-        uploading.value = false
-      }
-    },
-  })
+  applyMaterial(type === 'thumb' ? 'music' : formData.value.responseMessageType, material)
+  toast.success('上传成功')
 }
 
 /** 选择素材 */
 function handleMaterialSelect(item: any) {
-  if (formData.value.responseMessageType === 'news') {
-    const articles = item.content?.newsItem || item.articles || []
-    formData.value.responseArticles = articles
-    responseArticlesText.value = JSON.stringify(articles)
+  applyMaterial(formData.value.responseMessageType, item)
+}
+
+/** 把素材回填到对应回复字段（选择 / 上传共用） */
+function applyMaterial(type: string | undefined, item: any) {
+  if (type === 'news') {
+    formData.value.responseArticles = normalizeArticles(getNewsArticles(item))
     return
   }
-  // 音乐：选图片素材作为缩略图
-  if (formData.value.responseMessageType === 'music') {
+  // 音乐：素材作为缩略图
+  if (type === 'music') {
     formData.value.responseThumbMediaId = item.mediaId || ''
     formData.value.responseThumbMediaUrl = item.url || ''
     return
   }
+  // 图片 / 语音 / 视频：媒体素材
   formData.value.responseMediaId = item.mediaId || ''
   formData.value.responseMediaUrl = item.url || ''
-  formData.value.responseTitle = item.title || item.name || ''
-  formData.value.responseDescription = item.introduction || item.description || ''
+  if (type === 'video') {
+    formData.value.responseTitle = formData.value.responseTitle || item.title || item.name || ''
+    formData.value.responseDescription = formData.value.responseDescription || item.introduction || item.description || ''
+  }
+}
+
+/** 取素材图文列表（兼容草稿 / 已发布结构） */
+function getNewsArticles(item: any) {
+  return item.content?.newsItem || item.articles || []
+}
+
+/** 规整图文字段，满足后端 responseArticles 必填（digest→description、thumbUrl→picUrl） */
+function normalizeArticles(articles: any[]) {
+  return (articles || []).map(article => ({
+    ...article,
+    title: article.title || '',
+    description: article.description || article.digest || '',
+    picUrl: article.picUrl || article.thumbUrl || article.thumbMediaUrl || '',
+    url: article.url || article.contentSourceUrl || '',
+  }))
 }
 
 /** 提交表单 */
@@ -295,24 +376,6 @@ async function handleSubmit() {
     return
   }
   const data: AutoReply = { ...formData.value }
-  if (data.responseMessageType === 'news') {
-    if (!responseArticlesText.value) {
-      toast.show('请选择图文素材')
-      return
-    }
-    let articles: any[]
-    try {
-      articles = JSON.parse(responseArticlesText.value)
-    } catch {
-      toast.show('图文 JSON 格式不正确')
-      return
-    }
-    if (!Array.isArray(articles) || articles.length === 0) {
-      toast.show('请选择图文素材')
-      return
-    }
-    data.responseArticles = articles
-  }
   data.id = id.value || data.id
   data.accountId = data.accountId || accountId.value || 0
   data.type = data.type || replyType.value
@@ -334,13 +397,16 @@ async function handleSubmit() {
 }
 
 /** 初始化 */
-onLoad((query) => {
+onLoad(async (query) => {
   syncRouteParams(query)
   if (!id.value) {
     formData.value.accountId = accountId.value || 0
     formData.value.type = replyType.value
     formData.value.requestMatch = replyType.value === AutoReplyType.Keyword ? MpAutoReplyRequestMatchEnum.ALL : undefined
   }
-  getDetail()
+  await getDetail()
+  // 等回填触发的 watch 跑完再放开清字段
+  await nextTick()
+  ready.value = true
 })
 </script>

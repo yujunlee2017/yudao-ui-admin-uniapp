@@ -9,7 +9,9 @@ export interface DraftArticle {
   contentSourceUrl?: string
   thumbMediaId?: string
   thumbUrl?: string
-  showCoverPic?: boolean
+  showCoverPic?: number
+  needOpenComment?: number
+  onlyFansCanComment?: number
 }
 
 /** 公众号图文 */
@@ -22,8 +24,7 @@ export interface Draft {
   content?: {
     newsItem?: DraftArticle[]
   }
-  createTime?: string | Date
-  updateTime?: string | Date
+  updateTime?: number
 }
 
 /** 创建空图文 */
@@ -36,6 +37,9 @@ export function createEmptyNewsItem(): NewsItem {
     contentSourceUrl: '',
     thumbMediaId: '',
     thumbUrl: '',
+    showCoverPic: 1,
+    needOpenComment: 0,
+    onlyFansCanComment: 0,
   }
 }
 

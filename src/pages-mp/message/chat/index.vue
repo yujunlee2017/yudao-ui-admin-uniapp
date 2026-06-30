@@ -85,6 +85,7 @@
                 :content="item.content"
                 :media-url="item.mediaUrl"
                 :recognition="item.recognition"
+                :format="item.format"
                 :title="item.title"
                 :description="item.description"
                 :url="item.url"
@@ -96,6 +97,7 @@
                 :hq-music-url="item.hqMusicUrl"
                 :location-x="item.locationX"
                 :location-y="item.locationY"
+                :scale="item.scale"
                 :label="item.label"
               />
             </view>
@@ -111,13 +113,16 @@
         <wd-button size="small" variant="plain" @click="sendTypePickerVisible = true">
           {{ sendTypeLabel }}
         </wd-button>
+        <wd-button v-if="canUpload" size="small" variant="plain" :loading="uploading" @click="handleUpload">
+          本地上传
+        </wd-button>
         <wd-button
           v-if="canPickMaterial"
           size="small"
           variant="plain"
           @click="materialPickerVisible = true"
         >
-          素材库
+          {{ sendForm.type === 'music' ? '选缩略图' : '素材库' }}
         </wd-button>
       </view>
       <wd-picker
@@ -127,6 +132,7 @@
         @confirm="handleSendTypeConfirm"
       />
 
+      <!-- 文本 -->
       <template v-if="sendForm.type === 'text'">
         <wd-textarea
           v-model="sendForm.content"
@@ -136,26 +142,80 @@
           clearable
         />
       </template>
-      <template v-else>
-        <wd-input v-model="sendForm.mediaId" clearable placeholder="请输入素材 MediaID" />
+
+      <!-- 图片 -->
+      <template v-else-if="sendForm.type === 'image'">
+        <view v-if="sendForm.url" class="flex items-center gap-16rpx">
+          <wd-img :src="sendForm.url" width="160rpx" height="160rpx" radius="8rpx" mode="aspectFill" />
+          <wd-button size="small" type="error" variant="plain" @click="clearMedia">
+            移除
+          </wd-button>
+        </view>
+        <view v-else class="text-26rpx text-[#999]">
+          请「本地上传」或从「素材库」选择图片
+        </view>
+      </template>
+
+      <!-- 语音 -->
+      <template v-else-if="sendForm.type === 'voice'">
+        <view v-if="sendForm.url" class="flex items-center gap-16rpx">
+          <MediaPreview type="voice" :url="sendForm.url" />
+          <wd-button size="small" type="error" variant="plain" @click="clearMedia">
+            移除
+          </wd-button>
+        </view>
+        <view v-else class="text-26rpx text-[#999]">
+          请「本地上传」或从「素材库」选择语音
+        </view>
+      </template>
+
+      <!-- 视频 -->
+      <template v-else-if="sendForm.type === 'video'">
+        <MediaPreview v-if="sendForm.url" type="video" :url="sendForm.url" />
+        <view v-else class="text-26rpx text-[#999]">
+          请「本地上传」或从「素材库」选择视频
+        </view>
         <view class="h-12rpx" />
-        <wd-input v-model="sendForm.url" clearable placeholder="请输入素材 URL" />
+        <wd-input v-model="sendForm.title" clearable placeholder="请输入视频标题" />
         <view class="h-12rpx" />
+        <wd-textarea v-model="sendForm.description" clearable placeholder="请输入视频描述" />
+      </template>
+
+      <!-- 图文 -->
+      <template v-else-if="sendForm.type === 'news'">
+        <NewsCard
+          v-if="sendForm.articles.length"
+          :articles="sendForm.articles"
+          @article-click="article => openExternalUrl(article.url)"
+        />
+        <view v-else class="text-26rpx text-[#999]">
+          请从「素材库」选择图文（最多发送 1 条）
+        </view>
+        <view v-if="sendForm.articles.length" class="mt-12rpx text-right">
+          <wd-button size="small" type="error" variant="plain" @click="sendForm.articles = []">
+            移除图文
+          </wd-button>
+        </view>
+      </template>
+
+      <!-- 音乐 -->
+      <template v-else-if="sendForm.type === 'music'">
+        <view v-if="sendForm.thumbMediaUrl" class="mb-12rpx flex items-center gap-16rpx">
+          <wd-img :src="sendForm.thumbMediaUrl" width="120rpx" height="120rpx" radius="8rpx" mode="aspectFill" />
+          <wd-button size="small" type="error" variant="plain" @click="clearMusicThumb">
+            移除缩略图
+          </wd-button>
+        </view>
+        <view v-else class="mb-12rpx text-26rpx text-[#999]">
+          请「本地上传」或「选缩略图」回填音乐封面
+        </view>
         <wd-input v-model="sendForm.title" clearable placeholder="请输入标题" />
         <view class="h-12rpx" />
         <wd-textarea v-model="sendForm.description" clearable placeholder="请输入描述" />
-        <template v-if="sendForm.type === 'news'">
-          <view class="h-12rpx" />
-          <wd-textarea v-model="sendForm.articlesText" clearable placeholder="请输入图文数组 JSON" />
-        </template>
-        <template v-if="sendForm.type === 'music'">
-          <view class="h-12rpx" />
-          <wd-input v-model="sendForm.thumbMediaId" clearable placeholder="缩略图 MediaID（选图片素材回填）" />
-          <view class="h-12rpx" />
-          <wd-input v-model="sendForm.musicUrl" clearable placeholder="请输入音乐链接" />
-          <view class="h-12rpx" />
-          <wd-input v-model="sendForm.hqMusicUrl" clearable placeholder="请输入高质量音乐链接" />
-        </template>
+        <view class="h-12rpx" />
+        <wd-input v-model="sendForm.musicUrl" clearable placeholder="请输入音乐链接" />
+        <view class="h-12rpx" />
+        <wd-input v-model="sendForm.hqMusicUrl" clearable placeholder="请输入高质量音乐链接" />
       </template>
 
       <wd-button class="mt-16rpx" type="primary" block :loading="sending" @click="handleSend">
@@ -174,7 +234,7 @@
 </template>
 
 <script lang="ts" setup>
-import type { MpMessage } from '@/api/mp/message'
+import type { MpMessage, MpMessageSend } from '@/api/mp/message'
 import type { MpUser } from '@/api/mp/user'
 import { onLoad } from '@dcloudio/uni-app'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
@@ -183,7 +243,11 @@ import { getMessagePage, sendMessage } from '@/api/mp/message'
 import { getUser } from '@/api/mp/user'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
+import MediaPreview from '@/pages-mp/components/media-preview.vue'
+import NewsCard from '@/pages-mp/components/news-card.vue'
 import MaterialPicker from '@/pages-mp/material/components/material-picker.vue'
+import { openExternalUrl } from '@/pages-mp/utils/link'
+import { useMaterialUpload } from '@/pages-mp/utils/upload'
 import ReplyContent from '../../components/reply-content.vue'
 import { getMpRouteNumber, getMpRouteString, useMpRouteParams } from '../../utils/route'
 
@@ -202,6 +266,7 @@ definePage({
 })
 
 const toast = useToast()
+const { uploading, chooseAndUpload } = useMaterialUpload()
 const userId = computed(() => getMpRouteNumber(routeParams.userId))
 const routeAccountId = computed(() => getMpRouteNumber(routeParams.accountId))
 const routeOpenid = computed(() => getMpRouteString(routeParams.openid))
@@ -228,8 +293,9 @@ const sendForm = reactive({
   url: '',
   title: '',
   description: '',
-  articlesText: '',
+  articles: [] as any[],
   thumbMediaId: '',
+  thumbMediaUrl: '',
   musicUrl: '',
   hqMusicUrl: '',
 }) // 发送表单
@@ -244,7 +310,9 @@ const sendTypeOptions = [
 
 const sendTypeLabel = computed(() => sendTypeOptions.find(item => item.value === sendForm.type)?.label || '')
 const canPickMaterial = computed(() => ['image', 'voice', 'video', 'news', 'music'].includes(sendForm.type))
-const materialPickerType = computed(() => {
+// 本地上传：图片 / 语音 / 视频内联上传，音乐上传缩略图（thumb）
+const canUpload = computed(() => ['image', 'voice', 'video', 'music'].includes(sendForm.type))
+const materialPickerType = computed<'image' | 'voice' | 'video' | 'news'>(() => {
   if (sendForm.type === 'news') {
     return 'news'
   }
@@ -254,6 +322,7 @@ const materialPickerType = computed(() => {
   if (sendForm.type === 'video') {
     return 'video'
   }
+  // 图片 + 音乐（音乐选图片素材作为缩略图）
   return 'image'
 })
 
@@ -336,23 +405,58 @@ function handleSendTypeConfirm({ value }: { value: string[] }) {
   clearSendForm()
 }
 
+/** 本地上传：图片 / 语音 / 视频回填 mediaId + 预览，音乐回填缩略图 */
+async function handleUpload() {
+  if (!accountId.value) {
+    toast.show('缺少公众号编号')
+    return
+  }
+  const uploadType = sendForm.type === 'music' ? 'thumb' : (sendForm.type as 'image' | 'voice' | 'video')
+  const material = await chooseAndUpload(uploadType, { accountId: accountId.value, permanent: false })
+  if (!material) {
+    return
+  }
+  if (sendForm.type === 'music') {
+    sendForm.thumbMediaId = material.mediaId || ''
+    sendForm.thumbMediaUrl = material.url || ''
+    return
+  }
+  sendForm.mediaId = material.mediaId || ''
+  sendForm.url = material.url || ''
+}
+
 /** 选择素材 */
 function handleMaterialSelect(item: any) {
+  // 图文：回填 articles 数组，预览用 news-card
   if (sendForm.type === 'news') {
-    const articles = item.content?.newsItem || item.articles || []
-    sendForm.articlesText = JSON.stringify(articles)
-    sendForm.title = articles[0]?.title || ''
+    sendForm.articles = item.content?.newsItem || item.articles || []
     return
   }
   // 音乐：选图片素材作为缩略图
   if (sendForm.type === 'music') {
     sendForm.thumbMediaId = item.mediaId || ''
+    sendForm.thumbMediaUrl = item.url || ''
     return
   }
   sendForm.mediaId = item.mediaId || ''
   sendForm.url = item.url || ''
-  sendForm.title = item.title || item.name || ''
-  sendForm.description = item.introduction || item.description || ''
+  // 视频：素材自带标题 / 描述时回填
+  if (sendForm.type === 'video') {
+    sendForm.title = item.title || sendForm.title
+    sendForm.description = item.introduction || item.description || sendForm.description
+  }
+}
+
+/** 移除已选媒体 */
+function clearMedia() {
+  sendForm.mediaId = ''
+  sendForm.url = ''
+}
+
+/** 移除音乐缩略图 */
+function clearMusicThumb() {
+  sendForm.thumbMediaId = ''
+  sendForm.thumbMediaUrl = ''
 }
 
 /** 清空发送内容 */
@@ -362,8 +466,9 @@ function clearSendForm() {
   sendForm.url = ''
   sendForm.title = ''
   sendForm.description = ''
-  sendForm.articlesText = ''
+  sendForm.articles = []
   sendForm.thumbMediaId = ''
+  sendForm.thumbMediaUrl = ''
   sendForm.musicUrl = ''
   sendForm.hqMusicUrl = ''
 }
@@ -379,7 +484,7 @@ async function handleSend() {
     return
   }
   if (['image', 'voice', 'video'].includes(sendForm.type) && !sendForm.mediaId) {
-    toast.show('请选择或输入素材 MediaID')
+    toast.show('请上传或从素材库选择素材')
     return
   }
   if (sendForm.type === 'video' && (!sendForm.title || !sendForm.description)) {
@@ -387,33 +492,24 @@ async function handleSend() {
     return
   }
   if (sendForm.type === 'music' && (!sendForm.thumbMediaId || !sendForm.musicUrl || !sendForm.hqMusicUrl)) {
-    toast.show('请填写音乐缩略图、音乐链接与高质量链接')
+    toast.show('请上传音乐缩略图并填写音乐链接与高质量链接')
     return
   }
 
   let articles: any[] | undefined
   if (sendForm.type === 'news') {
-    if (!sendForm.articlesText) {
-      toast.show('请选择或输入图文素材')
+    if (!sendForm.articles.length) {
+      toast.show('请从素材库选择图文素材')
       return
     }
-    try {
-      articles = JSON.parse(sendForm.articlesText)
-    } catch {
-      toast.show('图文 JSON 格式不正确')
-      return
-    }
-    if (!Array.isArray(articles) || articles.length === 0) {
-      toast.show('请选择或输入图文素材')
-      return
-    }
-    if (articles.length > 1) {
-      articles = [articles[0]]
+    // 客服图文消息只允许发送 1 条
+    articles = sendForm.articles.length > 1 ? [sendForm.articles[0]] : sendForm.articles
+    if (sendForm.articles.length > 1) {
       toast.show('客服图文消息最多发送 1 条，已保留第一条')
     }
   }
 
-  const data: any = {
+  const data: MpMessageSend = {
     userId: userId.value,
     accountId: accountId.value,
     type: sendForm.type,
@@ -423,6 +519,7 @@ async function handleSend() {
     title: sendForm.title,
     description: sendForm.description,
     thumbMediaId: sendForm.thumbMediaId,
+    thumbMediaUrl: sendForm.thumbMediaUrl,
     musicUrl: sendForm.musicUrl,
     hqMusicUrl: sendForm.hqMusicUrl,
   }

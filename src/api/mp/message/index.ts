@@ -14,6 +14,7 @@ export interface MpMessage {
   content?: string
   mediaUrl?: string
   recognition?: string
+  format?: string
   title?: string
   description?: string
   url?: string
@@ -24,8 +25,9 @@ export interface MpMessage {
   thumbMediaUrl?: string
   musicUrl?: string
   hqMusicUrl?: string
-  locationX?: string
-  locationY?: string
+  locationX?: number
+  locationY?: number
+  scale?: number
   label?: string
   createTime?: Date
 }
