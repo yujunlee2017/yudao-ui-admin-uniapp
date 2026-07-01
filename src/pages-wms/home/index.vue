@@ -70,7 +70,7 @@
       </view>
       <view v-for="item in orderTrend" :key="item.time" class="mb-18rpx">
         <view class="mb-8rpx flex items-center justify-between text-24rpx text-[#666]">
-          <text>{{ item.time }}</text>
+          <text>{{ formatTrendTime(item.time) }}</text>
           <text>{{ getTrendTotal(item) }}</text>
         </view>
         <view class="h-16rpx overflow-hidden rounded-8rpx bg-[#f2f3f5]">
@@ -141,6 +141,7 @@ import { formatQuantity } from '@/pages-wms/utils/format'
 import { getDictLabel } from '@/hooks/useDict'
 import { navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
+import { formatDate } from '@/utils/date'
 
 definePage({
   style: {
@@ -218,6 +219,11 @@ function getTrendTotal(item: WmsHomeOrderTrend) {
     + Number(item.shipmentCount || 0)
     + Number(item.movementCount || 0)
     + Number(item.checkCount || 0)
+}
+
+/** 格式化趋势日期 */
+function formatTrendTime(time: WmsHomeOrderTrend['time']) {
+  return formatDate(new Date(time), 'MM-DD')
 }
 
 /** 获取趋势占比 */

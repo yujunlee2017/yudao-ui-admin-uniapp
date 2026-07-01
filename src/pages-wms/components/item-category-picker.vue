@@ -47,7 +47,8 @@ const treeProps = {
   value: 'id',
 } // 树字段映射
 
-const categoryOptions = computed(() => { // 分类树形选项
+/** 分类树形选项 */
+const categoryOptions = computed(() => {
   const topCategories = handleTree(categoryList.value)
   return props.showRoot
     ? [{ id: 0, name: '顶级分类' }, ...topCategories]

@@ -19,23 +19,10 @@
         </view>
         <wd-input v-model="formData.no" placeholder="请输入移库单号" clearable />
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          单据状态
-        </view>
-        <wd-radio-group v-model="formData.status" type="button">
-          <wd-radio :value="-1">
-            全部
-          </wd-radio>
-          <wd-radio
-            v-for="dict in getIntDictOptions(DICT_TYPE.WMS_ORDER_STATUS)"
-            :key="dict.value"
-            :value="dict.value"
-          >
-            {{ dict.label }}
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.status" label="单据状态" :dict-type="DICT_TYPE.WMS_ORDER_STATUS" all-option />
+      <WarehousePicker v-model="formData.sourceWarehouseId" label="来源仓库" placeholder="请选择来源仓库" />
+      <WarehousePicker v-model="formData.targetWarehouseId" label="目标仓库" placeholder="请选择目标仓库" />
+      <yd-search-date-range v-model="formData.orderTime" label="单据日期" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -50,9 +37,11 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
-import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
+import { getDictLabel } from '@/hooks/useDict'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
+import WarehousePicker from '@/pages-wms/components/warehouse-picker.vue'
 import { DICT_TYPE } from '@/utils/constants'
+import { formatDate, formatDateRange } from '@/utils/date'
 
 const emit = defineEmits<{
   search: [data: Record<string, any>]
@@ -62,7 +51,10 @@ const emit = defineEmits<{
 const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
   no: undefined as string | undefined,
-  status: -1, // -1 表示全部
+  status: undefined as number | undefined,
+  sourceWarehouseId: undefined as number | undefined,
+  targetWarehouseId: undefined as number | undefined,
+  orderTime: [undefined, undefined] as [number | undefined, number | undefined],
 }) // 搜索表单数据
 
 /** 搜索条件 placeholder 拼接 */
@@ -71,25 +63,43 @@ const placeholder = computed(() => {
   if (formData.no) {
     conditions.push(`单号:${formData.no}`)
   }
-  if (formData.status !== -1) {
+  if (formData.status !== undefined && formData.status !== -1) {
     conditions.push(`状态:${getDictLabel(DICT_TYPE.WMS_ORDER_STATUS, formData.status)}`)
+  }
+  if (formData.sourceWarehouseId) {
+    conditions.push('已选来源仓库')
+  }
+  if (formData.targetWarehouseId) {
+    conditions.push('已选目标仓库')
+  }
+  if (formData.orderTime?.[0] && formData.orderTime?.[1]) {
+    conditions.push(`日期:${formatDate(formData.orderTime[0])}~${formatDate(formData.orderTime[1])}`)
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索移库单'
 })
+
+/** 清理全部选项值 */
+function cleanPickerValue(value?: number) {
+  return value === -1 ? undefined : value
+}
 
 /** 搜索按钮操作 */
 function handleSearch() {
   visible.value = false
   emit('search', {
     ...formData,
-    status: formData.status === -1 ? undefined : formData.status,
+    status: cleanPickerValue(formData.status),
+    orderTime: formatDateRange(formData.orderTime),
   })
 }
 
 /** 重置按钮操作 */
 function handleReset() {
   formData.no = undefined
-  formData.status = -1
+  formData.status = undefined
+  formData.sourceWarehouseId = undefined
+  formData.targetWarehouseId = undefined
+  formData.orderTime = [undefined, undefined]
   visible.value = false
   emit('reset')
 }

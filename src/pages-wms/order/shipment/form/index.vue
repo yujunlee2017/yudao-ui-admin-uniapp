@@ -14,20 +14,13 @@
           <wd-form-item title="出库单号" title-width="180rpx" prop="no">
             <wd-input v-model="formData.no" clearable placeholder="请输入出库单号" />
           </wd-form-item>
-          <wd-form-item
-            title="出库类型"
-            title-width="180rpx"
+          <yd-form-picker
+            v-model="formData.type"
+            label="出库类型"
+            label-width="180rpx"
             prop="type"
-            is-link
-            :value="getWotPickerFormValue(getIntDictOptions(DICT_TYPE.WMS_SHIPMENT_ORDER_TYPE), formData.type)"
+            :dict-type="DICT_TYPE.WMS_SHIPMENT_ORDER_TYPE"
             placeholder="请选择出库类型"
-            @click="pickerVisible.type = true"
-          />
-          <wd-picker
-            v-model:visible="pickerVisible.type"
-            :model-value="formData.type"
-            :columns="getIntDictOptions(DICT_TYPE.WMS_SHIPMENT_ORDER_TYPE)"
-            @confirm="handleTypeConfirm"
           />
           <WarehousePicker v-model="formData.warehouseId" prop="warehouseId" @change="handleWarehouseChange" />
           <wd-form-item
@@ -124,7 +117,6 @@ import type { InventoryPickerRow } from '@/pages-wms/components/inventory-picker
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { createShipmentOrder, getShipmentOrder, updateShipmentOrder } from '@/api/wms/order/shipment'
-import { getIntDictOptions } from '@/hooks/useDict'
 import InventoryPicker from '@/pages-wms/components/inventory-picker.vue'
 import MerchantPicker from '@/pages-wms/components/merchant-picker.vue'
 import WarehousePicker from '@/pages-wms/components/warehouse-picker.vue'
@@ -134,7 +126,7 @@ import { generateOrderNo } from '@/pages-wms/utils/order'
 import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
-import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   id?: number | any
@@ -151,7 +143,6 @@ const toast = useToast()
 const getTitle = computed(() => props.id ? '编辑出库单' : '新增出库单')
 const formLoading = ref(false) // 表单提交状态
 const pickerVisible = reactive({
-  type: false,
   orderTime: false,
 }) // 选择器显示状态
 const formData = ref<ShipmentOrder>({
@@ -178,12 +169,6 @@ const inventoryPickerRef = ref<InstanceType<typeof InventoryPicker>>() // 库存
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-wms/order/shipment/index')
-}
-
-/** 选择出库类型 */
-function handleTypeConfirm({ value }: { value: any[] }) {
-  formData.value.type = value[0]
-  pickerVisible.type = false
 }
 
 /** 加载出库单详情 */

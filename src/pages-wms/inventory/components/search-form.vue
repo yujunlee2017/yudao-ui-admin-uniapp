@@ -13,19 +13,7 @@
     @close="visible = false"
   >
     <view class="yd-search-form-container">
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          统计维度
-        </view>
-        <wd-radio-group v-model="formData.type" type="button">
-          <wd-radio value="warehouse">
-            仓库
-          </wd-radio>
-          <wd-radio value="item">
-            商品
-          </wd-radio>
-        </wd-radio-group>
-      </view>
+      <yd-search-picker v-model="formData.type" label="统计维度" :columns="typeOptions" />
       <WarehousePicker v-model="formData.warehouseId" label="仓库" placeholder="请选择仓库" />
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
@@ -82,6 +70,10 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false) // 搜索弹窗显示状态
+const typeOptions = [
+  { label: '仓库', value: 'warehouse' },
+  { label: '商品', value: 'item' },
+] // 统计维度选项
 const formData = reactive({
   type: 'warehouse',
   warehouseId: undefined as number | undefined,

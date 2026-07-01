@@ -22,20 +22,13 @@
           <wd-form-item title="企业名称" title-width="200rpx" prop="name">
             <wd-input v-model="formData.name" clearable placeholder="请输入企业名称" />
           </wd-form-item>
-          <wd-form-item
-            title="企业类型"
-            title-width="200rpx"
+          <yd-form-picker
+            v-model="formData.type"
+            label="企业类型"
+            label-width="200rpx"
             prop="type"
-            is-link
-            :value="getWotPickerFormValue(getIntDictOptions(DICT_TYPE.WMS_MERCHANT_TYPE), formData.type)"
+            :dict-type="DICT_TYPE.WMS_MERCHANT_TYPE"
             placeholder="请选择企业类型"
-            @click="pickerVisible.type = true"
-          />
-          <wd-picker
-            v-model:visible="pickerVisible.type"
-            :model-value="formData.type"
-            :columns="getIntDictOptions(DICT_TYPE.WMS_MERCHANT_TYPE)"
-            @confirm="handleTypeConfirm"
           />
           <wd-form-item title="级别" title-width="200rpx">
             <wd-input v-model="formData.level" clearable placeholder="请输入级别" />
@@ -87,13 +80,12 @@
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { Merchant } from '@/api/wms/md/merchant'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { createMerchant, getMerchant, updateMerchant } from '@/api/wms/md/merchant'
-import { getIntDictOptions } from '@/hooks/useDict'
 import { generateWmsCode } from '@/pages-wms/utils/constants'
 import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
-import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   id?: number | any
@@ -109,9 +101,6 @@ definePage({
 const toast = useToast()
 const getTitle = computed(() => props.id ? '编辑往来企业' : '新增往来企业')
 const formLoading = ref(false) // 表单提交状态
-const pickerVisible = reactive({
-  type: false,
-}) // 选择器显示状态
 const formData = ref<Merchant>({
   id: undefined,
   code: '',
@@ -139,12 +128,6 @@ const formRef = ref<FormInstance>() // 表单组件引用
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-wms/md/merchant/index')
-}
-
-/** 选择企业类型 */
-function handleTypeConfirm({ value }: { value: any[] }) {
-  formData.value.type = value[0]
-  pickerVisible.type = false
 }
 
 /** 加载往来企业详情 */
