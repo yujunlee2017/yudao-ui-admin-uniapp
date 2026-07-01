@@ -25,6 +25,8 @@
         </view>
         <wd-input v-model="formData.code" placeholder="请输入商品编号" clearable />
       </view>
+      <ItemCategoryPicker v-model="formData.categoryId" label="商品分类" placeholder="请选择商品分类" />
+      <ItemBrandPicker v-model="formData.brandId" label="商品品牌" placeholder="请选择商品品牌" />
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" variant="plain" @click="handleReset">
           重置
@@ -39,6 +41,8 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
+import ItemBrandPicker from '@/pages-wms/components/item-brand-picker.vue'
+import ItemCategoryPicker from '@/pages-wms/components/item-category-picker.vue'
 import { getTopPopupModalStyle, getTopPopupStyle } from '@/utils'
 
 const emit = defineEmits<{
@@ -50,6 +54,8 @@ const visible = ref(false) // 搜索弹窗显示状态
 const formData = reactive({
   name: undefined as string | undefined,
   code: undefined as string | undefined,
+  categoryId: undefined as number | undefined,
+  brandId: undefined as number | undefined,
 }) // 搜索表单数据
 
 /** 搜索条件 placeholder 拼接 */
@@ -60,6 +66,12 @@ const placeholder = computed(() => {
   }
   if (formData.code) {
     conditions.push(`编号:${formData.code}`)
+  }
+  if (formData.categoryId) {
+    conditions.push('已选分类')
+  }
+  if (formData.brandId) {
+    conditions.push('已选品牌')
   }
   return conditions.length > 0 ? conditions.join(' | ') : '搜索商品'
 })
@@ -74,6 +86,8 @@ function handleSearch() {
 function handleReset() {
   formData.name = undefined
   formData.code = undefined
+  formData.categoryId = undefined
+  formData.brandId = undefined
   visible.value = false
   emit('reset')
 }

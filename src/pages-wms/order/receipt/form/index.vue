@@ -14,20 +14,13 @@
           <wd-form-item title="入库单号" title-width="180rpx" prop="no">
             <wd-input v-model="formData.no" clearable placeholder="请输入入库单号" />
           </wd-form-item>
-          <wd-form-item
-            title="入库类型"
-            title-width="180rpx"
+          <yd-form-picker
+            v-model="formData.type"
+            label="入库类型"
+            label-width="180rpx"
             prop="type"
-            is-link
-            :value="getWotPickerFormValue(getIntDictOptions(DICT_TYPE.WMS_RECEIPT_ORDER_TYPE), formData.type)"
+            :dict-type="DICT_TYPE.WMS_RECEIPT_ORDER_TYPE"
             placeholder="请选择入库类型"
-            @click="pickerVisible.type = true"
-          />
-          <wd-picker
-            v-model:visible="pickerVisible.type"
-            :model-value="formData.type"
-            :columns="getIntDictOptions(DICT_TYPE.WMS_RECEIPT_ORDER_TYPE)"
-            @confirm="handleTypeConfirm"
           />
           <WarehousePicker v-model="formData.warehouseId" prop="warehouseId" />
           <wd-form-item
@@ -123,7 +116,6 @@ import type { ReceiptOrderDetail } from '@/api/wms/order/receipt/detail'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { createReceiptOrder, getReceiptOrder, updateReceiptOrder } from '@/api/wms/order/receipt'
-import { getIntDictOptions } from '@/hooks/useDict'
 import ItemSkuPicker from '@/pages-wms/components/item-sku-picker.vue'
 import MerchantPicker from '@/pages-wms/components/merchant-picker.vue'
 import WarehousePicker from '@/pages-wms/components/warehouse-picker.vue'
@@ -133,7 +125,7 @@ import { generateOrderNo } from '@/pages-wms/utils/order'
 import { delay, navigateBackPlus } from '@/utils'
 import { DICT_TYPE } from '@/utils/constants'
 import { formatDate } from '@/utils/date'
-import { createFormSchema, getWotPickerFormValue } from '@/utils/wot'
+import { createFormSchema } from '@/utils/wot'
 
 const props = defineProps<{
   id?: number | any
@@ -150,7 +142,6 @@ const toast = useToast()
 const getTitle = computed(() => props.id ? '编辑入库单' : '新增入库单')
 const formLoading = ref(false) // 表单提交状态
 const pickerVisible = reactive({
-  type: false,
   orderTime: false,
 }) // 选择器显示状态
 const formData = ref<ReceiptOrder>({
@@ -177,12 +168,6 @@ const skuPickerRef = ref<InstanceType<typeof ItemSkuPicker>>() // 商品选择�
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages-wms/order/receipt/index')
-}
-
-/** 选择入库类型 */
-function handleTypeConfirm({ value }: { value: any[] }) {
-  formData.value.type = value[0]
-  pickerVisible.type = false
 }
 
 /** 加载入库单详情 */
