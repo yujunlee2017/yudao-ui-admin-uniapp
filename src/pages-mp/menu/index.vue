@@ -132,7 +132,7 @@
                 />
                 <wd-picker
                   v-model:visible="pickerVisible.type"
-                  :model-value="[activeMenu.type]"
+                  :model-value="menuTypePickerValue"
                   :columns="menuTypeOptions"
                   @confirm="handleTypeConfirm"
                 />
@@ -175,7 +175,7 @@
                   />
                   <wd-picker
                     v-model:visible="pickerVisible.replyType"
-                    :model-value="[activeMenu.reply?.type]"
+                    :model-value="replyTypePickerValue"
                     :columns="replyTypeOptions"
                     @confirm="handleReplyTypeConfirm"
                   />
@@ -335,6 +335,8 @@ let replyCacheMenu: MpMenu | null = null // replyCache 所属的菜单，切换�
 const isLeafMenu = computed(() => !(activeMenu.value.children && activeMenu.value.children.length > 0))
 const canPickReplyMaterial = computed(() => ['image', 'voice', 'video', 'news', 'music'].includes(String(activeMenu.value.reply?.type)))
 const canUploadReplyMaterial = computed(() => ['image', 'voice', 'video'].includes(String(activeMenu.value.reply?.type)))
+const menuTypePickerValue = computed(() => activeMenu.value.type ? [activeMenu.value.type] : []) // 菜单类型选择器值
+const replyTypePickerValue = computed(() => activeMenu.value.reply?.type ? [activeMenu.value.reply.type] : []) // 回复类型选择器值
 const replyMaterialPicked = computed(() => {
   const reply = activeMenu.value.reply
   if (reply?.type === 'news') {
@@ -607,12 +609,19 @@ function ensureMenu(menu: MpMenu) {
 
 /** 菜单内容选择 */
 function handleTypeConfirm({ value }: { value: string[] }) {
-  activeMenu.value.type = value[0]
+  const nextType = value[0]
+  if (!nextType) {
+    return
+  }
+  activeMenu.value.type = nextType
 }
 
 /** 回复类型选择 */
 function handleReplyTypeConfirm({ value }: { value: string[] }) {
   const nextType = value[0]
+  if (!nextType) {
+    return
+  }
   const current = activeMenu.value.reply || {}
   if (current.type === nextType) {
     return
