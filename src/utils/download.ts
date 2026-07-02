@@ -218,6 +218,88 @@ export function formatFileSize(size?: number): string {
   return `${(size / 1024 / 1024 / 1024).toFixed(2)} GB`
 }
 
+const IMAGE_FILE_EXTENSIONS = ['bmp', 'gif', 'jpeg', 'jpg', 'png', 'webp']
+
+/** 从 URL 中解析文件扩展名 */
+export function getFileExtFromUrl(url?: string): string {
+  const fileName = getFileNameFromUrl(url)
+  const extIndex = fileName.lastIndexOf('.')
+  return extIndex > -1 ? fileName.slice(extIndex + 1).toLowerCase() : ''
+}
+
+/** 判断是否图片文件 */
+export function isImageFile(url?: string): boolean {
+  return IMAGE_FILE_EXTENSIONS.includes(getFileExtFromUrl(url))
+}
+
+/** 从 URL 中解析文件名 */
+export function getFileNameFromUrl(url?: string): string {
+  const cleanUrl = String(url || '').split(/[?#]/)[0]
+  const fileName = cleanUrl.slice(cleanUrl.lastIndexOf('/') + 1)
+  try {
+    return decodeURIComponent(fileName)
+  } catch {
+    return fileName
+  }
+}
+
+/** 打开附件：图片预览，其他文件 H5 新窗口打开，非 H5 下载后用系统能力打开 */
+export function openAttachment(url?: string) {
+  if (!url) {
+    return
+  }
+  if (isImageFile(url)) {
+    uni.previewImage({
+      urls: [url],
+      current: url,
+    })
+    return
+  }
+  // #ifdef H5
+  window.open(url, '_blank')
+  // #endif
+  // #ifndef H5
+  uni.showLoading({
+    title: '打开中...',
+    mask: true,
+  })
+  uni.downloadFile({
+    url,
+    success: (res) => {
+      if (res.statusCode && res.statusCode !== 200) {
+        uni.hideLoading()
+        uni.showToast({
+          icon: 'none',
+          title: '附件下载失败',
+        })
+        return
+      }
+      const fileType = getFileExtFromUrl(url)
+      uni.openDocument({
+        filePath: res.tempFilePath,
+        ...(fileType ? { fileType } : {}),
+        complete: () => {
+          uni.hideLoading()
+        },
+        fail: () => {
+          uni.showToast({
+            icon: 'none',
+            title: '附件打开失败',
+          })
+        },
+      })
+    },
+    fail: () => {
+      uni.hideLoading()
+      uni.showToast({
+        icon: 'none',
+        title: '附件下载失败',
+      })
+    },
+  })
+  // #endif
+}
+
 /**
  * 获取静态资源完整 URL 地址
  * @param path 资源路径

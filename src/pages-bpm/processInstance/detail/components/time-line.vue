@@ -169,21 +169,23 @@
 
             <!-- 审批意见 -->
             <view
-              v-if="shouldShowReasonAndAttachment(task, activity.nodeType, index)"
+              v-if="shouldShowTaskEvidence(task, activity.nodeType, index)"
               class="mt-8rpx rounded-8rpx bg-[#f5f5f5] p-16rpx"
             >
               <view v-if="task.reason">
-                <text class="text-24rpx text-[#666]">审批意见：{{ task.reason }}</text>
+                <text class="text-24rpx text-[#666]">
+                  {{ getTaskEvidenceReasonLabel(activity.nodeType) }}：{{ task.reason }}
+                </text>
               </view>
               <view v-if="task.attachments?.length" class="mt-12rpx flex flex-wrap gap-12rpx">
                 <view
                   v-for="attachment in task.attachments"
                   :key="attachment"
                   class="flex items-center"
-                  @click="handleOpenAttachment(attachment)"
+                  @click="openAttachment(attachment)"
                 >
                   <wd-img
-                    v-if="isImageAttachment(attachment)"
+                    v-if="isImageFile(attachment)"
                     :src="attachment"
                     width="88rpx"
                     height="88rpx"
@@ -193,28 +195,26 @@
                   <view v-else class="max-w-520rpx flex items-center rounded-8rpx bg-white px-12rpx py-8rpx">
                     <wd-icon name="file" size="28rpx" color="#666" />
                     <text class="ml-8rpx truncate text-24rpx text-[#666]">
-                      {{ getAttachmentName(attachment) }}
+                      {{ getFileNameFromUrl(attachment) }}
                     </text>
                   </view>
                 </view>
               </view>
-            </view>
-
-            <!-- 签名 -->
-            <view
-              v-if="task.signPicUrl && activity.nodeType === BpmNodeTypeEnum.USER_TASK_NODE"
-              class="mt-8rpx flex items-center rounded-8rpx bg-[#f5f5f5] p-16rpx"
-            >
-              <text class="text-24rpx text-[#666]">签名：</text>
-              <wd-img
-                :src="task.signPicUrl"
-                width="288rpx"
-                height="96rpx"
-                mode="aspectFit"
-                radius="8rpx"
-                class="ml-8rpx"
-                enable-preview
-              />
+              <view
+                v-if="shouldShowTaskSignature(task, activity.nodeType)"
+                class="mt-12rpx flex items-center"
+              >
+                <text class="text-24rpx text-[#666]">签名：</text>
+                <wd-img
+                  :src="task.signPicUrl"
+                  width="288rpx"
+                  height="96rpx"
+                  mode="aspectFit"
+                  radius="8rpx"
+                  class="ml-8rpx bg-white"
+                  enable-preview
+                />
+              </view>
             </view>
           </view>
         </view>
@@ -269,6 +269,7 @@ import { ref } from 'vue'
 import UserPicker from '@/components/system-select/user-picker.vue'
 import { BpmCandidateStrategyEnum, BpmNodeTypeEnum, BpmTaskStatusEnum } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
+import { getFileNameFromUrl, isImageFile, openAttachment } from '@/utils/download'
 import { isEmptyValue } from '@/utils/is'
 
 const props = withDefaults(
@@ -415,83 +416,31 @@ function shouldShowCustomUserSelect(activity: ApprovalNodeInfo) {
   )
 }
 
-/** 判断是否需要显示审批意见和附件 */
-function shouldShowReasonAndAttachment(task: ApprovalTaskInfo, nodeType: number, nodeIndex: number) {
+/** 判断是否需要显示审批意见、附件和签名 */
+function shouldShowTaskEvidence(task: ApprovalTaskInfo, nodeType: number, nodeIndex: number) {
   // 第一个发起人节点是系统自动通过的，不展示审批意见
   if (nodeType === BpmNodeTypeEnum.START_USER_NODE && nodeIndex === 0) {
     return false
   }
   return (
-    Boolean(task.reason || task.attachments?.length)
+    Boolean(task.reason || task.attachments?.length || task.signPicUrl)
     && [
       BpmNodeTypeEnum.START_USER_NODE,
       BpmNodeTypeEnum.USER_TASK_NODE,
+      BpmNodeTypeEnum.TRANSACTOR_NODE,
     ].includes(nodeType)
   )
 }
 
-/** 是否图片附件 */
-function isImageAttachment(url: string) {
-  const ext = url.split(/[?#]/)[0]?.split('.').pop()?.toLowerCase()
-  return ['bmp', 'gif', 'jpeg', 'jpg', 'png', 'webp'].includes(ext || '')
+/** 判断是否需要显示任务签名 */
+function shouldShowTaskSignature(task: ApprovalTaskInfo, nodeType: number) {
+  return !!task.signPicUrl
+    && [BpmNodeTypeEnum.USER_TASK_NODE, BpmNodeTypeEnum.TRANSACTOR_NODE].includes(nodeType)
 }
 
-/** 获取附件名 */
-function getAttachmentName(url: string) {
-  const cleanUrl = url.split(/[?#]/)[0]
-  const fileName = cleanUrl.slice(cleanUrl.lastIndexOf('/') + 1)
-  try {
-    return decodeURIComponent(fileName)
-  } catch {
-    return fileName
-  }
-}
-
-/** 打开附件 */
-function handleOpenAttachment(url: string) {
-  if (isImageAttachment(url)) {
-    previewImage(url)
-    return
-  }
-  // #ifdef H5
-  window.open(url, '_blank')
-  // #endif
-  // #ifndef H5
-  uni.showLoading({
-    title: '打开中...',
-    mask: true,
-  })
-  uni.downloadFile({
-    url,
-    success: (res) => {
-      uni.openDocument({
-        filePath: res.tempFilePath,
-        fileType: getAttachmentFileType(url),
-        complete: () => {
-          uni.hideLoading()
-        },
-        fail: () => {
-          uni.showToast({
-            icon: 'none',
-            title: '附件打开失败',
-          })
-        },
-      })
-    },
-    fail: () => {
-      uni.hideLoading()
-      uni.showToast({
-        icon: 'none',
-        title: '附件下载失败',
-      })
-    },
-  })
-  // #endif
-}
-
-/** 获取附件类型 */
-function getAttachmentFileType(url: string) {
-  return url.split(/[?#]/)[0]?.split('.').pop()?.toLowerCase()
+/** 获取任务留痕意见标题 */
+function getTaskEvidenceReasonLabel(nodeType: number) {
+  return nodeType === BpmNodeTypeEnum.TRANSACTOR_NODE ? '办理意见' : '审批意见'
 }
 
 /** 获取状态文本样式类 */
@@ -540,14 +489,6 @@ function handleChildProcess(activity: ApprovalNodeInfo) {
   }
   uni.navigateTo({
     url: `/pages-bpm/processInstance/detail/index?id=${activity.processInstanceId}`,
-  })
-}
-
-/** 预览图片 */
-function previewImage(url: string) {
-  uni.previewImage({
-    urls: [url],
-    current: url,
   })
 }
 
