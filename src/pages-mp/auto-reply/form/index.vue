@@ -74,34 +74,38 @@
 
           <!-- 图片：素材库选择 / 本地上传 + 预览 -->
           <template v-else-if="formData.responseMessageType === 'image'">
-            <wd-cell title="回复素材">
-              <view class="flex gap-16rpx py-8rpx">
-                <wd-button size="small" plain @click="materialPickerVisible = true">
-                  素材库选择
-                </wd-button>
-                <wd-button size="small" plain :loading="uploading" @click="handleUploadMaterial('image')">
-                  本地上传
-                </wd-button>
-              </view>
-            </wd-cell>
-            <view v-if="formData.responseMediaUrl" class="px-24rpx pb-16rpx">
+            <wd-cell
+              title="素材库"
+              is-link
+              :value="responseMaterialValue"
+              @click="materialPickerVisible = true"
+            />
+            <wd-cell
+              title="本地上传"
+              is-link
+              :value="uploading ? '上传中...' : '从本地选择并上传'"
+              @click="handleUploadMaterial('image')"
+            />
+            <view v-if="formData.responseMediaUrl" class="px-24rpx py-16rpx">
               <wd-img :src="formData.responseMediaUrl" width="200rpx" height="200rpx" mode="aspectFill" radius="8rpx" />
             </view>
           </template>
 
           <!-- 语音：素材库选择 / 本地上传 + 预览 -->
           <template v-else-if="formData.responseMessageType === 'voice'">
-            <wd-cell title="回复素材">
-              <view class="flex gap-16rpx py-8rpx">
-                <wd-button size="small" plain @click="materialPickerVisible = true">
-                  素材库选择
-                </wd-button>
-                <wd-button size="small" plain :loading="uploading" @click="handleUploadMaterial('voice')">
-                  本地上传
-                </wd-button>
-              </view>
-            </wd-cell>
-            <view v-if="formData.responseMediaUrl" class="px-24rpx pb-16rpx">
+            <wd-cell
+              title="素材库"
+              is-link
+              :value="responseMaterialValue"
+              @click="materialPickerVisible = true"
+            />
+            <wd-cell
+              title="本地上传"
+              is-link
+              :value="uploading ? '上传中...' : '从本地选择并上传'"
+              @click="handleUploadMaterial('voice')"
+            />
+            <view v-if="formData.responseMediaUrl" class="px-24rpx py-16rpx">
               <MediaPreview type="voice" :url="formData.responseMediaUrl" />
             </view>
           </template>
@@ -114,56 +118,55 @@
             <wd-form-item title="描述" title-width="220rpx" prop="responseDescription">
               <wd-textarea v-model="formData.responseDescription" clearable placeholder="请输入描述" />
             </wd-form-item>
-            <wd-cell title="回复素材">
-              <view class="flex gap-16rpx py-8rpx">
-                <wd-button size="small" plain @click="materialPickerVisible = true">
-                  素材库选择
-                </wd-button>
-                <wd-button size="small" plain :loading="uploading" @click="handleUploadMaterial('video')">
-                  本地上传
-                </wd-button>
-              </view>
-            </wd-cell>
-            <view v-if="formData.responseMediaUrl" class="px-24rpx pb-16rpx">
+            <wd-cell
+              title="素材库"
+              is-link
+              :value="responseMaterialValue"
+              @click="materialPickerVisible = true"
+            />
+            <wd-cell
+              title="本地上传"
+              is-link
+              :value="uploading ? '上传中...' : '从本地选择并上传'"
+              @click="handleUploadMaterial('video')"
+            />
+            <view v-if="formData.responseMediaUrl" class="px-24rpx py-16rpx">
               <MediaPreview type="video" :url="formData.responseMediaUrl" />
             </view>
           </template>
 
           <!-- 图文：素材库选择 + 卡片预览 -->
           <template v-else-if="formData.responseMessageType === 'news'">
-            <wd-cell title="回复素材">
-              <view class="flex gap-16rpx py-8rpx">
-                <wd-button size="small" plain @click="materialPickerVisible = true">
-                  选择图文
-                </wd-button>
-                <wd-button
-                  v-if="formData.responseArticles?.length"
-                  size="small" plain type="danger"
-                  @click="formData.responseArticles = []"
-                >
-                  清空
-                </wd-button>
-              </view>
-            </wd-cell>
-            <view v-if="formData.responseArticles?.length" class="px-24rpx pb-16rpx">
+            <wd-cell
+              title="素材库"
+              is-link
+              :value="responseMaterialValue"
+              @click="materialPickerVisible = true"
+            />
+            <view v-if="formData.responseArticles?.length" class="px-24rpx py-16rpx">
               <NewsCard :articles="formData.responseArticles" />
+              <wd-button class="mt-16rpx" type="danger" size="small" variant="plain" block @click="handleDeleteResponseArticles">
+                删除图文
+              </wd-button>
             </view>
           </template>
 
           <!-- 音乐：缩略图（素材库 / 本地上传）+ 标题 / 描述 + 音乐链接 -->
           <template v-else-if="formData.responseMessageType === 'music'">
-            <wd-cell title="缩略图">
-              <view class="flex gap-16rpx py-8rpx">
-                <wd-button size="small" plain @click="materialPickerVisible = true">
-                  素材库选择
-                </wd-button>
-                <wd-button size="small" plain :loading="uploading" @click="handleUploadMaterial('thumb')">
-                  本地上传
-                </wd-button>
-              </view>
-            </wd-cell>
-            <view v-if="formData.responseThumbMediaUrl" class="px-24rpx pb-16rpx">
-              <wd-img :src="formData.responseThumbMediaUrl" width="160rpx" height="160rpx" mode="aspectFill" radius="8rpx" />
+            <wd-cell
+              title="素材库"
+              is-link
+              :value="responseMaterialValue"
+              @click="materialPickerVisible = true"
+            />
+            <wd-cell
+              title="本地上传"
+              is-link
+              :value="uploading ? '上传中...' : '从本地选择并上传'"
+              @click="handleUploadMaterial('thumb')"
+            />
+            <view v-if="formData.responseThumbMediaUrl" class="px-24rpx py-16rpx">
+              <wd-img :src="formData.responseThumbMediaUrl" width="200rpx" height="200rpx" mode="aspectFill" radius="8rpx" />
             </view>
             <wd-form-item title="标题" title-width="220rpx" prop="responseTitle">
               <wd-input v-model="formData.responseTitle" clearable placeholder="请输入标题" />
@@ -202,6 +205,7 @@
 <script lang="ts" setup>
 import type { FormInstance } from '@wot-ui/ui/components/wd-form/types'
 import type { AutoReply } from '@/api/mp/autoReply'
+import type { MpArticle } from '@/api/mp/message'
 import type { MaterialUploadType } from '@/pages-mp/utils/upload'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
@@ -273,10 +277,19 @@ const formRef = ref<FormInstance>() // 表单组件引用
 
 const requestMessageOptions = computed(() => getStrDictOptions(DICT_TYPE.MP_MESSAGE_TYPE).filter(item => requestMessageTypes.includes(String(item.value))))
 const responseMessageOptions = computed(() => getStrDictOptions(DICT_TYPE.MP_MESSAGE_TYPE).filter(item => responseMessageTypes.includes(String(item.value))))
-// 音乐选图片素材作为缩略图，其余按自身类型选择
-const materialPickerType = computed<'image' | 'voice' | 'video' | 'news'>(() => {
+const materialPickerType = computed<'image' | 'voice' | 'video' | 'news'>(() => { // 音乐选图片素材作为缩略图，其余按自身类型选择
   const type = formData.value.responseMessageType
   return type === 'voice' || type === 'video' || type === 'news' ? type : 'image'
+})
+const responseMaterialValue = computed(() => { // 素材库选择状态文案
+  const type = formData.value.responseMessageType
+  if (type === 'news') {
+    return formData.value.responseArticles?.length ? '重新选择图文' : '选择图文'
+  }
+  if (type === 'music') {
+    return formData.value.responseThumbMediaUrl ? '重新选择' : '选择缩略图'
+  }
+  return formData.value.responseMediaUrl ? '重新选择' : '选择素材'
 })
 
 const ready = ref(false) // 详情回填完成后才允许换类型清字段，避免回填触发清空
@@ -327,6 +340,11 @@ function handleMaterialSelect(item: any) {
   applyMaterial(formData.value.responseMessageType, item)
 }
 
+/** 删除已选图文 */
+function handleDeleteResponseArticles() {
+  formData.value.responseArticles = []
+}
+
 /** 把素材回填到对应回复字段（选择 / 上传共用） */
 function applyMaterial(type: string | undefined, item: any) {
   if (type === 'news') {
@@ -348,14 +366,14 @@ function applyMaterial(type: string | undefined, item: any) {
   }
 }
 
-/** 取素材图文列表（兼容草稿 / 已发布结构） */
-function getNewsArticles(item: any) {
-  return item.content?.newsItem || item.articles || []
+/** 获取素材图文列表 */
+function getNewsArticles(item: any): MpArticle[] {
+  return item?.content?.newsItem || item?.articles || []
 }
 
-/** 规整图文字段，满足后端 responseArticles 必填（digest→description、thumbUrl→picUrl） */
-function normalizeArticles(articles: any[]) {
-  return (articles || []).map(article => ({
+/** 规整图文字段，满足后端 responseArticles 结构 */
+function normalizeArticles(articles: MpArticle[]) {
+  return articles.map(article => ({
     ...article,
     title: article.title || '',
     description: article.description || article.digest || '',

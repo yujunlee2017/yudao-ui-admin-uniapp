@@ -257,6 +257,11 @@ export function trimArray(list: string[]): string[] {
   return list.map(item => item.trim()).filter(Boolean)
 }
 
+/** 归一化字符串里的转义换行 */
+export function normalizeEscapedNewlines(text: string): string {
+  return text.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n')
+}
+
 /** 换行文本转字符串数组（逐项去空白、过滤空项），用于多值表单字段 */
 export function linesToArray(text: string): string[] {
   return trimArray(text.split('\n'))

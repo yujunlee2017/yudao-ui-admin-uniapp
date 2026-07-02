@@ -215,6 +215,8 @@ async function handleUpload() {
   }
   // 视频需先在弹窗收集标题与描述
   if (currentType.value === 'video') {
+    videoForm.title = ''
+    videoForm.introduction = ''
     videoFormVisible.value = true
     return
   }

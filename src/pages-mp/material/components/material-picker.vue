@@ -143,7 +143,7 @@ function getItemKey(item: any) {
 
 /** 获取图文列表 */
 function getNewsArticles(item: any) {
-  return item.content?.newsItem || item.articles || []
+  return item?.content?.newsItem || item?.articles || []
 }
 
 /** 选择素材 */

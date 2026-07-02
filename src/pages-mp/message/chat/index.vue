@@ -1,5 +1,5 @@
 <template>
-  <view class="yd-page-container">
+  <view class="yd-page-container yd-page-container-paging">
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="粉丝消息"
@@ -8,7 +8,7 @@
     />
 
     <!-- 粉丝信息 -->
-    <view class="bg-white px-24rpx py-20rpx">
+    <view class="shrink-0 bg-white px-24rpx py-20rpx">
       <view class="flex items-center gap-16rpx">
         <wd-img
           v-if="userInfo.headImageUrl"
@@ -108,10 +108,13 @@
     </scroll-view>
 
     <!-- 发送区域 -->
-    <view class="border-t border-[#eee] bg-white px-24rpx py-20rpx">
+    <view class="shrink-0 border-t border-[#eee] bg-white px-24rpx py-20rpx pb-[calc(20rpx+env(safe-area-inset-bottom))]">
       <view class="mb-16rpx flex items-center gap-16rpx">
         <wd-button size="small" variant="plain" @click="sendTypePickerVisible = true">
-          {{ sendTypeLabel }}
+          <view class="flex items-center gap-4rpx">
+            <text>{{ sendTypeLabel }}</text>
+            <wd-icon name="down" size="24rpx" />
+          </view>
         </wd-button>
         <wd-button v-if="canUpload" size="small" variant="plain" :loading="uploading" @click="handleUpload">
           本地上传
@@ -234,7 +237,7 @@
 </template>
 
 <script lang="ts" setup>
-import type { MpMessage, MpMessageSend } from '@/api/mp/message'
+import type { MpArticle, MpMessage, MpMessageSend } from '@/api/mp/message'
 import type { MpUser } from '@/api/mp/user'
 import { useToast } from '@wot-ui/ui/components/wd-toast'
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
@@ -250,8 +253,8 @@ import { useMaterialUpload } from '@/pages-mp/utils/upload'
 import ReplyContent from '../../components/reply-content.vue'
 
 const props = defineProps<{
-  userId?: number | any
-  accountId?: number | any
+  userId?: number | string
+  accountId?: number | string
   openid?: string
 }>()
 
@@ -290,7 +293,7 @@ const sendForm = reactive({
   url: '',
   title: '',
   description: '',
-  articles: [] as any[],
+  articles: [] as MpArticle[],
   thumbMediaId: '',
   thumbMediaUrl: '',
   musicUrl: '',
@@ -426,7 +429,7 @@ async function handleUpload() {
 function handleMaterialSelect(item: any) {
   // 图文：回填 articles 数组，预览用 news-card
   if (sendForm.type === 'news') {
-    sendForm.articles = item.content?.newsItem || item.articles || []
+    sendForm.articles = normalizeArticles(getNewsArticles(item))
     return
   }
   // 音乐：选图片素材作为缩略图
@@ -442,6 +445,22 @@ function handleMaterialSelect(item: any) {
     sendForm.title = item.title || sendForm.title
     sendForm.description = item.introduction || item.description || sendForm.description
   }
+}
+
+/** 获取素材图文列表 */
+function getNewsArticles(item: any) {
+  return item?.content?.newsItem || item?.articles || []
+}
+
+/** 规整图文字段，满足后端 Article 结构 */
+function normalizeArticles(articles: MpArticle[]) {
+  return articles.map(article => ({
+    ...article,
+    title: article.title || '',
+    description: article.description || article.digest || '',
+    picUrl: article.picUrl || article.thumbUrl || article.thumbMediaUrl || '',
+    url: article.url || article.contentSourceUrl || '',
+  }))
 }
 
 /** 移除已选媒体 */
@@ -493,7 +512,7 @@ async function handleSend() {
     return
   }
 
-  let articles: any[] | undefined
+  let articles: MpArticle[] | undefined
   if (sendForm.type === 'news') {
     if (!sendForm.articles.length) {
       toast.show('请从素材库选择图文素材')

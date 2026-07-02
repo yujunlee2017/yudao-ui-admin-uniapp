@@ -96,6 +96,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { MpArticle } from '@/api/mp/message'
 import { computed } from 'vue'
 import { openUrl } from '@/utils/url'
 import MediaPreview from './media-preview.vue'
@@ -114,7 +115,7 @@ const props = defineProps<{
   url?: string
   event?: string
   eventKey?: string
-  articles?: any[]
+  articles?: MpArticle[]
   thumbMediaUrl?: string
   musicUrl?: string
   hqMusicUrl?: string

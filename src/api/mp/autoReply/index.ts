@@ -1,3 +1,4 @@
+import type { MpArticle } from '@/api/mp/message'
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
@@ -14,7 +15,7 @@ export interface AutoReply {
   responseMediaUrl?: string
   responseTitle?: string
   responseDescription?: string
-  responseArticles?: any[]
+  responseArticles?: MpArticle[]
   responseThumbMediaId?: string
   responseThumbMediaUrl?: string
   responseMusicUrl?: string

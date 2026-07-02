@@ -87,8 +87,8 @@ export function useMaterialUpload() {
         accountId: options.accountId,
         type,
       })
-    } catch {
-      toast.show('上传失败，请重试')
+    } catch (error) {
+      toast.show(getUploadErrorMessage(error))
       return undefined
     } finally {
       uploading.value = false
@@ -120,6 +120,20 @@ export function useMaterialUpload() {
   /** 选择视频 */
   function chooseVideoFile() {
     return new Promise<NormalizedFile | undefined>((resolve) => {
+      // #ifdef H5
+      // H5 端 chooseVideo 的 extension 过滤不稳定，优先使用 chooseFile 约束格式
+      const chooseFn = (uni as any).chooseFile
+      if (chooseFn) {
+        chooseFn({
+          count: 1,
+          type: 'video',
+          extension: UPLOAD_LIMITS.video.extensions.map(item => `.${item}`),
+          success: (res: any) => resolve(normalizeSelectedFile(res)),
+          fail: () => resolve(undefined),
+        })
+        return
+      }
+      // #endif
       uni.chooseVideo({
         extension: UPLOAD_LIMITS.video.extensions.map(item => `.${item}`),
         success: res => resolve(normalizeSelectedFile(res)),
@@ -184,4 +198,16 @@ export function useMaterialUpload() {
   }
 
   return { uploading, chooseAndUpload }
+}
+
+/** 获取上传失败提示 */
+function getUploadErrorMessage(error: any) {
+  if (!error) {
+    return '上传失败，请重试'
+  }
+  if (typeof error === 'string') {
+    return error
+  }
+  const message = error.msg || error.message || error.errMsg || error.data?.msg || error.data?.message
+  return message || '上传失败，请重试'
 }
