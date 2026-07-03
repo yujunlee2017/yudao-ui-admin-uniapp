@@ -6,7 +6,7 @@ import { http } from '@/http/http'
 export interface MovementOrder {
   id?: number
   no?: string
-  orderTime?: string | number | Date
+  orderTime?: string | Date
   status?: number
   remark?: string
   sourceWarehouseId?: number
@@ -16,10 +16,10 @@ export interface MovementOrder {
   totalQuantity?: number
   totalPrice?: number
   details?: MovementOrderDetail[]
-  createTime?: Date | string
+  createTime?: Date
   creator?: string
   creatorName?: string
-  updateTime?: Date | string
+  updateTime?: Date
   updater?: string
   updaterName?: string
 }

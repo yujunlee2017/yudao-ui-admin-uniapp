@@ -7,7 +7,7 @@ export interface ReceiptOrder {
   id?: number
   no?: string
   type?: number
-  orderTime?: string | number | Date
+  orderTime?: string | Date
   status?: number
   bizOrderNo?: string
   merchantId?: number
@@ -18,10 +18,10 @@ export interface ReceiptOrder {
   totalQuantity?: number
   totalPrice?: number
   details?: ReceiptOrderDetail[]
-  createTime?: Date | string
+  createTime?: Date
   creator?: string
   creatorName?: string
-  updateTime?: Date | string
+  updateTime?: Date
   updater?: string
   updaterName?: string
 }
